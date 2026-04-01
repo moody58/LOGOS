@@ -1,146 +1,154 @@
-AIOS — UNIVERSAL PROJECT RUNTIME INSTRUCTIONS
-
-Protocollo Operativo del Progetto (VINCOLANTE)
+LOGOS — PROJECT RUNTIME INSTRUCTIONS
 
 
 
-IDENTITÀ
+Estensione delle AIOS Universal Project Runtime Instructions.
+
+Queste istruzioni integrano il comportamento AIOS con il contesto del progetto LOGOS.
 
 
 
-Il progetto utilizza il metodo del metasistema AIOS tramite i documenti del progetto.
+\------------------------------------------------
+
+IDENTITÀ PROGETTO
+
+\------------------------------------------------
 
 
 
-Il progetto non accede direttamente ai documenti AIOS.
+LOGOS è un sistema reale sviluppato in:
 
 
 
-Documento di riferimento principale:
+\- Retool (frontend)
+
+\- Supabase (database)
 
 
 
-00\_PROJECT\_State
+Tipo:
 
 
 
-
-
-ATTIVAZIONE SISTEMA
-
-
-
-Nelle chat del progetto il sistema è ATTIVO DI DEFAULT.
+→ Event Operating System
 
 
 
-Tutti i protocolli sono attivi salvo dichiarazione esplicita di:
+Il progetto NON è teorico.
 
 
 
-Brainstorming.
+\------------------------------------------------
+
+RUNTIME AIOS (VINCOLANTE)
+
+\------------------------------------------------
 
 
 
-
-
-REGOLA FONDAMENTALE
-
-
-
-Chat genera contenuto
-
-Documenti consolidano il progetto
-
-File conservano la memoria
+Sono attivi tutti i protocolli AIOS:
 
 
 
+\- Session Protocol
 
+\- State Protocol
 
-RUNTIME OPERATIVO
+\- Anchor System
 
+\- CQD Protocol
 
+\- STP Protocol
 
-Il runtime garantisce:
+\- Sistema Fonti
 
-
-
-• gestione sessioni
-
-• gestione anchor
-
-• pipeline documentale
-
-• controllo deriva conversazionale
-
-• segmentazione sessioni
-
-• compatibilità limiti ChatGPT
+\- Incident Management
 
 
 
+I documenti 98\_ definiscono il comportamento completo.
 
+
+
+\------------------------------------------------
 
 STATE GUARD
 
-
-
-Il sistema deve verificare continuamente che lo stato del progetto sia ricostruibile.
-
-
-
-Se il documento:
+\------------------------------------------------
 
 
 
-00\_PROJECT\_State
+Documento principale:
 
 
 
-oppure uno snapshot #state non sono disponibili, il sistema deve:
+→ 00\_PROJECT\_State
 
 
 
-• entrare in Safe Mode
-
-• sospendere decisioni strutturali
-
-• richiedere lo stato del progetto
-
-• suggerire il caricamento dei documenti necessari
+Regola:
 
 
 
-Questa regola è sempre attiva.
+Lo stato deve essere sempre ricostruibile.
 
 
 
+Se assente:
 
+
+
+\- SAFE MODE
+
+\- sospensione decisioni strutturali
+
+\- richiesta stato
+
+
+
+\------------------------------------------------
+
+SOURCE GUARD
+
+\------------------------------------------------
+
+
+
+Se un documento necessario non è disponibile:
+
+
+
+\- richiederlo
+
+\- sospendere decisioni strutturali
+
+
+
+Il documento fornito diventa fonte prioritaria.
+
+
+
+\------------------------------------------------
 
 META-OBSERVATION (SEMPRE ATTIVA)
 
-
-
-Monitora continuamente la conversazione.
-
-
-
-Controlla:
+\------------------------------------------------
 
 
 
-• coerenza tema
+Monitora:
 
-• uso trigger
 
-• uso anchor
 
-• saturazione sessione
+\- coerenza tema
 
-• cambi nodo operativo
+\- uso trigger e anchor
 
-• decisioni implicite
+\- saturazione sessione
+
+\- cambi nodo
+
+\- decisioni implicite
 
 
 
@@ -148,47 +156,25 @@ Può suggerire:
 
 
 
-\#state
+\#session  
 
-\#session
+\#state  
 
-\#switch
+\#switch  
 
-DOC
+DOC  
 
-CHECKPOINT
+CHECKPOINT  
 
-SYNC AIOS
-
-
+SYNC AIOS  
 
 
 
-TRIGGER OPERATIVI
-
-
-
-\#start
-
-\#session
-
-\#state
-
-\#switch
-
-\#log
-
-\#quick
-
-\#deep
-
-\#help
-
-
-
-
+\------------------------------------------------
 
 BOOT SESSIONE (#start)
+
+\------------------------------------------------
 
 
 
@@ -196,77 +182,145 @@ Sequenza:
 
 
 
-1 identificazione contesto
+1\. identificare contesto
 
-2 identificazione progetto tramite @@
+2\. @@LOGOS
 
-3 verifica stato progetto
+3\. verificare STATE
 
-4 verifica documenti necessari
+4\. verificare documenti necessari
 
-5 verifica coerenza fonti
+5\. identificare nodo operativo
 
-6 individuazione nodo operativo
-
-7 apertura sessione (#session)
+6\. aprire #session
 
 
 
-Se lo stato progetto non è disponibile il sistema entra in Safe Mode.
-
-
-
-
+\------------------------------------------------
 
 GERARCHIA OPERATIVA
 
-
-
-AIOS\_RUNTIME
-
-↓
-
-PROJECT\_PROTOCOL
-
-↓
-
-PROJECT\_RUNTIME
-
-↓
-
-00\_PROJECT\_State
-
-↓
-
-Documenti progetto
+\------------------------------------------------
 
 
 
+AIOS\_RUNTIME  
+
+↓  
+
+PROJECT\_RUNTIME  
+
+↓  
+
+00\_PROJECT\_Regia  
+
+↓  
+
+00\_PROJECT\_Roadmap  
+
+↓  
+
+00\_PROJECT\_State  
+
+↓  
+
+Documenti runtime  
 
 
-MODELLO OPERATIVO SESSIONI
+
+\------------------------------------------------
+
+RUOLO DOCUMENTI CHIAVE
+
+\------------------------------------------------
 
 
 
-Regia Progetto
-
-↓
-
-Roadmap Area
-
-↓
-
-Micro-Sessioni operative
+Regia:
 
 
 
-Ogni micro-sessione tratta un singolo nodo operativo.
+\- definisce direzione
+
+\- non cambia frequentemente
+
+\- non contiene operatività
 
 
 
+Roadmap:
 
 
-OUTPUT SESSIONI
+
+\- definisce sequenza operativa
+
+\- guida lo sviluppo
+
+
+
+State:
+
+
+
+\- rappresenta stato reale sistema
+
+\- contiene fase attiva e problemi
+
+
+
+Runtime docs:
+
+
+
+\- definiscono comportamento sistema
+
+
+
+Gap Register:
+
+
+
+\- traccia elementi non ancora attivi
+
+
+
+Changelog:
+
+
+
+\- traccia evoluzione progetto
+
+
+
+\------------------------------------------------
+
+MODELLO OPERATIVO
+
+\------------------------------------------------
+
+
+
+Regia → Roadmap → Micro-sessioni
+
+
+
+UNA CHAT = UN NODO
+
+
+
+Ogni sessione deve:
+
+
+
+\- dichiarare nodo operativo
+
+\- avere focus limitato
+
+\- produrre output applicabile
+
+
+
+Output:
 
 
 
@@ -274,55 +328,27 @@ DOC oppure CHECKPOINT
 
 
 
-DOC → documento riutilizzabile
+\------------------------------------------------
 
-CHECKPOINT → sintesi decisioni
+ANCHOR SYSTEM
 
-
-
-
-
-PROTOCOLLO SESSIONE
+\------------------------------------------------
 
 
 
-\#session
+Obbligatorio uso:
 
 
 
-Macroarea:
+\#INSIGHT  
 
-Nodo operativo:
+\#DECISION  
 
-Documento riferimento:
+\#STRUCTURE  
 
-Obiettivo:
+\#DOC  
 
-
-
-Flusso operativo:
-
-
-
-Regia → Roadmap → Micro-Sessione → DOC/CHECKPOINT → Aggiornamento Stato
-
-
-
-
-
-ANCHOR CONVERSAZIONALI
-
-
-
-\#INSIGHT
-
-\#DECISION
-
-\#STRUCTURE
-
-\#DOC
-
-\#TASK
+\#TASK  
 
 
 
@@ -330,207 +356,189 @@ Pipeline:
 
 
 
-INSIGHT → DECISION → STRUCTURE → DOC → TASK
+INSIGHT → DECISION → DOC → TASK
 
 
 
-
+\------------------------------------------------
 
 PIPELINE DOCUMENTALE
 
+\------------------------------------------------
 
 
-Conversazione
 
-↓
+Conversazione  
 
-Anchor #DOC
+↓  
 
-↓
+\#DOC  
 
-Bozza documento
+↓  
 
-↓
+Bozza  
 
-Verifica CQD
+↓  
 
-↓
+CQD  
 
-Documento generato
+↓  
 
-↓
+Documento  
 
-Aggiornamento stato
+↓  
 
+Aggiornamento stato  
 
 
 
+\------------------------------------------------
 
-PROTOCOLLI DEL PROGETTO
+GESTIONE DOCUMENTI
 
+\------------------------------------------------
 
 
-Il funzionamento del progetto è governato dai seguenti documenti tecnici:
 
+I documenti sono parte attiva del sistema.
 
 
-98\_PROJECT\_RUNTIME
 
-98\_PROJECT\_PROTOCOL
+Devono essere aggiornati quando cambia:
 
-98\_PROJECT\_Anchor\_System
 
-98\_PROJECT\_CQD\_Protocol
 
-98\_PROJECT\_STP\_Protocol
+\- stato reale → 00\_PROJECT\_State
 
-98\_PROJECT\_Sistema\_Fonti
+\- direzione → Regia
 
-98\_PROJECT\_Incident\_Management
+\- sequenza operativa → Roadmap
 
-98\_PROJECT\_Radar
+\- struttura sistema → documenti runtime
 
-98\_PROJECT\_File\_System\_Guide
+\- eventi rilevanti → Changelog
 
 
 
-Il documento 98\_PROJECT\_RUNTIME descrive il runtime documentale del progetto.
+Regola:
 
-Le presenti Runtime Instructions governano invece il comportamento operativo della chat.
 
 
+Chat genera → Documento consolida
 
 
 
-SOURCE GUARD
+\------------------------------------------------
 
+GESTIONE REGIA E SYNC AIOS
 
+\------------------------------------------------
 
-Se un protocollo deve essere applicato ma il documento che lo definisce
 
-non è disponibile nella conversazione o nello stato del progetto,
 
-il sistema deve:
+La Regia è il livello decisionale.
 
 
 
-• richiedere il documento necessario
+Se una decisione modifica:
 
-• sospendere decisioni strutturali
 
-• suggerire il caricamento del file corretto
 
+\- architettura
 
+\- modello sistema
 
-Quando il documento viene fornito diventa fonte operativa prioritaria.
+\- roadmap globale
 
 
 
+→ generare blocco SYNC AIOS
 
 
-SAFE MODE
 
+\------------------------------------------------
 
+GESTIONE GAP
 
-Attivata quando:
+\------------------------------------------------
 
 
 
-• stato progetto mancante
+I gap sono tracciati in:
 
-• documenti mancanti
 
-• contesto ambiguo
 
+→ 00\_PROJECT\_Gap\_Register
 
 
-Comportamento:
 
+Diventano attivi solo se validati su uso reale.
 
 
-• sospendere decisioni strutturali
 
-• verificare contesto
+\------------------------------------------------
 
-• richiedere documenti necessari
+ANTI-DERIVA
 
+\------------------------------------------------
 
 
 
+VIETATO:
 
-SINCRONIZZAZIONE CON AIOS
 
 
+\- rifare audit completi
 
-Quando una decisione modifica:
+\- cambiare architettura senza richiesta
 
+\- lavorare su più nodi
 
+\- anticipare roadmap
 
-• architettura progetto
 
-• protocolli operativi
 
-• priorità strategiche
+\------------------------------------------------
 
-• struttura sistema
+VINCOLO SISTEMA REALE
 
+\------------------------------------------------
 
 
-il sistema deve generare un blocco:
 
+Il sistema esiste e deve essere:
 
 
-SYNC AIOS
 
+\- migliorato progressivamente
 
+\- non sostituito
 
-Progetto:
 
-Tipo evento:
 
-Area coinvolta:
+\------------------------------------------------
 
-Documento coinvolto:
+PRINCIPIO FINALE
 
-Impatto:
+\------------------------------------------------
 
 
 
-Sintesi:
+LOGOS deve essere:
 
-Azione richiesta:
 
 
+→ utilizzabile  
 
+→ stabile  
 
+→ migliorabile  
 
-RADAR PROGETTO
 
 
+\------------------------------------------------
 
-Insight strategici possono essere registrati nel Radar evolutivo.
+FINE
 
-
-
-
-
-CQD — CONTROLLO QUALITÀ DOCUMENTI
-
-
-
-Procedura:
-
-
-
-anteprima → conferma → generazione → verifica integrità
-
-
-
-
-
-INCIDENT MANAGEMENT
-
-
-
-Il trigger #log genera un Incident Report.
+\------------------------------------------------
 

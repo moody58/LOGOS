@@ -1,32 +1,40 @@
-\# 00\_PROJECT\_Regia\_v01
+\# 00\_PROJECT\_Regia\_v02
 
 
 
-DATA: 2026-04-01
+DATA: 2026-04-02
 
 
 
 \------------------------------------------------
 
-RUOLO DELLA REGIA
+SCOPO DELLA REGIA
 
 \------------------------------------------------
 
 
 
-La Regia LOGOS ha funzione:
+La Regia LOGOS rappresenta il livello direzionale del progetto.
 
 
 
-\- decisionale
-
-\- di coordinamento
-
-\- di controllo del metodo
+Ha funzione di:
 
 
 
-NON è operativa.
+\- guida strategica
+
+\- coordinamento dei nodi operativi
+
+\- controllo metodologico
+
+
+
+\---
+
+
+
+La Regia NON è operativa.
 
 
 
@@ -38,7 +46,11 @@ NON esegue modifiche dirette sul sistema.
 
 
 
-\---
+\------------------------------------------------
+
+FUNZIONE DELLA REGIA
+
+\------------------------------------------------
 
 
 
@@ -46,13 +58,71 @@ La Regia:
 
 
 
-\- definisce roadmap
+\- definisce direzione
 
-\- assegna priorità
+\- mantiene coerenza
 
-\- controlla coerenza
+\- stabilisce priorità
 
-\- previene deriva
+\- previene deriva operativa
+
+
+
+\---
+
+
+
+Opera come livello superiore rispetto a:
+
+
+
+STATE  
+
+REGISTRY  
+
+
+
+\------------------------------------------------
+
+GERARCHIA OPERATIVA
+
+\------------------------------------------------
+
+
+
+GERARCHIA VINCOLANTE:
+
+
+
+REGIA > STATE > REGISTRY
+
+
+
+\---
+
+
+
+REGIA:
+
+
+
+\- direzione strategica
+
+
+
+STATE:
+
+
+
+\- stato attuale sistema
+
+
+
+REGISTRY:
+
+
+
+\- storico eventi e decisioni
 
 
 
@@ -76,7 +146,7 @@ Roadmap
 
 ↓
 
-Micro-sessioni operative (chat separate)
+Micro-sessioni operative
 
 
 
@@ -84,11 +154,11 @@ Micro-sessioni operative (chat separate)
 
 
 
-Principio:
+Principio fondamentale:
 
 
 
-UNA CHAT = UN NODO
+UNA SESSIONE = UN NODO
 
 
 
@@ -110,19 +180,13 @@ Ogni nodo:
 
 \------------------------------------------------
 
-STATO DI PARTENZA
+RELAZIONE CON AIOS
 
 \------------------------------------------------
 
 
 
-Sistema:
-
-
-
-✔ funzionante end-to-end
-
-✔ architettura stabile
+La Regia LOGOS è collegata alla Control Room AIOS.
 
 
 
@@ -130,17 +194,19 @@ Sistema:
 
 
 
-Problemi reali:
+Quando emergono:
 
 
 
-\- input non affidabile
+\- decisioni strutturali
 
-\- parsing incompleto
+\- cambi architetturali
 
-\- matching debole
+\- modifiche di modello
 
-\- dati non normalizzati
+
+
+→ la Regia aggiorna AIOS
 
 
 
@@ -148,51 +214,33 @@ Problemi reali:
 
 
 
-Conclusione:
+Mantiene allineamento tra:
 
 
 
-Il sistema NON è da rifare.
+\- progetto LOGOS
 
-
-
-È da completare.
+\- metasistema AIOS
 
 
 
 \------------------------------------------------
 
-ERRORE STRATEGICO IDENTIFICATO
+PRINCIPI DI CONTROLLO
 
 \------------------------------------------------
 
 
 
-Errore precedente:
+La Regia garantisce:
 
 
 
-\- sviluppo non sequenziale
+\- coerenza tra documenti
 
-\- focus su più layer contemporaneamente
+\- allineamento tra stato e sviluppo
 
-\- perdita allineamento roadmap
-
-
-
-\---
-
-
-
-Effetto:
-
-
-
-\- frammentazione
-
-\- deriva operativa
-
-\- audit ripetuti
+\- rispetto della roadmap
 
 
 
@@ -200,37 +248,35 @@ Effetto:
 
 
 
-Correzione:
+Se un’attività:
 
 
 
-→ sviluppo sequenziale vincolato
+\- non è coerente
+
+\- non è prioritaria
+
+\- non è allineata
+
+
+
+→ viene bloccata
 
 
 
 \------------------------------------------------
 
-ROADMAP MASTER (VINCOLANTE)
+GESTIONE DOCUMENTALE
 
 \------------------------------------------------
 
 
 
-ORDINE OBBLIGATORIO:
+Regola:
 
 
 
-STEP 1 — INPUT RELIABILITY (ATTIVO)
-
-
-
-\- parsing unità (€, minuti, ore)
-
-\- estrazione amount
-
-\- label cleaning
-
-\- type detection base
+POCHI documenti, aggiornati.
 
 
 
@@ -238,31 +284,13 @@ STEP 1 — INPUT RELIABILITY (ATTIVO)
 
 
 
-STEP 2 — MATCHING BASE
+Consentito:
 
 
 
-\- project matching
+\- aggiornamento versioni (v01 → v02)
 
-\- entity matching
-
-\- suggerimenti coerenti
-
-
-
-\---
-
-
-
-STEP 3 — INPUT COMPLETENESS
-
-
-
-\- gestione edge case
-
-\- multi-unit (valutazione)
-
-\- stabilizzazione preview
+\- consolidamento documenti
 
 
 
@@ -270,157 +298,15 @@ STEP 3 — INPUT COMPLETENESS
 
 
 
-STEP 4 — EVENT EDITING
+Vietato:
 
 
 
-\- modifica eventi NEW
+\- duplicazioni
 
-\- correzione dati
+\- snapshot ridondanti
 
-
-
-\---
-
-
-
-STEP 5 — DATA STRUCTURE
-
-
-
-\- creazione project/entity guidata
-
-\- relazioni entity-project
-
-\- gestione duplicati
-
-
-
-\---
-
-
-
-STEP 6 — ENGINE
-
-
-
-\- normalizzazione avanzata
-
-\- deduplicazione
-
-\- logica semantica
-
-
-
-\---
-
-
-
-STEP 7 — OUTPUT
-
-
-
-\- dashboard
-
-\- KPI
-
-\- analytics
-
-
-
-\------------------------------------------------
-
-FASE ATTUALE
-
-\------------------------------------------------
-
-
-
-FASE:
-
-
-
-INPUT RELIABILITY
-
-
-
-\---
-
-
-
-NODO ATTIVO:
-
-
-
-Parsing unità base
-
-
-
-\---
-
-
-
-FOCUS:
-
-
-
-\- euro
-
-\- minuti
-
-\- ore
-
-
-
-\---
-
-
-
-VINCOLO:
-
-
-
-NON passare allo step successivo
-
-finché questo non è stabile
-
-
-
-\------------------------------------------------
-
-REGOLE OPERATIVE (ANTI-DERIVA)
-
-\------------------------------------------------
-
-
-
-VIETATO:
-
-
-
-\- lavorare su più step contemporaneamente
-
-\- anticipare engine o dashboard
-
-\- modificare architettura
-
-\- rifare audit completo
-
-
-
-\---
-
-
-
-CONSENTITO:
-
-
-
-\- miglioramenti locali
-
-\- interventi incrementali
-
-\- test reali
+\- versioni parallele incoerenti
 
 
 
@@ -454,9 +340,9 @@ La sessione termina quando:
 
 
 
-\- output applicabile ottenuto
+\- obiettivo raggiunto
 
-\- obiettivo nodo raggiunto
+\- output applicabile prodotto
 
 
 
@@ -464,13 +350,13 @@ La sessione termina quando:
 
 
 
-La Regia suggerisce chiusura se:
+La Regia interviene se:
 
 
 
-\- rischio deriva
+\- deriva operativa
 
-\- cambi nodo implicito
+\- cambio nodo implicito
 
 \- saturazione sessione
 
@@ -478,17 +364,21 @@ La Regia suggerisce chiusura se:
 
 \------------------------------------------------
 
-GESTIONE STATO
+PRINCIPIO DI STABILITÀ
 
 \------------------------------------------------
 
 
 
-Documento principale:
+La Regia è:
 
 
 
-→ 00\_PROJECT\_State
+\- stabile nel tempo
+
+\- indipendente dallo stato operativo
+
+\- non legata al nodo attivo
 
 
 
@@ -496,97 +386,15 @@ Documento principale:
 
 
 
-Aggiornamento:
+NON deve essere aggiornata per:
 
 
 
-solo quando cambia:
+\- avanzamento step
 
+\- cambio fase
 
-
-\- fase
-
-\- nodo
-
-\- struttura sistema
-
-
-
-\------------------------------------------------
-
-GESTIONE DOCUMENTI
-
-\------------------------------------------------
-
-
-
-Regola:
-
-
-
-POCHI documenti, aggiornati.
-
-
-
-\---
-
-
-
-VIETATO:
-
-
-
-\- duplicare documenti
-
-\- versioni parallele
-
-\- snapshot inutili
-
-
-
-\---
-
-
-
-Consentito:
-
-
-
-\- aggiornamento versione (v01 → v02)
-
-\- consolidamento
-
-
-
-\------------------------------------------------
-
-PRINCIPIO DI CONTROLLO
-
-\------------------------------------------------
-
-
-
-La Regia mantiene:
-
-
-
-\- coerenza
-
-\- direzione
-
-\- priorità
-
-
-
-\---
-
-
-
-Se un’attività non è allineata alla roadmap:
-
-
-
-→ viene bloccata
+\- attività operative
 
 
 
@@ -620,7 +428,7 @@ Obiettivo finale:
 
 
 
-→ dashboard operativa basata su dati reali
+→ sistema decisionale basato su dati strutturati
 
 
 
@@ -638,7 +446,7 @@ LOGOS NON deve essere:
 
 \- perfetto
 
-\- automatizzato completamente
+\- completamente automatizzato
 
 
 
@@ -666,15 +474,23 @@ CHANGELOG
 
 
 
+v02 — 2026-04-02
+
+
+
+\- Rimozione contenuti operativi (fase, nodo, roadmap)
+
+\- Ripristino struttura conforme AIOS
+
+\- Separazione Regia / State / Roadmap
+
+\- Eliminazione dipendenza dallo stato corrente
+
+
+
 v01 — 2026-04-01
 
 
 
-\- Definizione Regia operativa LOGOS
-
-\- Consolidamento roadmap master
-
-\- Risoluzione deriva metodologica
-
-\- Allineamento definitivo con stato reale sistema
+\- Prima definizione Regia operativa (successivamente corretta)
 
