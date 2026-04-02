@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v01
+# 01_LOGOS_Input_System_v02
 
-DATA: 2026-04-01
+DATA: 2026-04-02
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -172,83 +172,121 @@ Unità supportate:
 
 ---
 
-RICONOSCIMENTO:
+RICONOSCIMENTO UNITÀ (UPDATED)
 
 euro:
 
 - €
 - euro
+- eur
+- €20 / 20€ / € 20
 
-minuti:
+---
 
-- min
-- minuti
+tempo:
 
 ore:
-
 - ora
 - ore
+- h
+- 2h / h2 / 2 h
+
+minuti:
+- min
+- minuti
+- 30min / min30 / 30 min
 
 ---
 
-NORMALIZZAZIONE:
+NORMALIZZAZIONE INPUT (RUNTIME)
 
-euro → euro  
-minuti → minuti  
-ore → ore  
+Applicata solo nel layer parsing.
 
----
+Operazioni:
 
-REGOLE:
-
-✔ una sola unità per evento  
-✔ multi-unit NON supportato  
+- separazione simboli (€)
+- separazione unit compatte (2h → 2 h)
+- pulizia spazi
 
 ---
 
-CASO MULTI-UNIT:
+ESEMPI:
 
-es:
+2h30 → 2 h 30  
+€20 → € 20  
 
-"2 ore e 30 minuti"
+---
 
-→ parsing disabilitato  
-→ input trattato come testo  
+IMPORTANTE:
+
+✔ non modifica input utente  
+✔ usata solo per parsing interno  
+
+GESTIONE ORARI
+
+Formati:
+
+HH:MM
+
+---
+
+COMPORTAMENTO:
+
+✔ NON considerati amount  
+✔ NON considerati unit  
+✔ mantenuti come testo  
+
+---
+
+ESEMPIO:
+
+"15:30 test" → label = "15:30 test"
 
 ------------------------------------------------
-ESTRAZIONE AMOUNT
+ESTRAZIONE AMOUNT (UPDATED — RETROFIT v2)
 ------------------------------------------------
 
 Regola:
 
-estrarre il primo numero valido
+estrarre il numero più rilevante rispetto alla unità rilevata
 
 ---
 
-Formati supportati:
+STRATEGIA:
+
+- identificazione di tutti i numeri presenti
+- identificazione della posizione della unità
+- selezione del numero con distanza minima dalla unità
+
+---
+
+ESEMPI:
+
+"pizza 20 euro" → 20  
+"2 ore lavoro" → 2  
+"2 ore 30" → 2  
+
+---
+
+FORMATI SUPPORTATI:
 
 - interi
 - decimali (.,)
 
 ---
 
-Conversione:
+NOTE:
 
-string → number
-
----
-
-CASI:
-
-✔ "30 minuti" → 30  
-✔ "12,5 euro" → 12.5  
+✔ supporto multi-numero (selezione per prossimità)  
+✔ parsing deterministico  
+✔ no interpretazione semantica  
 
 ---
 
 LIMITI:
 
-- numeri multipli → non gestiti  
-- contesto numerico → ignorato  
+- multi-unit NON supportato
+- numeri secondari trattati come label
 
 ------------------------------------------------
 LABEL CLEANING
