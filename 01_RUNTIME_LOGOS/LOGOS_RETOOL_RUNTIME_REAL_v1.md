@@ -2,7 +2,7 @@
 
 
 
-LOGOS\_RETOOL\_RUNTIME\_REAL\_v1
+LOGOS\_RETOOL\_RUNTIME\_REAL\_v02
 
 
 
@@ -34,11 +34,11 @@ Il flusso operativo si articola nei seguenti step:
 
 
 
-&#x20;  \* L’utente inserisce testo libero nel componente `input\_home`
+&#x20;  \* L’utente inserisce testo libero nel componente `input\\\_home`
 
-&#x20;  \* Il valore viene sincronizzato in tempo reale su `input\_raw` tramite `input\_home.setValue → input\_raw.setValue`
+&#x20;  \* Il valore viene sincronizzato in tempo reale su `input\\\_raw` tramite `input\\\_home.setValue → input\\\_raw.setValue`
 
-&#x20;  \* Viene attivato lo stato di digitazione tramite `typing\_state.trigger`
+&#x20;  \* Viene attivato lo stato di digitazione tramite `typing\\\_state.trigger`
 
 
 
@@ -48,9 +48,9 @@ Il flusso operativo si articola nei seguenti step:
 
 &#x20;  \* Il testo viene normalizzato (lowercase + trim + pulizia spazi)
 
-&#x20;  \* Viene eseguito un primo livello di \*\*matching automatico progetti\*\* nello script di `input\_raw` e nel `default value` di `select\_project`
+&#x20;  \* Viene eseguito un primo livello di \*\*matching automatico progetti\*\* nello script di `input\\\_raw` e nel `default value` di `select\\\_project`
 
-&#x20;  \* Viene eseguito un \*\*matching entità\*\* nel `default value` di `select\_entity`
+&#x20;  \* Viene eseguito un \*\*matching entità\*\* nel `default value` di `select\\\_entity`
 
 &#x20;  \* La logica utilizza:
 
@@ -62,7 +62,7 @@ Il flusso operativo si articola nei seguenti step:
 
 &#x20;    \* matching completo (every word)
 
-&#x20;    \* disambiguazione tramite numeri (`match(/\\d+/)`)
+&#x20;    \* disambiguazione tramite numeri (`match(/\\\\d+/)`)
 
 
 
@@ -88,13 +88,19 @@ Il flusso operativo si articola nei seguenti step:
 
 
 
-&#x20;    \* `input\_raw`
+&#x20;    \* `input\\\_raw`
 
-&#x20;    \* progetto selezionato (`select\_project`)
+&#x20;    \* progetto selezionato (`select\\\_project`)
 
-&#x20;    \* entità selezionata (`select\_entity`)
+&#x20;    \* entità selezionata (`select\\\_entity`)
 
 &#x20;  \* Serve come feedback visivo prima della conferma
+
+\* utilizza la stessa logica del parsing finale
+
+\* non altera il contenuto dell’input
+
+\* rappresenta il dato che verrà salvato
 
 
 
@@ -102,23 +108,151 @@ Il flusso operativo si articola nei seguenti step:
 
 
 
-&#x20;  \* Alla pressione di `button\_input\_confirm`:
+&#x20;  \* Alla pressione di `button\\\_input\\\_confirm`:
 
 
 
-&#x20;    \* reset immediato input (`input\_home.setValue("")`)
+&#x20;    \* reset immediato input (`input\\\_home.setValue("")`)
 
-&#x20;    \* switch UI a `feedback` tramite `ui\_state.trigger`
+&#x20;    \* switch UI a `feedback` tramite `ui\\\_state.trigger`
 
-&#x20;    \* esecuzione parsing inline:
+&#x20;    \* esecuzione parsing inline avanzato:
 
 
 
-&#x20;      \* `amount` → primo numero trovato (`match(/\\d+/)`)
+&#x20; \* normalizzazione input (lowercase, spazi, simboli)
 
-&#x20;      \* `unit` → rilevata solo per `"min"`
+&#x20; \* riconoscimento unità (€, euro, h, ore, min, minuti)
 
-&#x20;    \* invio dati tramite `insert\_event.trigger`
+&#x20; \* estrazione amount tramite selezione del numero più vicino alla unità (matchAll + proximity)
+
+&#x20; \* esclusione formati orari (HH:MM)
+
+
+
+\* invio dati tramite `insert\_event.trigger`
+
+
+
+\---
+
+
+
+\## PARSING LOGIC (UPDATED — RETROFIT v2)
+
+
+
+Il parsing è eseguito completamente lato client nel componente `button\_input\_confirm`.
+
+
+
+\### Normalizzazione
+
+
+
+\- lowercase
+
+\- separazione simboli (€)
+
+\- separazione unità compatte (2h → 2 h, 2h30 → 2 h 30)
+
+\- pulizia spazi
+
+
+
+\---
+
+
+
+\### Riconoscimento unità
+
+
+
+Euro:
+
+\- €, euro, eur
+
+\- formati: €20, 20€, € 20
+
+
+
+Tempo:
+
+\- ore: ora, ore, h, 2h, h2, 2 h
+
+\- minuti: min, minuti, 30min, min30
+
+
+
+\---
+
+
+
+\### Estrazione amount
+
+
+
+\- identificazione di tutti i numeri (`matchAll`)
+
+\- individuazione posizione unità
+
+\- selezione numero con distanza minima dalla unità
+
+
+
+\---
+
+
+
+\### Esempi
+
+
+
+\- pizza 20 euro → 20
+
+\- 2 ore lavoro → 2
+
+\- 2h30 → 2
+
+\- €20 pizza → 20
+
+
+
+\---
+
+
+
+\### Decimali
+
+
+
+\- supporto 1,5 / 1.5
+
+\- conversione automatica a Number
+
+
+
+\---
+
+
+
+\### Gestione orari
+
+
+
+\- formati HH:MM ignorati dal parsing
+
+\- mantenuti come testo
+
+
+
+Esempio:
+
+15:30 test → amount null
+
+
+
+\---
 
 
 
@@ -130,15 +264,15 @@ Il flusso operativo si articola nei seguenti step:
 
 
 
-&#x20;    \* `raw\_input`
+&#x20;    \* `raw\\\_input`
 
 &#x20;    \* `amount`
 
 &#x20;    \* `unit`
 
-&#x20;    \* `project\_id`
+&#x20;    \* `project\\\_id`
 
-&#x20;    \* `entity\_id`
+&#x20;    \* `entity\\\_id`
 
 &#x20;    \* `status = NEW`
 
@@ -150,9 +284,9 @@ Il flusso operativo si articola nei seguenti step:
 
 
 
-&#x20;  \* Trigger `events\_new` per aggiornare la lista eventi
+&#x20;  \* Trigger `events\\\_new` per aggiornare la lista eventi
 
-&#x20;  \* Reset selezioni (`select\_project.clearValue`, `select\_entity.clearValue`)
+&#x20;  \* Reset selezioni (`select\\\_project.clearValue`, `select\\\_entity.clearValue`)
 
 &#x20;  \* Ritorno automatico alla home dopo timeout (3.5s)
 
@@ -162,17 +296,17 @@ Il flusso operativo si articola nei seguenti step:
 
 
 
-&#x20;  \* Lista eventi (`list\_events`) alimentata da `events\_new`
+&#x20;  \* Lista eventi (`list\\\_events`) alimentata da `events\\\_new`
 
 &#x20;  \* Azioni disponibili:
 
 
 
-&#x20;    \* `btn\_written` → `update\_written.trigger` → status = WRITTEN
+&#x20;    \* `btn\\\_written` → `update\\\_written.trigger` → status = WRITTEN
 
-&#x20;    \* `btn\_error` → `update\_error.trigger` → status = ERROR
+&#x20;    \* `btn\\\_error` → `update\\\_error.trigger` → status = ERROR
 
-&#x20;  \* Navigazione gestita via visibilità container (`container\_events\_list`, `container\_home`)
+&#x20;  \* Navigazione gestita via visibilità container (`container\\\_events\\\_list`, `container\\\_home`)
 
 
 
@@ -188,7 +322,7 @@ Il sistema attuale:
 
 
 
-\* acquisisce input destrutturato (`input\_home`)
+\* acquisisce input destrutturato (`input\\\_home`)
 
 \* esegue parsing e matching \*\*in tempo reale lato UI\*\*
 
@@ -396,7 +530,9 @@ const hasTime =
 
 &#x20; text.includes("min") ||
 
-&#x20; text.includes("minuti");
+&#x20; text.includes("minuti") ||
+
+&#x20; text.includes("h");
 
 
 
@@ -746,23 +882,9 @@ await insert\_event.trigger({
 
 &#x20;   raw\_input: input\_raw.value,
 
-&#x20;   amount: input\_raw.value \&\&
+&#x20;   amount: amount,
 
-&#x20;     input\_raw.value.match(/\\d+/)
-
-&#x20;       ? Number(input\_raw.value.match(/\\d+/)\[0])
-
-&#x20;       : null,
-
-&#x20;   unit: input\_raw.value \&\&
-
-&#x20;     input\_raw.value.includes("min")
-
-&#x20;       ? "minuti"
-
-&#x20;       : null,
-
-&#x20;   project\_id: select\_project.value || null,
+&#x20;   unit: unit,    project\_id: select\_project.value || null,
 
 &#x20;   entity\_id: select\_entity.value || null
 
