@@ -1,4 +1,4 @@
-00_PROJECT_State_v02
+00\_PROJECT\_State\_v02
 
 DATA: 2026-04-02
 NODO: INPUT RELIABILITY — PARSING (RETROFIT COMPLETATO)
@@ -51,8 +51,8 @@ Il parsing è stato completamente stabilizzato tramite retrofit incrementale.
 
 COMPONENTI ATTIVI
 INPUT LAYER
-input_home (input utente principale)
-input_raw (adapter tecnico)
+input\_home (input utente principale)
+input\_raw (adapter tecnico)
 input libero non vincolato
 PARSING (UPDATED — RETROFIT v2)
 
@@ -115,7 +115,7 @@ AGGIORNAMENTO CRITICO
 ✔ nessuna alterazione input
 
 INSERT
-insert_event attivo
+insert\_event attivo
 scrittura su database events
 status iniziale: NEW
 nessuna validazione bloccante
@@ -126,15 +126,15 @@ Tabella: events
 Campi principali:
 
 id
-created_at
-event_date
-project_id
-entity_id
+created\_at
+event\_date
+project\_id
+entity\_id
 type
 amount
 unit
 notes
-raw_input
+raw\_input
 payload
 status
 PROCESSING
@@ -147,21 +147,21 @@ UI STATE
 
 Gestione tramite:
 
-ui_state:
+ui\_state:
 
 {
-  view: "home" | "feedback"
+view: "home" | "feedback"
 }
 
 Container:
 
-container_home
-container_input
-container_feedback
-container_events_list
+container\_home
+container\_input
+container\_feedback
+container\_events\_list
 FEEDBACK
 sistema non bloccante
-visualizzazione breve (~3s)
+visualizzazione breve (\~3s)
 ritorno automatico a home
 FUNZIONALITÀ IMPLEMENTATE
 
@@ -197,17 +197,18 @@ analytics
 KPI
 STATO LAYER SISTEMA
 
-Layer 1 — Input: ~92%
-Layer 2 — Processing: ~60%
-Layer 3 — Data Structure: ~20%
+Layer 1 — Input: \~92%
+Layer 2 — Processing: \~60%
+Layer 3 — Data Structure: \~20%
 Layer 4 — Engine: 0%
 Layer 5 — Output: 0%
 
 STATO COMPLESSIVO
 
-~35%
+\~35%
 
 PROBLEMI REALI IDENTIFICATI
+
 1. MATCHING ANCORA DEBOLE
 project/entity non sempre precisi
 ambiguità su nomi simili
@@ -227,6 +228,132 @@ preview allineata al parsing reale
 ✔ VARIANTI INPUT → RISOLTO
 gestione input reale utente (compatti, simboli, decimali)
 FASE ATTUALE
+
+\------------------------------------------------
+
+AGGIORNAMENTO MATCHING (STEP 2 COMPLETATO)
+
+\------------------------------------------------
+
+
+
+Il matching project/entity è stato stabilizzato tramite retrofit incrementale.
+
+
+
+INTERVENTI:
+
+
+
+\- sostituzione partial match aggressivo (includes)
+
+\- introduzione matching basato su token significativi
+
+\- filtro parole corte (<4 caratteri)
+
+\- miglioramento full match (parole rilevanti)
+
+\- riduzione rumore entity
+
+
+
+\---
+
+
+
+PROJECT MATCHING:
+
+
+
+✔ stabile
+
+✔ coerente
+
+✔ suggerimenti affidabili
+
+
+
+\---
+
+
+
+ENTITY MATCHING:
+
+
+
+✔ meno rumoroso
+
+✔ ambiguità solo quando reale
+
+✔ eliminati falsi positivi principali
+
+
+
+\---
+
+
+
+COMPORTAMENTO:
+
+
+
+\- "cliente test" → match corretto
+
+\- "leroy merlin" → match preciso
+
+\- "alfie aspri" → ambiguità non forzata
+
+
+
+\---
+
+
+
+LIMITI CONSAPEVOLI:
+
+
+
+\- nessuna gerarchia entity
+
+\- nessuna disambiguazione automatica multi-match
+
+\- nessun ranking avanzato
+
+\- nessun matching semantico
+
+
+
+\---
+
+
+
+VINCOLI RISPETTATI:
+
+
+
+✔ nessuna AI introdotta
+
+✔ nessuna auto-selezione aggressiva
+
+✔ controllo utente mantenuto
+
+✔ nessuna modifica architetturale
+
+
+
+\---
+
+
+
+STATO MATCHING:
+
+
+
+→ stabilizzato
+
+→ utilizzabile in produzione reale
+
+
 
 INPUT RELIABILITY — COMPLETATA
 
@@ -277,3 +404,4 @@ allineamento preview / confirm
 eliminazione regressioni parsing
 aggiornamento stato layer Input
 riduzione ambiguità sistema
+

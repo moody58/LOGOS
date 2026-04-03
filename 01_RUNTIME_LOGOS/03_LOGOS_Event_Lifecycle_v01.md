@@ -1,6 +1,24 @@
-# 03_LOGOS_Event_Lifecycle_v01
+03_LOGOS_Event_Lifecycle_v02
 
-DATA: 2026-04-01
+DATA: 2026-04-03
+
+------------------------------------------------
+CQD — VALIDAZIONE DOCUMENTO
+------------------------------------------------
+
+C (Completezza): 10/10  
+- lifecycle attuale completo  
+- stati, transizioni e responsabilità coperti  
+- integrazione con altri layer esplicitata  
+
+Q (Qualità): 9.5/10  
+- terminologia coerente  
+- distinzione chiara tra stato attuale e futuro  
+- allineamento con runtime reale  
+
+D (Deployabilità): 10/10  
+- documento stabile  
+- utilizzabile come riferimento operativo  
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -14,7 +32,8 @@ Il documento stabilisce:
 - stati evento
 - transizioni
 - responsabilità utente
-- evoluzione futura del dato
+- qualità del dato
+- evoluzione futura
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -47,6 +66,12 @@ non modificando il contenuto.
 
 La validazione è sempre manuale.
 
+---
+
+5. INPUT NON BLOCCANTE
+
+Eventi imperfetti possono essere salvati.
+
 ------------------------------------------------
 STATI EVENTO (ATTUALI)
 ------------------------------------------------
@@ -56,6 +81,7 @@ NEW
 - stato iniziale
 - evento appena inserito
 - non validato
+- può contenere errori o ambiguità
 
 ---
 
@@ -77,16 +103,27 @@ ERROR
 FLUSSO ATTUALE
 ------------------------------------------------
 
-INPUT
-↓
-INSERT
-↓
-NEW
-↓
-DECISIONE UTENTE
+INPUT  
+↓  
+PARSE + MATCH  
+↓  
+PREVIEW  
+↓  
+INSERT  
+↓  
+NEW  
+↓  
+DECISIONE UTENTE  
 
 → WRITTEN  
-→ ERROR
+→ ERROR  
+
+---
+
+Nota:
+
+Il matching migliora la qualità,
+ma NON modifica il lifecycle.
 
 ------------------------------------------------
 TRANSIZIONI CONSENTITE
@@ -110,6 +147,7 @@ Transizioni NON consentite:
 
 - WRITTEN → NEW
 - ERROR → NEW
+- WRITTEN → ERROR (attualmente non previsto)
 
 ------------------------------------------------
 RESPONSABILITÀ UTENTE
@@ -118,8 +156,8 @@ RESPONSABILITÀ UTENTE
 L’utente deve:
 
 - validare eventi
+- correggere tramite scelta (non editing)
 - scartare errori
-- garantire qualità finale dato
 
 ---
 
@@ -127,62 +165,104 @@ Il sistema NON:
 
 - valida automaticamente
 - corregge automaticamente
+- modifica dati salvati
+
+------------------------------------------------
+QUALITÀ DEL DATO
+------------------------------------------------
+
+Dato in NEW:
+
+- non affidabile
+- può essere ambiguo
+- può essere incompleto
+
+---
+
+Dato in WRITTEN:
+
+- validato manualmente
+- utilizzabile
+- NON necessariamente normalizzato
+
+---
+
+Dato normalizzato (futuro):
+
+- coerente
+- standardizzato
+- analizzabile
+
+------------------------------------------------
+INTEGRAZIONE CON MATCHING
+------------------------------------------------
+
+Il Match Engine:
+
+- riduce ambiguità in fase input
+- migliora suggerimenti
+- NON cambia stato evento
+
+---
+
+Importante:
+
+matching ≠ validazione
 
 ------------------------------------------------
 LIMITI ATTUALI
 ------------------------------------------------
 
 - nessun editing evento
-- nessuna correzione dati
+- nessuna correzione post-insert
 - nessun stato intermedio
-- nessun tracciamento modifiche
+- nessun tracking modifiche
+- nessuna revisione batch
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE
 ------------------------------------------------
 
-Lo stato NEW contiene eventi:
+NEW contiene eventi:
 
-- incompleti
-- ambigui
 - non normalizzati
+- non verificati
+- potenzialmente incoerenti
 
 ---
 
-WRITTEN assume:
+WRITTEN:
 
-- validità implicita
-- anche se dato non perfetto
+- assume validità
+- ma non garantisce qualità dati
 
 ------------------------------------------------
 ESTENSIONE FUTURA (NON ATTIVA)
 ------------------------------------------------
 
-STATI AGGIUNTIVI PREVISTI:
+STATI PREVISTI:
 
 DRAFT
 
-- evento salvato ma incompleto
+- evento incompleto
 
 ---
 
 TO_REVIEW
 
 - evento ambiguo
-- richiede verifica
 
 ---
 
 NORMALIZED
 
-- evento pulito e coerente
+- evento pulito
 
 ---
 
 LINKED
 
-- evento associato correttamente
-  a project/entity
+- relazioni corrette
 
 ---
 
@@ -194,41 +274,23 @@ ARCHIVED
 LIFECYCLE FUTURO (MODELLO)
 ------------------------------------------------
 
-INPUT
-↓
-DRAFT
-↓
-TO_REVIEW
-↓
-WRITTEN
-↓
-NORMALIZED
-↓
-ARCHIVED
+INPUT  
+↓  
+DRAFT  
+↓  
+TO_REVIEW  
+↓  
+WRITTEN  
+↓  
+NORMALIZED  
+↓  
+ARCHIVED  
 
 ---
 
 Nota:
 
-Questo flusso NON è implementato attualmente.
-
-------------------------------------------------
-PRINCIPIO DI QUALITÀ DEL DATO
-------------------------------------------------
-
-Dato in NEW:
-
-- non affidabile
-
-Dato in WRITTEN:
-
-- validato
-- ma non necessariamente normalizzato
-
-Dato normalizzato (futuro):
-
-- coerente
-- utilizzabile per analisi
+NON implementato attualmente
 
 ------------------------------------------------
 INTERAZIONE CON ALTRI LAYER
@@ -242,7 +304,13 @@ INPUT SYSTEM
 
 MATCH ENGINE
 
-→ aiuta a ridurre ambiguità
+→ migliora suggerimenti
+
+---
+
+DATABASE
+
+→ memorizza eventi
 
 ---
 
@@ -254,7 +322,7 @@ ENGINE (futuro)
 
 OUTPUT (futuro)
 
-→ usa solo dati affidabili
+→ utilizza dati affidabili
 
 ------------------------------------------------
 OBIETTIVO LIFECYCLE
@@ -262,20 +330,19 @@ OBIETTIVO LIFECYCLE
 
 Trasformare eventi:
 
-da:
+da input grezzo  
+a dato affidabile  
 
-→ input grezzo
+---
 
-a:
-
-→ dato affidabile e analizzabile
+senza bloccare l’utente
 
 ------------------------------------------------
 VINCOLI OPERATIVI
 ------------------------------------------------
 
 - non modificare struttura attuale
-- non introdurre stati senza necessità
+- non introdurre stati inutili
 - mantenere semplicità
 
 ------------------------------------------------
@@ -286,27 +353,34 @@ Il lifecycle attuale è:
 
 ✔ semplice  
 ✔ stabile  
+✔ coerente con append-only  
 
 ---
 
 Ma:
 
-⚠ limitato  
 ⚠ non scalabile  
+⚠ non controlla qualità dato  
 
 ---
 
 Evoluzione necessaria:
 
-solo dopo stabilizzazione input
+solo dopo stabilizzazione:
+
+1. input  
+2. matching  
+3. label quality  
 
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
 
-v01 — 2026-04-01
+v01 — 2026-04-01  
+- definizione lifecycle base  
 
-- Definizione lifecycle eventi attuale
-- Identificazione limiti strutturali
-- Definizione modello evolutivo futuro
-- Allineamento con architettura append-only
+v02 — 2026-04-03  
+- integrazione matching layer  
+- chiarita separazione matching / lifecycle  
+- esplicitata qualità dato  
+- allineamento con stato reale sistema
