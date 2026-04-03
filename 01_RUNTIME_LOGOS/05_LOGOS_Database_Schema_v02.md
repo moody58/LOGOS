@@ -126,10 +126,11 @@ UTILIZZO REALE:
 
 ✔ raw_input sempre valorizzato  
 ✔ amount valorizzato da parsing  
-✔ unit valorizzato (euro / tempo)  
+✔ unit sempre valorizzata correttamente (euro / tempo)  
 ✔ project_id talvolta valorizzato  
 ✔ entity_id raramente valorizzato  
 ✔ status sempre NEW in insert  
+✔ amount coerente anche in presenza di multi-numero
 
 ---
 
@@ -293,7 +294,7 @@ PROBLEMI NOTI
 
 1. DATI NON NORMALIZZATI
 
-- unit non standardizzate globalmente
+- unit coerenti ma non standardizzate globalmente
 - label non uniformi
 
 ---
