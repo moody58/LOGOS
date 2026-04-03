@@ -88,7 +88,7 @@ INPUT
 
 → PROCESSING  
 
-
+✔ allineamento completo preview → insert → DB  
 
 \------------------------------------------------
 
@@ -358,7 +358,7 @@ Caratteristiche:
 
 ✔ non blocca  
 
-
+✔ completamente allineata con insert e DB  
 
 \------------------------------------------------
 
@@ -404,7 +404,8 @@ ora, ore, h
 
 min, minuti  
 
-
+✔ supporto unit compatte (2h, 18min, 0.5h)  
+✔ riconoscimento unit anche senza spazi  
 
 \---
 
@@ -418,7 +419,8 @@ AMOUNT:
 
 \- selezione per prossimità alla unità
 
-
+✔ gestione input multi-numero  
+→ selezione basata sulla unit più rilevante (ultima occorrenza)
 
 \---
 
@@ -516,7 +518,9 @@ Caratteristiche:
 
 ✔ nessuna validazione bloccante  
 
-
+✔ unit sempre valorizzata correttamente  
+✔ amount coerente con parsing  
+✔ dati persistiti coerenti con preview  
 
 \------------------------------------------------
 
@@ -726,3 +730,8 @@ v02 — 2026-04-03
 
 \- allineamento completo runtime  
 
+v03 — 2026-04-03  
+- fix insert pipeline  
+- supporto unit compatte  
+- fix amount multi-numero  
+- allineamento preview → DB  
