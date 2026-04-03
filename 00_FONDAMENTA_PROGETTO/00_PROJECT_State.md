@@ -1,407 +1,1086 @@
-00\_PROJECT\_State\_v02
+00\_PROJECT\_State\_v03
 
-DATA: 2026-04-02
-NODO: INPUT RELIABILITY — PARSING (RETROFIT COMPLETATO)
+
+
+DATA: 2026-04-03
+
+
+
+NODO ATTIVO:
+
+INPUT RELIABILITY + MATCHING BASE — COMPLETATI
+
+
+
+FASE:
+
+TRANSIZIONE → LABEL QUALITY
+
+
+
+\------------------------------------------------
 
 CQD — VALIDAZIONE DOCUMENTO
 
-C (Completezza): 9.5/10
+\------------------------------------------------
 
-Tutti i layer aggiornati
-Parsing reale documentato
-Gap residui esplicitati
 
-Q (Qualità): 9/10
 
-Stato coerente con runtime reale
-Nessuna ambiguità parsing/preview
-Terminologia allineata
+C (Completezza): 10/10  
 
-D (Deployabilità): 10/10
+\- coperti tutti i layer sistema  
 
-Documento pronto per Regia
-Stato ricostruibile
-Nessuna dipendenza mancante
+\- parsing + matching completamente documentati  
+
+\- runtime allineato  
+
+
+
+Q (Qualità): 9.5/10  
+
+\- stato coerente con sistema reale  
+
+\- nessuna ambiguità parsing/matching  
+
+\- distinzione chiara tra attuale e futuro  
+
+
+
+D (Deployabilità): 10/10  
+
+\- pronto per Regia  
+
+\- stato completamente ricostruibile  
+
+\- nessuna dipendenza mancante  
+
+
+
+\------------------------------------------------
+
 IDENTIFICAZIONE PROGETTO
 
-Nome: LOGOS
-Tipo: Event Operating System
+\------------------------------------------------
+
+
+
+Nome: LOGOS  
+
+Tipo: Event Operating System  
+
+
 
 Stack:
 
-Frontend: Retool
-Backend: Supabase
-Logica: Client-side (JavaScript)
-Modello dati: Event Ledger (append-only)
+
+
+Frontend: Retool  
+
+Backend: Supabase  
+
+Logica: Client-side (JavaScript)  
+
+Modello dati: Event Ledger (append-only)  
+
+
+
+\------------------------------------------------
+
 STATO GENERALE SISTEMA
 
-Sistema attualmente funzionante end-to-end:
+\------------------------------------------------
 
-INPUT → PREVIEW → INSERT → PROCESSING → FEEDBACK
 
-Il sistema è operativo e stabile.
 
-AGGIORNAMENTO CRITICO (NUOVO)
+Sistema funzionante end-to-end:
 
-Il parsing è stato completamente stabilizzato tramite retrofit incrementale.
 
-✔ eliminato parsing fragile
-✔ eliminata divergenza preview / confirm
-✔ introdotto parsing deterministico robusto
+
+INPUT  
+
+→ PARSING  
+
+→ MATCHING  
+
+→ PREVIEW  
+
+→ INSERT  
+
+→ PROCESSING  
+
+→ FEEDBACK  
+
+
+
+✔ sistema stabile  
+
+✔ utilizzabile in produzione reale  
+
+✔ comportamento deterministico  
+
+
+
+\------------------------------------------------
+
+AGGIORNAMENTO CRITICO (COMPLETATO)
+
+\------------------------------------------------
+
+
+
+Il sistema è stato stabilizzato su due layer fondamentali:
+
+
+
+1\. INPUT RELIABILITY — PARSING  
+
+2\. MATCHING BASE  
+
+
+
+\---
+
+
+
+RISULTATO:
+
+
+
+✔ eliminata fragilità input  
+
+✔ eliminata divergenza preview / confirm  
+
+✔ ridotti falsi positivi matching  
+
+✔ comportamento prevedibile  
+
+
+
+\------------------------------------------------
 
 COMPONENTI ATTIVI
+
+\------------------------------------------------
+
+
+
 INPUT LAYER
-input\_home (input utente principale)
-input\_raw (adapter tecnico)
-input libero non vincolato
-PARSING (UPDATED — RETROFIT v2)
 
-Il parsing è ora:
 
-✔ proximity-based
-✔ multi-formato
-✔ deterministico
 
-CAPACITÀ ATTUALI
+\- input\_home (input utente)
 
-Unità supportate:
+\- input\_raw (adapter tecnico)
 
-Euro:
 
-€, euro, eur
-€20, 20€, € 20
 
-Tempo:
+\---
 
-ora, ore, h
-min, minuti
-2h, h2, 2 h
-30min, min30
-ESTRAZIONE AMOUNT
-identificazione tutti i numeri (matchAll)
-selezione numero più vicino alla unità
 
-Esempi:
 
-pizza 20 euro → 20
-2 ore lavoro → 2
-2h30 → 2
-€20 pizza → 20
-DECIMALI
-supportati: 1,5 / 1.5
-conversione automatica → Number
-GESTIONE ORARI
-formato HH:MM ignorato
-non interpretato come amount
-mantenuto come testo
-LABEL CLEANING
-rimozione amount + unit
-rimozione preposizioni base
-mantenimento significato
-LIMITI CONSAPEVOLI
-multi-unit NON supportato
-nessuna interpretazione semantica
-parsing basato su pattern
-PREVIEW
-sintesi strutturata (amount + unit + label)
-selezione manuale:
-type
-project
-entity
-AGGIORNAMENTO CRITICO
+MATCHING LAYER
 
-✔ preview = parsing reale
-✔ nessuna doppia interpretazione
-✔ nessuna alterazione input
 
-INSERT
-insert\_event attivo
-scrittura su database events
-status iniziale: NEW
-nessuna validazione bloccante
-DATABASE
 
-Tabella: events
+\- select\_project
 
-Campi principali:
+\- select\_entity
 
-id
-created\_at
-event\_date
-project\_id
-entity\_id
-type
-amount
-unit
-notes
-raw\_input
-payload
-status
-PROCESSING
-lista eventi NEW
-azioni:
-WRITTEN
-ERROR
-aggiornamento stato tramite query
+\- logiche di matching distribuite
+
+
+
+\---
+
+
+
+PROCESSING LAYER
+
+
+
+\- lista eventi NEW
+
+\- gestione WRITTEN / ERROR
+
+
+
+\---
+
+
+
 UI STATE
 
-Gestione tramite:
+
 
 ui\_state:
 
+
+
 {
-view: "home" | "feedback"
+
+&#x20; view: "home" | "feedback"
+
 }
+
+
+
+\---
+
+
+
+FEEDBACK SYSTEM
+
+
+
+\- non bloccante (\~3s)
+
+\- ritorno automatico
+
+
+
+\------------------------------------------------
+
+PARSING SYSTEM (STABILIZZATO)
+
+\------------------------------------------------
+
+
+
+TIPO:
+
+
+
+✔ deterministico  
+
+✔ proximity-based  
+
+✔ multi-formato  
+
+
+
+\---
+
+
+
+UNITÀ SUPPORTATE
+
+
+
+EURO:
+
+
+
+€, euro, eur  
+
+€20 / 20€ / € 20  
+
+
+
+\---
+
+
+
+TEMPO:
+
+
+
+ore: ora, ore, h  
+
+minuti: min, minuti  
+
+
+
+formati:
+
+
+
+2h, h2, 2 h  
+
+30min, min30  
+
+
+
+\---
+
+
+
+ESTRAZIONE AMOUNT
+
+
+
+\- matchAll numeri  
+
+\- selezione per prossimità alla unità  
+
+
+
+\---
+
+
+
+DECIMALI
+
+
+
+✔ supportati (1,5 / 1.5)
+
+
+
+\---
+
+
+
+GESTIONE ORARI
+
+
+
+✔ HH:MM ignorato  
+
+
+
+\---
+
+
+
+FIX CRITICI INTRODOTTI
+
+
+
+✔ eliminato fallback su "h"  
+
+→ evitati falsi positivi ("macchina")
+
+
+
+✔ numero finale senza unità ignorato  
+
+→ "villa 2" NON genera amount
+
+
+
+\---
+
+
+
+LABEL CLEANING
+
+
+
+\- rimozione amount + unit  
+
+\- rimozione preposizioni base  
+
+\- mantenimento significato  
+
+
+
+\---
+
+
+
+LIMITI CONSAPEVOLI
+
+
+
+\- multi-unit non supportato  
+
+\- parsing non semantico  
+
+
+
+\------------------------------------------------
+
+MATCHING SYSTEM (STABILIZZATO)
+
+\------------------------------------------------
+
+
+
+PRINCIPI:
+
+
+
+✔ suggerire ≠ decidere  
+
+✔ no inferenze  
+
+✔ utente in controllo  
+
+
+
+\---
+
+
+
+PROJECT MATCH
+
+
+
+\- split parole nome  
+
+\- filtro parole (>2 char, non numeriche)  
+
+\- match per parole  
+
+\- disambiguazione numerica  
+
+
+
+\---
+
+
+
+ENTITY MATCH (RETROFIT STEP 2)
+
+
+
+STRONG:
+
+
+
+\- match nome completo  
+
+
+
+\---
+
+
+
+FULL:
+
+
+
+\- tutte parole presenti  
+
+\- parole ≥4 caratteri  
+
+
+
+\---
+
+
+
+PARTIAL (RETROFIT):
+
+
+
+PRIMA:
+
+
+
+\- includes(cleanText) → rumoroso  
+
+
+
+DOPO:
+
+
+
+\- match su token significativi  
+
+\- almeno una parola ≥4 caratteri in comune  
+
+
+
+\---
+
+
+
+AUTO-SELECT
+
+
+
+✔ solo match univoco  
+
+✔ nessuna forzatura  
+
+
+
+\---
+
+
+
+RISULTATI
+
+
+
+✔ riduzione falsi positivi  
+
+✔ ambiguità solo reale  
+
+✔ maggiore affidabilità suggerimenti  
+
+
+
+\------------------------------------------------
+
+PREVIEW SYSTEM
+
+\------------------------------------------------
+
+
+
+✔ preview = parsing reale  
+
+✔ nessuna doppia interpretazione  
+
+✔ rappresentazione fedele  
+
+
+
+STRUTTURA:
+
+
+
+MAIN:
+
+
+
+amount + unit + label  
+
+
+
+META:
+
+
+
+project + entity  
+
+
+
+HINT:
+
+
+
+\- suggerimenti matching  
+
+\- suggerimenti tipo  
+
+
+
+\------------------------------------------------
+
+INSERT
+
+\------------------------------------------------
+
+
+
+insert\_event attivo
+
+
+
+Scrittura:
+
+
+
+\- raw\_input  
+
+\- amount  
+
+\- unit  
+
+\- project\_id  
+
+\- entity\_id  
+
+\- status = NEW  
+
+
+
+✔ nessuna validazione bloccante  
+
+
+
+\------------------------------------------------
+
+DATABASE
+
+\------------------------------------------------
+
+
+
+Tabelle:
+
+
+
+\- events  
+
+\- projects  
+
+\- entities  
+
+
+
+\---
+
+
+
+CARATTERISTICHE:
+
+
+
+✔ database passivo  
+
+✔ nessuna logica  
+
+✔ nessuna validazione  
+
+
+
+\---
+
+
+
+LIMITI:
+
+
+
+\- entity senza gerarchia  
+
+\- dati non normalizzati  
+
+\- type non utilizzato  
+
+
+
+\------------------------------------------------
+
+PROCESSING
+
+\------------------------------------------------
+
+
+
+Lista eventi NEW
+
+
+
+Azioni:
+
+
+
+✔ WRITTEN  
+
+✔ ERROR  
+
+
+
+\---
+
+
+
+✔ decisione manuale  
+
+✔ nessuna automazione  
+
+
+
+\------------------------------------------------
+
+UI ARCHITECTURE
+
+\------------------------------------------------
+
+
+
+Single Page App (Retool)
+
+
 
 Container:
 
-container\_home
-container\_input
-container\_feedback
-container\_events\_list
-FEEDBACK
-sistema non bloccante
-visualizzazione breve (\~3s)
-ritorno automatico a home
+
+
+\- home  
+
+\- input  
+
+\- feedback  
+
+\- events\_list  
+
+
+
+\---
+
+
+
+✔ state-driven  
+
+✔ nessun routing  
+
+✔ logica client-side  
+
+
+
+\------------------------------------------------
+
 FUNZIONALITÀ IMPLEMENTATE
 
-✔ inserimento eventi rapido (<3s)
-✔ preview strutturata coerente
-✔ parsing robusto reale
-✔ supporto varianti input (€, h, min, compatti)
-✔ suggerimenti project/entity (soft)
-✔ gestione eventi NEW
-✔ conferma manuale (WRITTEN / ERROR)
-✔ UI state stabile
-✔ feedback post-insert
+\------------------------------------------------
+
+
+
+✔ inserimento eventi rapido (<3s)  
+
+✔ parsing robusto reale  
+
+✔ supporto varianti input  
+
+✔ matching project/entity stabile  
+
+✔ suggerimenti non invasivi  
+
+✔ preview coerente  
+
+✔ gestione eventi NEW  
+
+✔ conferma manuale  
+
+✔ UI stabile  
+
+✔ feedback post-insert  
+
+
+
+\------------------------------------------------
 
 FUNZIONALITÀ NON IMPLEMENTATE
+
+\------------------------------------------------
+
+
+
 INPUT
-multi-unit parsing (2h30 → 2.5h)
-parsing semantico
-riconoscimento comandi
-PROCESSING
-editing eventi
-correzione dati
+
+
+
+\- multi-unit parsing  
+
+\- parsing semantico  
+
+
+
+\---
+
+
+
+MATCHING
+
+
+
+\- gerarchia entity  
+
+\- disambiguazione avanzata  
+
+\- ranking  
+
+
+
+\---
+
+
+
 DATA STRUCTURE
-creazione guidata project/entity
-relazioni strutturate
-gestione duplicati
+
+
+
+\- relazioni entity  
+
+\- deduplicazione  
+
+
+
+\---
+
+
+
 ENGINE
-normalizzazione avanzata
-deduplicazione
-interpretazione intelligente
+
+
+
+\- normalizzazione  
+
+\- interpretazione  
+
+
+
+\---
+
+
+
 OUTPUT
-dashboard
-analytics
-KPI
-STATO LAYER SISTEMA
 
-Layer 1 — Input: \~92%
-Layer 2 — Processing: \~60%
-Layer 3 — Data Structure: \~20%
-Layer 4 — Engine: 0%
-Layer 5 — Output: 0%
 
-STATO COMPLESSIVO
 
-\~35%
+\- dashboard  
+
+\- analytics  
+
+\- KPI  
+
+
+
+\------------------------------------------------
 
 PROBLEMI REALI IDENTIFICATI
 
-1. MATCHING ANCORA DEBOLE
-project/entity non sempre precisi
-ambiguità su nomi simili
-2. DATI NON NORMALIZZATI
-unit coerenti ma non consolidate lato DB
-assenza standard globale
-3. ASSENZA LAYER ENGINE
-nessuna logica evolutiva
-nessuna interpretazione avanzata
-PROBLEMI RISOLTI (NUOVO)
-✔ INPUT NON AFFIDABILE → RISOLTO
-parsing stabile
-unit riconosciute correttamente
-ambiguità ridotta drasticamente
-✔ PREVIEW NON COERENTE → RISOLTO
-preview allineata al parsing reale
-✔ VARIANTI INPUT → RISOLTO
-gestione input reale utente (compatti, simboli, decimali)
+\------------------------------------------------
+
+
+
+1\. DATA NON NORMALIZZATI
+
+
+
+\- label variabili  
+
+\- unit non consolidate  
+
+
+
+\---
+
+
+
+2\. ENTITY NON STRUTTURATE
+
+
+
+\- nessuna gerarchia  
+
+\- ambiguità inevitabile  
+
+
+
+\---
+
+
+
+3\. TYPE LIMITATO
+
+
+
+\- nessuna distinzione spesa/incasso  
+
+
+
+\---
+
+
+
+4\. UI LIMITI
+
+
+
+\- input non multilinea  
+
+\- preview migliorabile  
+
+
+
+\---
+
+
+
+5\. ASSENZA ENGINE
+
+
+
+\- nessuna logica evolutiva  
+
+
+
+\------------------------------------------------
+
+PROBLEMI RISOLTI
+
+\------------------------------------------------
+
+
+
+✔ parsing fragile → RISOLTO  
+
+✔ preview incoerente → RISOLTO  
+
+✔ falsi positivi matching → RIDOTTI  
+
+✔ comportamento non deterministico → RISOLTO  
+
+
+
+\------------------------------------------------
+
+STATO LAYER SISTEMA
+
+\------------------------------------------------
+
+
+
+Layer 1 — Input: \~92%  
+
+Layer 2 — Matching + Processing: \~70%  
+
+Layer 3 — Data Structure: \~20%  
+
+Layer 4 — Engine: 0%  
+
+Layer 5 — Output: 0%  
+
+
+
+\---
+
+
+
+STATO COMPLESSIVO:
+
+
+
+\~45%
+
+
+
+\------------------------------------------------
+
 FASE ATTUALE
 
 \------------------------------------------------
 
-AGGIORNAMENTO MATCHING (STEP 2 COMPLETATO)
+
+
+✔ INPUT RELIABILITY — COMPLETATA  
+
+✔ MATCHING BASE — COMPLETATO  
+
+
+
+\---
+
+
+
+TRANSIZIONE:
+
+
+
+→ LABEL QUALITY  
+
+
+
+\------------------------------------------------
+
+OBIETTIVO IMMEDIATO
 
 \------------------------------------------------
 
 
 
-Il matching project/entity è stato stabilizzato tramite retrofit incrementale.
-
-
-
-INTERVENTI:
-
-
-
-\- sostituzione partial match aggressivo (includes)
-
-\- introduzione matching basato su token significativi
-
-\- filtro parole corte (<4 caratteri)
-
-\- miglioramento full match (parole rilevanti)
-
-\- riduzione rumore entity
-
-
-
-\---
-
-
-
-PROJECT MATCHING:
-
-
-
-✔ stabile
-
-✔ coerente
-
-✔ suggerimenti affidabili
-
-
-
-\---
-
-
-
-ENTITY MATCHING:
-
-
-
-✔ meno rumoroso
-
-✔ ambiguità solo quando reale
-
-✔ eliminati falsi positivi principali
-
-
-
-\---
-
-
-
-COMPORTAMENTO:
-
-
-
-\- "cliente test" → match corretto
-
-\- "leroy merlin" → match preciso
-
-\- "alfie aspri" → ambiguità non forzata
-
-
-
-\---
-
-
-
-LIMITI CONSAPEVOLI:
-
-
-
-\- nessuna gerarchia entity
-
-\- nessuna disambiguazione automatica multi-match
-
-\- nessun ranking avanzato
-
-\- nessun matching semantico
-
-
-
-\---
-
-
-
-VINCOLI RISPETTATI:
-
-
-
-✔ nessuna AI introdotta
-
-✔ nessuna auto-selezione aggressiva
-
-✔ controllo utente mantenuto
-
-✔ nessuna modifica architetturale
-
-
-
-\---
-
-
-
-STATO MATCHING:
-
-
-
-→ stabilizzato
-
-→ utilizzabile in produzione reale
-
-
-
-INPUT RELIABILITY — COMPLETATA
-
-NODO OPERATIVO ATTIVO
-
-→ TRANSIZIONE VERSO MATCHING / LABEL QUALITY
-
-OBIETTIVO IMMEDIATO
-
 Migliorare:
 
-qualità label
-precisione matching
-riduzione ambiguità
+
+
+\- qualità label  
+
+\- coerenza descrizioni  
+
+\- riduzione variabilità  
+
+
+
+\---
+
+
+
+Preparare:
+
+
+
+→ base per ENGINE  
+
+
+
+\------------------------------------------------
+
 VINCOLI OPERATIVI
-nessun refactor globale
-nessuna modifica architettura
-nessun blocco input
-miglioramenti incrementali
+
+\------------------------------------------------
+
+
+
+✔ nessun refactor globale  
+
+✔ nessuna modifica architettura  
+
+✔ nessuna AI  
+
+✔ miglioramenti incrementali  
+
+
+
+\------------------------------------------------
+
 NOTE STRATEGICHE
+
+\------------------------------------------------
+
+
 
 Il sistema:
 
-✔ non è più fragile
-✔ è utilizzabile in produzione reale
-✔ è pronto per layer successivo
+
+
+✔ è stabile  
+
+✔ è utilizzabile  
+
+✔ è estendibile  
+
+
+
+\---
+
+
 
 Priorità:
 
-→ matching
-→ normalizzazione
-→ engine
-→ dashboard
+
+
+1\. label quality  
+
+2\. normalizzazione  
+
+3\. engine  
+
+4\. output  
+
+
+
+\------------------------------------------------
 
 CHANGELOG
 
-v01 — 2026-04-01
+\------------------------------------------------
 
-documento iniziale
-audit completo
 
-v02 — 2026-04-02
 
-retrofit parsing completato
-introduzione parsing proximity-based
-supporto varianti input reali
-allineamento preview / confirm
-eliminazione regressioni parsing
-aggiornamento stato layer Input
-riduzione ambiguità sistema
+v01 — 2026-04-01  
+
+documento iniziale  
+
+
+
+v02 — 2026-04-02  
+
+parsing retrofit  
+
+
+
+v03 — 2026-04-03  
+
+matching retrofit  
+
+stabilizzazione completa input + matching  
+
+allineamento runtime reale  
 
