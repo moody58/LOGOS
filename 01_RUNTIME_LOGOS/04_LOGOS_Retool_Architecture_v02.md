@@ -1,4 +1,4 @@
-04_LOGOS_Retool_Architecture_v02
+04_LOGOS_Retool_Architecture_v03
 
 DATA: 2026-04-03
 
@@ -173,7 +173,10 @@ input_home.onChange:
 
 Principio:
 
-input_home = source of truth
+input_home = source of truth  
+
+✔ input_raw utilizzato come fonte per parsing in preview e confirm  
+✔ coerenza tra valore mostrato e valore persistito  
 
 ------------------------------------------------
 MATCHING FLOW (AGGIORNATO STEP 2)
@@ -257,11 +260,16 @@ Caratteristiche:
 ✔ gestione decimali  
 ✔ esclusione formato HH:MM  
 
+✔ supporto unit compatte (2h, 18min, 0.5h)  
+✔ riconoscimento unit anche senza spazi  
+✔ gestione input multi-numero  
+→ selezione amount basata sulla unit più rilevante (ultima occorrenza)  
+
 ---
 
 Nota:
 
-preview = parsing reale
+preview = parsing reale  
 
 ------------------------------------------------
 CONFIRM FLOW
@@ -281,7 +289,12 @@ Sequenza:
 Obiettivo:
 
 - evitare flicker
-- mantenere fluidità
+- mantenere fluidità  
+
+✔ parsing eseguito in fase di confirm  
+✔ allineamento completo con preview  
+✔ eliminata divergenza tra preview e insert  
+✔ payload coerente ai dati visualizzati  
 
 ------------------------------------------------
 QUERY ATTIVE
@@ -345,6 +358,9 @@ PROBLEMI NOTI (AGGIORNATI)
 
 ✔ parsing → RISOLTO  
 ✔ matching → STABILIZZATO  
+✔ perdita unit → RISOLTA  
+✔ mismatch amount → RISOLTO  
+✔ divergenza preview / DB → RISOLTA  
 
 ---
 
@@ -378,6 +394,7 @@ STATO ARCHITETTURA
 
 ✔ parsing affidabile  
 ✔ matching affidabile  
+✔ pipeline input completamente allineata  
 
 ---
 
@@ -395,3 +412,9 @@ v02 — 2026-04-03
 - integrazione matching step 2  
 - aggiornamento type detection  
 - allineamento completo con runtime reale  
+
+v03 — 2026-04-03  
+- fix pipeline insert  
+- supporto unit compatte  
+- fix amount multi-numero  
+- allineamento preview → DB  
