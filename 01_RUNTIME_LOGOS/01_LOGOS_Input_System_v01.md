@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v02
+# 01_LOGOS_Input_System_v03
 
-DATA: 2026-04-02
+DATA: 2026-04-04
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -62,6 +62,9 @@ input_home
 input_raw
 → derivato tecnico per parsing
 
+label (preview)
+→ derivato UI (non persistito)
+
 ---
 
 FLOW:
@@ -70,6 +73,7 @@ input_home
 → sync
 → input_raw
 → parsing
+→ label generation
 → preview
 → conferma
 → insert_event
@@ -126,7 +130,7 @@ PARSING SYSTEM
 
 FUNZIONE:
 
-estrarre informazioni utili dall’input
+estrarre informazioni strutturate dall’input
 
 ---
 
@@ -140,7 +144,8 @@ OUTPUT:
 
 - amount
 - unit
-- label
+
+⚠ label NON è output del parsing
 
 ---
 
@@ -176,25 +181,25 @@ RICONOSCIMENTO UNITÀ (UPDATED)
 
 euro:
 
-- €
-- euro
-- eur
-- €20 / 20€ / € 20
+- €  
+- euro  
+- eur  
+- €20 / 20€ / € 20  
 
 ---
 
 tempo:
 
 ore:
-- ora
-- ore
-- h
-- 2h / h2 / 2 h
+- ora  
+- ore  
+- h  
+- 2h / h2 / 2 h  
 
 minuti:
-- min
-- minuti
-- 30min / min30 / 30 min
+- min  
+- minuti  
+- 30min / min30 / 30 min  
 
 ---
 
@@ -221,6 +226,8 @@ IMPORTANTE:
 
 ✔ non modifica input utente  
 ✔ usata solo per parsing interno  
+
+---
 
 GESTIONE ORARI
 
@@ -270,8 +277,8 @@ ESEMPI:
 
 FORMATI SUPPORTATI:
 
-- interi
-- decimali (.,)
+- interi  
+- decimali (.,)  
 
 ---
 
@@ -285,43 +292,58 @@ NOTE:
 
 LIMITI:
 
-- multi-unit NON supportato
-- numeri secondari trattati come label
+- multi-unit NON supportato  
+- numeri secondari trattati come label  
 
 ------------------------------------------------
-LABEL CLEANING
+LABEL SYSTEM (STEP 3 — NUOVO)
 ------------------------------------------------
 
-Funzione:
+FUNZIONE:
 
-ottenere descrizione pulita
-
----
-
-Operazioni:
-
-- rimozione numero
-- rimozione unità
-- rimozione preposizioni comuni
+generare una descrizione coerente e leggibile
+a partire da raw_input
 
 ---
 
-Preposizioni rimosse:
+TIPO:
 
-- di
-- del
-- della
-- dei
-- degli
-- delle
-- per
-- e
+✔ derivato  
+✔ non persistito  
+✔ non distruttivo  
 
 ---
 
-Output:
+INPUT:
 
-label sintetica
+- raw_input  
+- amount  
+- unit  
+
+---
+
+OPERAZIONI:
+
+- rimozione amount + unit  
+- gestione unit compatte (es: 3h, 30min)  
+- rimozione stopwords base  
+- preservazione numeri semantici (es: "villa 2")  
+- unione token composti (es: "villa 2")  
+- ordinamento alfabetico (locale: it, sensitivity base)  
+
+---
+
+OUTPUT:
+
+label coerente e stabile
+
+---
+
+IMPORTANTE:
+
+✔ non modifica raw_input  
+✔ non influisce su parsing  
+✔ non viene salvata nel DB  
 
 ------------------------------------------------
 TYPE DETECTION (BASE)
@@ -329,9 +351,9 @@ TYPE DETECTION (BASE)
 
 Tipi:
 
-- tempo
-- economico
-- evento
+- tempo  
+- economico  
+- evento  
 
 ---
 
@@ -339,15 +361,15 @@ Regole:
 
 tempo:
 
-→ presenza unità tempo
+→ presenza unità tempo  
 
 economico:
 
-→ presenza euro
+→ presenza euro  
 
 evento:
 
-→ default
+→ default  
 
 ---
 
@@ -355,10 +377,10 @@ IMPORTANTE:
 
 economico NON distingue:
 
-- spesa
-- incasso
+- spesa  
+- incasso  
 
-→ decisione utente
+→ decisione utente  
 
 ------------------------------------------------
 PREVIEW SYSTEM
@@ -374,7 +396,7 @@ STRUTTURA:
 
 MAIN:
 
-amount + unit + label
+amount + unit + label  
 
 ---
 
@@ -387,7 +409,9 @@ entity
 
 HINT:
 
-suggerimenti matching
+- suggerimenti matching  
+- suggerimenti tipo  
+- hint durata ambigua  
 
 ---
 
@@ -396,6 +420,7 @@ REGOLE:
 ✔ preview non blocca  
 ✔ preview può essere errata  
 ✔ preview non modifica input  
+✔ preview = parsing + label  
 
 ------------------------------------------------
 MATCHING BASE
@@ -403,15 +428,15 @@ MATCHING BASE
 
 Oggetti:
 
-- projects
-- entities
+- projects  
+- entities  
 
 ---
 
 STRATEGIA:
 
-- includes
-- normalizzazione base
+- includes  
+- normalizzazione base  
 
 ---
 
@@ -426,6 +451,14 @@ REGOLE:
 
 ✔ mai forzare selezione  
 ✔ mai creare automaticamente  
+
+---
+
+UX (STEP 3):
+
+- hint solo se input ≥5 caratteri  
+- oppure input corto ma ambiguo  
+- riduzione suggerimenti ridondanti  
 
 ------------------------------------------------
 CONFIRMA EVENTO
@@ -459,9 +492,9 @@ GESTIONE ERRORI
 
 TIPI:
 
-- parsing error
-- match error
-- input ambiguo
+- parsing error  
+- match error  
+- input ambiguo  
 
 ---
 
@@ -475,11 +508,11 @@ COMPORTAMENTO:
 LIMITI ATTUALI
 ------------------------------------------------
 
-- parsing incompleto
-- unità limitate
-- matching debole
-- nessun comando input
-- nessuna normalizzazione avanzata
+- parsing incompleto  
+- unità limitate  
+- matching debole  
+- nessun comando input  
+- nessuna normalizzazione avanzata  
 
 ------------------------------------------------
 OBIETTIVO INPUT SYSTEM
@@ -487,24 +520,33 @@ OBIETTIVO INPUT SYSTEM
 
 Rendere l’input:
 
-- veloce
-- comprensibile
-- sufficientemente affidabile
+- veloce  
+- comprensibile  
+- sufficientemente affidabile  
 
 ---
 
 NON:
 
-- perfetto
-- completamente automatico
+- perfetto  
+- completamente automatico  
 
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
 
-v01 — 2026-04-01
+v01 — 2026-04-01  
 
-- Definizione completa sistema input
-- Consolidamento parsing, preview, matching
-- Allineamento con implementazione Retool
-- Definizione regole operative vincolanti
+- Definizione completa sistema input  
+
+v02 — 2026-04-02  
+
+- Consolidamento parsing, preview, matching  
+- Allineamento con implementazione Retool  
+
+v03 — 2026-04-04  
+
+- introduzione separazione parsing / label  
+- introduzione label system (non persistito)  
+- aggiornamento preview (label + hint)  
+- miglioramento UX suggerimenti  

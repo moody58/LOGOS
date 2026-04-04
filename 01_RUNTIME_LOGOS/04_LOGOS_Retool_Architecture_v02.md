@@ -1,6 +1,6 @@
-04_LOGOS_Retool_Architecture_v03
+04_LOGOS_Retool_Architecture_v04
 
-DATA: 2026-04-03
+DATA: 2026-04-04
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -10,11 +10,13 @@ C (Completezza): 10/10
 - struttura UI completa  
 - flow input → insert documentato  
 - query e componenti allineati al runtime  
+- label layer integrato  
 
 Q (Qualità): 9.5/10  
 - allineato a comportamento reale aggiornato  
 - distinzione chiara tra layer  
 - eliminati elementi obsoleti  
+- UX migliorata senza regressioni  
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -158,7 +160,19 @@ META:
 
 HINT:
 
-- suggerimenti matching
+- suggerimenti matching  
+- suggerimenti tipo  
+- hint durata ambigua  
+
+---
+
+Nota:
+
+La label è:
+
+✔ generata in tempo reale  
+✔ non persistita  
+✔ derivata da raw_input  
 
 ------------------------------------------------
 INPUT FLOW (AGGIORNATO)
@@ -179,7 +193,7 @@ input_home = source of truth
 ✔ coerenza tra valore mostrato e valore persistito  
 
 ------------------------------------------------
-MATCHING FLOW (AGGIORNATO STEP 2)
+MATCHING FLOW (AGGIORNATO STEP 2 + STEP 3)
 ------------------------------------------------
 
 Eseguito in:
@@ -197,6 +211,9 @@ Caratteristiche:
 ✔ tokenizzazione input  
 ✔ filtro parole significative  
 ✔ riduzione partial match aggressivo  
+
+✔ gestione ambiguità controllata  
+✔ attivazione hint condizionata  
 
 ---
 
@@ -218,6 +235,16 @@ AUTO-SELECT:
 
 - solo match univoco
 - nessuna forzatura
+
+---
+
+UX MATCHING (STEP 3):
+
+- hint attivi solo se:
+  - input ≥ 5 caratteri
+  - oppure input corto ma ambiguo (prefisso)
+- eliminazione suggerimenti duplicati  
+- riduzione rumore UI  
 
 ------------------------------------------------
 TYPE DETECTION (AGGIORNATO)
@@ -270,6 +297,48 @@ Caratteristiche:
 Nota:
 
 preview = parsing reale  
+
+------------------------------------------------
+LABEL FLOW (STEP 3 — NUOVO)
+------------------------------------------------
+
+Eseguito in:
+
+- sintesi (preview)
+
+---
+
+Caratteristiche:
+
+✔ non distruttivo  
+✔ deterministico  
+✔ separato dal parsing  
+
+---
+
+Pipeline:
+
+1. normalizzazione testo  
+2. rimozione amount + unit  
+3. gestione unit compatte (3h, 30min)  
+4. rimozione stopwords base  
+5. numeric safe (numeri preservati)  
+6. compound token (es: "villa 2")  
+7. sorting alfabetico (locale: it, sensitivity base)  
+
+---
+
+Output:
+
+- label coerente  
+- leggibile  
+- stabile  
+
+---
+
+Nota:
+
+label NON salvata nel DB  
 
 ------------------------------------------------
 CONFIRM FLOW
@@ -362,12 +431,15 @@ PROBLEMI NOTI (AGGIORNATI)
 ✔ mismatch amount → RISOLTO  
 ✔ divergenza preview / DB → RISOLTA  
 
+✔ label variabili → RIDOTTE  
+✔ rumore suggerimenti → RIDOTTO  
+
 ---
 
 ⚠ UI:
 
 - input non multilinea  
-- preview verbosa  
+- preview migliorabile  
 
 ---
 
@@ -394,7 +466,8 @@ STATO ARCHITETTURA
 
 ✔ parsing affidabile  
 ✔ matching affidabile  
-✔ pipeline input completamente allineata  
+✔ label pipeline stabile  
+✔ UX migliorata  
 
 ---
 
@@ -410,11 +483,13 @@ v01 — 2026-04-01
 v02 — 2026-04-03  
 - integrazione parsing retrofit  
 - integrazione matching step 2  
-- aggiornamento type detection  
-- allineamento completo con runtime reale  
 
 v03 — 2026-04-03  
 - fix pipeline insert  
 - supporto unit compatte  
-- fix amount multi-numero  
-- allineamento preview → DB  
+
+v04 — 2026-04-04  
+- introduzione label layer  
+- integrazione label pipeline  
+- miglioramento UX hint  
+- gestione ambiguità input corto  

@@ -1,18 +1,18 @@
-00_PROJECT_State_v04
+00_PROJECT_State_v05
 
-DATA: 2026-04-03
+DATA: 2026-04-04
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-INPUT RELIABILITY + MATCHING BASE — COMPLETATI
+LABEL QUALITY — COMPLETATO
 
 ------------------------------------------------
 FASE:
 ------------------------------------------------
 
-TRANSIZIONE → LABEL QUALITY
+TRANSIZIONE → STEP 4 (UX / ENGINE BASE)
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -21,12 +21,12 @@ CQD — VALIDAZIONE DOCUMENTO
 C (Completezza): 10/10  
 - coperti tutti i layer sistema  
 - parsing + matching completamente documentati  
-- runtime allineato  
+- label layer integrato  
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
-- nessuna ambiguità parsing/matching  
-- distinzione chiara tra attuale e futuro  
+- distinzione chiara parsing / matching / label  
+- UX migliorata senza regressioni  
 
 D (Deployabilità): 10/10  
 - pronto per Regia  
@@ -56,7 +56,7 @@ Sistema funzionante end-to-end:
 INPUT  
 → PARSING  
 → MATCHING  
-→ PREVIEW  
+→ PREVIEW (LABEL)  
 → INSERT  
 → PROCESSING  
 → FEEDBACK  
@@ -69,10 +69,11 @@ INPUT
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stato stabilizzato su due layer fondamentali:
+Il sistema è stabilizzato su tre layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
+3. LABEL QUALITY  
 
 ---
 
@@ -81,8 +82,9 @@ RISULTATO:
 ✔ eliminata fragilità input  
 ✔ eliminata divergenza preview / confirm  
 ✔ ridotti falsi positivi matching  
+✔ migliorata coerenza label  
+✔ UX meno rumorosa  
 ✔ comportamento prevedibile  
-✔ allineamento completo preview → insert → DB  
 
 ------------------------------------------------
 COMPONENTI ATTIVI
@@ -100,6 +102,14 @@ MATCHING LAYER
 - select_project
 - select_entity
 - logiche di matching distribuite
+
+---
+
+LABEL LAYER (NUOVO)
+
+- sintesi (preview)
+- pipeline label non distruttiva
+- gestione hint UX
 
 ---
 
@@ -214,6 +224,44 @@ LIMITI CONSAPEVOLI
 - parsing non semantico  
 
 ------------------------------------------------
+LABEL SYSTEM (NUOVO — STABILIZZATO)
+------------------------------------------------
+
+TIPO:
+
+✔ deterministico  
+✔ non distruttivo  
+✔ derivato (non persistito)  
+
+---
+
+PIPELINE:
+
+- normalizzazione testo  
+- rimozione amount + unit  
+- gestione unit compatte (es: 3h, 30min)  
+- rimozione stopwords base  
+- numeric safe (preservazione numeri semantici)  
+- compound token (es: "villa 2")  
+- sorting alfabetico stabile (locale: it, sensitivity base)  
+
+---
+
+PRINCIPI:
+
+✔ nessuna perdita informazione  
+✔ nessuna interpretazione semantica  
+✔ nessuna modifica DB  
+
+---
+
+OUTPUT:
+
+- label coerenti  
+- variabilità ridotta  
+- maggiore leggibilità  
+
+------------------------------------------------
 MATCHING SYSTEM (STABILIZZATO)
 ------------------------------------------------
 
@@ -251,12 +299,6 @@ FULL:
 
 PARTIAL (RETROFIT):
 
-PRIMA:
-
-- includes(cleanText) → rumoroso  
-
-DOPO:
-
 - match su token significativi  
 - almeno una parola ≥4 caratteri in comune  
 
@@ -266,6 +308,14 @@ AUTO-SELECT
 
 ✔ solo match univoco  
 ✔ nessuna forzatura  
+
+---
+
+AGGIUNTE UX MATCHING
+
+- soglia attivazione hint (≥5 caratteri)  
+- gestione ambiguità input corto (prefisso)  
+- riduzione suggerimenti ridondanti  
 
 ---
 
@@ -279,7 +329,7 @@ RISULTATI
 PREVIEW SYSTEM
 ------------------------------------------------
 
-✔ preview = parsing reale  
+✔ preview = parsing reale + label  
 ✔ nessuna doppia interpretazione  
 ✔ rappresentazione fedele  
 ✔ completamente allineata con insert e DB  
@@ -298,6 +348,7 @@ HINT:
 
 - suggerimenti matching  
 - suggerimenti tipo  
+- hint durata ambigua  
 
 ------------------------------------------------
 INSERT
@@ -318,6 +369,8 @@ Scrittura:
 ✔ amount coerente con parsing  
 ✔ raw_input sempre valorizzato  
 ✔ dati salvati coerenti con preview  
+
+✔ label NON persistita  
 
 ✔ nessuna validazione bloccante  
 
@@ -393,6 +446,9 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ suggerimenti non invasivi  
 ✔ preview coerente  
 ✔ allineamento preview = DB  
+✔ label cleaning non distruttivo  
+✔ riduzione variabilità descrizioni  
+✔ hint intelligenti (UX)  
 ✔ gestione eventi NEW  
 ✔ conferma manuale  
 ✔ UI stabile  
@@ -443,7 +499,7 @@ PROBLEMI REALI IDENTIFICATI
 
 1. DATA NON NORMALIZZATI
 
-- label variabili  
+- label variabili (ridotte lato preview)  
 - unit non consolidate  
 
 ---
@@ -483,13 +539,17 @@ PROBLEMI RISOLTI
 ✔ perdita unit → RISOLTA  
 ✔ mismatch amount → RISOLTO  
 ✔ divergenza preview / DB → RISOLTA  
+✔ variabilità label → RIDOTTA  
+✔ rumore UX → RIDOTTO  
+✔ unit attaccate → RISOLTE  
+✔ duplicazione suggerimenti → RISOLTA  
 
 ------------------------------------------------
 STATO LAYER SISTEMA
 ------------------------------------------------
 
 Layer 1 — Input: ~95%  
-Layer 2 — Matching + Processing: ~70%  
+Layer 2 — Matching + Processing: ~75%  
 Layer 3 — Data Structure: ~20%  
 Layer 4 — Engine: 0%  
 Layer 5 — Output: 0%  
@@ -498,7 +558,7 @@ Layer 5 — Output: 0%
 
 STATO COMPLESSIVO:
 
-~50%
+~55%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -506,12 +566,13 @@ FASE ATTUALE
 
 ✔ INPUT RELIABILITY — COMPLETATA  
 ✔ MATCHING BASE — COMPLETATO  
+✔ LABEL QUALITY — COMPLETATO  
 
 ---
 
 TRANSIZIONE:
 
-→ LABEL QUALITY  
+→ STEP 4 (UX refinement / ENGINE BASE)
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
@@ -519,15 +580,9 @@ OBIETTIVO IMMEDIATO
 
 Migliorare:
 
-- qualità label  
-- coerenza descrizioni  
-- riduzione variabilità  
-
----
-
-Preparare:
-
-→ base per ENGINE  
+- suggestion UX  
+- gestione ambiguità  
+- base per normalizzazione futura  
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -550,9 +605,17 @@ Il sistema:
 
 ---
 
+La label è ora:
+
+→ layer derivato  
+→ non persistito  
+→ base per evoluzione engine  
+
+---
+
 Priorità:
 
-1. label quality  
+1. label quality ✔  
 2. normalizzazione  
 3. engine  
 4. output  
@@ -569,11 +632,12 @@ parsing retrofit
 
 v03 — 2026-04-03  
 matching retrofit  
-stabilizzazione completa input + matching  
-allineamento runtime reale  
 
 v04 — 2026-04-03  
 fix insert pipeline  
-allineamento preview → DB  
-fix unit compatte  
-fix amount multi-numero  
+
+v05 — 2026-04-04  
+introduzione label layer  
+implementazione label pipeline  
+miglioramento UX hint  
+riduzione variabilità descrizioni  
