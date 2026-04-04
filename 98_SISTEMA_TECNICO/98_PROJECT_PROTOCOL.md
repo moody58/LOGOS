@@ -296,5 +296,177 @@ progetti derivati dal template per tracciare
 
 le modifiche nel tempo.
 
+------------------------------------------------
+12 — GESTIONE MICRO-SESSIONI (ESTESO)
+------------------------------------------------
 
+Le micro-sessioni rappresentano il livello operativo del progetto.
 
+La loro gestione deve essere deterministica e controllata.
+
+---
+
+12.1 — CREAZIONE MICRO-SESSIONE (DA REGIA)
+
+La Regia definisce:
+
+- nodo operativo
+- obiettivo
+- vincoli
+- condizione di chiusura
+
+La Regia NON esegue attività operative.
+
+---
+
+12.2 — DOCUMENTI OBBLIGATORI
+
+Ogni micro-sessione deve dichiarare esplicitamente:
+
+CORE:
+
+- 00_PROJECT_State
+- Roadmap
+
+TECNICI (se rilevanti):
+
+- Input System
+- Match Engine
+- Architecture
+
+---
+
+Se un documento necessario manca:
+
+→ attivazione Safe Mode
+→ richiesta upload
+
+---
+
+12.3 — VERIFICA VERSIONI (META-OBSERVATION)
+
+La Meta-Observation verifica:
+
+- presenza documenti
+- coerenza con stato
+- allineamento versione
+
+Se incoerenza:
+
+→ suggerire:
+#state
+DOC
+SYNC
+
+---
+
+12.4 — RELAZIONE CON LE FONTI
+
+Le fonti NON aggiornano una sessione attiva.
+
+---
+
+Regola:
+
+Ogni micro-sessione è isolata.
+
+Usa:
+
+→ snapshot documentale al momento del boot
+
+---
+
+Conseguenza:
+
+Aggiornare le fonti NON modifica:
+
+- Regia attiva
+- sessioni attive
+
+---
+
+12.5 — CICLO OPERATIVO COMPLETO
+
+Regia:
+
+→ definisce nodo  
+
+↓
+
+Micro-sessione:
+
+→ analisi  
+→ decisione  
+→ operatività  
+→ test  
+
+↓
+
+Output:
+
+→ CHECKPOINT o DOC  
+
+↓
+
+Aggiornamento:
+
+→ STATE  
+→ documenti  
+
+---
+
+12.6 — VINCOLI OPERATIVI
+
+La micro-sessione:
+
+✔ può decidere  
+✔ può implementare  
+✔ può testare  
+
+MA:
+
+❌ non può cambiare nodo  
+❌ non può modificare roadmap  
+❌ non può introdurre architettura  
+
+---
+
+12.7 — CHIUSURA SESSIONE
+
+Una sessione è chiusa solo se:
+
+- output prodotto
+- nodo completato
+- stato aggiornato
+
+---
+
+12.8 — DERIVA OPERATIVA
+
+Se durante la sessione:
+
+- cambia focus
+- emergono nuovi problemi
+- si esce dal nodo
+
+→ STOP
+
+→ ritorno in Regia
+
+---
+
+12.9 — RESET REGIA
+
+La Regia NON è persistente.
+
+Se:
+
+- incoerenza
+- lentezza
+- confusione
+
+→ nuova chat
+
+→ Boot Sequence
+
+→ ricarica documenti core
