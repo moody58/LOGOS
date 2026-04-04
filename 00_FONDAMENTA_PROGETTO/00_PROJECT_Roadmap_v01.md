@@ -55,25 +55,40 @@ Divieto:
 STATO ATTUALE
 ------------------------------------------------
 
+FASE COMPLETATA:
+
+✔ STEP 1 — INPUT RELIABILITY  
+✔ STEP 2 — MATCHING BASE  
+✔ STEP 3 — LABEL QUALITY  
+
+---
+
 FASE ATTIVA:
 
-STEP 1 — INPUT RELIABILITY
+STEP 4 — UX REFINEMENT / ENGINE BASE
 
 ---
 
 Motivazione:
 
-Il sistema è utilizzabile ma:
+Il sistema è:
 
-- input non affidabile
-- parsing incompleto
-- unità non coerenti
+- stabile
+- utilizzabile
+- deterministico
+
+Ma:
+
+- dati non normalizzati
+- suggerimenti migliorabili
+- nessun engine attivo
 
 ---
 
 Blocco:
 
-NON procedere oltre finché l’input non è stabile
+NON procedere verso DATA STRUCTURE o ENGINE avanzato
+finché non è definita una base UX + normalizzazione controllata
 
 ------------------------------------------------
 ROADMAP MASTER
@@ -147,6 +162,31 @@ Output atteso:
 
 - copertura casi reali
 - robustezza input
+
+------------------------------------------------
+
+STEP 3.5 — UX REFINEMENT (NUOVO)
+
+Obiettivo:
+
+Ridurre attrito e ambiguità senza modificare architettura
+
+---
+
+Interventi:
+
+- miglioramento hint
+- gestione ambiguità input
+- controllo attivazione suggerimenti
+- coerenza visuale preview
+
+---
+
+Output atteso:
+
+- UX più chiara
+- meno errori utente
+- maggiore velocità input
 
 ------------------------------------------------
 
