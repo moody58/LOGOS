@@ -322,6 +322,19 @@ LOGOS is designed to be:
 
 ---
 
+## AIOS Ecosystem
+
+LOGOS operates within the AIOS system as the data engine.
+
+Related components:
+
+- **AIOS_CORE** — defines the method and system structure  
+- **AIOS_PROJECT_TEMPLATE** — used to create structured project instances  
+
+LOGOS connects raw data with the broader decision-making system.
+
+---
+
 ## 9. Open Collaboration
 
 This project is part of a broader experimental system (AIOS).
