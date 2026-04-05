@@ -324,10 +324,11 @@ LOGOS is designed to be:
 
 ## 9. Open Collaboration
 
-LOGOS is part of a broader system.
+This project is part of a broader experimental system (AIOS).
 
-It is not designed as a standalone product,
-but as a component of an evolving metasystem.
+It is shared openly to explore ideas, structures, and workflows.
+
+If you find this interesting or plan to build upon it, feel free to reach out — I’d be glad to connect.
 
 ---
 
