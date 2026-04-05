@@ -328,8 +328,8 @@ LOGOS operates within the AIOS system as the data engine.
 
 Related components:
 
-- **AIOS_CORE** — defines the method and system structure  
-- **AIOS_PROJECT_TEMPLATE** — used to create structured project instances  
+- **AIOS_CORE** [https://github.com/moody58/aios_core] — defines the method and system structure  
+- **AIOS_PROJECT_TEMPLATE** [https://github.com/moody58/aios_project_template] — used to create structured project instances  
 
 LOGOS connects raw data with the broader decision-making system.
 
