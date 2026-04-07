@@ -151,18 +151,24 @@ Preview:
 
 MAIN:
 
-- amount + unit + label
+- event_date + amount + unit + label  
 
-META:
-
-- project
-- entity
+---
 
 HINT:
 
-- suggerimenti matching  
-- suggerimenti tipo  
-- hint durata ambigua  
+- basati su stato matching  
+
+  - entity_matches > 1 → "Seleziona entità"  
+  - project_matches > 1 → "Seleziona progetto"  
+
+---
+
+Caratteristiche:
+
+✔ preview = rappresentazione dati reali  
+✔ coerente con payload DB  
+✔ nessuna logica autonoma    
 
 ---
 
@@ -196,55 +202,39 @@ input_home = source of truth
 MATCHING FLOW (AGGIORNATO STEP 2 + STEP 3)
 ------------------------------------------------
 
-Eseguito in:
+Eseguito tramite query:
 
-- input_raw (auto-select project)
-- select_project (default value)
-- select_entity (default value)
-- sintesi (preview)
+- project_state
+- entity_state
+
+---
+
+OUTPUT:
+
+- project_state.data?.matches  
+- entity_state.data?.matches  
+
+---
+
+LOGICA:
+
+match = 1  
+→ auto-select  
+
+match > 1  
+→ ambiguità  
+→ nessuna selezione  
+
+match = 0  
+→ nessun suggerimento  
 
 ---
 
 Caratteristiche:
 
-✔ normalizzazione testo  
-✔ tokenizzazione input  
-✔ filtro parole significative  
-✔ riduzione partial match aggressivo  
-
-✔ gestione ambiguità controllata  
-✔ attivazione hint condizionata  
-
----
-
-PROJECT:
-
-- match basato su parole
-- disambiguazione numerica
-
----
-
-ENTITY:
-
-- match multi-livello (strong/full/partial)
-- partial match basato su token ≥4 caratteri
-
----
-
-AUTO-SELECT:
-
-- solo match univoco
-- nessuna forzatura
-
----
-
-UX MATCHING (STEP 3):
-
-- hint attivi solo se:
-  - input ≥ 5 caratteri
-  - oppure input corto ma ambiguo (prefisso)
-- eliminazione suggerimenti duplicati  
-- riduzione rumore UI  
+✔ nessuna logica token esplicita  
+✔ nessuna pipeline interna documentabile  
+✔ matching gestito come stato osservabile    
 
 ------------------------------------------------
 TYPE DETECTION (AGGIORNATO)
@@ -258,7 +248,7 @@ select1
 
 Logica:
 
-- Tempo → match su parola intera (ora, ore, min, minuti, h)
+- Tempo → presenza unità parse_input (ore, minuti)
 - Evento → default
 
 ---
@@ -274,7 +264,11 @@ PARSING FLOW (RETROFIT v2)
 
 Eseguito in:
 
-- sintesi (preview)
+- parse_input (query)
+
+Utilizzato da:
+
+- preview
 - button_input_confirm
 
 ---
@@ -299,7 +293,7 @@ Nota:
 preview = parsing reale  
 
 ------------------------------------------------
-LABEL FLOW (STEP 3 — NUOVO)
+LABEL (RUNTIME)
 ------------------------------------------------
 
 Eseguito in:
@@ -310,35 +304,25 @@ Eseguito in:
 
 Caratteristiche:
 
-✔ non distruttivo  
-✔ deterministico  
-✔ separato dal parsing  
+✔ generata runtime  
+✔ non persistita  
+✔ non esiste come layer separato  
 
 ---
 
-Pipeline:
+Operazioni:
 
-1. normalizzazione testo  
-2. rimozione amount + unit  
-3. gestione unit compatte (3h, 30min)  
-4. rimozione stopwords base  
-5. numeric safe (numeri preservati)  
-6. compound token (es: "villa 2")  
-7. sorting alfabetico (locale: it, sensitivity base)  
-
----
-
-Output:
-
-- label coerente  
-- leggibile  
-- stabile  
+- rimozione amount + unit (best-effort)
+- rimozione date già parse
+- normalizzazione spazi
+- preservazione numeri semantici (es: "villa 2")
 
 ---
 
 Nota:
 
-label NON salvata nel DB  
+✔ non riutilizzabile come modulo  
+✔ parte della logica preview  
 
 ------------------------------------------------
 CONFIRM FLOW
@@ -363,32 +347,52 @@ Obiettivo:
 ✔ parsing eseguito in fase di confirm  
 ✔ allineamento completo con preview  
 ✔ eliminata divergenza tra preview e insert  
-✔ payload coerente ai dati visualizzati  
+✔ payload coerente ai dati visualizzati 
+
+VINCOLI:
+
+✔ insert bloccato se:
+
+- entity_matches > 1  
+- project_matches > 1  
+
+✔ nessuna ambiguità consentita in insert  
 
 ------------------------------------------------
 QUERY ATTIVE
 ------------------------------------------------
 
-DATA:
+GLOBAL:
 
-- projects_list
-- entities_list
+- projects_list  
+- entities_list  
+
+---
+
+PAGE1:
+
+DATA / MATCHING:
+
+- project_state  
+- entity_state  
+- parse_input  
 
 ---
 
 EVENTI:
 
-- insert_event
-- events_new
-- update_written
-- update_error
+- insert_event  
+- events_new  
+- update_written  
+- update_error  
 
 ---
 
-STATE:
+STATE / UI:
 
-- ui_state
-- typing_state
+- ui_state  
+- typing_state  
+- focus_input_home  
 
 ------------------------------------------------
 SUPABASE INTEGRAZIONE

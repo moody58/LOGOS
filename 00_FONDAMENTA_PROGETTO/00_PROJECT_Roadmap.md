@@ -57,44 +57,52 @@ STATO ATTUALE
 
 FASE COMPLETATA:
 
-✔ STEP 1 — INPUT RELIABILITY  
-✔ STEP 2 — MATCHING BASE  
-✔ STEP 3 — LABEL QUALITY  
+✔ STEP 1 — INPUT RELIABILITY (STABILIZZATO)  
+✔ STEP 2 — MATCHING BASE (STABILE)  
+⚠ STEP 3 — LABEL QUALITY (INTEGRATO MA NON ISOLATO — DENTRO PREVIEW)    
 
 ---
 
 FASE ATTIVA:
 
-STEP 4 — UX REFINEMENT / ENGINE BASE
+STEP 3.5 — STRUCTURE STABILIZATION (NUOVO)
+
+Obiettivo:
+
+Rendere stabile il sistema separando le responsabilità
+attualmente accoppiate nella preview
 
 ---
 
-Motivazione:
+Interventi:
 
-Il sistema è:
-
-- stabile
-- utilizzabile
-- deterministico
-
-Ma:
-
-- dati non normalizzati
-- suggerimenti migliorabili
-- nessun engine attivo
+- isolare logica label dalla preview
+- eliminare duplicazioni (cleaning / label)
+- ridurre accoppiamento tra parsing, label e UI
+- mantenere comportamento invariato lato utente
 
 ---
 
-Blocco:
+Vincoli:
 
-NON procedere verso DATA STRUCTURE o ENGINE avanzato
-finché non è definita una base UX + normalizzazione controllata
+✘ nessuna modifica parsing  
+✘ nessuna modifica matching  
+✘ nessuna modifica DB  
+✘ nessun cambiamento UX visibile  
+
+---
+
+Output atteso:
+
+- preview stabile e prevedibile  
+- riduzione regressioni  
+- base solida per UX futura  
 
 ------------------------------------------------
 ROADMAP MASTER
 ------------------------------------------------
 
-STEP 1 — INPUT RELIABILITY (ATTIVO)
+STEP 1 — INPUT RELIABILITY (COMPLETATO)
 
 Obiettivo:
 
@@ -142,7 +150,7 @@ Output atteso:
 
 ------------------------------------------------
 
-STEP 3 — INPUT COMPLETENESS
+STEP 3 — LABEL QUALITY / INPUT COMPLETENESS
 
 Obiettivo:
 
@@ -348,6 +356,26 @@ Il sistema deve evolvere per:
 - uso reale
 - qualità dati
 - affidabilità
+
+------------------------------------------------
+BLOCCO ATTUALE (CRITICO)
+------------------------------------------------
+
+Il sistema NON può avanzare allo STEP 4 pieno
+finché non vengono risolti:
+
+- errori runtime (matches null)
+- incoerenze matching entity
+- attivazione non controllata degli hint
+- disallineamenti preview / comportamento insert
+
+Questi elementi NON sono UX.
+
+Sono causati da accoppiamento nel layer preview.
+
+Rientrano nello STEP 3.5 (STRUCTURE STABILIZATION)
+
+------------------------------------------------
 
 ------------------------------------------------
 CHANGELOG

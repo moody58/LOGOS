@@ -65,6 +65,8 @@ INPUT
 ✔ utilizzabile in produzione reale  
 ✔ comportamento deterministico  
 
+⚠ presenza di accoppiamento logico nel layer preview    
+
 ------------------------------------------------
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
@@ -82,9 +84,9 @@ RISULTATO:
 ✔ eliminata fragilità input  
 ✔ eliminata divergenza preview / confirm  
 ✔ ridotti falsi positivi matching  
-✔ migliorata coerenza label  
-✔ UX meno rumorosa  
-✔ comportamento prevedibile  
+
+⚠ matching basato su stringhe (no fuzzy)  
+⚠ hint limitati a logica base    
 
 ------------------------------------------------
 COMPONENTI ATTIVI
@@ -105,11 +107,11 @@ MATCHING LAYER
 
 ---
 
-LABEL LAYER (NUOVO)
+LABEL LOGIC (EMBEDDED)
 
-- sintesi (preview)
-- pipeline label non distruttiva
-- gestione hint UX
+- generazione label dentro preview
+- pipeline non distruttiva
+- NON separata come layer runtime
 
 ---
 
@@ -322,17 +324,21 @@ AGGIUNTE UX MATCHING
 RISULTATI
 
 ✔ riduzione falsi positivi  
-✔ ambiguità solo reale  
-✔ maggiore affidabilità suggerimenti  
+
+⚠ ambiguità non sempre correttamente segnalata  
+⚠ riconoscimento entity non sempre consistente  
+⚠ affidabilità suggerimenti variabile su input complessi    
 
 ------------------------------------------------
 PREVIEW SYSTEM
 ------------------------------------------------
 
 ✔ preview = parsing reale + label  
-✔ nessuna doppia interpretazione  
-✔ rappresentazione fedele  
-✔ completamente allineata con insert e DB  
+✔ rappresentazione coerente lato utente  
+✔ allineata ai dati salvati (amount, unit, ids)  
+
+⚠ contiene logiche di trasformazione (cleaning + label)  
+⚠ non è una view pura    
 
 STRUTTURA:
 
@@ -365,10 +371,12 @@ Scrittura:
 - entity_id  
 - status = NEW  
 
-✔ unit sempre persistita correttamente  
+✔ unit generalmente persistita correttamente  
 ✔ amount coerente con parsing  
 ✔ raw_input sempre valorizzato  
-✔ dati salvati coerenti con preview  
+
+✔ dati salvati correttamente  
+✔ nessun blocco runtime attuale      
 
 ✔ label NON persistita  
 
@@ -538,7 +546,7 @@ PROBLEMI RISOLTI
 ✔ comportamento non deterministico → RISOLTO  
 ✔ perdita unit → RISOLTA  
 ✔ mismatch amount → RISOLTO  
-✔ divergenza preview / DB → RISOLTA  
+✔ divergenza preview / DB → RISOLTA (dati persistiti)    
 ✔ variabilità label → RIDOTTA  
 ✔ rumore UX → RIDOTTO  
 ✔ unit attaccate → RISOLTE  
@@ -549,10 +557,11 @@ STATO LAYER SISTEMA
 ------------------------------------------------
 
 Layer 1 — Input: ~95%  
-Layer 2 — Matching + Processing: ~75%  
-Layer 3 — Data Structure: ~20%  
-Layer 4 — Engine: 0%  
-Layer 5 — Output: 0%  
+Layer 2 — Matching: ~75%  
+Layer 3 — View / Preview: ~60% (funzionante ma accoppiato)  
+Layer 4 — Data Structure: ~20%  
+Layer 5 — Engine: 0%  
+Layer 6 — Output: 0%    
 
 ---
 

@@ -144,6 +144,7 @@ OUTPUT:
 
 - amount
 - unit
+- event_date
 
 ⚠ label NON è output del parsing
 
@@ -295,22 +296,19 @@ LIMITI:
 - multi-unit NON supportato  
 - numeri secondari trattati come label  
 
-------------------------------------------------
-LABEL SYSTEM (STEP 3 — NUOVO)
-------------------------------------------------
+LABEL (RUNTIME)
 
 FUNZIONE:
 
-generare una descrizione coerente e leggibile
-a partire da raw_input
+generare una descrizione leggibile per la preview
 
 ---
 
 TIPO:
 
-✔ derivato  
+✔ derivato runtime  
 ✔ non persistito  
-✔ non distruttivo  
+✔ non strutturato  
 
 ---
 
@@ -319,31 +317,26 @@ INPUT:
 - raw_input  
 - amount  
 - unit  
+- event_date  
 
 ---
 
-OPERAZIONI:
+COMPORTAMENTO:
 
-- rimozione amount + unit  
-- gestione unit compatte (es: 3h, 30min)  
-- rimozione stopwords base  
-- preservazione numeri semantici (es: "villa 2")  
-- unione token composti (es: "villa 2")  
-- ordinamento alfabetico (locale: it, sensitivity base)  
-
----
-
-OUTPUT:
-
-label coerente e stabile
+- rimozione amount + unit (best-effort)
+- rimozione date già parse
+- normalizzazione spazi
+- preservazione numeri semantici (es: "villa 2")
 
 ---
 
 IMPORTANTE:
 
-✔ non modifica raw_input  
-✔ non influisce su parsing  
-✔ non viene salvata nel DB  
+✔ NON esiste un label system separato  
+✔ logica applicata direttamente nella preview  
+✔ NON riutilizzabile come modulo indipendente  
+✔ NON influisce su parsing  
+✔ NON salvata nel DB  
 
 ------------------------------------------------
 TYPE DETECTION (BASE)
@@ -420,7 +413,11 @@ REGOLE:
 ✔ preview non blocca  
 ✔ preview può essere errata  
 ✔ preview non modifica input  
-✔ preview = parsing + label  
+✔ preview = rendering di:
+
+- parsed (amount, unit, event_date)
+- label runtime
+- stato matching (project/entity)  
 
 ------------------------------------------------
 MATCHING BASE
@@ -443,7 +440,31 @@ STRATEGIA:
 OUTPUT:
 
 ✔ suggerimento  
-✔ auto-select solo se univoco  
+✔ auto-select solo se univoco
+
+OUTPUT REALE:
+
+- project_matches
+- entity_matches
+
+Fonte:
+
+project_state.data?.matches  
+entity_state.data?.matches  
+
+---
+
+COMPORTAMENTO:
+
+match = 1  
+→ auto-select  
+
+match > 1  
+→ ambiguità  
+→ nessuna selezione  
+
+match = 0  
+→ nessun suggerimento
 
 ---
 
@@ -483,8 +504,14 @@ SEQUENZA:
 
 REGOLE:
 
-✔ insert sempre consentito  
-✔ nessun blocco  
+✔ insert consentito SOLO se:
+
+- entity_matches ≤ 1
+- project_matches ≤ 1
+
+✔ bloccato in caso di ambiguità
+
+✔ input comunque sempre modificabile  
 
 ------------------------------------------------
 GESTIONE ERRORI
