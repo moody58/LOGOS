@@ -34,7 +34,8 @@ Q (Qualità): 9.5/10
 
 \- parsing e matching coerenti  
 
-\- nessuna ambiguità runtime  
+\- presenza di ambiguità controllate (matching / hint)
+- presenza di criticità runtime (binding / null access)  
 
 
 
@@ -282,13 +283,11 @@ else → "Evento"
 
 Nota:
 
-
-
 \- rimosso includes("h")
-
 \- evitati falsi positivi ("macchina")
 
-
+⚠ nessuna distinzione spesa/incasso  
+⚠ possibile incoerenza tra tipo selezionato e contenuto input  
 
 \------------------------------------------------
 
@@ -314,9 +313,13 @@ Costruita da:
 
 
 
-Output:
+OUTPUT:
 
-
+- 1 match → auto-select
+- >1 match → ambiguità
+- 0 match → nessun suggerimento
+⚠ ambiguità non sempre segnalata correttamente  
+⚠ riconoscimento entity non sempre consistente su input complessi  
 
 MAIN:
 
@@ -353,12 +356,11 @@ Caratteristiche:
 
 
 ✔ preview = parsing reale  
-
 ✔ non modifica input  
-
 ✔ non blocca  
 
-✔ completamente allineata con insert e DB  
+⚠ allineamento preview → insert NON sempre garantito (binding runtime)  
+⚠ presenza di incoerenze su hint e highlight    
 
 \------------------------------------------------
 
@@ -514,13 +516,13 @@ Caratteristiche:
 
 
 
-✔ insert sempre consentito  
-
+✔ insert generalmente consentito  
 ✔ nessuna validazione bloccante  
-
-✔ unit sempre valorizzata correttamente  
+✔ unit generalmente valorizzata correttamente  
 ✔ amount coerente con parsing  
-✔ dati persistiti coerenti con preview  
+
+⚠ insert può fallire per errori runtime (binding / null access)  
+⚠ coerenza preview → DB non sempre garantita    
 
 \------------------------------------------------
 
@@ -582,49 +584,39 @@ update\_event\_status
 
 
 
-\------------------------------------------------
-
-10\. QUERY
-
-\------------------------------------------------
-
-
+------------------------------------------------
+10. QUERY
+------------------------------------------------
 
 GET:
 
+- projects_list  
+- entities_list  
+- events_new  
 
-
-projects\_list  
-
-entities\_list  
-
-events\_new  
-
-
-
-\---
-
-
+---  
 
 POST:
 
+- insert_event  
 
-
-insert\_event  
-
-
-
-\---
-
-
+---  
 
 RPC:
 
+- update_written  
+- update_error  
 
+---  
 
-update\_written  
+STATE / UI:
 
-update\_error  
+- ui_state  
+- typing_state  
+- project_state  
+- entity_state  
+
+⚠ project_state / entity_state possono essere null → rischio errori runtime  
 
 
 
