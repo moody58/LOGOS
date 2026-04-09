@@ -6,13 +6,14 @@ DATA: 2026-04-04
 NODO ATTIVO:
 ------------------------------------------------
 
-LABEL QUALITY — COMPLETATO
+UX REFINEMENT — COMPLETATO
 
 ------------------------------------------------
 FASE:
 ------------------------------------------------
 
-TRANSIZIONE → STEP 4 (UX / ENGINE BASE)
+STEP 4 — UX REFINEMENT (COMPLETATO)
+TRANSIZIONE → ENGINE BASE
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -86,7 +87,28 @@ RISULTATO:
 ✔ ridotti falsi positivi matching  
 
 ⚠ matching basato su stringhe (no fuzzy)  
-⚠ hint limitati a logica base    
+⚠ hint limitati a logica base
+
+------------------------------------------------
+AGGIORNAMENTO UX (NUOVO)
+------------------------------------------------
+
+Il sistema è stato aggiornato nel layer preview/hint:
+
+✔ introduzione hint multipli
+✔ introduzione gerarchia visiva
+✔ eliminazione hint prematuri
+✔ attivazione controllata (input ≥ 3 char)
+✔ separazione semantica colori
+
+RISULTATO:
+
+✔ UX più chiara
+✔ nessuna ambiguità nascosta
+✔ miglior supporto decisionale utente
+
+⚠ hint ancora scollegati da state unificato
+⚠ duplicazione logica detection
 
 ------------------------------------------------
 COMPONENTI ATTIVI
@@ -327,7 +349,24 @@ RISULTATI
 
 ⚠ ambiguità non sempre correttamente segnalata  
 ⚠ riconoscimento entity non sempre consistente  
-⚠ affidabilità suggerimenti variabile su input complessi    
+⚠ affidabilità suggerimenti variabile su input complessi 
+
+--- 
+
+⚠ PROBLEMA STRUTTURALE EMERSO
+
+- presenza di più sistemi di matching:
+  - input_raw (ranking)
+  - select (deterministico)
+  - preview (detected*)
+
+→ incoerenza architetturale
+→ duplicazione logica
+
+⚠ PRIORITY MATCH NON IMPLEMENTATO
+→ impossibilità di distinguere:
+  - match migliore
+  - match multipli equivalenti
 
 ------------------------------------------------
 PREVIEW SYSTEM
@@ -355,6 +394,19 @@ HINT:
 - suggerimenti matching  
 - suggerimenti tipo  
 - hint durata ambigua  
+
+✔ supporto multi-hint
+
+✔ hint NON bloccanti
+
+✔ gerarchia visiva:
+
+- rosso → ambiguità
+- arancione → azione richiesta
+- grigio → suggerimento soft
+
+⚠ logica hint NON basata su state unico
+⚠ presenza duplicazione detected vs state
 
 ------------------------------------------------
 INSERT
@@ -460,7 +512,10 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ gestione eventi NEW  
 ✔ conferma manuale  
 ✔ UI stabile  
-✔ feedback post-insert  
+✔ feedback post-insert 
+✔ gestione multi-hint
+✔ gerarchia visiva feedback
+✔ controllo attivazione hint (anti-noise) 
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -478,6 +533,13 @@ MATCHING
 - gerarchia entity  
 - disambiguazione avanzata  
 - ranking  
+
+--- 
+
+HINT SYSTEM
+
+- integrazione con state unificato
+- priorità tra match (priority engine)
 
 ---
 
@@ -534,7 +596,27 @@ PROBLEMI REALI IDENTIFICATI
 
 5. ASSENZA ENGINE
 
-- nessuna logica evolutiva  
+- nessuna logica evolutiva
+
+--- 
+
+6. DUPLICAZIONE MATCHING
+
+- più logiche indipendenti
+- incoerenza tra layer
+
+--- 
+
+7. HINT NON STATE-DRIVEN
+
+- uso detected*
+- non allineati a select
+
+--- 
+
+8. PRIORITÀ MATCH ASSENTE
+
+- impossibile distinguere match dominante  
 
 ------------------------------------------------
 PROBLEMI RISOLTI
@@ -551,6 +633,10 @@ PROBLEMI RISOLTI
 ✔ rumore UX → RIDOTTO  
 ✔ unit attaccate → RISOLTE  
 ✔ duplicazione suggerimenti → RISOLTA  
+✔ hint incoerenti → RISOLTI  
+✔ hint prematuri → RISOLTI  
+✔ perdita multi-anomalia → RISOLTA  
+✔ UX hint migliorata → RISOLTA  
 
 ------------------------------------------------
 STATO LAYER SISTEMA
@@ -558,7 +644,8 @@ STATO LAYER SISTEMA
 
 Layer 1 — Input: ~95%  
 Layer 2 — Matching: ~75%  
-Layer 3 — View / Preview: ~60% (funzionante ma accoppiato)  
+Layer 3 — View / Preview: ~85%  
+Layer HINT SYSTEM: ~90%
 Layer 4 — Data Structure: ~20%  
 Layer 5 — Engine: 0%  
 Layer 6 — Output: 0%    
@@ -629,6 +716,23 @@ Priorità:
 3. engine  
 4. output  
 
+--- 
+
+Il sistema attuale è:
+
+✔ UX-driven
+✔ safe
+✔ non decisionale
+
+--- 
+
+PRIORITÀ FUTURE:
+
+1. priority match engine  
+2. unificazione matching  
+3. hint state-driven  
+4. semantic engine  
+
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
@@ -650,3 +754,9 @@ introduzione label layer
 implementazione label pipeline  
 miglioramento UX hint  
 riduzione variabilità descrizioni  
+
+v06 — 2026-04-09  
+refinement UX hint  
+introduzione multi-hint  
+introduzione gerarchia visiva  
+emersione criticità matching duplicato  
