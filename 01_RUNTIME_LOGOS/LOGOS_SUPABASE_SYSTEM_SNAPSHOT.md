@@ -1,4 +1,4 @@
-# LOGOS — SUPABASE SYSTEM SNAPSHOT v1.0
+# LOGOS — SUPABASE SYSTEM SNAPSHOT v1.1
 
 ## DESCRIZIONE GENERALE
 
@@ -7,7 +7,7 @@ Il backend LOGOS è costruito su Supabase e rappresenta il layer dati e logico d
 Funzioni principali:
 
 - Persistenza eventi generati da input naturale (raw_input)
-- Supporto al parsing tramite campi strutturati (amount, unit, project_id, entity_id)
+- Supporto al parsing lato client (Retool) con persistenza campi strutturati (amount, unit, project_id, entity_id)
 - Gestione stato eventi (NEW, WRITTEN, ERROR)
 - Lookup dinamici per progetti ed entità
 - Monitoraggio tramite query SQL manuali
@@ -19,6 +19,9 @@ Retool (UI)
 → Supabase Data API
 → Tabelle PostgreSQL
 → Query SQL + RPC
+
+⚠ Il parsing NON avviene nel database
+⚠ Tutta la logica di interpretazione è lato Retool
 
 ---
 
@@ -54,6 +57,7 @@ Campi:
 
 - id (uuid, PK, default gen_random_uuid())
 - created_at (timestamp, default now())
+- updated_at (timestamp)
 - event_date (date)
 - project_id (uuid)
 - entity_id (uuid)
@@ -71,8 +75,35 @@ Campi:
 Uso:
 
 → tabella centrale del sistema
+→ supporta sia insert che update (editing eventi)
 
 ---
+
+### EVENT EDITING (NUOVO)
+
+Il sistema supporta modifica eventi esistenti.
+
+Implementazione:
+
+→ update_event (Retool)
+
+Campi modificabili:
+
+- raw_input
+- amount
+- unit
+- event_date
+- project_id
+- entity_id
+
+Caratteristiche:
+
+- status NON modificato
+- updated_at aggiornato
+- modifica consentita solo su eventi NEW
+
+⚠ il database non gestisce vincoli
+→ controllo completamente lato frontend
 
 ### TABLE: projects
 
@@ -186,19 +217,22 @@ SELECT id, name FROM projects;
 ASSIGN
 UPDATE events
 SET
-  project_id = '',
-  entity_id = ''
-WHERE id = '';
+  project_id = '<uuid>',
+  entity_id = '<uuid>',
+  updated_at = now()
+WHERE id = '<uuid>';
 ERROR
 UPDATE events
 SET status = 'ERROR'
 WHERE id = '';
+, updated_at = now()
 WRITTEN
 UPDATE events
 SET status = 'WRITTEN'
 WHERE id = '';
 SECURITY STATUS
 RLS (Row Level Security)
+, updated_at = now()
 
 Stato:
 
@@ -221,7 +255,49 @@ Le query SQL sono usate per debug e operatività
 Lo stato eventi è gestito tramite:
 RPC (update_event_status)
 Query dirette (ERROR, WRITTEN)
+Parsing, matching e logica decisionale NON sono nel backend
+
+→ completamente gestiti in Retool
+
+Il backend:
+
+✔ salva dati
+✔ espone API
+❌ non interpreta eventi
+❌ non valida contenuto
 RISCHI ATTUALI
 RLS disabilitato
 Default privileges attivi
 API completamente esposta
+Assenza vincoli su update
+
+→ qualsiasi campo modificabile lato client
+
+Assenza storico modifiche
+
+→ updated_at traccia modifica ma NON versiona i dati
+
+COMPORTAMENTO REALE (AGGIORNATO)
+
+Flusso attuale:
+
+input (Retool)
+→ parsing avanzato (client-side)
+→ matching (client-side)
+→ insert / update
+→ events (Supabase)
+→ status NEW
+→ processing manuale
+
+⚠ il database NON è coinvolto nella logica
+
+→ è uno storage layer puro
+
+VERSIONE DOCUMENTO
+
+v1.1 — 2026-04-23
+
+- introduzione updated_at
+- supporto editing eventi
+- aggiornamento query ordering
+- allineamento con runtime reale

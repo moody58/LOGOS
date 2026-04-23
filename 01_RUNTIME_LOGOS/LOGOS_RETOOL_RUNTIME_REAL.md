@@ -2,11 +2,11 @@
 
 
 
-LOGOS\_RETOOL\_RUNTIME\_REAL\_v02
+LOGOS\_RETOOL\_RUNTIME\_REAL\_v04
 
 
 
-DATA: 2026-04-03
+DATA: 2026-04-23
 
 
 
@@ -28,14 +28,12 @@ C (Completezza): 10/10
 
 
 
-Q (Qualità): 9.5/10  
-
-\- eliminati comportamenti obsoleti  
-
-\- parsing e matching coerenti  
-
-\- presenza di ambiguità controllate (matching / hint)
-- presenza di criticità runtime (binding / null access)  
+Q (Qualità): 8/10  
+- runtime reale documentato ma non aggiornato  
+- assenza update flow  
+- assenza gestione edit_mode  
+- non rappresentato il comportamento UI attuale  
+- non documentato il loop reattivo   
 
 
 
@@ -85,9 +83,8 @@ INPUT
 
 → PREVIEW  
 
-→ INSERT  
-
-→ PROCESSING  
+→ INSERT / UPDATE  
+→ PROCESSING    
 
 ✔ allineamento completo preview → insert → DB  
 
@@ -123,7 +120,7 @@ Trigger:
 
 typing\_state.trigger()
 
-
+⚠ possibile re-trigger parsing (loop reattivo)
 
 \------------------------------------------------
 
@@ -247,6 +244,13 @@ AUTO-SELECT:
 
 \- nessuna forzatura
 
+⚠ presenza di più sistemi di matching:
+
+- input_raw (ranking)
+- select (deterministico)
+- preview (detection)
+
+→ non unificati
 
 
 \------------------------------------------------
@@ -358,6 +362,17 @@ Caratteristiche:
 ✔ preview = parsing reale  
 ✔ non modifica input  
 ✔ non blocca  
+
+⚠ contiene logiche di trasformazione  
+⚠ utilizza fonti multiple non sincronizzate  
+⚠ parte del flusso reattivo   
+
+⚠ possibile incoerenza tra:
+
+- parsing
+- matching
+- select
+- hint
 
 ⚠ allineamento preview → insert NON sempre garantito (binding runtime)  
 ⚠ presenza di incoerenze su hint e highlight    
@@ -478,7 +493,7 @@ DECIMALI:
 
 \------------------------------------------------
 
-7\. INSERT EVENT
+7. INSERT / UPDATE EVENT
 
 \------------------------------------------------
 
@@ -506,7 +521,13 @@ Payload:
 
 \- payload: {}
 
+UPDATE FLOW (NUOVO):
 
+- update_event
+- utilizzato in edit_mode
+- modifica eventi esistenti
+- status invariato (NEW)
+- aggiornamento campo updated_at
 
 \---
 
@@ -524,6 +545,11 @@ Caratteristiche:
 ⚠ insert può fallire per errori runtime (binding / null access)  
 ⚠ coerenza preview → DB non sempre garantita    
 
+✔ distinzione runtime:
+
+- edit_mode = false → insert_event  
+- edit_mode = true → update_event  
+
 \------------------------------------------------
 
 8\. RESET \& FEEDBACK
@@ -535,20 +561,14 @@ Caratteristiche:
 Sequenza:
 
 
+1. insert_event / update_event  
+2. handle_event_success.trigger()  
+3. ui_state → feedback  
+4. reset input e select  
+5. ritorno automatico a home (~4–5s)   
 
-1\. reset input\_home  
-
-2\. ui\_state → feedback  
-
-3\. insert\_event  
-
-4\. refresh eventi  
-
-5\. clear select  
-
-6\. ritorno home (\~3.5s)  
-
-
+⚠ gestione UI centralizzata  
+⚠ evitati multi-trigger su ui_state  
 
 \------------------------------------------------
 
@@ -582,7 +602,11 @@ Trigger:
 
 update\_event\_status
 
+EDITING:
 
+- disponibile solo per eventi NEW
+- riuso pipeline input
+- update_event
 
 ------------------------------------------------
 10. QUERY
@@ -599,6 +623,7 @@ GET:
 POST:
 
 - insert_event  
+- update_event
 
 ---  
 
@@ -676,7 +701,16 @@ UI:
 
 \- preview migliorabile
 
+ARCHITETTURA:
 
+- loop reattivo input → parsing → UI  
+- accoppiamento tra layer  
+- preview non pura  
+- matching non unificato  
+
+UI:
+
+- gestione stato fragile (multi-trigger)  
 
 \------------------------------------------------
 
@@ -690,7 +724,7 @@ UI:
 
 ✔ database passivo  
 
-✔ append-only  
+✔ append-only controllato (editing su NEW) 
 
 ✔ suggerire ≠ decidere  
 
@@ -727,3 +761,13 @@ v03 — 2026-04-03
 - supporto unit compatte  
 - fix amount multi-numero  
 - allineamento preview → DB  
+
+v04 — 2026-04-23  
+
+- introduzione update_event  
+- introduzione edit_mode  
+- refactor confirm flow  
+- introduzione handle_event_success  
+- aggiornamento UI state  
+- identificazione loop reattivo  
+- allineamento runtime con sistema reale  

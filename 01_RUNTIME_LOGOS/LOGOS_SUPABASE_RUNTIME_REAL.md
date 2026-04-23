@@ -1,6 +1,17 @@
-# LOGOS_SUPABASE_RUNTIME_REAL_v1_FULL
+# LOGOS_SUPABASE_RUNTIME_REAL_v2
 
 ## DESCRIZIONE
+
+⚠ ATTENZIONE
+
+Questo documento è stato aggiornato per riflettere:
+
+- introduzione update_event
+- parsing avanzato lato Retool
+- editing eventi (edit_mode)
+- introduzione campo updated_at
+
+Versioni precedenti descrivevano un sistema con parsing minimale.
 
 Documento tecnico completo del database reale LOGOS su Supabase.
 
@@ -51,6 +62,7 @@ SUPPORT:
 
 id (uuid, NOT NULL, default: gen_random_uuid())
 created_at (timestamp, NULL, default: now())
+updated_at (timestamp, NULL)
 event_date (date, NULL)
 project_id (uuid, NULL)
 entity_id (uuid, NULL)
@@ -90,8 +102,8 @@ ASSENTI:
 Campi popolati:
 
 * raw_input → sempre valorizzato
-* amount → valorizzato via parsing regex
-* unit → valorizzato solo per "minuti"
+* amount → valorizzato tramite parsing avanzato (proximity-based)
+* unit → valorizzato correttamente (euro / ore / minuti)
 * project_id → valorizzato raramente
 * entity_id → quasi sempre null
 * status → sempre "NEW"
@@ -112,16 +124,48 @@ payload:
 
 ## COMPORTAMENTO REALE
 
-Parsing:
+Parsing (Retool):
 
-* amount → primo numero (`match(/\d+/)`)
-* unit → rilevata solo per "min"
+* amount → selezionato per prossimità alla unità
+* unit → riconosciuta tra:
+
+  - euro (€ / euro / eur)
+  - ore (ora / ore / h)
+  - minuti (min / minuti)
+
+* supporto multi-numero
+* esclusione formato orario (HH:MM)
+* gestione unit compatte (2h, 30min)
 
 Limitazioni:
 
-* euro non riconosciuti
-* orari interpretati come numeri
+* euro correttamente riconosciuti
+* orari (HH:MM) esclusi dal parsing
 * nessuna gestione multi-valore
+
+## EDITING EVENTI (NUOVO)
+
+Il sistema supporta modifica eventi in stato NEW.
+
+Caratteristiche:
+
+* update_event lato Retool
+* modifica:
+
+  - raw_input
+  - amount
+  - unit
+  - event_date
+  - project_id
+  - entity_id
+
+* status NON modificato
+* updated_at aggiornato
+
+Vincoli:
+
+* editing consentito SOLO su eventi NEW
+* eventi WRITTEN / ERROR non modificabili
 
 ---
 
@@ -283,6 +327,12 @@ ASSENTI:
 
 # RPC: update_event_status
 
+⚠ NOTA
+
+update_event_status gestisce SOLO lo stato (WRITTEN / ERROR)
+
+NON gestisce editing contenuto evento
+
 ## PARAMETRI
 
 event_id (text)
@@ -316,9 +366,17 @@ Flusso reale:
 input testo
 → parsing minimo (numero)
 → matching parziale
-→ inserimento evento
+→ insert / update evento
 → status NEW
+
+editing:
+
+→ update_event
+→ modifica evento esistente
+→ status invariato
 → processing manuale
+
+
 
 ---
 
@@ -357,10 +415,26 @@ Il database LOGOS:
 Stato attuale:
 
 * sistema funzionante
-* parsing minimale
-* matching parziale
+* parsing avanzato lato client
+* matching funzionante ma non unificato
 * grande capacità inutilizzata
+* editing eventi disponibile
+* update flow attivo
+
+⚠ il database rimane passivo
+
+⚠ la coerenza dei dati è garantita esclusivamente dal frontend
+
+⚠ modifiche eventi non sono versionate (no storico revisioni)
 
 ---
+
+v2 — 2026-04-23
+
+- aggiornamento parsing (avanzato)
+- introduzione update_event
+- introduzione editing eventi
+- aggiunta updated_at
+- allineamento con runtime reale Retool
 
 # FINE DOCUMENTO

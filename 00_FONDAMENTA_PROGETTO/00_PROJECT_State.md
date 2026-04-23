@@ -1,19 +1,19 @@
-00_PROJECT_State_v05
+00_PROJECT_State_v08
 
-DATA: 2026-04-04
+DATA: 2026-04-23
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-UX REFINEMENT — COMPLETATO
+EVENT EDITING + INPUT SYSTEM STABILIZATION
 
 ------------------------------------------------
 FASE:
 ------------------------------------------------
 
-STEP 4 — UX REFINEMENT (COMPLETATO)
-TRANSIZIONE → ENGINE BASE
+STEP 4 — EVENT EDITING (COMPLETATO FUNZIONALE)
+TRANSIZIONE → STABILIZZAZIONE INPUT (PRE-ENGINE)
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -62,11 +62,12 @@ INPUT
 → PROCESSING  
 → FEEDBACK  
 
-✔ sistema stabile  
+✔ sistema funzionante  
 ✔ utilizzabile in produzione reale  
-✔ comportamento deterministico  
+✔ comportamento quasi deterministico  
 
-⚠ presenza di accoppiamento logico nel layer preview    
+⚠ presenza loop reattivo (input ↔ parsing ↔ UI)
+⚠ accoppiamento input / processing / UI    
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO (COMPLETATO)
@@ -88,6 +89,17 @@ RISULTATO:
 
 ⚠ matching basato su stringhe (no fuzzy)  
 ⚠ hint limitati a logica base
+
+✔ introduzione EVENT EDITING
+
+- edit_mode per distinzione INSERT / UPDATE
+- update_event implementato
+- riuso completo pipeline input per modifica
+
+✔ introduzione updated_at
+
+- tracciamento modifiche evento
+- base per ordinamento dinamico lista
 
 ------------------------------------------------
 AGGIORNAMENTO UX (NUOVO)
@@ -149,15 +161,17 @@ UI STATE
 ui_state:
 
 {
-  view: "home" | "feedback"
+  view: "home" | "feedback" | "events"
 }
 
 ---
 
 FEEDBACK SYSTEM
 
-- non bloccante (~3s)
-- ritorno automatico
+- attivazione tramite handle_event_success
+- delay controllato (~1500–1700ms)
+- ritorno automatico a home
+- reset input post-feedback
 
 ------------------------------------------------
 PARSING SYSTEM (STABILIZZATO)
@@ -435,6 +449,27 @@ Scrittura:
 ✔ nessuna validazione bloccante  
 
 ------------------------------------------------
+UPDATE (NUOVO)
+------------------------------------------------
+
+update_event attivo
+
+Scrittura:
+
+- raw_input
+- amount
+- unit
+- project_id
+- entity_id
+- event_date
+- updated_at
+
+✔ modifica evento senza duplicazione
+✔ riuso pipeline input
+
+⚠ update consentito solo su eventi NEW
+
+------------------------------------------------
 DATABASE
 ------------------------------------------------
 
@@ -451,6 +486,8 @@ CARATTERISTICHE:
 ✔ database passivo  
 ✔ nessuna logica  
 ✔ nessuna validazione  
+✔ presenza campo updated_at
+→ utilizzato per tracking modifiche
 
 ---
 
@@ -476,6 +513,14 @@ Azioni:
 ✔ decisione manuale  
 ✔ nessuna automazione  
 
+✔ supporto EDIT (modifica evento)
+
+FLOW:
+
+NEW → EDIT → NEW
+NEW → WRITTEN
+NEW → ERROR
+
 ------------------------------------------------
 UI ARCHITECTURE
 ------------------------------------------------
@@ -494,6 +539,8 @@ Container:
 ✔ state-driven  
 ✔ nessun routing  
 ✔ logica client-side  
+✔ gestione stato centralizzata via ui_state
+✔ eliminati trigger multipli UI
 
 ------------------------------------------------
 FUNZIONALITÀ IMPLEMENTATE
@@ -516,6 +563,12 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ gestione multi-hint
 ✔ gerarchia visiva feedback
 ✔ controllo attivazione hint (anti-noise) 
+✔ EVENT EDITING (modifica eventi)
+✔ UPDATE FLOW (insert/update separati)
+✔ tracciamento updated_at
+✔ ordinamento eventi per modifica
+✔ centralizzazione UI state
+✔ stabilizzazione feedback flow
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -618,6 +671,25 @@ PROBLEMI REALI IDENTIFICATI
 
 - impossibile distinguere match dominante  
 
+9. LOOP REATTIVO (CRITICO)
+
+- input → parsing → UI → re-trigger
+- instabilità UX
+
+---
+
+10. ACCOPPIAMENTO LAYER
+
+- input non separato da processing
+- preview non read-only puro
+
+---
+
+11. MATCHING NON UNIFICATO
+
+- 3 logiche separate
+- incoerenza tra select / preview / ranking
+
 ------------------------------------------------
 PROBLEMI RISOLTI
 ------------------------------------------------
@@ -642,9 +714,9 @@ PROBLEMI RISOLTI
 STATO LAYER SISTEMA
 ------------------------------------------------
 
-Layer 1 — Input: ~95%  
+Layer 1 — Input: ~80%  
 Layer 2 — Matching: ~75%  
-Layer 3 — View / Preview: ~85%  
+Layer 3 — View / Preview: ~80%  
 Layer HINT SYSTEM: ~90%
 Layer 4 — Data Structure: ~20%  
 Layer 5 — Engine: 0%  
@@ -654,7 +726,7 @@ Layer 6 — Output: 0%
 
 STATO COMPLESSIVO:
 
-~55%
+~60%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -663,22 +735,24 @@ FASE ATTUALE
 ✔ INPUT RELIABILITY — COMPLETATA  
 ✔ MATCHING BASE — COMPLETATO  
 ✔ LABEL QUALITY — COMPLETATO  
+✔ EVENT EDITING — COMPLETATO (FUNZIONALE)
 
 ---
 
 TRANSIZIONE:
 
-→ STEP 4 (UX refinement / ENGINE BASE)
+→ STABILIZZAZIONE INPUT (LOOP ISOLATION)
+→ ENGINE BASE
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Migliorare:
+Stabilizzare:
 
-- suggestion UX  
-- gestione ambiguità  
-- base per normalizzazione futura  
+- eliminazione loop reattivo
+- separazione input / processing / UI
+- unificazione matching  
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -695,9 +769,10 @@ NOTE STRATEGICHE
 
 Il sistema:
 
-✔ è stabile  
+✔ è funzionale    
 ✔ è utilizzabile  
-✔ è estendibile  
+✔ è estendibile 
+⚠ non è ancora stabile architetturalmente 
 
 ---
 
@@ -728,10 +803,10 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. priority match engine  
+1. eliminazione loop reattivo  
 2. unificazione matching  
 3. hint state-driven  
-4. semantic engine  
+4. semantic engine    
 
 ------------------------------------------------
 CHANGELOG
@@ -760,3 +835,15 @@ refinement UX hint
 introduzione multi-hint  
 introduzione gerarchia visiva  
 emersione criticità matching duplicato  
+
+v07 — 2026-04-22  
+introduzione event editing  
+implementazione update_event  
+introduzione updated_at  
+
+v08 — 2026-04-23  
+stabilizzazione UI state  
+fix feedback flow  
+ordinamento eventi per updated_at  
+identificazione loop reattivo  
+allineamento stato sistema reale  

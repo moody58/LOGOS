@@ -1,6 +1,6 @@
-02_LOGOS_Match_Engine_v02
+02_LOGOS_Match_Engine_v03
 
-DATA: 2026-04-03
+DATA: 2026-04-23
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -11,10 +11,10 @@ C (Completezza): 10/10
 - coperti project + entity + hint + auto-select  
 - allineato a runtime reale  
 
-Q (Qualità): 9.5/10  
-- eliminata ambiguità su partial match  
-- definita logica token-based  
-- terminologia coerente  
+Q (Qualità): 7.5/10  
+- logica definita ma non unificata  
+- presenza di più sistemi di matching  
+- incoerenza tra runtime e documentazione   
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -87,15 +87,16 @@ PIPELINE MATCH
 ------------------------------------------------
 
 input_raw  
-→ matching (query runtime)  
-→ calcolo matches  
-→ auto-select (se match = 1)   
+→ sistemi di matching paralleli  
+→ calcolo matches (multipli)  
+→ suggestion / select / preview  
+→ auto-select (solo in select layer)   
 
 ------------------------------------------------
 NORMALIZZAZIONE
 ------------------------------------------------
 
-Gestita implicitamente nel sistema di matching.
+Gestita implicitamente e in modo NON uniforme nei diversi sistemi di matching.
 
 Non esiste un layer esplicito controllabile a livello documentale.
 
@@ -108,6 +109,14 @@ consentire confronto testuale coerente tra input e dataset
 ------------------------------------------------
 PROJECT MATCH (ATTUALE)
 ------------------------------------------------
+
+⚠ esistono più logiche:
+
+- matching deterministico (select)
+- matching ranking (input_raw)
+- matching detected (preview)
+
+→ non unificate
 
 COMPORTAMENTO REALE:
 
@@ -140,6 +149,10 @@ match = 0
 ------------------------------------------------
 ENTITY MATCH (AGGIORNATO — STEP 2)
 ------------------------------------------------
+
+⚠ logica non unificata con project match e preview
+
+→ possibili incoerenze nei risultati
 
 COMPORTAMENTO REALE:
 
@@ -185,6 +198,10 @@ NON auto-select se:
 - ambiguità
 - valore già presente
 
+⚠ auto-select basato solo su uno dei sistemi di matching (select layer)
+
+→ non necessariamente coerente con preview
+
 ------------------------------------------------
 GESTIONE AMBIGUITÀ
 ------------------------------------------------
@@ -206,7 +223,7 @@ evitare errori silenziosi
 HINT SYSTEM
 ------------------------------------------------
 
-Basato su stato di matching.
+Basato su stato derivato (non unificato).
 
 ---
 
@@ -222,6 +239,8 @@ Caratteristiche:
 - non invasivo
 - derivato da stato reale
 - nessuna inferenza
+⚠ utilizzo di detection parallela (preview)
+⚠ non sempre coerente con select
 
 ------------------------------------------------
 CASI NON SUPPORTATI
@@ -243,14 +262,48 @@ LIMITI ATTUALI
 ------------------------------------------------
 
 - nessuna gerarchia entity
-- nessun ranking avanzato
-- nessuna memoria storica
+- nessun ranking avanzato unificato
+- duplicazione logiche matching
+- incoerenza tra select / preview / ranking
+- assenza priority match
 - nessuna disambiguazione automatica
+
+------------------------------------------------
+PROBLEMA STRUTTURALE (CRITICO)
+------------------------------------------------
+
+Attualmente esistono 3 sistemi di matching indipendenti:
+
+1. INPUT_RAW MATCHING (ranking)
+2. SELECT MATCHING (deterministico)
+3. PREVIEW DETECTION (token-based)
+
+---
+
+CONSEGUENZE:
+
+- incoerenza risultati
+- duplicazione logica
+- difficoltà evoluzione engine
+
+---
+
+STATO:
+
+❗ NON RISOLTO
+❗ BLOCCANTE per sviluppo engine
+
+---
+
+TARGET:
+
+unificazione in un unico match engine
 
 ------------------------------------------------
 EVOLUZIONE FUTURA (NON ATTIVA)
 ------------------------------------------------
 
+- unificazione sistemi di matching (priorità assoluta)
 - ranking per frequenza
 - storico selezioni
 - entity hierarchy
@@ -282,3 +335,10 @@ v02 — 2026-04-03
 - eliminazione partial match aggressivo  
 - riduzione falsi positivi  
 - allineamento con runtime reale
+
+v03 — 2026-04-23  
+
+- identificazione sistemi di matching multipli  
+- documentazione incoerenza strutturale  
+- introduzione problema unificazione matching  
+- allineamento con stato reale sistema  

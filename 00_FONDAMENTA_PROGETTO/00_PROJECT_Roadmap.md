@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v01
+# 00_PROJECT_Roadmap_v02
 
-DATA: 2026-04-02
+DATA: 2026-04-23
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -59,44 +59,44 @@ FASE COMPLETATA:
 
 ✔ STEP 1 — INPUT RELIABILITY (STABILIZZATO)  
 ✔ STEP 2 — MATCHING BASE (STABILE)  
-⚠ STEP 3 — LABEL QUALITY (INTEGRATO MA NON ISOLATO — DENTRO PREVIEW)    
+✔ STEP 3 — LABEL QUALITY (COMPLETATO)  
+✔ STEP 4 — EVENT EDITING (COMPLETATO FUNZIONALE)  
+⚠ STEP 3.5 — STRUCTURE STABILIZATION (NON COMPLETATO)      
 
 ---
 
 FASE ATTIVA:
 
-STEP 3.5 — STRUCTURE STABILIZATION (NUOVO)
+STEP 3.5 — STRUCTURE STABILIZATION (RIAPERTO)
 
 Obiettivo:
 
-Rendere stabile il sistema separando le responsabilità
-attualmente accoppiate nella preview
+Risoluzione accoppiamenti strutturali emersi dopo implementazione editing
 
 ---
 
 Interventi:
 
-- isolare logica label dalla preview
-- eliminare duplicazioni (cleaning / label)
-- ridurre accoppiamento tra parsing, label e UI
-- mantenere comportamento invariato lato utente
+- eliminazione loop reattivo input ↔ parsing ↔ UI
+- separazione input / processing / output
+- riduzione accoppiamento preview
+- preparazione base per engine
 
 ---
 
 Vincoli:
 
 ✘ nessuna modifica parsing  
-✘ nessuna modifica matching  
 ✘ nessuna modifica DB  
-✘ nessun cambiamento UX visibile  
+✘ nessuna regressione UX  
 
 ---
 
 Output atteso:
 
-- preview stabile e prevedibile  
-- riduzione regressioni  
-- base solida per UX futura  
+- sistema stabile reattivamente  
+- comportamento deterministico reale  
+- base solida per engine 
 
 ------------------------------------------------
 ROADMAP MASTER
@@ -173,28 +173,28 @@ Output atteso:
 
 ------------------------------------------------
 
-STEP 3.5 — UX REFINEMENT (NUOVO)
+STEP 3.5 — STRUCTURE STABILIZATION (CRITICO)
 
 Obiettivo:
 
-Ridurre attrito e ambiguità senza modificare architettura
+Stabilizzare il sistema eliminando accoppiamenti tra input, parsing e UI
 
 ---
 
 Interventi:
 
-- miglioramento hint
-- gestione ambiguità input
-- controllo attivazione suggerimenti
-- coerenza visuale preview
+- isolamento pipeline input
+- eliminazione loop reattivo
+- separazione preview da logica
+- riduzione duplicazione logiche (matching / detection)
 
 ---
 
 Output atteso:
 
-- UX più chiara
-- meno errori utente
-- maggiore velocità input
+- sistema deterministico reale
+- eliminazione trigger circolari
+- base stabile per engine
 
 ------------------------------------------------
 
@@ -218,6 +218,16 @@ Output atteso:
 
 - miglioramento qualità dati
 - riduzione errori permanenti
+---
+
+STATO:
+
+✔ editing eventi NEW operativo  
+✔ update_event implementato  
+✔ riuso completo pipeline input  
+✔ miglioramento qualità dati  
+
+⚠ dipendente da stabilizzazione input (STEP 3.5)
 
 ------------------------------------------------
 
@@ -313,7 +323,7 @@ CRITERIO DI PASSAGGIO STEP
 Uno step è considerato completato solo se:
 
 ✔ utilizzabile in modo reale  
-✔ stabile  
+✔ stabile (anche reattivamente)    
 ✔ senza blocchi evidenti  
 ✔ validato su uso concreto  
 
@@ -361,19 +371,26 @@ Il sistema deve evolvere per:
 BLOCCO ATTUALE (CRITICO)
 ------------------------------------------------
 
-Il sistema NON può avanzare allo STEP 4 pieno
+Il sistema NON può avanzare allo STEP 5 (DATA STRUCTURE)
 finché non vengono risolti:
 
-- errori runtime (matches null)
-- incoerenze matching entity
-- attivazione non controllata degli hint
-- disallineamenti preview / comportamento insert
+- loop reattivo input ↔ parsing ↔ UI
+- accoppiamento tra layer input / preview
+- duplicazione logiche matching
+- assenza separazione pipeline
 
 Questi elementi NON sono UX.
 
-Sono causati da accoppiamento nel layer preview.
+Sono problemi strutturali.
 
 Rientrano nello STEP 3.5 (STRUCTURE STABILIZATION)
+
+---
+
+STEP 4 (EVENT EDITING) è considerato:
+
+✔ completato funzionalmente  
+⚠ non stabile architetturalmente
 
 ------------------------------------------------
 

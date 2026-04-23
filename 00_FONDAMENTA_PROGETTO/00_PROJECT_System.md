@@ -1,6 +1,6 @@
-# 00_PROJECT_System_v01
+# 00_PROJECT_System_v02
 
-DATA: 2026-04-01
+DATA: 2026-04-23
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -101,8 +101,9 @@ raw_input:
 
 Eventi:
 
-- non vengono modificati
-- evolvono tramite stato
+- append-only per eventi validati
+- modificabili in fase NEW (pre-validazione)
+- evolvono tramite stato dopo validazione
 - mantengono storico
 
 ---
@@ -142,7 +143,8 @@ Caratteristiche:
 
 - input libero
 - nessun vincolo
-- sincronizzazione unidirezionale
+- sincronizzazione unidirezionale (logica)
+⚠ possibile accoppiamento reattivo lato UI
 
 Flow:
 
@@ -150,7 +152,8 @@ input_home → input_raw
 
 Principio:
 
-input_home = source of truth
+input_home = source of truth (UI)
+raw_input = source of truth (persistenza)
 
 ------------------------------------------------
 2 — PARSING LAYER
@@ -171,7 +174,7 @@ Caratteristiche:
 
 - best-effort
 - non bloccante
-- non deterministico
+- deterministico (best-effort)
 
 Limiti:
 
@@ -207,6 +210,8 @@ Limiti:
 - matching debole
 - ambiguità frequente
 - nessuna logica avanzata
+- presenza di più sistemi di matching non unificati
+- incoerenza tra preview, select e ranking
 
 ------------------------------------------------
 4 — UI STATE LAYER
@@ -217,7 +222,7 @@ Gestione stato:
 ui_state:
 
 {
-  view: "home" | "feedback"
+  view: "home" | "feedback" | "events"
 }
 
 Container:
@@ -236,6 +241,8 @@ Caratteristiche:
 - nessun routing
 - show/hide dinamico
 - stato minimale
+- gestione centralizzata tramite orchestratore (handle_event_success)
+- rischio di conflitti se multi-trigger
 
 ------------------------------------------------
 5 — PROCESSING LAYER
@@ -260,8 +267,8 @@ Caratteristiche:
 
 Limiti:
 
-- nessun editing
-- nessun lifecycle avanzato
+- editing disponibile solo su eventi NEW
+- lifecycle limitato (no versioning storico)
 
 ------------------------------------------------
 FLOW COMPLETO SISTEMA
@@ -312,6 +319,16 @@ DATABASE:
 evento salvato con status NEW
 
 ↓
+EDIT (NUOVO):
+
+utente può modificare evento (NEW)
+
+↓
+UPDATE:
+
+update_event
+
+↓
 
 PROCESSING:
 
@@ -360,8 +377,10 @@ STATO ARCHITETTURALE
 ------------------------------------------------
 
 ✔ sistema coerente
-✔ architettura stabile
+✔ architettura coerente
 ✔ flusso end-to-end funzionante
+⚠ instabilità reattiva (input ↔ parsing ↔ UI)
+⚠ accoppiamento tra layer non completamente risolto
 
 ---
 
@@ -387,6 +406,9 @@ LIMITI STRUTTURALI
 - matching non deterministico
 - dati non normalizzati
 - assenza lifecycle completo
+- loop reattivo nel sistema input
+- assenza separazione input / processing / output
+- duplicazione logiche matching
 
 ------------------------------------------------
 DIREZIONE EVOLUTIVA
@@ -394,12 +416,11 @@ DIREZIONE EVOLUTIVA
 
 Ordine corretto sviluppo:
 
-1. input reliability
-2. parsing completo
-3. matching affidabile
-4. data structure
-5. engine
-6. dashboard
+1. stabilizzazione input (loop isolation)
+2. unificazione matching
+3. data structure
+4. engine
+5. dashboard
 
 ------------------------------------------------
 CHANGELOG
@@ -411,3 +432,11 @@ v01 — 2026-04-01
 - Allineamento completo con Retool e Supabase
 - Consolidamento layer funzionali
 - Eliminazione incoerenze tra documenti precedenti
+
+v02 — 2026-04-23
+
+- aggiornamento modello append-only (editing su NEW)
+- introduzione update flow
+- allineamento parsing deterministico
+- aggiornamento UI state
+- introduzione problemi reattivi e accoppiamento layer

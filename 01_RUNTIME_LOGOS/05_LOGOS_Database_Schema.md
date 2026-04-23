@@ -11,10 +11,10 @@ C (Completezza): 10/10
 - campi reali allineati  
 - comportamento runtime incluso  
 
-Q (Qualità): 9.5/10  
-- distinzione chiara tra struttura e uso reale  
-- limiti esplicitati  
-- nessuna ambiguità semantica  
+Q (Qualità): 9/10  
+- struttura corretta ma non aggiornata con update flow  
+- append-only non più assoluto  
+- modifica eventi non documentata    
 
 D (Deployabilità): 10/10  
 - documento utilizzabile come riferimento AS-IS  
@@ -82,9 +82,10 @@ contenitore eventi
 
 Caratteristiche:
 
-- append-only
+- append-only controllato
 - ogni riga = evento
-- nessuna modifica distruttiva
+- modificabile in stato NEW (update_event)
+- nessuna modifica su eventi validati
 
 ---
 
@@ -93,6 +94,8 @@ CAMPI:
 id (uuid, PK)
 
 created_at (timestamp)
+
+updated_at (timestamp, utilizzato per tracking modifiche)
 
 event_date (date)
 
@@ -131,6 +134,9 @@ UTILIZZO REALE:
 ✔ entity_id raramente valorizzato  
 ✔ status sempre NEW in insert  
 ✔ amount coerente anche in presenza di multi-numero
+✔ updated_at valorizzato in caso di modifica  
+✔ eventi NEW modificabili tramite update_event  
+✔ nessuna modifica su WRITTEN / ERROR  
 
 ---
 
@@ -148,6 +154,7 @@ COMPORTAMENTO:
 - nessuna validazione DB
 - nessuna constraint forte
 - inserimento sempre consentito
+- update consentito solo lato applicativo (controllo UI)
 
 ------------------------------------------------
 TABELLA: projects
@@ -277,8 +284,14 @@ Flusso:
 input  
 → parsing (client-side)  
 → matching (client-side)  
-→ insert  
-→ status NEW  
+→ insert / update  
+→ status NEW   
+
+editing:
+
+→ update_event  
+→ modifica dati evento  
+→ status invariato (NEW)
 
 ---
 
@@ -324,6 +337,11 @@ PROBLEMI NOTI
 - sempre vuoto
 - nessuna struttura definita
 
+6. ASSENZA VERSIONING
+
+- modifiche non tracciate storicamente
+- perdita stato precedente evento
+
 ------------------------------------------------
 VINCOLI OPERATIVI
 ------------------------------------------------
@@ -331,6 +349,7 @@ VINCOLI OPERATIVI
 - NON modificare schema attuale
 - NON introdurre vincoli rigidi
 - mantenere flessibilità
+- evitare update su eventi WRITTEN / ERROR
 
 ---
 
@@ -372,6 +391,9 @@ ENGINE SUPPORT:
 OBIETTIVO DATABASE
 ------------------------------------------------
 
+⚠ coerenza garantita dal frontend  
+⚠ rischio incoerenze senza controlli applicativi  
+
 Fornire base dati:
 
 - stabile
@@ -396,3 +418,10 @@ v02 — 2026-04-03
 - allineamento utilizzo reale  
 - distinzione campi attivi/non attivi  
 - integrazione comportamento runtime  
+
+v03 — 2026-04-23  
+
+- introduzione updated_at  
+- introduzione update_event  
+- aggiornamento modello append-only (controllato)  
+- supporto editing eventi NEW  

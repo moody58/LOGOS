@@ -1,6 +1,6 @@
-03_LOGOS_Event_Lifecycle_v02
+03_LOGOS_Event_Lifecycle_v03
 
-DATA: 2026-04-03
+DATA: 2026-04-23
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -11,10 +11,10 @@ C (Completezza): 10/10
 - stati, transizioni e responsabilità coperti  
 - integrazione con altri layer esplicitata  
 
-Q (Qualità): 9.5/10  
-- terminologia coerente  
-- distinzione chiara tra stato attuale e futuro  
-- allineamento con runtime reale  
+Q (Qualità): 8.5/10  
+- lifecycle coerente ma non aggiornato con editing  
+- append-only parzialmente violato (controllato)  
+- stato reale non completamente rappresentato   
 
 D (Deployabilità): 10/10  
 - documento stabile  
@@ -45,20 +45,22 @@ Ogni informazione è registrata come evento.
 
 ---
 
-2. APPEND-ONLY
+2. APPEND-ONLY (CONTROLLATO)
 
 Gli eventi:
 
-- non vengono modificati
-- non vengono sovrascritti
-- mantengono storico completo
+- sono append-only dopo validazione
+- possono essere modificati in stato NEW
+- mantengono storico implicito (raw_input)
 
 ---
 
-3. EVOLUZIONE PER STATO
+3. EVOLUZIONE PER STATO + CORREZIONE PRE-VALIDAZIONE
 
-Un evento evolve cambiando stato,
-non modificando il contenuto.
+Un evento:
+
+- può essere modificato in stato NEW
+- evolve tramite stato dopo validazione
 
 ---
 
@@ -82,6 +84,7 @@ NEW
 - evento appena inserito
 - non validato
 - può contenere errori o ambiguità
+- modificabile (editing consentito)
 
 ---
 
@@ -113,10 +116,19 @@ INSERT
 ↓  
 NEW  
 ↓  
+EDIT (opzionale)  
+↓  
 DECISIONE UTENTE  
 
 → WRITTEN  
 → ERROR  
+
+EDIT:
+
+- modifica evento esistente
+- riuso pipeline input
+- update_event
+- stato invariato (NEW)
 
 ---
 
@@ -128,6 +140,12 @@ ma NON modifica il lifecycle.
 ------------------------------------------------
 TRANSIZIONI CONSENTITE
 ------------------------------------------------
+
+NEW → NEW (EDIT)
+
+- azione: modifica evento
+- eseguita da utente
+- update_event
 
 NEW → WRITTEN
 
@@ -156,7 +174,7 @@ RESPONSABILITÀ UTENTE
 L’utente deve:
 
 - validare eventi
-- correggere tramite scelta (non editing)
+- correggere tramite editing o selezione
 - scartare errori
 
 ---
@@ -165,7 +183,7 @@ Il sistema NON:
 
 - valida automaticamente
 - corregge automaticamente
-- modifica dati salvati
+- modifica eventi validati (WRITTEN / ERROR)
 
 ------------------------------------------------
 QUALITÀ DEL DATO
@@ -213,15 +231,20 @@ matching ≠ validazione
 LIMITI ATTUALI
 ------------------------------------------------
 
-- nessun editing evento
+- editing limitato a eventi NEW
 - nessuna correzione post-insert
 - nessun stato intermedio
 - nessun tracking modifiche
 - nessuna revisione batch
+- assenza versioning modifiche
+- update distruttivo (no storico revisioni)
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE
 ------------------------------------------------
+
+- modifica eventi non tracciata storicamente
+- possibile perdita stato intermedio
 
 NEW contiene eventi:
 
@@ -298,7 +321,8 @@ INTERAZIONE CON ALTRI LAYER
 
 INPUT SYSTEM
 
-→ genera eventi NEW
+→ genera eventi NEW  
+→ consente modifica eventi (editing)
 
 ---
 
@@ -353,7 +377,7 @@ Il lifecycle attuale è:
 
 ✔ semplice  
 ✔ stabile  
-✔ coerente con append-only  
+✔ coerente con append-only controllato 
 
 ---
 
@@ -361,6 +385,8 @@ Ma:
 
 ⚠ non scalabile  
 ⚠ non controlla qualità dato  
+⚠ editing introduce violazione controllata del modello append-only
+⚠ accettata per migliorare qualità dati
 
 ---
 
@@ -384,3 +410,11 @@ v02 — 2026-04-03
 - chiarita separazione matching / lifecycle  
 - esplicitata qualità dato  
 - allineamento con stato reale sistema
+
+v03 — 2026-04-23  
+
+- introduzione editing eventi (NEW → NEW)
+- aggiornamento modello append-only (controllato)
+- introduzione update_event
+- aggiornamento responsabilità utente
+- allineamento lifecycle con sistema reale  

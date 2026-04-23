@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v03
+# 01_LOGOS_Input_System_v04
 
-DATA: 2026-04-04
+DATA: 2026-04-23
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -76,7 +76,17 @@ input_home
 → label generation
 → preview
 → conferma
-→ insert_event
+→ insert_event / update_event
+
+EDIT FLOW (NUOVO):
+
+evento selezionato
+→ load raw_input
+→ input_home
+→ parsing
+→ preview
+→ modifica utente
+→ update_event
 
 ------------------------------------------------
 INPUT_HOME
@@ -124,6 +134,8 @@ Sync:
 
 input_home → input_raw
 
+⚠ possibile re-trigger parsing (loop reattivo)
+
 ------------------------------------------------
 PARSING SYSTEM
 ------------------------------------------------
@@ -136,7 +148,7 @@ estrarre informazioni strutturate dall’input
 
 TIPO:
 
-best-effort
+best-effort deterministico
 
 ---
 
@@ -337,6 +349,8 @@ IMPORTANTE:
 ✔ NON riutilizzabile come modulo indipendente  
 ✔ NON influisce su parsing  
 ✔ NON salvata nel DB  
+⚠ logica accoppiata alla preview
+⚠ non isolata come layer indipendente
 
 ------------------------------------------------
 TYPE DETECTION (BASE)
@@ -418,6 +432,8 @@ REGOLE:
 - parsed (amount, unit, event_date)
 - label runtime
 - stato matching (project/entity)  
+⚠ presenza logica interna (non pura view)
+⚠ dipendenza da più fonti (parsed + detected + state)
 
 ------------------------------------------------
 MATCHING BASE
@@ -434,6 +450,13 @@ STRATEGIA:
 
 - includes  
 - normalizzazione base  
+⚠ presenza di più sistemi di matching:
+
+- input_raw (ranking)
+- select (deterministico)
+- preview (detected)
+
+→ non unificati
 
 ---
 
@@ -493,18 +516,17 @@ utente conferma inserimento
 
 SEQUENZA:
 
-1. reset input_home  
-2. switch UI feedback  
-3. insert_event  
-4. refresh eventi  
-5. reset select  
-6. ritorno home  
+1. insert_event / update_event  
+2. gestione UI tramite handle_event_success  
+3. feedback  
+4. reset input e select  
+5. ritorno automatico a home   
 
 ---
 
 REGOLE:
 
-✔ insert consentito SOLO se:
+✔ conferma consentita SOLO se:
 
 - entity_matches ≤ 1
 - project_matches ≤ 1
@@ -513,9 +535,17 @@ REGOLE:
 
 ✔ input comunque sempre modificabile  
 
+✔ gestione edit_mode:
+
+- true → update_event  
+- false → insert_event  
+
 ------------------------------------------------
 GESTIONE ERRORI
 ------------------------------------------------
+
+✔ errori UI gestiti tramite feedback state
+✔ nessun blocco runtime
 
 TIPI:
 
@@ -539,7 +569,11 @@ LIMITI ATTUALI
 - unità limitate  
 - matching debole  
 - nessun comando input  
-- nessuna normalizzazione avanzata  
+- nessuna normalizzazione avanzata 
+- loop reattivo input → parsing → UI  
+- accoppiamento tra layer  
+- matching non unificato  
+- preview non completamente read-only   
 
 ------------------------------------------------
 OBIETTIVO INPUT SYSTEM
@@ -577,3 +611,13 @@ v03 — 2026-04-04
 - introduzione label system (non persistito)  
 - aggiornamento preview (label + hint)  
 - miglioramento UX suggerimenti  
+
+v04 — 2026-04-23  
+
+- introduzione update_event  
+- introduzione edit_mode  
+- supporto editing eventi  
+- refactor confirm flow (insert/update)  
+- centralizzazione UI feedback  
+- identificazione loop reattivo  
+- allineamento comportamento reale sistema  

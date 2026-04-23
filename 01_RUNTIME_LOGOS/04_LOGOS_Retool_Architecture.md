@@ -1,6 +1,6 @@
-04_LOGOS_Retool_Architecture_v04
+04_LOGOS_Retool_Architecture_v05
 
-DATA: 2026-04-04
+DATA: 2026-04-23
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -12,11 +12,10 @@ C (Completezza): 10/10
 - query e componenti allineati al runtime  
 - label layer integrato  
 
-Q (Qualità): 9.5/10  
-- allineato a comportamento reale aggiornato  
-- distinzione chiara tra layer  
-- eliminati elementi obsoleti  
-- UX migliorata senza regressioni  
+Q (Qualità): 8.5/10  
+- allineato ma non completamente aderente al runtime attuale  
+- presenza logiche accoppiate (preview / parsing / state)  
+- alcune parti non riflettono update flow reale   
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -69,7 +68,7 @@ ui_state
 Struttura:
 
 {
-  view: "home" | "feedback"
+  view: "home" | "feedback" | "events"
 }
 
 ---
@@ -90,6 +89,8 @@ Hidden = !input_home.value
 Principio:
 
 UI = funzione dello stato
+⚠ gestione centralizzata tramite handle_event_success  
+⚠ rischio conflitti in presenza di trigger multipli  
 
 ------------------------------------------------
 CONTAINER HOME
@@ -168,7 +169,8 @@ Caratteristiche:
 
 ✔ preview = rappresentazione dati reali  
 ✔ coerente con payload DB  
-✔ nessuna logica autonoma    
+⚠ contiene logiche di derivazione (label + hint)
+⚠ non è una view completamente pura    
 
 ---
 
@@ -188,6 +190,7 @@ input_home.onChange:
 
 → input_raw.setValue(input_home.value)  
 → typing_state.trigger()
+⚠ possibile re-trigger parsing (loop reattivo)
 
 ---
 
@@ -234,7 +237,9 @@ Caratteristiche:
 
 ✔ nessuna logica token esplicita  
 ✔ nessuna pipeline interna documentabile  
-✔ matching gestito come stato osservabile    
+✔ matching gestito come stato osservabile   
+⚠ presenza di più logiche di matching non unificate
+⚠ possibili incoerenze tra preview e select 
 
 ------------------------------------------------
 TYPE DETECTION (AGGIORNATO)
@@ -286,6 +291,9 @@ Caratteristiche:
 ✔ gestione input multi-numero  
 → selezione amount basata sulla unit più rilevante (ultima occorrenza)  
 
+⚠ accoppiato alla UI tramite trigger reattivi
+⚠ non isolato come layer indipendente
+
 ---
 
 Nota:
@@ -322,7 +330,9 @@ Operazioni:
 Nota:
 
 ✔ non riutilizzabile come modulo  
-✔ parte della logica preview  
+✔ parte della logica preview 
+⚠ logica accoppiata alla preview
+⚠ non riutilizzabile e non isolata 
 
 ------------------------------------------------
 CONFIRM FLOW
@@ -330,12 +340,18 @@ CONFIRM FLOW
 
 Sequenza:
 
-1. reset input_home  
-2. ui_state → feedback  
-3. insert_event.trigger()  
-4. events_new.trigger()  
-5. clear select  
-6. timeout → home  
+1. insert_event / update_event  
+2. gestione UI tramite handle_event_success  
+3. feedback  
+4. reset input e select  
+5. ritorno automatico a home  
+
+EDIT MODE:
+
+- edit_mode = true → update_event  
+- edit_mode = false → insert_event  
+
+✔ distinzione runtime tra insert e update   
 
 ---
 
@@ -385,6 +401,7 @@ EVENTI:
 - events_new  
 - update_written  
 - update_error  
+- update_event  
 
 ---
 
@@ -423,7 +440,7 @@ PATTERN ARCHITETTURALI
 ✔ Adapter Pattern (input_raw)  
 ✔ State-driven UI  
 ✔ Client-side logic  
-✔ Append-only interaction  
+✔ Append-only controllato (editing su NEW)  
 
 ------------------------------------------------
 PROBLEMI NOTI (AGGIORNATI)
@@ -458,18 +475,29 @@ PROBLEMI NOTI (AGGIORNATI)
 
 - nessuna distinzione spesa/incasso  
 
+⚠ ARCHITETTURA:
+
+- loop reattivo input ↔ parsing ↔ UI  
+- accoppiamento layer  
+- preview non completamente read-only  
+- matching non unificato  
+
+⚠ UI:
+
+- gestione stato fragile (multi-trigger)  
+
 ------------------------------------------------
 STATO ARCHITETTURA
 ------------------------------------------------
 
-✔ stabile  
-✔ coerente  
 ✔ funzionante  
+✔ coerente  
+⚠ non completamente stabile (reattività)    
 
 ---
 
 ✔ parsing affidabile  
-✔ matching affidabile  
+⚠ matching funzionale ma non unificato 
 ✔ label pipeline stabile  
 ✔ UX migliorata  
 
@@ -497,3 +525,13 @@ v04 — 2026-04-04
 - integrazione label pipeline  
 - miglioramento UX hint  
 - gestione ambiguità input corto  
+
+v05 — 2026-04-23  
+
+- introduzione update_event  
+- introduzione edit_mode  
+- aggiornamento confirm flow  
+- centralizzazione UI state (handle_event_success)  
+- aggiornamento append-only (controllato)  
+- identificazione loop reattivo  
+- allineamento architettura con runtime reale  

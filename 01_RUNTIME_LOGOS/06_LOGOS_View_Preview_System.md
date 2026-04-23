@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v01
+# 06_LOGOS_View_Preview_System_v02
 
-DATA: 2026-04-07
+DATA: 2026-04-23
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -32,7 +32,9 @@ Collocazione:
 input_raw
 → parse_input
 → preview (sintesi)
-→ confirm (insert)
+→ confirm (insert/update)
+
+⚠ flusso reattivo (non snapshot)
 
 ------------------------------------------------
 RUOLO DELLA PREVIEW
@@ -56,6 +58,8 @@ La preview NON è solo view pura.
 Attualmente è:
 
 👉 un layer ibrido (view + trasformazione)
+⚠ parte attiva del flusso reattivo
+⚠ contribuisce al loop input → parsing → UI
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -76,6 +80,15 @@ Fonti dati utilizzate:
 - entity_state.data.matches
 
 - select1.value
+
+⚠ fonti multiple non sincronizzate
+
+- parsing
+- matching
+- select
+- stato UI
+
+→ possibile incoerenza runtime
 
 ------------------------------------------------
 OUTPUT DELLA PREVIEW
@@ -217,14 +230,27 @@ Caratteristiche:
 ✔ condizionale  
 ✔ visivo  
 
+⚠ non basato su stato unificato
+⚠ utilizza logiche parallele (matching + detection locale)
+⚠ possibile incoerenza con select
+
+⚠ logiche duplicate rispetto ad altri layer
+
+- parsing (parziale)
+- matching (indiretto)
+- label system
+
+→ accoppiamento elevato
+
 ------------------------------------------------
 COMPORTAMENTO MATCHING IN PREVIEW
 ------------------------------------------------
 
-La preview NON esegue matching.
+La preview NON esegue matching diretto.
 
-Ma:
+MA:
 
+⚠ utilizza risultati da sistemi multipli non unificati
 ✔ utilizza risultati di matching
 ✔ evidenzia solo selezioni attive
 ✔ mostra ambiguità tramite hint
@@ -236,6 +262,14 @@ Regole:
 - match = 1 → evidenziazione attiva
 - match > 1 → hint ambiguità
 - match = 0 → nessuna evidenza
+
+⚠ integrazione con:
+
+- matching ranking (input_raw)
+- matching select (deterministico)
+- detection locale preview
+
+→ possibile divergenza risultati
 
 ------------------------------------------------
 RELAZIONE CON PARSING
@@ -254,6 +288,8 @@ MA:
 - ricostruzione label
 
 👉 quindi NON è pura rappresentazione
+⚠ parsing e preview sono accoppiati tramite flusso reattivo
+⚠ modifiche UI possono re-trigger parsing
 
 ------------------------------------------------
 RELAZIONE CON INSERT
@@ -300,6 +336,9 @@ MA:
 ✘ contiene cleaning  
 ✘ contiene costruzione label  
 
+⚠ preview partecipa indirettamente al loop reattivo
+⚠ dipende da aggiornamenti multipli non orchestrati
+
 ------------------------------------------------
 LIMITI STRUTTURALI
 ------------------------------------------------
@@ -334,11 +373,25 @@ LIMITI STRUTTURALI
 
 - difficile isolare origine problemi
 
+6. LOOP REATTIVO
+
+- preview collegata a input e parsing
+- re-trigger indiretti
+- difficoltà isolamento comportamento
+
+---
+
+7. MULTI-SOURCE STATE
+
+- dati provenienti da più query
+- assenza single source of truth
+
 ------------------------------------------------
 PROPRIETÀ DEL SISTEMA
 ------------------------------------------------
 
-✔ deterministico  
+✔ deterministico (localmente)
+⚠ non sempre coerente globalmente 
 ✔ funzionante lato utente  
 ✔ coerente con DB  
 
@@ -354,9 +407,11 @@ MA:
 STATO ATTUALE
 ------------------------------------------------
 
-✔ sistema stabile  
-✔ preview funzionante  
-✔ UX utilizzabile  
+✔ preview funzionante
+✔ UX utilizzabile
+
+⚠ stabilità dipendente da gestione reattiva
+⚠ presenza loop potenziale 
 
 ---
 
@@ -394,3 +449,10 @@ v01 — 2026-04-07
 - descrizione completa preview system
 - evidenziate duplicazioni e limiti
 - allineamento con stato attuale sistema
+
+v02 — 2026-04-23
+
+- identificazione loop reattivo
+- evidenziata dipendenza preview dal flusso reattivo
+- documentata incoerenza tra fonti dati
+- integrazione con stato reale sistema
