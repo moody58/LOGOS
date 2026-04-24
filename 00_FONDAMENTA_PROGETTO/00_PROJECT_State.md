@@ -1,19 +1,21 @@
-00_PROJECT_State_v08
-
-DATA: 2026-04-23
+00_PROJECT_State_v09
+DATA: 2026-04-24
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-EVENT EDITING + INPUT SYSTEM STABILIZATION
+INPUT SYSTEM — PARSE FLOW STABILIZATION COMPLETED
 
 ------------------------------------------------
 FASE:
 ------------------------------------------------
 
-STEP 4 — EVENT EDITING (COMPLETATO FUNZIONALE)
-TRANSIZIONE → STABILIZZAZIONE INPUT (PRE-ENGINE)
+STEP 4 — EVENT EDITING (COMPLETATO)
+
+STEP 4.1 — INPUT SYSTEM STABILIZATION (COMPLETATO)
+
+TRANSIZIONE → ENGINE BASE
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -102,6 +104,52 @@ RISULTATO:
 - base per ordinamento dinamico lista
 
 ------------------------------------------------
+AGGIORNAMENTO CRITICO — INPUT FLOW (NUOVO)
+------------------------------------------------
+
+Refactor completo del sistema di parsing:
+
+✔ introduzione parse_input_controlled (parser unico)
+✔ eliminazione parse_input come source di verità
+✔ introduzione debounce parsing
+✔ eliminazione trigger per-lettera
+✔ separazione input → parsing → UI
+
+---
+
+NUOVA ARCHITETTURA:
+
+input_home
+→ input_raw
+→ trigger_parse_debounced
+→ parse_input_controlled
+→ ui_state.parsed
+→ preview
+
+---
+
+RISULTATI:
+
+✔ eliminato loop reattivo (CRITICO)
+✔ parsing stabile
+✔ UX fluida (desktop + mobile)
+✔ riduzione chiamate inutili
+✔ base pronta per input vocale
+
+---
+
+PRINCIPIO INTRODOTTO:
+
+→ SINGLE SOURCE OF TRUTH = ui_state.parsed
+
+- preview usa ui_state
+- salvataggio usa ui_state
+- edit usa ui_state
+
+✔ eliminata duplicazione parsing
+✔ eliminata divergenza preview / DB
+
+------------------------------------------------
 AGGIORNAMENTO UX (NUOVO)
 ------------------------------------------------
 
@@ -161,17 +209,46 @@ UI STATE
 ui_state:
 
 {
-  view: "home" | "feedback" | "events"
+  view: "home" | "feedback" | "events",
+  parsed: {
+    amount,
+    unit,
+    event_date
+  },
+  status,
+  feedback_text,
+  feedback_project
 }
+
+✔ state centralizzato
+✔ parsing condiviso tra layer
+✔ UI completamente state-driven
 
 ---
 
 FEEDBACK SYSTEM
 
-- attivazione tramite handle_event_success
-- delay controllato (~1500–1700ms)
-- ritorno automatico a home
-- reset input post-feedback
+✔ attivazione immediata (no attesa backend)
+✔ gestione view tramite ui_state
+✔ eliminato doppio trigger UI (no flash)
+
+FLOW:
+
+submit →
+ui_state.view = feedback →
+reset input →
+save async →
+refresh async
+
+---
+
+✔ UX immediata
+✔ nessun flicker
+✔ feedback consistente
+
+---
+
+✔ resume basato su ui_state (non su input)
 
 ------------------------------------------------
 PARSING SYSTEM (STABILIZZATO)
@@ -260,6 +337,33 @@ LIMITI CONSAPEVOLI
 
 - multi-unit non supportato  
 - parsing non semantico  
+
+--- 
+
+ARCHITETTURA PARSING (AGGIORNATA)
+
+✔ parsing NON più inline
+✔ parsing NON duplicato
+✔ parsing NON dipendente da UI
+
+---
+
+TRIGGER:
+
+✔ debounce (non per lettera)
+✔ trigger controllato
+
+---
+
+CONSUMO:
+
+✔ preview → ui_state.parsed
+✔ save → ui_state.parsed
+✔ edit → trigger parse manuale
+
+---
+
+✔ sistema consistente in tutti gli stati (create/edit)
 
 ------------------------------------------------
 LABEL SYSTEM (NUOVO — STABILIZZATO)
@@ -421,6 +525,16 @@ HINT:
 
 ⚠ logica hint NON basata su state unico
 ⚠ presenza duplicazione detected vs state
+
+---
+
+✔ preview ora basata su ui_state.parsed
+✔ nessuna dipendenza diretta dal parser
+✔ eliminato desync preview/edit
+
+✔ comportamento identico:
+- creazione
+- modifica
 
 ------------------------------------------------
 INSERT
@@ -671,10 +785,9 @@ PROBLEMI REALI IDENTIFICATI
 
 - impossibile distinguere match dominante  
 
-9. LOOP REATTIVO (CRITICO)
+9. LOOP REATTIVO (RISOLTO)
 
-- input → parsing → UI → re-trigger
-- instabilità UX
+- eliminato tramite debounce + parser controllato
 
 ---
 
@@ -709,12 +822,19 @@ PROBLEMI RISOLTI
 ✔ hint prematuri → RISOLTI  
 ✔ perdita multi-anomalia → RISOLTA  
 ✔ UX hint migliorata → RISOLTA  
+✔ loop reattivo input → RISOLTO  
+✔ parsing per-lettera → RISOLTO  
+✔ duplicazione parsing → RISOLTA  
+✔ desync edit/preview → RISOLTO  
+✔ errore ui_state.setValue → RISOLTO  
+✔ flash UI feedback → RISOLTO  
+✔ blocco UX su save → RISOLTO  
 
 ------------------------------------------------
 STATO LAYER SISTEMA
 ------------------------------------------------
 
-Layer 1 — Input: ~80%  
+Layer 1 — Input: ~95%    
 Layer 2 — Matching: ~75%  
 Layer 3 — View / Preview: ~80%  
 Layer HINT SYSTEM: ~90%
@@ -726,7 +846,7 @@ Layer 6 — Output: 0%
 
 STATO COMPLESSIVO:
 
-~60%
+~68%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -735,13 +855,13 @@ FASE ATTUALE
 ✔ INPUT RELIABILITY — COMPLETATA  
 ✔ MATCHING BASE — COMPLETATO  
 ✔ LABEL QUALITY — COMPLETATO  
-✔ EVENT EDITING — COMPLETATO (FUNZIONALE)
+✔ EVENT EDITING — COMPLETATO  
+✔ INPUT SYSTEM STABILIZATION — COMPLETATA  
 
 ---
 
 TRANSIZIONE:
 
-→ STABILIZZAZIONE INPUT (LOOP ISOLATION)
 → ENGINE BASE
 
 ------------------------------------------------
@@ -847,3 +967,13 @@ fix feedback flow
 ordinamento eventi per updated_at  
 identificazione loop reattivo  
 allineamento stato sistema reale  
+
+v09 — 2026-04-24  
+introduzione parse_input_controlled  
+introduzione debounce parsing  
+eliminazione loop reattivo  
+unificazione parsing (single source of truth)  
+fix edit mode (trigger parse)  
+stabilizzazione UI state  
+eliminazione flash feedback  
+ottimizzazione UX async save  

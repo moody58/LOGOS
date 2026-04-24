@@ -1,6 +1,5 @@
-# 00_PROJECT_Roadmap_v02
-
-DATA: 2026-04-23
+# 00_PROJECT_Roadmap_v03
+DATA: 2026-04-24
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -60,43 +59,14 @@ FASE COMPLETATA:
 ✔ STEP 1 — INPUT RELIABILITY (STABILIZZATO)  
 ✔ STEP 2 — MATCHING BASE (STABILE)  
 ✔ STEP 3 — LABEL QUALITY (COMPLETATO)  
-✔ STEP 4 — EVENT EDITING (COMPLETATO FUNZIONALE)  
-⚠ STEP 3.5 — STRUCTURE STABILIZATION (NON COMPLETATO)      
+✔ STEP 3.5 — STRUCTURE STABILIZATION (COMPLETATO)  
+✔ STEP 4 — EVENT EDITING (COMPLETATO)  
 
 ---
 
 FASE ATTIVA:
 
-STEP 3.5 — STRUCTURE STABILIZATION (RIAPERTO)
-
-Obiettivo:
-
-Risoluzione accoppiamenti strutturali emersi dopo implementazione editing
-
----
-
-Interventi:
-
-- eliminazione loop reattivo input ↔ parsing ↔ UI
-- separazione input / processing / output
-- riduzione accoppiamento preview
-- preparazione base per engine
-
----
-
-Vincoli:
-
-✘ nessuna modifica parsing  
-✘ nessuna modifica DB  
-✘ nessuna regressione UX  
-
----
-
-Output atteso:
-
-- sistema stabile reattivamente  
-- comportamento deterministico reale  
-- base solida per engine 
+TRANSIZIONE → STEP 6 — ENGINE BASE
 
 ------------------------------------------------
 ROADMAP MASTER
@@ -173,7 +143,7 @@ Output atteso:
 
 ------------------------------------------------
 
-STEP 3.5 — STRUCTURE STABILIZATION (CRITICO)
+STEP 3.5 — STRUCTURE STABILIZATION (COMPLETATO)
 
 Obiettivo:
 
@@ -181,20 +151,27 @@ Stabilizzare il sistema eliminando accoppiamenti tra input, parsing e UI
 
 ---
 
-Interventi:
+Interventi eseguiti:
 
-- isolamento pipeline input
-- eliminazione loop reattivo
-- separazione preview da logica
-- riduzione duplicazione logiche (matching / detection)
+✔ introduzione parser controllato (parse_input_controlled)  
+✔ introduzione debounce parsing  
+✔ eliminazione parsing per-lettera  
+✔ eliminazione loop reattivo  
+✔ centralizzazione parsing in ui_state  
+✔ eliminazione duplicazione parsing  
+✔ allineamento create/edit  
+✔ stabilizzazione UI flow (no flash)  
+✔ separazione input → parsing → preview  
 
 ---
 
-Output atteso:
+Output raggiunto:
 
-- sistema deterministico reale
-- eliminazione trigger circolari
-- base stabile per engine
+✔ sistema deterministico reale  
+✔ parsing stabile  
+✔ UX fluida  
+✔ nessun trigger circolare  
+✔ base pronta per engine  
 
 ------------------------------------------------
 
@@ -226,8 +203,7 @@ STATO:
 ✔ update_event implementato  
 ✔ riuso completo pipeline input  
 ✔ miglioramento qualità dati  
-
-⚠ dipendente da stabilizzazione input (STEP 3.5)
+✔ completamente allineato con input system stabilizzato
 
 ------------------------------------------------
 
@@ -371,26 +347,41 @@ Il sistema deve evolvere per:
 BLOCCO ATTUALE (CRITICO)
 ------------------------------------------------
 
-Il sistema NON può avanzare allo STEP 5 (DATA STRUCTURE)
-finché non vengono risolti:
+Il blocco strutturale principale è stato risolto:
 
-- loop reattivo input ↔ parsing ↔ UI
-- accoppiamento tra layer input / preview
-- duplicazione logiche matching
-- assenza separazione pipeline
-
-Questi elementi NON sono UX.
-
-Sono problemi strutturali.
-
-Rientrano nello STEP 3.5 (STRUCTURE STABILIZATION)
+✔ eliminato loop reattivo  
+✔ separata pipeline input → parsing → UI  
+✔ eliminata duplicazione parsing  
+✔ stabilizzato comportamento reattivo  
 
 ---
 
-STEP 4 (EVENT EDITING) è considerato:
+Il sistema è ora idoneo al passaggio verso ENGINE.
 
-✔ completato funzionalmente  
-⚠ non stabile architetturalmente
+---
+
+⚠ BLOCCO ATTUALE:
+
+Il sistema NON può avanzare allo STEP 7 (OUTPUT)
+finché non viene implementato:
+
+- ENGINE BASE (STEP 6)
+
+---
+
+Motivazione:
+
+senza engine:
+
+- dati non normalizzati  
+- impossibilità di confronto  
+- impossibilità di aggregazione  
+
+---
+
+STEP 5 (DATA STRUCTURE) resta:
+
+⚠ opzionale ma fortemente consigliato prima di ENGINE avanzato
 
 ------------------------------------------------
 
@@ -403,3 +394,13 @@ v01 — 2026-04-02
 - Creazione roadmap separata dalla Regia
 - Definizione sequenza operativa vincolante
 - Allineamento con audit e stato reale sistema
+
+v03 — 2026-04-24
+
+- completamento STEP 3.5 (Structure Stabilization)
+- eliminazione loop reattivo
+- introduzione parsing controllato
+- unificazione parsing (single source of truth)
+- stabilizzazione UX input
+- chiusura dipendenza STEP 4 da stabilizzazione
+- apertura transizione verso ENGINE BASE
