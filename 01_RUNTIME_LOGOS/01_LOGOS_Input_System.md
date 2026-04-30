@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v04
+# 01_LOGOS_Input_System_v05
 
-DATA: 2026-04-23
+DATA: 2026-04-30
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -15,6 +15,8 @@ Il documento è utilizzato per:
 - sviluppo parsing
 - gestione preview
 - controllo qualità input
+- normalizzazione base dei dati parsati
+- allineamento insert/update
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -50,6 +52,16 @@ Il sistema deve essere comprensibile senza formazione.
 
 Il sistema suggerisce, l’utente decide.
 
+---
+
+6. FONTE UNICA PER IL SALVATAGGIO
+
+I dati strutturati salvati nel DB devono derivare da:
+
+ui_state.parsed
+
+e non da parsing duplicato nel bottone di conferma.
+
 ------------------------------------------------
 ARCHITETTURA INPUT
 ------------------------------------------------
@@ -62,31 +74,47 @@ input_home
 input_raw
 → derivato tecnico per parsing
 
+trigger_parse_debounced
+→ debounce del parsing
+
+parse_input_controlled
+→ parser controllato + normalization base
+
+ui_state.parsed
+→ fonte unica per preview/save/edit
+
 label (preview)
 → derivato UI (non persistito)
 
 ---
 
-FLOW:
+FLOW ATTUALE:
 
 input_home
 → sync
 → input_raw
-→ parsing
-→ label generation
+→ trigger_parse_debounced
+→ parse_input_controlled
+→ ui_state.parsed
 → preview
 → conferma
 → insert_event / update_event
+→ events_new refresh
 
-EDIT FLOW (NUOVO):
+---
+
+EDIT FLOW:
 
 evento selezionato
 → load raw_input
 → input_home
-→ parsing
+→ input_raw
+→ parse_input_controlled
+→ ui_state.parsed
 → preview
 → modifica utente
 → update_event
+→ events_new refresh
 
 ------------------------------------------------
 INPUT_HOME
@@ -96,6 +124,7 @@ Ruolo:
 
 - campo principale di input
 - visibile all’utente
+- source of truth lato UX
 
 Caratteristiche:
 
@@ -110,6 +139,7 @@ Regole:
 ✔ sempre modificabile  
 ✔ sempre attivo  
 ✔ non validato  
+✔ non bloccante  
 
 ------------------------------------------------
 INPUT_RAW
@@ -119,6 +149,7 @@ Ruolo:
 
 - adapter tecnico
 - base per parsing
+- valore sincronizzato da input_home
 
 ---
 
@@ -126,7 +157,7 @@ Caratteristiche:
 
 - hidden
 - derivato da input_home
-- non modificato direttamente
+- non modificato direttamente dall’utente
 
 ---
 
@@ -134,113 +165,234 @@ Sync:
 
 input_home → input_raw
 
-⚠ possibile re-trigger parsing (loop reattivo)
+---
+
+Nota:
+
+Il precedente rischio di loop reattivo è stato ridotto tramite:
+
+- trigger_parse_debounced
+- parse_input_controlled
+- ui_state.parsed come fonte unica
 
 ------------------------------------------------
-PARSING SYSTEM
+TRIGGER_PARSE_DEBOUNCED
 ------------------------------------------------
+
+Ruolo:
+
+- evitare parsing per-lettera
+- ridurre chiamate inutili
+- stabilizzare UX
+- mantenere preview reattiva senza loop critici
+
+---
+
+Comportamento:
+
+input_raw aggiornato
+→ attesa debounce
+→ parse_input_controlled.trigger()
+
+---
+
+Esempio runtime:
+
+```js
+if (window.__parseTimer) {
+  clearTimeout(window.__parseTimer);
+}
+
+window.__parseTimer = setTimeout(() => {
+  parse_input_controlled.trigger();
+}, 350);
+UI_STATE.PARSED
+
+Ruolo:
+
+fonte unica dei dati strutturati parsati
+base per preview
+base per insert/update
+base per edit flow
+
+Struttura:
+
+{
+  amount: null,
+  unit: null,
+  event_date: null
+}
+
+ui_state completo:
+
+{
+  view: "home",
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: null,
+  feedback_text: null,
+  feedback_project: null
+}
+
+Regole:
+
+✔ parsed deve sempre esistere
+✔ parsed non deve tornare null
+✔ parsed deve contenere sempre amount/unit/event_date
+✔ button_input_confirm usa parsed senza ricalcolare parsing
+
+PARSING SYSTEM
 
 FUNZIONE:
 
-estrarre informazioni strutturate dall’input
-
----
+estrarre informazioni strutturate dall’input.
 
 TIPO:
 
 best-effort deterministico
 
----
-
 OUTPUT:
 
-- amount
-- unit
-- event_date
+amount
+unit
+event_date
 
 ⚠ label NON è output del parsing
 
----
-
 REGOLE:
 
-✔ parsing non blocca  
-✔ parsing può fallire  
-✔ parsing può essere parziale  
-
----
+✔ parsing non blocca
+✔ parsing può fallire
+✔ parsing può essere parziale
+✔ parsing non interpreta semanticamente l’evento
+✔ parsing non classifica spesa/incasso
+✔ parsing non modifica raw_input
 
 CASI:
 
-✔ parsing corretto  
-✔ parsing incompleto  
-✔ parsing errato  
+✔ parsing corretto
+✔ parsing incompleto
+✔ parsing errato
 
-Tutti validi
+Tutti validi.
 
-------------------------------------------------
-PARSING UNITÀ (CRITICO)
-------------------------------------------------
+L’utente mantiene il controllo finale.
+
+PARSING + NORMALIZATION BASE
+
+Il parser attuale non si limita più a estrarre dati,
+ma applica anche una normalizzazione base controllata.
+
+Questa normalizzazione riguarda solo:
+
+amount
+unit
+event_date preservato
+
+Non riguarda:
+
+label
+project
+entity
+type
+spesa/incasso
+matching
+hint
+dashboard
+KPI
+
+Obiettivo:
+
+rendere coerenti i dati strutturati minimi
+prima di insert/update.
+
+PARSING UNITÀ
 
 Unità supportate:
 
-- euro
-- minuti
-- ore
+euro
+minuti
+ore
 
----
+RICONOSCIMENTO UNITÀ
 
-RICONOSCIMENTO UNITÀ (UPDATED)
+EURO:
 
-euro:
+€
+euro
+eur
+€20
+20€
+€ 20
+20 euro
+20 eur
 
-- €  
-- euro  
-- eur  
-- €20 / 20€ / € 20  
+TEMPO — ORE:
 
----
+ora
+ore
+h
+1 ora
+1ora
+2 ore
+2ore
+2h
+h2
+2 h
+1,5 ore
+1.5 ore
+1,5h
+1.5h
 
-tempo:
+TEMPO — MINUTI:
 
-ore:
-- ora  
-- ore  
-- h  
-- 2h / h2 / 2 h  
+min
+minuto
+minuti
+30 min
+30min
+30 minuti
+30minuti
+min30
 
-minuti:
-- min  
-- minuti  
-- 30min / min30 / 30 min  
+OUTPUT NORMALIZZATO UNIT:
 
----
+€, euro, eur → euro
 
-NORMALIZZAZIONE INPUT (RUNTIME)
+h, ora, ore → ore
+
+min, minuto, minuti → minuti
+NORMALIZZAZIONE INPUT RUNTIME
 
 Applicata solo nel layer parsing.
 
 Operazioni:
 
-- separazione simboli (€)
-- separazione unit compatte (2h → 2 h)
-- pulizia spazi
-
----
+lowercase
+trim
+compressione spazi
+riconoscimento simboli (€)
+riconoscimento unit compatte
+pulizia spazi
+estrazione amount per prossimità alla unità
 
 ESEMPI:
 
-2h30 → 2 h 30  
-€20 → € 20  
-
----
+2h → amount 2, unit ore
+1ora → amount 1, unit ore
+18min → amount 18, unit minuti
+€20 → amount 20, unit euro
+1.500,50 euro → amount 1500.5, unit euro
 
 IMPORTANTE:
 
-✔ non modifica input utente  
-✔ usata solo per parsing interno  
-
----
+✔ non modifica input utente
+✔ non modifica raw_input
+✔ usata solo per parsing interno
+✔ produce dati strutturati per ui_state.parsed
 
 GESTIONE ORARI
 
@@ -248,376 +400,790 @@ Formati:
 
 HH:MM
 
----
-
 COMPORTAMENTO:
 
-✔ NON considerati amount  
-✔ NON considerati unit  
-✔ mantenuti come testo  
-
----
+✔ NON considerati amount
+✔ NON considerati unit
+✔ mantenuti come testo
 
 ESEMPIO:
 
-"15:30 test" → label = "15:30 test"
-
-------------------------------------------------
-ESTRAZIONE AMOUNT (UPDATED — RETROFIT v2)
-------------------------------------------------
+15:30 test
+→ amount null
+→ unit null
+→ raw_input preservato
+ESTRAZIONE AMOUNT
 
 Regola:
 
-estrarre il numero più rilevante rispetto alla unità rilevata
-
----
+estrarre il numero più rilevante rispetto alla unità rilevata.
 
 STRATEGIA:
 
-- identificazione di tutti i numeri presenti
-- identificazione della posizione della unità
-- selezione del numero con distanza minima dalla unità
-
----
+identificazione dei numeri presenti
+identificazione della posizione della unità
+selezione del numero con distanza minima dalla unità
+conversione tramite normalizeNumberValue
+se non esiste unità, amount = null
 
 ESEMPI:
 
-"pizza 20 euro" → 20  
-"2 ore lavoro" → 2  
-"2 ore 30" → 2  
-
----
+pizza 20 euro → 20
+2 ore lavoro → 2
+2 ore 30 → 2
+villa 2 mario → null
+villa 2 mario rossi 3h → 3
 
 FORMATI SUPPORTATI:
 
-- interi  
-- decimali (.,)  
+interi
+decimali con virgola
+decimali con punto
+migliaia italiane con punto
+migliaia italiane + decimali con virgola
 
----
+ESEMPI AMOUNT NORMALIZATION:
 
-NOTE:
+458,78 → 458.78
+1,5 → 1.5
+1.5 → 1.5
+1.500 → 1500
+1.500,50 → 1500.5
+1500 → 1500
 
-✔ supporto multi-numero (selezione per prossimità)  
-✔ parsing deterministico  
-✔ no interpretazione semantica  
+REGOLA CRITICA:
 
----
+I numeri senza unità NON vengono interpretati come amount.
 
-LIMITI:
+Esempi:
 
-- multi-unit NON supportato  
-- numeri secondari trattati come label  
+villa 2 → amount null
+cliente 2026 → amount null
+casa mare 2 → amount null
 
+Motivo:
+
+preservare numeri semantici
+evitare dati quantitativi errati
+ridurre errori permanenti in DB
+NORMALIZE_NUMBER_VALUE
+
+Funzione runtime utilizzata dal parser:
+
+function normalizeNumberValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const raw = String(value).trim();
+
+  // Formato italiano con migliaia + decimali:
+  // 1.500,50 → 1500.50
+  if (/^\d{1,3}(\.\d{3})+,\d+$/.test(raw)) {
+    return Number(raw.replace(/\./g, "").replace(",", "."));
+  }
+
+  // Formato italiano con separatore migliaia:
+  // 1.500 → 1500
+  if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+    return Number(raw.replace(/\./g, ""));
+  }
+
+  // Formato con virgola decimale:
+  // 458,78 → 458.78
+  // 1,5 → 1.5
+  if (/^\d+,\d+$/.test(raw)) {
+    return Number(raw.replace(",", "."));
+  }
+
+  // Formato con punto decimale compatibile:
+  // 1.5 → 1.5
+  if (/^\d+\.\d+$/.test(raw)) {
+    return Number(raw);
+  }
+
+  // Intero semplice:
+  // 1500 → 1500
+  if (/^\d+$/.test(raw)) {
+    return Number(raw);
+  }
+
+  return null;
+}
+SUCCESS HANDLER PARSER
+
+parse_input_controlled aggiorna ui_state.parsed tramite success handler.
+
+Codice finale:
+
+const parsed = parse_input_controlled.data || {};
+
+ui_state.setValue({
+  ...ui_state.value,
+  parsed: {
+    amount: parsed.amount ?? null,
+    unit: parsed.unit ?? null,
+    event_date: parsed.event_date ?? null
+  }
+});
+
+Risultato:
+
+✔ parsed sempre strutturato
+✔ nessun undefined
+✔ nessun parsed null
+✔ save/edit leggono dati coerenti
+
+DATE PARSING
+
+Formati supportati:
+
+6/4/26
+06/04/2026
+4 aprile
+
+Output:
+
+YYYY-MM-DD
+
+Esempi:
+
+6/4/26 → 2026-04-06
+4 aprile → 2026-04-04
+
+Non supportati:
+
+oggi
+domani
+ieri
+prossima settimana
+date relative
+intervalli date
 LABEL (RUNTIME)
 
 FUNZIONE:
 
-generare una descrizione leggibile per la preview
-
----
+generare una descrizione leggibile per la preview.
 
 TIPO:
 
-✔ derivato runtime  
-✔ non persistito  
-✔ non strutturato  
-
----
+✔ derivato runtime
+✔ non persistito
+✔ non strutturato
 
 INPUT:
 
-- raw_input  
-- amount  
-- unit  
-- event_date  
-
----
+raw_input
+amount
+unit
+event_date
 
 COMPORTAMENTO:
 
-- rimozione amount + unit (best-effort)
-- rimozione date già parse
-- normalizzazione spazi
-- preservazione numeri semantici (es: "villa 2")
-
----
+rimozione amount + unit best-effort
+rimozione date già parse
+normalizzazione spazi
+preservazione numeri semantici
+gestione compound token
 
 IMPORTANTE:
 
-✔ NON esiste un label system separato  
-✔ logica applicata direttamente nella preview  
-✔ NON riutilizzabile come modulo indipendente  
-✔ NON influisce su parsing  
-✔ NON salvata nel DB  
+✔ NON esiste ancora un label system separato
+✔ logica applicata direttamente nella preview
+✔ NON riutilizzabile come modulo indipendente
+✔ NON influisce su parsing
+✔ NON salvata nel DB
+
 ⚠ logica accoppiata alla preview
 ⚠ non isolata come layer indipendente
+⚠ non completamente allineata al nuovo Normalization Layer Base
 
-------------------------------------------------
 TYPE DETECTION (BASE)
-------------------------------------------------
 
-Tipi:
+Tipi attuali:
 
-- tempo  
-- economico  
-- evento  
+tempo
+economico
+evento
 
----
-
-Regole:
+Regole attuali:
 
 tempo:
 
-→ presenza unità tempo  
+→ presenza unità tempo
 
 economico:
 
-→ presenza euro  
+→ presenza euro
 
 evento:
 
-→ default  
-
----
+→ default
 
 IMPORTANTE:
 
 economico NON distingue:
 
-- spesa  
-- incasso  
+spesa
+incasso
 
-→ decisione utente  
+→ decisione utente
 
-------------------------------------------------
+NON IMPLEMENTATO:
+
+classificazione da parole chiave
+benzina → spesa
+acconto → incasso
+pagamento → spesa
+ricevuto → incasso
+tipo persistito affidabile
+
+Nota:
+
+La type classification sarà un nodo dedicato futuro.
+
 PREVIEW SYSTEM
-------------------------------------------------
 
 FUNZIONE:
 
-mostrare interpretazione sistema
-
----
+mostrare interpretazione sistema.
 
 STRUTTURA:
 
 MAIN:
 
-amount + unit + label  
-
----
+amount + unit + label
 
 META:
 
-project  
-entity  
-
----
+project
+entity
 
 HINT:
 
-- suggerimenti matching  
-- suggerimenti tipo  
-- hint durata ambigua  
-
----
+suggerimenti matching
+suggerimenti tipo
+hint durata ambigua
 
 REGOLE:
 
-✔ preview non blocca  
-✔ preview può essere errata  
-✔ preview non modifica input  
-✔ preview = rendering di:
+✔ preview non blocca
+✔ preview può essere errata
+✔ preview non modifica input
+✔ preview non modifica DB
+✔ preview legge dati parsati/normalizzati
 
-- parsed (amount, unit, event_date)
-- label runtime
-- stato matching (project/entity)  
-⚠ presenza logica interna (non pura view)
-⚠ dipendenza da più fonti (parsed + detected + state)
+Preview = rendering di:
 
-------------------------------------------------
+parsed (amount, unit, event_date)
+label runtime
+stato matching project/entity
+hint
+
+⚠ presenza logica interna
+⚠ non pura view
+⚠ dipendenza da più fonti
+⚠ formattazione italiana amount non ancora allineata
+⚠ possibile divergenza visuale rispetto al dato interno normalizzato
+
+Esempio:
+
+Dato interno:
+
+amount: 1500.5
+unit: euro
+
+Preview attuale possibile:
+
+1500.5 €
+
+Preview futura desiderata:
+
+1.500,50 €
+
+Questa correzione appartiene a:
+
+PREVIEW ALIGNMENT BASE
+
 MATCHING BASE
-------------------------------------------------
 
 Oggetti:
 
-- projects  
-- entities  
-
----
+projects
+entities
 
 STRATEGIA:
 
-- includes  
-- normalizzazione base  
+includes
+normalizzazione base
+token matching
+auto-select solo se match univoco
+
 ⚠ presenza di più sistemi di matching:
 
-- input_raw (ranking)
-- select (deterministico)
-- preview (detected)
+input_raw / ranking
+select / deterministico
+preview / detected
 
 → non unificati
 
----
-
 OUTPUT:
 
-✔ suggerimento  
+✔ suggerimento
 ✔ auto-select solo se univoco
 
 OUTPUT REALE:
 
-- project_matches
-- entity_matches
+project_matches
+entity_matches
 
 Fonte:
 
-project_state.data?.matches  
-entity_state.data?.matches  
-
----
+project_state.data?.matches
+entity_state.data?.matches
 
 COMPORTAMENTO:
 
-match = 1  
-→ auto-select  
+match = 1
+→ auto-select
 
-match > 1  
-→ ambiguità  
-→ nessuna selezione  
+match > 1
+→ ambiguità
+→ nessuna selezione
 
-match = 0  
+match = 0
 → nessun suggerimento
-
----
 
 REGOLE:
 
-✔ mai forzare selezione  
-✔ mai creare automaticamente  
+✔ mai forzare selezione
+✔ mai creare automaticamente
+✔ utente in controllo
 
----
+UX:
 
-UX (STEP 3):
+hint solo se input sufficiente
+oppure input corto ma ambiguo
+riduzione suggerimenti ridondanti
 
-- hint solo se input ≥5 caratteri  
-- oppure input corto ma ambiguo  
-- riduzione suggerimenti ridondanti  
+NON RISOLTO:
 
-------------------------------------------------
+priority match
+matching unificato
+entity hierarchy
+deduplicazione entità
+ranking affidabile
 CONFIRMA EVENTO
-------------------------------------------------
 
 AZIONE:
 
-utente conferma inserimento
+utente conferma inserimento o modifica.
 
----
+SEQUENZA ATTUALE:
 
-SEQUENZA:
-
-1. insert_event / update_event  
-2. gestione UI tramite handle_event_success  
-3. feedback  
-4. reset input e select  
-5. ritorno automatico a home   
-
----
+lettura ui_state.parsed
+costruzione payload
+feedback immediato
+reset input/select
+insert_event / update_event
+await savePromise
+await events_new.trigger()
+reset edit_mode se necessario
 
 REGOLE:
 
 ✔ conferma consentita SOLO se:
 
-- entity_matches ≤ 1
-- project_matches ≤ 1
+entity_matches ≤ 1
+project_matches ≤ 1
 
 ✔ bloccato in caso di ambiguità
 
-✔ input comunque sempre modificabile  
+✔ input comunque sempre modificabile
 
 ✔ gestione edit_mode:
 
-- true → update_event  
-- false → insert_event  
+true → update_event
+false → insert_event
 
-------------------------------------------------
+Il bottone NON ricalcola più parsing.
+
+Fonte dati strutturata:
+
+const parsed = ui_state.value?.parsed || {
+  amount: null,
+  unit: null,
+  event_date: null
+};
+
+Payload:
+
+const payload = {
+  raw_input: input_raw.value,
+  amount: parsed.amount,
+  unit: parsed.unit,
+  event_date: parsed.event_date,
+  project_id: select_project.value || null,
+  entity_id: select_entity.value || null
+};
+BUTTON_INPUT_CONFIRM — FLOW FINALE
+
+Codice logico finale:
+
+// --- INSERT / UPDATE SWITCH ---
+const parsed = ui_state.value?.parsed || {
+  amount: null,
+  unit: null,
+  event_date: null
+};
+
+const payload = {
+  raw_input: input_raw.value,
+  amount: parsed.amount,
+  unit: parsed.unit,
+  event_date: parsed.event_date,
+  project_id: select_project.value || null,
+  entity_id: select_entity.value || null
+};
+
+const feedbackText = input_raw.value;
+const feedbackProject = select_project.selectedItem?.name;
+
+// RESET UI SUBITO
+ui_state.setValue({
+  ...ui_state.value,
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "idle",
+  view: "feedback",
+  feedback_text: feedbackText,
+  feedback_project: feedbackProject
+});
+
+input_home.setValue("");
+input_raw.setValue("");
+
+select_project.clearValue();
+select_entity.clearValue();
+
+trigger_parse_debounced.cancel?.();
+
+const wasEditMode = edit_mode.data;
+
+const savePromise = wasEditMode
+  ? update_event.trigger({ additionalScope: payload })
+  : insert_event.trigger({ additionalScope: payload });
+
+await savePromise;
+
+await events_new.trigger();
+
+if (wasEditMode) {
+  edit_mode.trigger({
+    additionalScope: { value: false }
+  });
+}
+
+Risultato:
+
+✔ parsing duplicato rimosso
+✔ insert/update usano ui_state.parsed
+✔ feedback immediato
+✔ lista eventi aggiornata dopo save reale
+✔ update visibile senza refresh pagina
+
+INSERT FLOW
+
+Trigger:
+
+insert_event
+
+Payload:
+
+raw_input
+amount
+unit
+event_date
+project_id
+entity_id
+status: NEW
+updated_at
+payload: {}
+
+Caratteristiche:
+
+✔ insert consentito se non ci sono ambiguità bloccanti
+✔ nessuna validazione DB
+✔ nessuna label persistita
+✔ amount coerente con ui_state.parsed
+✔ unit coerente con ui_state.parsed
+✔ raw_input preservato
+
+Test validato:
+
+1.500,50 euro test engine
+
+DB:
+
+amount: 1500.5
+unit: euro
+status: NEW
+UPDATE FLOW
+
+Trigger:
+
+update_event
+
+Utilizzato quando:
+
+edit_mode = true
+
+Payload:
+
+raw_input
+amount
+unit
+event_date
+project_id
+entity_id
+updated_at
+
+Caratteristiche:
+
+✔ modifica eventi NEW
+✔ status invariato
+✔ dati aggiornati correttamente in DB
+✔ lista eventi aggiornata dopo salvataggio completato
+
+Problema risolto:
+
+Prima:
+
+events_new veniva aggiornato prima del completamento update_event.
+
+Risultato:
+
+DB corretto
+lista momentaneamente vecchia
+fix visibile solo dopo refresh pagina
+
+Dopo:
+
+await savePromise
+→ await events_new.trigger()
+
+Risultato:
+
+✔ lista aggiornata subito
+✔ nessun refresh pagina necessario
+
 GESTIONE ERRORI
-------------------------------------------------
 
 ✔ errori UI gestiti tramite feedback state
 ✔ nessun blocco runtime
+✔ parsing non blocca
+✔ input resta modificabile
 
 TIPI:
 
-- parsing error  
-- match error  
-- input ambiguo  
-
----
+parsing error
+match error
+input ambiguo
+save error
+update error
 
 COMPORTAMENTO:
 
-✔ NON bloccare  
-✔ NON interrompere  
-✔ mostrare feedback implicito  
+✔ NON bloccare input
+✔ NON interrompere UX inutilmente
+✔ mostrare feedback implicito o toaster Retool
+✔ preservare possibilità di correzione
 
-------------------------------------------------
+TEST VALIDATI
+
+PARSER / PREVIEW:
+
+18min test                  → 18 / minuti
+18 minuti test              → 18 / minuti
+1ora lavoro                 → 1 / ore
+1 ora lavoro                → 1 / ore
+20€ materiale               → 20 / euro
+villa 2 mario               → null / null
+458,78 euro mangime         → 458.78 / euro
+1.500 euro materiale        → 1500 / euro
+1.500,50 euro materiale     → 1500.5 / euro
+1.5 ore sopralluogo         → 1.5 / ore
+1,5 ore sopralluogo         → 1.5 / ore
+2 ore sopralluogo villa 2   → 2 / ore
+
+INSERT:
+
+1.500,50 euro test engine
+→ amount 1500.5
+→ unit euro
+→ status NEW
+
+INSERT DOPO RIMOZIONE PARSING LEGACY:
+
+1.500,50 euro test engine 2
+→ amount 1500.5
+→ unit euro
+→ status NEW
+
+UPDATE:
+
+1,5 ore test engine update
+→ amount 1.5
+→ unit ore
+→ status NEW
+
+UPDATE LISTA:
+
+update_event
+→ await save
+→ events_new refresh
+→ lista aggiornata subito
 LIMITI ATTUALI
-------------------------------------------------
 
-- parsing incompleto  
-- unità limitate  
-- matching debole  
-- nessun comando input  
-- nessuna normalizzazione avanzata 
-- loop reattivo input → parsing → UI  
-- accoppiamento tra layer  
-- matching non unificato  
-- preview non completamente read-only   
+INPUT / PARSING:
 
-------------------------------------------------
+multi-unit parsing non supportato
+1 ora e 15 minuti non normalizzato
+2h30 non normalizzato
+2 ore 30 non convertito
+giorni non supportati
+settimane non supportate
+date relative non supportate
+parsing semantico non implementato
+
+NORMALIZATION:
+
+solo amount/unit base
+nessuna unità canonica durata
+nessuna conversione tempo
+nessuna retro-normalizzazione dati storici
+
+TYPE:
+
+economico non distingue spesa/incasso
+type non usato in modo affidabile
+parole chiave non implementate
+
+MATCHING:
+
+matching debole
+matching non unificato
+più logiche parallele
+no priority match
+no gerarchia entity
+
+PREVIEW:
+
+non completamente read-only
+formattazione italiana non ancora allineata
+contiene ancora logica label/hint
+non è una view pura
+
+ARCHITETTURA:
+
+alcuni layer ancora accoppiati
+preview e matching ancora distribuiti
+input system stabilizzato ma non completamente separato da tutti i layer
 OBIETTIVO INPUT SYSTEM
-------------------------------------------------
 
 Rendere l’input:
 
-- veloce  
-- comprensibile  
-- sufficientemente affidabile  
-
----
+veloce
+comprensibile
+sufficientemente affidabile
+non bloccante
+coerente nel salvataggio
+progressivamente normalizzato
 
 NON:
 
-- perfetto  
-- completamente automatico  
+perfetto
+completamente automatico
+semantico avanzato
+decisionale
+orientato a KPI prima della qualità dati
+NEXT STEP CONSIGLIATI
+PREVIEW ALIGNMENT BASE
 
-------------------------------------------------
+Obiettivo:
+
+formattazione italiana amount
+visualizzazione coerente con ui_state.parsed
+riduzione divergenza sintesi/parser
+nessuna modifica DB
+nessuna semantica nuova
+ENGINE BASE — DURATION NORMALIZATION
+
+Obiettivo:
+
+1 ora e 15 minuti
+2h30
+2 ore 30
+90 minuti
+eventuale gestione giorni
+ENGINE BASE — TYPE CLASSIFICATION BASE
+
+Obiettivo:
+
+evento / tempo / economico
+eventuale spesa/incasso
+parole chiave controllate
+mantenimento controllo utente
+MATCH ENGINE UNIFICATION
+
+Obiettivo:
+
+eliminazione logiche parallele
+priority match
+hint state-driven
+select / preview / matching coerenti
 CHANGELOG
-------------------------------------------------
 
-v01 — 2026-04-01  
+v01 — 2026-04-01
 
-- Definizione completa sistema input  
+Definizione completa sistema input
 
-v02 — 2026-04-02  
+v02 — 2026-04-02
 
-- Consolidamento parsing, preview, matching  
-- Allineamento con implementazione Retool  
+Consolidamento parsing, preview, matching
+Allineamento con implementazione Retool
 
-v03 — 2026-04-04  
+v03 — 2026-04-04
 
-- introduzione separazione parsing / label  
-- introduzione label system (non persistito)  
-- aggiornamento preview (label + hint)  
-- miglioramento UX suggerimenti  
+introduzione separazione parsing / label
+introduzione label system (non persistito)
+aggiornamento preview (label + hint)
+miglioramento UX suggerimenti
 
-v04 — 2026-04-23  
+v04 — 2026-04-23
 
-- introduzione update_event  
-- introduzione edit_mode  
-- supporto editing eventi  
-- refactor confirm flow (insert/update)  
-- centralizzazione UI feedback  
-- identificazione loop reattivo  
-- allineamento comportamento reale sistema  
+introduzione update_event
+introduzione edit_mode
+supporto editing eventi
+refactor confirm flow (insert/update)
+centralizzazione UI feedback
+identificazione loop reattivo
+allineamento comportamento reale sistema
+
+v05 — 2026-04-30
+
+completamento Normalization Layer Base
+stabilizzazione ui_state.parsed
+introduzione normalization amount formato italiano
+introduzione normalization unit base
+supporto unità compatte testuali
+rimozione amount per numeri senza unità
+eliminazione parsing legacy da button_input_confirm
+allineamento insert/update a ui_state.parsed
+validazione insert con dati normalizzati
+validazione update con dati normalizzati
+fix refresh lista dopo update
+esplicitazione limiti: multi-unit, duration normalization, type classification
