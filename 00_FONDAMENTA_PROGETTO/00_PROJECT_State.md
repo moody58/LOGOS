@@ -1,4 +1,4 @@
-# 00_PROJECT_State_v11
+# 00_PROJECT_State_v12
 
 DATA: 2026-04-30
 
@@ -6,7 +6,7 @@ DATA: 2026-04-30
 NODO ATTIVO:
 ------------------------------------------------
 
-PREVIEW ALIGNMENT BASE — COMPLETATO
+ENGINE BASE — DURATION NORMALIZATION — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -20,7 +20,9 @@ STEP 6.1 — ENGINE BASE / NORMALIZATION LAYER BASE (COMPLETATO)
 
 PREVIEW ALIGNMENT BASE (COMPLETATO)
 
-TRANSIZIONE → STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
+STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)
+
+TRANSIZIONE → STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -33,13 +35,15 @@ C (Completezza): 10/10
 - normalizzazione base documentata  
 - insert/update flow aggiornato  
 - preview alignment documentato  
-- limiti duration/type/matching esplicitati  
+- duration normalization documentata  
+- limiti type/matching/output esplicitati    
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
 - distinzione chiara parsing / matching / label / normalization / preview  
 - UX migliorata senza regressioni  
 - sintesi allineata ai dati normalizzati  
+- durate certe rese confrontabili tramite minuti canonici  
 - debiti residui esplicitati  
 
 D (Deployabilità): 10/10  
@@ -47,7 +51,8 @@ D (Deployabilità): 10/10
 - stato completamente ricostruibile  
 - nessuna dipendenza mancante  
 - codice runtime principale documentato nei checkpoint  
-- nodo Preview Alignment Base completato e validato runtime    
+- nodo Preview Alignment Base completato e validato runtime  
+- nodo Duration Normalization completato e validato runtime       
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -83,6 +88,8 @@ INPUT
 ✔ comportamento quasi deterministico  
 ✔ parsing base stabilizzato  
 ✔ normalizzazione amount/unit base implementata  
+✔ duration normalization base implementata  
+✔ durate certe ore/minuti normalizzate in minuti  
 ✔ preview allineata visivamente a ui_state.parsed  
 ✔ insert/update verificati su DB reale  
 ✔ refresh lista eventi corretto dopo save/update  
@@ -92,19 +99,20 @@ INPUT
 ⚠ matching non unificato  
 ⚠ hint non completamente state-driven  
 ⚠ type classification ancora limitata  
-⚠ duration normalization non implementata    
+⚠ giorni/settimane non convertiti automaticamente     
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su cinque layer fondamentali:
+Il sistema è stabilizzato su sei layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
 3. LABEL QUALITY  
 4. ENGINE BASE — NORMALIZATION LAYER BASE  
-5. PREVIEW ALIGNMENT BASE    
+5. PREVIEW ALIGNMENT BASE  
+6. ENGINE BASE — DURATION NORMALIZATION      
 
 ---
 
@@ -117,13 +125,21 @@ RISULTATO:
 ✔ unit visualizzate in modo coerente  
 ✔ label cleaning migliorato sui casi normalizzati  
 ✔ date separate correttamente nella sintesi  
-✔ highlight preview non interferisce più con unità tecniche  
+✔ highlight preview non interferisce più con unità tecniche 
+✔ durate certe ore/minuti normalizzate in minuti  
+✔ 1 ora e 15 minuti supportato  
+✔ 2h30 supportato  
+✔ 2 ore 30 supportato  
+✔ 1,5 ore convertito in minuti  
+✔ preview durata mostra forma umana + valore normalizzato  
+✔ giorni/settimane segnalati come durata ambigua   
 
 ⚠ matching basato su stringhe (no fuzzy)  
 ⚠ hint limitati a logica base  
 ⚠ preview contiene ancora logiche proprie  
 ⚠ preview non è ancora view pura  
-⚠ normalizzazione durata avanzata non implementata    
+⚠ giorni/settimane non convertiti automaticamente  
+⚠ forme colloquiali durata non implementate    
 
 ✔ introduzione EVENT EDITING
 
@@ -155,6 +171,24 @@ RISULTATO:
 - date separate dalla descrizione anche senza amount
 - token tecnici esclusi dall'highlight locale
 - nessuna modifica a parser, DB, matching o save flow
+
+✔ completamento ENGINE BASE — DURATION NORMALIZATION
+
+- durata canonica interna definita in minuti
+- amount tempo salvato come totale minuti
+- unit tempo salvata come "minuti"
+- raw_input preservato come testo originario
+- conversione ore → minuti implementata
+- conversione ore + minuti implementata
+- conversione h compatte implementata
+- conversione ore decimali implementata
+- giorni/settimane riconosciuti come ambigui ma non convertiti
+- hint preview per valore normalizzato
+- hint preview per durata ambigua
+- nessuna modifica DB
+- nessuna modifica save flow
+- nessuna modifica matching
+- nessuna type classification
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO — INPUT FLOW
@@ -248,17 +282,22 @@ AMBITO IMPLEMENTATO:
 
 ---
 
-AMBITO NON IMPLEMENTATO:
+AMBITO ORA EVOLUTO NEL NODO SUCCESSIVO:
 
-✘ conversione multi-unità  
-✘ 1 ora e 15 minuti → durata normalizzata  
-✘ 2h30 → durata normalizzata  
-✘ giorni / settimane  
+✔ conversione ore/minuti implementata in Duration Normalization  
+✔ 1 ora e 15 minuti → 75 minuti  
+✔ 2h30 → 150 minuti  
+✔ 2 ore 30 → 150 minuti  
+✔ 1,5 ore → 90 minuti  
+
+AMBITO ANCORA NON IMPLEMENTATO:
+
+✘ conversione automatica giorni / settimane  
+✘ giornata lavorativa  
+✘ mezza giornata  
+✘ parole numeriche tipo “due ore”  
+✘ forme colloquiali tipo “un paio d’ore”  
 ✘ spesa / incasso  
-✘ type classification da parole chiave  
-✘ normalizzazione project/entity  
-✘ matching engine unificato  
-✘ dashboard / KPI  
 
 ------------------------------------------------
 NORMALIZATION RULES — BASE
@@ -287,10 +326,13 @@ TEMPO:
 - minuto
 - minuti
 
-Output normalizzato:
+Output normalizzato dopo Duration Normalization:
 
-- ore
 - minuti
+
+Regola:
+
+tutte le durate certe espresse in ore/minuti vengono convertite in minuti.
 
 Formati supportati:
 
@@ -309,6 +351,24 @@ Formati supportati:
 - 1.5 ore
 - 1,5h
 - 1.5h
+
+Conversione canonica:
+
+1 ora → 60 minuti  
+1ora → 60 minuti  
+2 ore → 120 minuti  
+2h → 120 minuti  
+h2 → 120 minuti  
+18 min → 18 minuti  
+18min → 18 minuti  
+30 minuti → 30 minuti  
+min30 → 30 minuti  
+1,5 ore → 90 minuti  
+1.5 ore → 90 minuti  
+1 ora e 15 minuti → 75 minuti  
+2h30 → 150 minuti  
+2 ore 30 → 150 minuti  
+2 ore e 30 minuti → 150 minuti  
 
 ---
 
@@ -461,10 +521,11 @@ unit euro
 
 AMBITO NON IMPLEMENTATO:
 
-✘ duration normalization  
-✘ 1 ora e 15 minuti  
-✘ 2h30  
-✘ giorni / settimane  
+✔ duration normalization implementata nel nodo successivo  
+✔ 1 ora e 15 minuti supportato  
+✔ 2h30 supportato  
+✔ 2 ore 30 supportato  
+✘ giorni / settimane non convertiti automaticamente   
 ✘ type classification  
 ✘ spesa / incasso  
 ✘ matching unificato  
@@ -495,6 +556,9 @@ RISULTATO:
 ✔ sintesi più leggibile  
 ✔ dato visuale coerente con dato normalizzato  
 ✔ ridotta divergenza parser / preview  
+✔ durata visualizzata in forma umana quando internamente normalizzata  
+✔ hint “Normalizzato: X minuti” introdotto  
+✔ hint durata ambigua per giorni/settimane introdotto  
 
 ⚠ hint ancora scollegati da state unificato  
 ⚠ duplicazione logica detection  
@@ -519,10 +583,11 @@ NORMALIZATION BASE
 - incorporata attualmente in parse_input_controlled
 - normalizza amount
 - normalizza unit
+- normalizza durate certe in minuti
 - preserva event_date
 - non modifica raw_input
 - non modifica DB schema
-- non interpreta semanticamente l’evento
+- non converte automaticamente giorni/settimane
 
 ---
 
@@ -639,6 +704,12 @@ formati:
 
 ✔ supporto unit compatte senza spazi
 ✔ supporto forme testuali compatte
+✔ conversione canonica ore/minuti in minuti
+✔ supporto durate composte
+✔ supporto 1 ora e 15 minuti
+✔ supporto 2h30
+✔ supporto 2 ore 30
+✔ supporto ore decimali convertite in minuti
 
 ---
 
@@ -711,9 +782,11 @@ LABEL CLEANING
 
 LIMITI CONSAPEVOLI
 
-- multi-unit non supportato
+- giorni/settimane non convertiti automaticamente
+- giornata/mezza giornata non normalizzate
+- parole numeriche tipo “due ore” non supportate
+- forme colloquiali tipo “un paio d’ore” non supportate
 - parsing non semantico
-- giorni non supportati
 - type classification non consolidata
 
 ---
@@ -937,6 +1010,19 @@ Esempi validati:
 
 2 ore sopralluogo villa 2
 → 2 ore • sopralluogo villa 2
+→ Normalizzato: 120 minuti
+
+1 ora e 15 minuti sopralluogo
+→ 1 ora 15 minuti • sopralluogo
+→ Normalizzato: 75 minuti
+
+2h30 rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
+
+2 giorni rendering
+→ 2 giorni rendering
+→ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
 
 ---
 
@@ -1149,6 +1235,16 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ bug "minuti" → "uti" risolto  
 ✔ date separate correttamente in sintesi  
 ✔ highlight unit-safe    
+✔ duration normalization base completata  
+✔ durate certe convertite in minuti  
+✔ unità canonica tempo = minuti  
+✔ 1 ora e 15 minuti supportato  
+✔ 2h30 supportato  
+✔ 2 ore 30 supportato  
+✔ 1,5 ore convertito in 90 minuti  
+✔ preview durata in forma umana  
+✔ hint normalizzazione durata  
+✔ hint durata ambigua per giorni/settimane    
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -1156,20 +1252,22 @@ FUNZIONALITÀ NON IMPLEMENTATE
 
 INPUT
 
-- multi-unit parsing
 - parsing semantico
-- giorni / settimane
+- giorni / settimane come conversione automatica
+- parole numeriche tipo “due ore”
+- forme colloquiali tipo “un paio d’ore”
 - date relative
 
 ---
 
 NORMALIZATION
 
-- conversione durata
-- unità canonica tempo
-- 1 ora e 15 minuti
-- 2h30
-- 2 giorni rendering
+- conversione automatica giorni/settimane
+- giornata lavorativa
+- mezza giornata
+- 2 giorni rendering come minuti automatici
+- payload duration
+- campo duration_minutes dedicato
 
 ---
 
@@ -1220,7 +1318,8 @@ PROBLEMI REALI IDENTIFICATI
 1. DATA PARZIALMENTE NORMALIZZATI
 
 - amount/unit base ora normalizzati
-- durata avanzata non normalizzata
+- durate certe ore/minuti ora normalizzate in minuti
+- giorni/settimane non convertiti automaticamente
 - dati storici non retro-normalizzati
 
 ---
@@ -1252,7 +1351,8 @@ PROBLEMI REALI IDENTIFICATI
 
 - Normalization Layer Base completato
 - engine semantico non implementato
-- duration normalization non implementata
+- duration normalization base implementata
+- duration avanzata giorni/settimane non implementata
 - type classification non implementata
 
 ---
@@ -1333,7 +1433,15 @@ PROBLEMI RISOLTI
 ✔ duplicazione amount/unit nella label → RIDOTTA  
 ✔ separatore data/label → RISOLTO  
 ✔ highlight improprio su unità → RISOLTO  
-✔ preview alignment base → COMPLETATO   
+✔ preview alignment base → COMPLETATO  
+✔ duration normalization base → COMPLETATO  
+✔ durate ore/minuti non confrontabili → RISOLTE  
+✔ 1 ora e 15 minuti non normalizzato → RISOLTO  
+✔ 2h30 non normalizzato → RISOLTO  
+✔ 2 ore 30 non normalizzato → RISOLTO  
+✔ ore decimali non convertite in minuti → RISOLTO  
+✔ preview durata tecnica poco leggibile → RISOLTA  
+✔ giorni/settimane silenziosi → RIDOTTI tramite hint ambiguità   
 
 ------------------------------------------------
 STATO LAYER SISTEMA
@@ -1344,14 +1452,14 @@ Layer 2 — Matching: ~75%
 Layer 3 — View / Preview: ~88%  
 Layer HINT SYSTEM: ~90%  
 Layer 4 — Data Structure: ~20%  
-Layer 5 — Engine: ~18%  
+Layer 5 — Engine: ~28%  
 Layer 6 — Output: 0%  
 
 ---
 
 STATO COMPLESSIVO:
 
-~72%
+~75%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -1364,12 +1472,13 @@ FASE ATTUALE
 ✔ INPUT SYSTEM STABILIZATION — COMPLETATA  
 ✔ ENGINE BASE — NORMALIZATION LAYER BASE — COMPLETATO  
 ✔ PREVIEW ALIGNMENT BASE — COMPLETATO  
+✔ ENGINE BASE — DURATION NORMALIZATION — COMPLETATO  
 
 ---
 
 TRANSIZIONE:
 
-→ STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
+→ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
@@ -1379,18 +1488,17 @@ Stabilizzare il passaggio successivo dell'Engine Base senza introdurre nuova com
 
 Priorità immediata consigliata:
 
-ENGINE BASE — DURATION NORMALIZATION
+ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Obiettivo:
 
-- definire regole minime per durate complesse
-- valutare casi 1 ora e 15 minuti
-- valutare casi 2h30 / 2 ore 30
-- chiarire unità canonica durata
-- non modificare DB salvo decisione dedicata
-- non introdurre type classification
+- distinguere in modo controllato evento / tempo / economico
+- valutare se mantenere type manuale o semi-guidato
+- correggere incoerenze select1 su durate normalizzate
 - non introdurre dashboard/KPI
-- non rifare preview
+- non automatizzare spesa/incasso senza regole esplicite
+- non modificare DB salvo decisione dedicata
+- non rifare matching
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -1433,10 +1541,10 @@ Priorità aggiornata:
 2. label quality ✔  
 3. normalization layer base ✔  
 4. preview alignment ✔  
-5. duration normalization  
+5. duration normalization ✔  
 6. type classification base  
 7. match engine unification  
-8. output    
+8. output      
 
 ---
 
@@ -1451,31 +1559,18 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. duration normalization  
-2. type classification base  
-3. matching unification  
-4. hint state-driven  
+1. type classification base  
+2. matching unification  
+3. hint state-driven  
+4. data structure / entity relations  
 5. semantic engine  
-6. dashboard / KPI   
+6. dashboard / KPI     
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. ENGINE BASE — DURATION NORMALIZATION
-
-Scopo:
-
-- gestire 1 ora e 15 minuti
-- gestire 2h30
-- gestire 2 ore 30
-- valutare giorni / ore / minuti
-- definire unità canonica durata
-- chiarire rapporto tra raw_input, amount, unit e durata normalizzata
-
----
-
-2. ENGINE BASE — TYPE CLASSIFICATION BASE
+1. ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Scopo:
 
@@ -1485,13 +1580,36 @@ Scopo:
 
 ---
 
-3. MATCH ENGINE UNIFICATION
+2. MATCH ENGINE UNIFICATION
 
 Scopo:
 
 - eliminare logiche parallele
 - costruire priority match
 - rendere hint/select/preview coerenti
+
+---
+
+3. EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+
+Scopo:
+
+- correggere dicitura "modificato oggi" su eventi appena inseriti
+- distinguere visivamente created_at / updated_at
+- evitare falso messaggio di modifica su primo inserimento
+- intervento UX/lista eventi, non engine
+
+---
+
+4. DURATION ADVANCED — GIORNI / SETTIMANE
+
+Scopo:
+
+- decidere conversione giorni/settimane
+- valutare giornata lavorativa
+- valutare mezza giornata
+- evitare conversioni automatiche ambigue
+- nodo non prioritario rispetto a type/matching
 
 ------------------------------------------------
 CHANGELOG
@@ -1573,4 +1691,27 @@ separatore data/label uniformato
 introduzione previewStopTokens  
 highlight unit-safe  
 nessuna modifica a parser, DB, matching o save flow  
-transizione verso STEP 6.2 — DURATION NORMALIZATION  
+transizione verso STEP 6.2 — DURATION NORMALIZATION 
+
+v12 — 2026-04-30  
+completamento ENGINE BASE — DURATION NORMALIZATION  
+definita unità canonica durata in minuti  
+durate certe ore/minuti convertite in minuti  
+1 ora → 60 minuti  
+1,5 ore → 90 minuti  
+1 ora e 15 minuti → 75 minuti  
+2h30 → 150 minuti  
+2 ore 30 → 150 minuti  
+aggiornato parse_input_controlled  
+aggiornata preview durata con forma umana  
+aggiunto hint “Normalizzato: X minuti”  
+aggiunto hint durata ambigua per giorni/settimane  
+giorni/settimane non convertiti automaticamente  
+raw_input preservato  
+nessuna modifica DB  
+nessuna modifica button_input_confirm  
+nessuna modifica insert_event/update_event  
+nessuna modifica matching  
+nessuna type classification  
+insert/update validati runtime con amount/unit normalizzati  
+transizione verso STEP 6.3 — TYPE CLASSIFICATION BASE  

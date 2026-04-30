@@ -1,4 +1,4 @@
-# 06_LOGOS_View_Preview_System_v04
+# 06_LOGOS_View_Preview_System_v05
 
 DATA: 2026-04-30
 
@@ -18,6 +18,8 @@ Il documento descrive:
 - quali fonti dati utilizza dopo l’introduzione di ui_state.parsed
 - quali limiti restano aperti dopo il Normalization Layer Base
 - quali allineamenti visuali sono stati completati con Preview Alignment Base
+- come la preview rappresenta la Duration Normalization Base
+- come vengono mostrati durata normalizzata e durata ambigua
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -62,7 +64,11 @@ La preview è il punto di visualizzazione dello stato input.
 Mostra:
 
 ✔ dati parsati  
-✔ dati normalizzati base  
+✔ dati normalizzati base 
+✔ durate normalizzate in minuti  
+✔ durata in forma umana  
+✔ hint normalizzazione durata  
+✔ hint durata ambigua   
 ✔ label derivata  
 ✔ stato matching  
 ✔ hint utente  
@@ -97,6 +103,9 @@ Rispetto allo stato precedente:
 ✔ label cleaning aggiornato sui casi già normalizzati  
 ✔ date separate correttamente dalla descrizione  
 ✔ highlight locale reso unit-safe  
+✔ durata certa visualizzata in forma umana  
+✔ valore tecnico normalizzato mostrato come hint  
+✔ giorni/settimane segnalati come durata ambigua  
 
 Ma:
 
@@ -180,25 +189,32 @@ Il dato interno resta numerico e non localizzato.
 
 La visualizzazione viene formattata solo nella preview.
 
-Esempio:
+Esempio durata normalizzata:
 
 Dato interno:
 
-amount: 1500.5
-unit: euro
+amount: 150
+unit: minuti
+
+raw_input:
+
+2h30 rendering
 
 Preview attuale:
 
-1.500,50 €
+2 ore 30 minuti • rendering
+Normalizzato: 150 minuti
 
 DB:
 
-amount 1500.5
-unit euro
+amount 150
+unit minuti
 
 Regola:
 
-la formattazione italiana è solo visuale.
+la durata viene salvata come minuti canonici.
+La forma umana è solo visuale.
+raw_input conserva la forma originaria inserita dall’utente.
 
 COMPONENTI LOGICI INTERNI
 
@@ -213,13 +229,15 @@ formattazione visuale italiana
 Gestione formati:
 
 euro
-ore
 minuti
+durate normalizzate
 
 Funzioni introdotte:
 
 - formatAmountIT
 - formatUnitIT
+- formatDurationHumanIT
+- formatDurationMinutesIT
 
 Comportamento:
 
@@ -234,14 +252,32 @@ Esempi:
 
 1500 euro → 1.500,00 €
 1.500,50 euro → 1.500,50 €
-1ora → 1 ora
 18min → 18 minuti
-2,7 ore → 2,7 ore
+1ora → 1 ora + hint Normalizzato: 60 minuti
+1 ora e 15 minuti → 1 ora 15 minuti + hint Normalizzato: 75 minuti
+2h30 → 2 ore 30 minuti + hint Normalizzato: 150 minuti
+2,7 ore → 2 ore 42 minuti + hint Normalizzato: 162 minuti
 
 Nota:
 
 il value builder non modifica ui_state.parsed
 e non modifica il dato salvato.
+
+Nel caso delle durate, il value builder mostra una forma umana
+partendo dal valore interno già normalizzato in minuti.
+
+Esempio:
+
+ui_state.parsed.amount = 150
+ui_state.parsed.unit = minuti
+
+preview value:
+
+2 ore 30 minuti
+
+hint:
+
+Normalizzato: 150 minuti
 
 DATE FORMATTER
 converte YYYY-MM-DD → formato breve leggibile
@@ -259,6 +295,9 @@ Operazioni:
 - compressione spazi
 - preservazione numeri semantici
 - ricomposizione parola + numero
+- rimozione durate composte già normalizzate
+- rimozione forme compatte tipo 2h30
+- rimozione residui congiunzione e/ed
 
 Aggiornamenti Preview Alignment Base:
 
@@ -267,7 +306,10 @@ Aggiornamenti Preview Alignment Base:
 ✔ rimozione migliorata di minuti separati e compatti  
 ✔ corretto bug "minuti" → "uti"  
 ✔ preservato caso "villa 2"  
-✔ label più coerente con ui_state.parsed  
+✔ label più coerente con ui_state.parsed 
+✔ durate composte rimosse dopo Duration Normalization  
+✔ forme compatte 2h30 / 2 h 30 rimosse dalla label  
+✔ residui “e/ed” rimossi dopo cleaning durata   
 
 Esempi:
 
@@ -279,6 +321,18 @@ Esempi:
 
 18min test
 → 18 minuti • test
+
+1 ora e 15 minuti sopralluogo
+→ 1 ora 15 minuti • sopralluogo
+→ Normalizzato: 75 minuti
+
+2h30 rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
+
+2 ore e 30 minuti rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
 
 villa 2 mario
 → villa 2 mario
@@ -350,6 +404,12 @@ Token esclusi:
 - minuti
 - euro
 - eur
+- giorno
+- giorni
+- settimana
+- settimane
+- giornata
+- giornate
 
 Funzione runtime introdotta:
 
@@ -359,6 +419,9 @@ getPreviewTokens
 Risultato:
 
 "ore", "minuti", "euro" non interferiscono più con l'highlight locale.
+
+Dopo Duration Normalization, anche token lunghi ambigui come
+“giorni”, “settimane”, “giornata” vengono esclusi dall’highlight locale.
 
 Nota:
 
@@ -390,13 +453,20 @@ ECONOMICO:
 
 TEMPO:
 
-⏱ Verifica durata
+ℹ️ Normalizzato: X minuti
+⚠️ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
 
 Caratteristiche:
 
 ✔ non bloccante
 ✔ condizionale
 ✔ visivo
+
+Aggiornamento Duration Normalization Base:
+
+- il vecchio hint generico “Verifica durata” è stato superato
+- le durate certe mostrano il valore tecnico normalizzato
+- giorni/settimane mostrano hint ambiguità
 
 ⚠ non basato su stato unificato completo
 ⚠ utilizza logiche parallele
@@ -462,8 +532,23 @@ amount con formato italiano convertito a numero
 Esempi dati interni:
 
 1.500,50 euro → amount 1500.5, unit euro
-1ora lavoro → amount 1, unit ore
+1ora lavoro → amount 60, unit minuti
+1 ora e 15 minuti → amount 75, unit minuti
+2h30 rendering → amount 150, unit minuti
+2 ore 30 rendering → amount 150, unit minuti
 villa 2 mario → amount null, unit null
+2 giorni rendering → amount null, unit null
+
+Nota:
+
+dopo Duration Normalization Base,
+le durate certe ore/minuti vengono salvate sempre in minuti.
+
+La preview può però mostrare una forma umana:
+
+amount 150 / unit minuti
+→ 2 ore 30 minuti
+→ Normalizzato: 150 minuti
 
 MA:
 
@@ -480,7 +565,7 @@ Quindi:
 ✔ la preview è più coerente nei dati principali
 ✘ ma non è ancora pura rappresentazione
 
-RELAZIONE CON NORMALIZATION LAYER BASE
+RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION
 
 Il Normalization Layer Base ha consolidato:
 
@@ -493,6 +578,16 @@ Il Normalization Layer Base ha consolidato:
 Preview Alignment Base ha allineato la rappresentazione visuale
 a questo stato.
 
+Duration Normalization Base ha poi introdotto:
+
+- unità canonica tempo = minuti
+- conversione ore/minuti in minuti
+- conversione durate composte
+- conversione forme compatte tipo 2h30
+- visualizzazione umana della durata in preview
+- hint “Normalizzato: X minuti”
+- hint durata ambigua per giorni/settimane
+
 Implementato:
 
 ✔ 1500.5 → 1.500,50 €  
@@ -503,6 +598,14 @@ Implementato:
 ✔ 6/4/26 → 6 apr separato dalla descrizione  
 ✔ label cleaning coerente con amount/unit già rappresentati  
 ✔ unità tecniche escluse dall'highlight locale  
+✔ 1 ora → 60 minuti  
+✔ 1,5 ore → 90 minuti  
+✔ 1 ora e 15 minuti → 75 minuti  
+✔ 2h30 → 150 minuti  
+✔ 2 ore 30 → 150 minuti  
+✔ preview durata in forma umana  
+✔ hint valore normalizzato  
+✔ hint durata ambigua  
 
 Esempi validati:
 
@@ -520,6 +623,7 @@ Esempi validati:
 
 1ora lavoro
 → 1 ora • lavoro
+→ Normalizzato: 60 minuti
 
 6/4/26 inseminazione alfie
 → 6 apr • inseminazione alfie
@@ -532,6 +636,19 @@ villa 2 mario
 
 2 ore sopralluogo villa 2
 → 2 ore • sopralluogo villa 2
+→ Normalizzato: 120 minuti
+
+1 ora e 15 minuti sopralluogo
+→ 1 ora 15 minuti • sopralluogo
+→ Normalizzato: 75 minuti
+
+2h30 rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
+
+2 giorni rendering
+→ 2 giorni rendering
+→ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
 
 Nessuna alterazione del dato salvato.
 
@@ -564,8 +681,31 @@ Relazione:
 
 ✔ preview e DB leggono lo stesso parsed data di base
 ✔ dati persistiti sono coerenti con parser controllato
+✔ durate certe persistite come amount in minuti e unit = minuti
 ✘ label NON persistita
 ✘ preview applica ancora trasformazioni visive aggiuntive
+
+Esempio durata:
+
+input:
+
+2h30 rendering
+
+ui_state.parsed:
+
+amount: 150
+unit: minuti
+
+DB:
+
+amount: 150
+unit: minuti
+raw_input: 2h30 rendering
+
+preview:
+
+2 ore 30 minuti
+Normalizzato: 150 minuti
 
 VINCOLI ATTUALI (REALI)
 
@@ -588,6 +728,8 @@ MA:
 ⚠ dipende da aggiornamenti multipli
 ⚠ usa fonti non completamente orchestrate
 ✔ allineata visualmente al Normalization Layer Base per amount/unit/date
+✔ allineata visualmente alla Duration Normalization Base per ore/minuti
+✔ mostra durata normalizzata senza modificare il dato salvato
 
 ⚠ non ancora separata come view pura
 
@@ -602,6 +744,8 @@ label cleaning
 HINT NON CENTRALIZZATI
 parte derivata da matching
 parte da logica locale
+hint durata normalizzata ancora locale alla preview
+hint durata ambigua ancora locale alla preview
 NON È VIEW PURA
 contiene trasformazioni dati
 contiene label logic
@@ -615,6 +759,7 @@ select
 matching state
 liste project/entity
 type select
+duration hint locale
 
 → assenza di preview model unico
 
@@ -636,6 +781,38 @@ Nota:
 questa localizzazione resta visuale
 e non modifica il valore persistito.
 
+------------------------------------------------
+FORMATO DURATA ALLINEATO IN PREVIEW
+------------------------------------------------
+
+Dato interno:
+
+amount = totale minuti
+unit = minuti
+
+Visualizzazione:
+
+forma umana calcolata in preview
+
+Esempio:
+
+dato interno:
+150 minuti
+
+preview:
+2 ore 30 minuti
+
+hint:
+Normalizzato: 150 minuti
+
+raw_input:
+2h30 rendering
+
+Nota:
+
+la visualizzazione umana non modifica il dato interno.
+Il dato persistito resta amount = 150, unit = minuti.
+
 PROPRIETÀ DEL SISTEMA
 
 ✔ deterministico localmente
@@ -656,8 +833,6 @@ MA:
 
 STATO ATTUALE
 
-STATO ATTUALE
-
 ✔ preview funzionante
 ✔ UX utilizzabile
 ✔ preview alimentata da ui_state.parsed
@@ -668,6 +843,10 @@ STATO ATTUALE
 ✔ label cleaning aggiornato
 ✔ date separate correttamente dalla descrizione
 ✔ highlight unit-safe
+✔ duration normalization visualizzata correttamente
+✔ durata certa mostrata in forma umana
+✔ hint normalizzato introdotto
+✔ hint durata ambigua introdotto
 
 ⚠ preview ancora ibrida
 ⚠ hint non completamente state-driven
@@ -681,12 +860,13 @@ Nessun ulteriore nodo preview attivo.
 
 Il prossimo nodo logico di roadmap è:
 
-ENGINE BASE — DURATION NORMALIZATION
+ENGINE BASE — TYPE CLASSIFICATION BASE
 
 La preview potrà essere aggiornata solo come conseguenza controllata
-di eventuali nuove regole di durata, senza refactor globale.
+di eventuali regole type/select1, senza refactor globale.
 
 Preview Alignment Base è completato.
+Duration Normalization Base è completata.
 
 Restano futuri, ma non attivi:
 
@@ -770,3 +950,20 @@ documentato filtro previewStopTokens
 documentato highlight unit-safe
 confermato che preview non modifica DB/save flow
 confermato che preview resta layer ibrido non ancora view pura
+
+v05 — 2026-04-30
+
+completamento ENGINE BASE — DURATION NORMALIZATION
+documentata visualizzazione durata normalizzata
+documentate funzioni formatDurationHumanIT / formatDurationMinutesIT
+documentato hint “Normalizzato: X minuti”
+documentato hint durata ambigua
+documentato cleaning durate composte
+documentata rimozione forme compatte tipo 2h30 dalla label
+documentata rimozione residui e/ed dopo cleaning durata
+aggiornati previewStopTokens con giorni/settimane/giornata
+confermato che preview non modifica DB/save flow
+confermato che amount tempo resta salvato in minuti
+confermato che raw_input preserva la forma originale
+confermato che preview resta layer ibrido non ancora view pura
+aggiornato prossimo nodo logico: TYPE CLASSIFICATION BASE

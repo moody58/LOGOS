@@ -1,4 +1,4 @@
-# 00_PROJECT_Roadmap_v05
+# 00_PROJECT_Roadmap_v06
 
 DATA: 2026-04-30
 
@@ -66,18 +66,19 @@ FASE COMPLETATA:
 ✔ STEP 4 — EVENT EDITING (COMPLETATO)  
 ✔ STEP 6.1 — ENGINE BASE / NORMALIZATION LAYER BASE (COMPLETATO)  
 ✔ PREVIEW ALIGNMENT BASE (COMPLETATO)  
+✔ STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)  
 
 ---
 
 FASE ATTIVA CONSIGLIATA:
 
-STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
+STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
 
 ---
 
 FASE SUCCESSIVA CANDIDATA:
 
-STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
+STEP 6.4 — MATCH ENGINE UNIFICATION
 
 ------------------------------------------------
 ROADMAP MASTER
@@ -335,14 +336,22 @@ Regole consolidate:
 
 ---
 
-Limiti espliciti:
+Limiti espliciti dopo evoluzione successiva:
 
-⚠ multi-unit non supportato  
-⚠ durata avanzata non normalizzata  
-⚠ giorni/settimane non supportati  
+✔ duration normalization base implementata nello STEP 6.2  
+✔ ore/minuti ora normalizzati in minuti  
+✔ 1 ora e 15 minuti supportato  
+✔ 2h30 supportato  
+✔ 2 ore 30 supportato  
+
+Limiti ancora aperti:
+
+⚠ giorni/settimane non convertiti automaticamente  
+⚠ giornata / mezza giornata non normalizzate  
+⚠ parole numeriche tipo “due ore” non supportate  
 ⚠ type classification non implementata  
 ⚠ spesa/incasso non implementati  
-⚠ matching non toccato  
+⚠ matching non toccato   
 
 ------------------------------------------------
 
@@ -427,60 +436,129 @@ Regole consolidate:
 
 ---
 
-Limiti espliciti:
+Limiti espliciti dopo evoluzione successiva:
 
-⚠ duration normalization non implementata  
-⚠ 1 ora e 15 minuti non supportato  
-⚠ 2h30 non supportato  
-⚠ giorni/settimane non supportati  
+✔ duration normalization base implementata nello STEP 6.2  
+✔ 1 ora e 15 minuti supportato  
+✔ 2h30 supportato  
+✔ 2 ore 30 supportato  
+✔ preview durata aggiornata con forma umana + hint normalizzato  
+
+Limiti ancora aperti:
+
+⚠ giorni/settimane non convertiti automaticamente  
 ⚠ type classification non implementata  
 ⚠ spesa/incasso non implementati  
 ⚠ matching non unificato  
-⚠ preview non ancora view pura  
+⚠ preview non ancora view pura   
 
 ------------------------------------------------
 
-STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (FASE ATTIVA CONSIGLIATA)
+STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)
 
 Obiettivo:
 
-Normalizzare durate complesse.
+Normalizzare durate certe espresse in ore/minuti
+rendendole confrontabili tramite unità canonica.
 
 ---
 
-Esempi target:
+Decisione consolidata:
 
-- 1 ora e 15 minuti
-- 2h30
-- 2 ore 30
-- 90 minuti
-- 2 giorni rendering
-
----
-
-Decisioni richieste prima dell’implementazione:
-
-- unità canonica durata
-- mantenimento unit originale
-- gestione giorni
-- conversione minuti/ore
-- rapporto tra durata normalizzata e raw_input
+- unità canonica tempo = minuti
+- amount = totale minuti
+- unit = "minuti"
+- raw_input resta preservato
+- DB invariato
+- nessun payload duration
+- nessun nuovo campo duration_minutes
 
 ---
 
-Stato:
+Interventi eseguiti:
 
-Stato:
+✔ parse_input_controlled aggiornato  
+✔ ore semplici convertite in minuti  
+✔ minuti semplici preservati come minuti  
+✔ ore decimali convertite in minuti  
+✔ durate composte ore + minuti convertite in minuti  
+✔ formati compatti tipo 2h30 convertiti in minuti  
+✔ giorni/settimane riconosciuti come ambigui ma non convertiti  
+✔ preview aggiornata con forma umana della durata  
+✔ hint “Normalizzato: X minuti” introdotto  
+✔ hint durata ambigua introdotto  
+✔ insert verificato con durata normalizzata  
+✔ update verificato con durata normalizzata  
+✔ regressioni euro / date / numeri semantici verificate  
 
-→ fase attiva consigliata  
-⚠ da aprire solo in nodo dedicato  
-⚠ richiede definizione regole prima dell’implementazione  
-⚠ non deve introdurre type classification  
-⚠ non deve modificare dashboard/KPI    
+---
+
+Esempi validati:
+
+1 ora  
+→ amount 60  
+→ unit minuti  
+
+1,5 ore  
+→ amount 90  
+→ unit minuti  
+
+1 ora e 15 minuti  
+→ amount 75  
+→ unit minuti  
+
+2h30  
+→ amount 150  
+→ unit minuti  
+
+2 ore 30  
+→ amount 150  
+→ unit minuti  
+
+18min  
+→ amount 18  
+→ unit minuti  
+
+90 minuti  
+→ amount 90  
+→ unit minuti  
+
+2 giorni rendering  
+→ amount null  
+→ unit null  
+→ hint durata ambigua  
+
+---
+
+Output raggiunto:
+
+✔ durate certe confrontabili  
+✔ tempo normalizzato in minuti  
+✔ raw_input preservato  
+✔ DB invariato  
+✔ save flow invariato  
+✔ preview più leggibile  
+✔ nessuna type classification introdotta  
+✔ nessun matching modificato  
+✔ nessuna dashboard/KPI anticipata  
+
+---
+
+Limiti espliciti:
+
+⚠ giorni/settimane non convertiti automaticamente  
+⚠ giornata / mezza giornata non normalizzate  
+⚠ parole numeriche tipo “due ore” non supportate  
+⚠ forme colloquiali tipo “un paio d’ore” non supportate  
+⚠ 2h e mezza non supportato  
+⚠ dati storici non retro-normalizzati  
+⚠ type classification non implementata  
+⚠ select1 può restare incoerente su alcune durate  
+⚠ flash preview durante debounce non corretto     
 
 ------------------------------------------------
 
-STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (CANDIDATO FUTURO)
+STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (FASE ATTIVA CONSIGLIATA)
 
 Obiettivo:
 
@@ -507,11 +585,29 @@ Possibili segnali:
 
 ---
 
+Problema reale emerso:
+
+- input come 2h30 rendering viene normalizzato correttamente come durata
+- parsed.amount = 150
+- parsed.unit = minuti
+- select1 può però restare su “Evento”
+- la type detection attuale non è pienamente allineata alla nuova normalizzazione durata
+
+Obiettivo minimo del nodo:
+
+- rendere coerente evento / tempo / economico
+- evitare classificazioni automatiche rischiose
+- mantenere controllo utente
+- non introdurre ancora KPI/output
+
 Stato:
 
-⚠ non attivo  
+→ fase attiva consigliata  
+⚠ da aprire solo in nodo dedicato  
 ⚠ richiede attenzione perché introduce semantica leggera  
 ⚠ non deve diventare automazione decisionale  
+⚠ deve tenere conto della nuova duration normalization in minuti  
+⚠ non deve anticipare dashboard/KPI   
 
 ------------------------------------------------
 
@@ -572,10 +668,15 @@ Motivazione:
 
 Il sistema NON può avanzare allo STEP 7 finché:
 
-- duration normalization non è definita o esclusa consapevolmente
 - type classification non è almeno base o mantenuta manuale consapevolmente
 - matching non è stabilizzato nei punti critici
-- dati non sono sufficientemente confrontabili
+- incoerenze select / preview / state non sono ridotte
+- dati non sono sufficientemente confrontabili per tipo evento
+
+Nota:
+
+Duration Normalization Base è stata completata.
+Le durate certe ore/minuti sono ora confrontabili tramite minuti canonici.
 
 Nota:
 
@@ -585,43 +686,55 @@ Preview Alignment Base è stato completato.
 NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-ENGINE BASE — DURATION NORMALIZATION
+ENGINE BASE — TYPE CLASSIFICATION BASE
 
 ------------------------------------------------
 SCOPO NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-Definire e implementare il primo livello controllato di normalizzazione durata,
-partendo dai casi tempo già riconosciuti dal parser base.
+Definire e implementare, se coerente, il primo livello controllato
+di classificazione evento.
+
+Obiettivo:
+
+distinguere in modo minimo e non distruttivo:
+
+- evento
+- tempo
+- economico
+
+Valutare separatamente se e come trattare:
+
+- spesa
+- incasso
 
 ---
 
 Ammesso:
 
-✔ analisi casi durata complessa  
-✔ 1 ora e 15 minuti  
-✔ 2h30  
-✔ 2 ore 30  
-✔ 90 minuti  
-✔ valutazione giorni/settimane solo come decisione, non implementazione automatica obbligatoria  
-✔ definizione unità canonica durata  
-✔ chiarimento rapporto tra raw_input, amount, unit e durata normalizzata  
-✔ eventuale micro-estensione parser solo se necessaria e controllata  
-✔ test runtime su preview/save solo dopo definizione regole  
+✔ analisi comportamento attuale select1  
+✔ verifica incoerenze evento / tempo / economico  
+✔ allineamento minimo con ui_state.parsed  
+✔ uso di parsed.unit come segnale controllato  
+✔ tempo se parsed.unit = minuti  
+✔ economico se parsed.unit = euro  
+✔ mantenimento selezione manuale utente  
+✔ test runtime su preview/save  
+✔ nessuna automazione decisionale definitiva  
 
 ---
 
 Vietato:
 
-❌ type classification  
-❌ spesa/incasso  
 ❌ dashboard/KPI  
 ❌ match engine unification  
 ❌ refactor globale parser  
 ❌ refactor globale preview  
 ❌ modifica schema DB non motivata  
-❌ conversioni semantiche non dichiarate  
-❌ retro-normalizzazione storico    
+❌ classificazione spesa/incasso automatica non dichiarata  
+❌ parole chiave economiche aggressive  
+❌ retro-normalizzazione storico  
+❌ sostituire controllo utente con decisione automatica     
 
 ------------------------------------------------
 REGOLE OPERATIVE
@@ -736,9 +849,14 @@ Il sistema è ora entrato nello STEP 6 in modo reale.
 Il sistema NON può avanzare allo STEP 7 (OUTPUT)
 finché non vengono completati almeno:
 
-1. Duration Normalization o decisione esplicita di non implementarla subito
-2. Type Classification Base o decisione esplicita di mantenerla manuale
-3. Match Engine Unification o almeno stabilizzazione delle incoerenze critiche
+1. Type Classification Base o decisione esplicita di mantenerla manuale
+2. Match Engine Unification o almeno stabilizzazione delle incoerenze critiche
+3. riduzione delle incoerenze tra parsed data, select, preview e hint
+
+Nota:
+
+Duration Normalization Base è completata.
+Le durate certe ore/minuti sono ora normalizzate in minuti.
 
 Nota:
 
@@ -811,3 +929,28 @@ v05 — 2026-04-30
 - nessuna modifica a parser, DB, matching o save flow
 - aggiornamento fase attiva consigliata a STEP 6.2 — DURATION NORMALIZATION
 - mantenuto blocco verso OUTPUT fino a duration/type/matching
+
+v06 — 2026-04-30
+
+- completamento STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
+- definita unità canonica durata in minuti
+- amount tempo salvato come totale minuti
+- unit tempo salvata come "minuti"
+- raw_input preservato
+- 1 ora → 60 minuti
+- 1,5 ore → 90 minuti
+- 1 ora e 15 minuti → 75 minuti
+- 2h30 → 150 minuti
+- 2 ore 30 → 150 minuti
+- 90 minuti → 90 minuti
+- giorni/settimane riconosciuti come ambigui ma non convertiti
+- preview aggiornata con forma umana della durata
+- introdotto hint “Normalizzato: X minuti”
+- introdotto hint durata ambigua
+- insert/update validati runtime
+- regressioni euro/date/numeri semantici superate
+- nessuna modifica DB
+- nessuna modifica matching
+- nessuna type classification
+- aggiornamento fase attiva consigliata a STEP 6.3 — TYPE CLASSIFICATION BASE
+- mantenuto blocco verso OUTPUT fino a type/matching/data quality

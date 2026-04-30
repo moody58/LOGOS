@@ -1,4 +1,4 @@
-# 00_PROJECT_Gap_Register_v02
+# 00_PROJECT_Gap_Register_v03
 
 DATA: 2026-04-30
 
@@ -76,8 +76,10 @@ Esempi gestiti:
 
 ```text
 1.500,50 euro → amount 1500.5, unit euro
-1ora lavoro → amount 1, unit ore
+1ora lavoro → amount 60, unit minuti
 18min test → amount 18, unit minuti
+1 ora e 15 minuti → amount 75, unit minuti
+2h30 → amount 150, unit minuti
 villa 2 mario → amount null, unit null
 
 NOTE:
@@ -92,13 +94,12 @@ Non esiste ancora un modulo engine separato.
 
 RISCHIO RESIDUO:
 
-Dati solo parzialmente confrontabili perché non sono ancora implementati:
+Dati ancora parzialmente confrontabili perché restano non implementati:
 
-duration normalization
-multi-unit parsing
 type classification
 spesa/incasso
 normalizzazione project/entity
+giorni/settimane come durata automatica
 retro-normalizzazione storico
 
 AZIONE:
@@ -107,9 +108,9 @@ Mantenere il gap aperto come INTEGRATO PARZIALE.
 
 Prossimi sotto-gap:
 
-Duration Normalization
 Type Classification Base
 Match Engine Unification
+Duration Advanced — giorni/settimane
 
 ID: G02
 
@@ -138,15 +139,17 @@ input
 
 STATO REALE:
 
-È stato avviato il primo blocco engine:
+Sono stati avviati e completati due blocchi engine base:
 
-Normalization Layer Base
+- Normalization Layer Base
+- Duration Normalization Base
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
 Attualmente:
 
-parsing e normalization base sono in Retool
+parsing, normalization base e duration normalization sono in Retool
+durate certe ore/minuti sono normalizzate in minuti
 matching resta distribuito
 preview contiene logiche proprie
 processing resta manuale
@@ -166,10 +169,10 @@ AZIONE:
 Non creare ancora un documento engine globale.
 Procedere per nodi minimi:
 
-Preview Alignment Base
-Duration Normalization
 Type Classification Base
 Match Engine Unification
+Data Structure / Entity Hierarchy
+Duration Advanced — giorni/settimane
 
 ID: G03
 
@@ -302,9 +305,9 @@ Non prioritario ora.
 
 Da rivalutare dopo:
 
-Preview Alignment Base
-Duration Normalization
 Type Classification Base
+Match Engine Unification
+Data Structure / Entity Hierarchy
 
 Possibile uso futuro:
 
@@ -341,7 +344,9 @@ Attualmente:
 solo input manuale Retool
 sistema non ancora pronto per fonti multiple
 parsing base stabilizzato ma non completo
-type classification e duration normalization assenti
+duration normalization base completata
+type classification ancora assente
+matching ancora non unificato
 
 RISCHIO:
 
@@ -367,56 +372,69 @@ FONTE:
 Normalization Layer Base + View Preview System
 
 STATO:
-VALIDATO
+INTEGRATO
 
 DESCRIZIONE:
 
-Dopo l’introduzione della normalizzazione base, la preview può mostrare
-valori tecnicamente corretti ma visualmente non ancora localizzati.
+Allineamento visuale della preview ai dati normalizzati in ui_state.parsed.
 
-Esempio:
+Il nodo PREVIEW ALIGNMENT BASE è stato completato.
 
-Dato interno:
+Implementato:
 
-amount: 1500.5
-unit: euro
+- formattazione italiana amount
+- euro visualizzato con due decimali
+- grouping migliaia visuale
+- ore/minuti visualizzati coerentemente
+- singolare/plurale unit
+- label cleaning aggiornato
+- correzione bug "minuti" → "uti"
+- separatore data/descrizione
+- highlight unit-safe
+- previewStopTokens
+- nessuna modifica DB
+- nessuna modifica matching
+- nessuna modifica save flow
 
-Possibile visualizzazione attuale:
+Esempi validati:
 
-1500.5 €
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
 
-Visualizzazione desiderata:
+1500 euro materiale
+→ 1.500,00 € • materiale
 
-1.500,50 €
+18min test
+→ 18 minuti • test
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+villa 2 mario
+→ villa 2 mario
 
 NOTE:
 
-La preview è ancora layer ibrido:
+La preview resta comunque layer ibrido:
 
-view
-label cleaning
-hint logic
-highlight
-formattazione locale
+- view
+- label cleaning
+- hint logic
+- highlight
+- formattazione locale
 
-RISCHIO:
+RISCHIO RESIDUO:
 
-Divergenza percepita tra dato salvato corretto e sintesi visiva.
+- preview non ancora view pura
+- hint non completamente state-driven
+- matching locale preview non unificato
 
 AZIONE:
 
-Aprire nodo dedicato:
+Gap integrato come Preview Alignment Base.
 
-PREVIEW ALIGNMENT BASE
-
-Scope ammesso:
-
-formattazione italiana amount
-visualizzazione unit coerente
-allineamento visuale a ui_state.parsed
-nessuna modifica DB
-nessuna nuova semantica
-nessun matching refactor
+Non aprire ulteriori nodi preview generici.
+Eventuali modifiche preview devono essere conseguenza controllata di nodi futuri specifici.
 
 ID: G08
 
@@ -427,49 +445,80 @@ FONTE:
 Domande utente + Engine Base
 
 STATO:
-VALIDATO
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Gestione durate complesse e multi-unità.
+Gestione durate certe espresse in ore/minuti tramite unità canonica.
 
-Esempi:
+Il nodo ENGINE BASE — DURATION NORMALIZATION è stato completato.
 
-1 ora e 15 minuti
-2h30
-2 ore 30
-90 minuti
+Decisione consolidata:
+
+- unità canonica tempo = minuti
+- amount = totale minuti
+- unit = "minuti"
+- raw_input preservato
+- nessuna modifica schema DB
+- nessun payload.duration
+- nessun campo duration_minutes
+
+Implementato:
+
+- 18min → 18 minuti
+- 1 ora → 60 minuti
+- 1ora → 60 minuti
+- 2 ore → 120 minuti
+- 1,5 ore → 90 minuti
+- 1.5 ore → 90 minuti
+- 1 ora e 15 minuti → 75 minuti
+- 1 ora 15 minuti → 75 minuti
+- 2h30 → 150 minuti
+- 2 h 30 → 150 minuti
+- 2 ore 30 → 150 minuti
+- 2 ore e 30 minuti → 150 minuti
+- 90 minuti → 90 minuti
+
+Preview aggiornata:
+
+2h30 rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
+
+Giorni/settimane:
+
+Non convertiti automaticamente.
+
+Esempio:
+
 2 giorni rendering
+→ amount null
+→ unit null
+→ hint durata ambigua
 
-NOTE:
+Motivo:
 
-Attualmente:
+“giorno” e “settimana” sono semanticamente ambigui:
+possono indicare calendario, lavoro, cantiere, evento o turno.
 
-supporto ore/minuti base
-supporto unità compatte semplici
-nessuna conversione durata
-nessuna unità canonica
-nessuna gestione giorni
+RISCHIO RESIDUO:
 
-RISCHIO:
-
-Senza duration normalization:
-
-tempi non sempre confrontabili
-report ore/minuti incompleti
-KPI tempo non affidabili
+- giorni/settimane non normalizzati
+- giornata/mezza giornata non normalizzate
+- parole numeriche tipo “due ore” non supportate
+- forme colloquiali tipo “un paio d’ore” non supportate
+- dati storici non retro-normalizzati
+- type/select1 non sempre allineato a unit = minuti
 
 AZIONE:
 
-Aprire solo dopo Preview Alignment Base oppure in nodo dedicato.
+Gap integrato a livello base.
 
-Decisioni richieste:
+Tenere aperto solo come sotto-gap futuro:
 
-unità canonica durata
-ore vs minuti
-gestione giorni
-preservazione unit originale
-visualizzazione finale
+DURATION ADVANCED — GIORNI / SETTIMANE
+
+Da non riaprire come Duration Normalization Base.
 
 ID: G09
 
@@ -502,6 +551,21 @@ evento come default
 nessuna distinzione affidabile spesa/incasso
 type non utilizzato per KPI
 
+Problema reale emerso dopo Duration Normalization:
+
+input come 2h30 rendering viene normalizzato correttamente:
+
+amount 150
+unit minuti
+
+ma select1 può restare su Evento.
+
+La type detection deve essere allineata a ui_state.parsed,
+in particolare a:
+
+unit = minuti → tempo
+unit = euro → economico
+
 RISCHIO:
 
 Senza type affidabile:
@@ -513,6 +577,10 @@ reportistica prematura fuorviante
 AZIONE:
 
 Da aprire in nodo dedicato futuro.
+
+Nodo attualmente candidato come prossimo step operativo:
+
+ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Vincoli:
 
@@ -629,18 +697,81 @@ anticipa la roadmap
 richiede refactor globale
 introduce complessità non validata
 non è necessario al problema immediato
+
+ID: G12
+
+NOME:
+Events List Label / Updated At Display
+
+FONTE:
+Duration Normalization Session + Test runtime
+
+STATO:
+IDENTIFICATO
+
+DESCRIZIONE:
+
+La lista eventi mostra la dicitura “modificato oggi”
+anche per eventi appena inseriti.
+
+Causa probabile:
+
+updated_at viene valorizzato anche in insert_event.
+La UI della lista interpreta la presenza di updated_at come modifica,
+senza distinguere created_at / updated_at o insert/update.
+
+NOTE:
+
+Il problema è solo visuale / UX.
+
+Non impatta:
+
+- parsing
+- duration normalization
+- save flow
+- DB
+- amount/unit
+- status evento
+
+RISCHIO:
+
+Può generare confusione utente,
+facendo apparire modificato un evento appena creato.
+
+AZIONE:
+
+Non prioritario rispetto a Type Classification Base.
+
+Possibile micro-nodo futuro:
+
+EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+
+Scope:
+
+- distinguere “creato oggi” da “modificato oggi”
+- confrontare created_at / updated_at
+- evitare falsa indicazione di modifica su primo inserimento
+- nessuna modifica engine
+- nessuna modifica parsing
+- nessuna modifica DB salvo decisione dedicata
+
 ORDINE CONSIGLIATO GAP / NODI
 
 Ordine attuale consigliato:
 
-G07 — Preview Alignment
-G08 — Duration Normalization
 G09 — Type Classification Base
 G10 — Match Engine Unification
+G12 — Events List Label / Updated At Display
 G11 — Data Structure / Entity Hierarchy
+G08A — Duration Advanced / Giorni-Settimane
 G04 — Logging / Versioning
 G05 — Input Modes
 G06 — Multi-source Input
+
+Gap già integrati:
+
+G07 — Preview Alignment
+G08 — Duration Normalization Base
 
 Nota:
 
@@ -676,3 +807,18 @@ aggiunto gap G11 Data Structure / Entity Hierarchy
 classificato G06 Multi-source Input come NON PRIORITARIO
 aggiornato ordine consigliato gap/nodi
 allineamento con State v10 e Roadmap v04
+
+v03 — 2026-04-30
+
+aggiornato G07 Preview Alignment a INTEGRATO
+aggiornato G08 Duration Normalization a INTEGRATO BASE
+documentata unità canonica tempo = minuti
+documentata normalizzazione durate certe ore/minuti
+documentato raw_input preservato
+documentato che giorni/settimane restano sotto-gap avanzato
+aggiornato G01 Normalization Model dopo Duration Normalization
+aggiornato G02 Processor / Engine Flow
+aggiornato G09 Type Classification Base come prossimo nodo candidato
+aggiunto G12 Events List Label / Updated At Display
+aggiornato ordine consigliato gap/nodi
+allineamento con State v12 e Roadmap v06

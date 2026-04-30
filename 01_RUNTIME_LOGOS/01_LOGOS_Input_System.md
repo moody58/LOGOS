@@ -1,4 +1,4 @@
-# 01_LOGOS_Input_System_v06
+# 01_LOGOS_Input_System_v07
 
 DATA: 2026-04-30
 
@@ -16,6 +16,7 @@ Il documento è utilizzato per:
 - gestione preview
 - controllo qualità input
 - normalizzazione base dei dati parsati
+- duration normalization base
 - allineamento preview ai dati parsati
 - allineamento insert/update
 
@@ -79,7 +80,7 @@ trigger_parse_debounced
 → debounce del parsing
 
 parse_input_controlled
-→ parser controllato + normalization base
+→ parser controllato + normalization base + duration normalization base
 
 ui_state.parsed
 → fonte unica per preview/save/edit
@@ -87,6 +88,7 @@ ui_state.parsed
 label / sintesi (preview)
 → derivato UI (non persistito)
 → allineato visualmente a ui_state.parsed per amount/unit/date
+→ mostra durata normalizzata in forma umana + hint tecnico
 
 ---
 
@@ -311,11 +313,30 @@ PARSING + NORMALIZATION BASE
 Il parser attuale non si limita più a estrarre dati,
 ma applica anche una normalizzazione base controllata.
 
-Questa normalizzazione riguarda solo:
+Questa normalizzazione riguarda:
 
 amount
 unit
 event_date preservato
+durate certe ore/minuti normalizzate in minuti
+
+La Duration Normalization Base è parte del parsing controllato.
+
+Regola:
+
+tutte le durate certe espresse in ore/minuti vengono convertite in minuti.
+
+Esempio:
+
+1 ora e 15 minuti
+→ amount 75
+→ unit minuti
+
+2h30
+→ amount 150
+→ unit minuti
+
+raw_input resta sempre preservato.
 
 Non riguarda:
 
@@ -387,9 +408,20 @@ OUTPUT NORMALIZZATO UNIT:
 
 €, euro, eur → euro
 
-h, ora, ore → ore
+h, ora, ore, min, minuto, minuti → minuti
 
-min, minuto, minuti → minuti
+Regola durata:
+
+le unità tempo riconosciute vengono convertite in unità canonica "minuti".
+
+Esempi:
+
+1 ora → amount 60, unit minuti
+2 ore → amount 120, unit minuti
+1,5 ore → amount 90, unit minuti
+18 minuti → amount 18, unit minuti
+2h30 → amount 150, unit minuti
+
 NORMALIZZAZIONE INPUT RUNTIME
 
 Applicata solo nel layer parsing.
@@ -406,9 +438,13 @@ estrazione amount per prossimità alla unità
 
 ESEMPI:
 
-2h → amount 2, unit ore
-1ora → amount 1, unit ore
+2h → amount 120, unit minuti
+1ora → amount 60, unit minuti
 18min → amount 18, unit minuti
+1,5 ore → amount 90, unit minuti
+1 ora e 15 minuti → amount 75, unit minuti
+2h30 → amount 150, unit minuti
+2 ore 30 → amount 150, unit minuti
 €20 → amount 20, unit euro
 1.500,50 euro → amount 1500.5, unit euro
 
@@ -437,6 +473,7 @@ ESEMPIO:
 → amount null
 → unit null
 → raw_input preservato
+
 ESTRAZIONE AMOUNT
 
 Regola:
@@ -453,11 +490,13 @@ se non esiste unità, amount = null
 
 ESEMPI:
 
-pizza 20 euro → 20
-2 ore lavoro → 2
-2 ore 30 → 2
-villa 2 mario → null
-villa 2 mario rossi 3h → 3
+pizza 20 euro → 20 / euro
+2 ore lavoro → 120 / minuti
+2 ore 30 → 150 / minuti
+1 ora e 15 minuti → 75 / minuti
+2h30 rendering → 150 / minuti
+villa 2 mario → null / null
+villa 2 mario rossi 3h → 180 / minuti
 
 FORMATI SUPPORTATI:
 
@@ -491,6 +530,7 @@ Motivo:
 preservare numeri semantici
 evitare dati quantitativi errati
 ridurre errori permanenti in DB
+
 NORMALIZE_NUMBER_VALUE
 
 Funzione runtime utilizzata dal parser:
@@ -535,6 +575,112 @@ function normalizeNumberValue(value) {
 
   return null;
 }
+
+------------------------------------------------
+DURATION NORMALIZATION BASE
+------------------------------------------------
+
+La Duration Normalization Base è stata implementata nel parser controllato.
+
+Decisione:
+
+- amount tempo = totale minuti
+- unit tempo = minuti
+- raw_input preservato
+- nessuna modifica schema DB
+- nessun payload duration
+- nessun campo duration_minutes dedicato
+
+------------------------------------------------
+UNITÀ CANONICA TEMPO
+------------------------------------------------
+
+Unità canonica:
+
+minuti
+
+Motivo:
+
+- rende i dati confrontabili
+- evita mix tra ore e minuti
+- facilita dashboard/report futuri
+- permette somma diretta delle durate
+- mantiene raw_input come fonte originaria
+
+------------------------------------------------
+CASI SUPPORTATI
+------------------------------------------------
+
+Minuti semplici:
+
+18 minuti → amount 18, unit minuti
+18min → amount 18, unit minuti
+min30 → amount 30, unit minuti
+90 minuti → amount 90, unit minuti
+
+Ore semplici:
+
+1 ora → amount 60, unit minuti
+1ora → amount 60, unit minuti
+2 ore → amount 120, unit minuti
+2h → amount 120, unit minuti
+h2 → amount 120, unit minuti
+
+Ore decimali:
+
+1,5 ore → amount 90, unit minuti
+1.5 ore → amount 90, unit minuti
+1,5h → amount 90, unit minuti
+1.5h → amount 90, unit minuti
+
+Durate composte:
+
+1 ora e 15 minuti → amount 75, unit minuti
+1 ora 15 minuti → amount 75, unit minuti
+2 ore e 30 minuti → amount 150, unit minuti
+2 ore 30 → amount 150, unit minuti
+2h30 → amount 150, unit minuti
+2 h 30 → amount 150, unit minuti
+
+------------------------------------------------
+CASI NON CONVERTITI AUTOMATICAMENTE
+------------------------------------------------
+
+Non vengono convertiti automaticamente:
+
+- giorni
+- settimane
+- giornata
+- giornate
+- mezza giornata
+- parole numeriche tipo “due ore”
+- forme colloquiali tipo “un paio d’ore”
+- 2h e mezza
+
+Motivo:
+
+questi casi introducono ambiguità operativa.
+
+Esempio:
+
+2 giorni
+
+può significare:
+
+- 48 ore
+- due giornate lavorative
+- due giornate evento
+- due giorni di calendario
+- due turni operativi
+
+Decisione:
+
+2 giorni rendering
+→ amount null
+→ unit null
+→ raw_input preservato
+→ preview mostra hint durata ambigua
+
 SUCCESS HANDLER PARSER
 
 parse_input_controlled aggiorna ui_state.parsed tramite success handler.
@@ -613,6 +759,9 @@ normalizzazione spazi
 preservazione numeri semantici
 gestione compound token
 formattazione visuale amount/unit
+visualizzazione umana della durata normalizzata
+hint valore normalizzato
+hint durata ambigua per giorni/settimane
 
 AGGIORNAMENTO PREVIEW ALIGNMENT BASE:
 
@@ -626,6 +775,15 @@ AGGIORNAMENTO PREVIEW ALIGNMENT BASE:
 ✔ data separata correttamente dalla descrizione
 ✔ highlight locale reso unit-safe
 
+AGGIORNAMENTO DURATION NORMALIZATION BASE:
+
+✔ durata interna salvata in minuti
+✔ preview durata mostrata in forma umana
+✔ hint “Normalizzato: X minuti”
+✔ hint durata ambigua per giorni/settimane
+✔ rimozione dalla label della durata originale già normalizzata
+✔ rimozione residui congiunzione “e/ed”
+
 ESEMPI:
 
 1.500,50 euro materiale
@@ -638,7 +796,24 @@ ESEMPI:
 → 18 minuti • test
 
 1ora lavoro
-→ 1 ora • lavoro
+→ 1 ora
+→ Normalizzato: 60 minuti
+
+2 ore sopralluogo villa 2
+→ 2 ore • sopralluogo villa 2
+→ Normalizzato: 120 minuti
+
+1 ora e 15 minuti sopralluogo
+→ 1 ora 15 minuti • sopralluogo
+→ Normalizzato: 75 minuti
+
+2h30 rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
+
+2 giorni rendering
+→ 2 giorni rendering
+→ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
 
 6/4/26 inseminazione alfie
 → 6 apr • inseminazione alfie
@@ -672,6 +847,28 @@ Regole attuali:
 tempo:
 
 → presenza unità tempo
+
+Nota post Duration Normalization:
+
+il parser ora normalizza le durate certe in:
+
+unit = minuti
+
+La type detection attuale può non essere ancora completamente allineata
+alla nuova duration normalization.
+
+Esempio:
+
+2h30 rendering
+
+può essere correttamente parsato come:
+
+amount 150
+unit minuti
+
+ma select1 può ancora mostrare Evento invece di Tempo.
+
+Questo è un limite del nodo TYPE CLASSIFICATION BASE futuro.
 
 economico:
 
@@ -793,6 +990,34 @@ Non modifica:
 Preview Alignment Base:
 
 ✔ COMPLETATO
+
+AGGIORNAMENTO DURATION NORMALIZATION BASE:
+
+✔ preview durata in forma umana
+✔ valore tecnico normalizzato mostrato come hint
+✔ giorni/settimane segnalati come durata ambigua
+✔ label cleaning aggiornato per rimuovere durate composte già normalizzate
+
+Esempio:
+
+Dato interno:
+
+amount: 150
+unit: minuti
+
+raw_input:
+
+2h30 rendering
+
+Preview:
+
+2 ore 30 minuti • rendering
+Normalizzato: 150 minuti
+
+DB:
+
+amount: 150
+unit: minuti
 
 MATCHING BASE
 
@@ -1095,18 +1320,90 @@ TEST VALIDATI
 
 PARSER / PREVIEW:
 
-18min test                  → 18 / minuti
-18 minuti test              → 18 / minuti
-1ora lavoro                 → 1 / ore
-1 ora lavoro                → 1 / ore
-20€ materiale               → 20 / euro
-villa 2 mario               → null / null
-458,78 euro mangime         → 458.78 / euro
-1.500 euro materiale        → 1500 / euro
-1.500,50 euro materiale     → 1500.5 / euro
-1.5 ore sopralluogo         → 1.5 / ore
-1,5 ore sopralluogo         → 1.5 / ore
-2 ore sopralluogo villa 2   → 2 / ore
+PARSER / PREVIEW:
+
+18min test
+→ parsed: amount 18, unit minuti
+→ preview: 18 minuti • test
+
+18 minuti test
+→ parsed: amount 18, unit minuti
+→ preview: 18 minuti • test
+
+1ora lavoro
+→ parsed: amount 60, unit minuti
+→ preview: 1 ora
+→ hint: Normalizzato: 60 minuti
+
+1 ora lavoro
+→ parsed: amount 60, unit minuti
+→ preview: 1 ora • lavoro
+→ hint: Normalizzato: 60 minuti
+
+2 ore sopralluogo villa 2
+→ parsed: amount 120, unit minuti
+→ preview: 2 ore • sopralluogo villa 2
+→ hint: Normalizzato: 120 minuti
+
+1,5 ore sopralluogo
+→ parsed: amount 90, unit minuti
+→ preview: 1 ora 30 minuti • sopralluogo
+→ hint: Normalizzato: 90 minuti
+
+1.5 ore sopralluogo
+→ parsed: amount 90, unit minuti
+→ preview: 1 ora 30 minuti • sopralluogo
+→ hint: Normalizzato: 90 minuti
+
+1 ora e 15 minuti sopralluogo
+→ parsed: amount 75, unit minuti
+→ preview: 1 ora 15 minuti • sopralluogo
+→ hint: Normalizzato: 75 minuti
+
+2h30 rendering
+→ parsed: amount 150, unit minuti
+→ preview: 2 ore 30 minuti • rendering
+→ hint: Normalizzato: 150 minuti
+
+2 h 30 rendering
+→ parsed: amount 150, unit minuti
+→ preview: 2 ore 30 minuti • rendering
+→ hint: Normalizzato: 150 minuti
+
+2 ore 30 rendering
+→ parsed: amount 150, unit minuti
+→ preview: 2 ore 30 minuti • rendering
+→ hint: Normalizzato: 150 minuti
+
+90 minuti rendering
+→ parsed: amount 90, unit minuti
+→ preview: 90 minuti • rendering
+
+20€ materiale
+→ parsed: amount 20, unit euro
+
+villa 2 mario
+→ parsed: amount null, unit null
+→ preview: villa 2 mario
+
+458,78 euro mangime
+→ parsed: amount 458.78, unit euro
+
+1.500 euro materiale
+→ parsed: amount 1500, unit euro
+
+1.500,50 euro materiale
+→ parsed: amount 1500.5, unit euro
+
+2 giorni rendering
+→ parsed: amount null, unit null
+→ preview: 2 giorni rendering
+→ hint: Durata ambigua
+
+1 settimana lavoro
+→ parsed: amount null, unit null
+→ preview: 1 settimana lavoro
+→ hint: Durata ambigua
 
 INSERT:
 
@@ -1135,6 +1432,59 @@ update_event
 → await save
 → events_new refresh
 → lista aggiornata subito
+
+DURATION NORMALIZATION — INSERT:
+
+1 ora e 15 minuti test duration
+→ amount 75
+→ unit minuti
+→ raw_input preservato
+→ status NEW
+
+2h30 test duration
+→ amount 150
+→ unit minuti
+→ raw_input preservato
+→ status NEW
+
+1,5 ore test duration
+→ amount 90
+→ unit minuti
+→ raw_input preservato
+→ status NEW
+
+2 giorni test duration
+→ amount null
+→ unit null
+→ raw_input preservato
+→ status NEW
+
+DURATION NORMALIZATION — UPDATE:
+
+2 ore e 30 minuti test duration update
+→ amount 150
+→ unit minuti
+→ raw_input aggiornato
+→ status NEW
+
+1 ora e 45 minuti regressione finale update
+→ amount 105
+→ unit minuti
+→ raw_input aggiornato
+→ status NEW
+
+DURATION NORMALIZATION — REGRESSIONI:
+
+30 euro regressione finale
+→ amount 30
+→ unit euro
+→ status NEW
+
+villa 2 test duration
+→ amount null
+→ unit null
+→ raw_input preservato
+→ status NEW
 
 PREVIEW ALIGNMENT BASE:
 
@@ -1177,21 +1527,24 @@ LIMITI ATTUALI
 
 INPUT / PARSING:
 
-multi-unit parsing non supportato
-1 ora e 15 minuti non normalizzato
-2h30 non normalizzato
-2 ore 30 non convertito
-giorni non supportati
-settimane non supportate
+giorni non convertiti automaticamente
+settimane non convertite automaticamente
+giornata / mezza giornata non normalizzate
+parole numeriche tipo “due ore” non supportate
+forme colloquiali tipo “un paio d’ore” non supportate
+2h e mezza non supportato
 date relative non supportate
 parsing semantico non implementato
 
 NORMALIZATION:
 
-solo amount/unit base
-nessuna unità canonica durata
-nessuna conversione tempo
+amount/unit base implementati
+unità canonica tempo = minuti
+conversione ore/minuti implementata
+giorni/settimane non convertiti automaticamente
 nessuna retro-normalizzazione dati storici
+nessun payload duration
+nessun campo duration_minutes dedicato
 
 TYPE:
 
@@ -1221,6 +1574,7 @@ ARCHITETTURA:
 alcuni layer ancora accoppiati
 preview e matching ancora distribuiti
 input system stabilizzato ma non completamente separato da tutti i layer
+
 OBIETTIVO INPUT SYSTEM
 
 Rendere l’input:
@@ -1242,26 +1596,16 @@ orientato a KPI prima della qualità dati
 
 NEXT STEP CONSIGLIATI
 
-ENGINE BASE — DURATION NORMALIZATION
-
-Obiettivo:
-
-1 ora e 15 minuti
-2h30
-2 ore 30
-90 minuti
-eventuale gestione giorni
-definizione unità canonica durata
-chiarimento rapporto tra raw_input, amount, unit e durata normalizzata
-
 ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Obiettivo:
 
 evento / tempo / economico
-eventuale spesa/incasso
-parole chiave controllate
+allineamento select1 a ui_state.parsed
+gestione corretta unit = minuti come tempo
+eventuale spesa/incasso tramite parole chiave controllate
 mantenimento controllo utente
+nessuna automazione decisionale definitiva
 
 MATCH ENGINE UNIFICATION
 
@@ -1332,3 +1676,29 @@ confermato che parse_input_controlled non è stato modificato
 confermato che ui_state.parsed non è stato modificato
 confermato che save flow e DB restano invariati
 aggiornamento prossimo nodo consigliato: ENGINE BASE — DURATION NORMALIZATION
+
+v07 — 2026-04-30
+
+completamento ENGINE BASE — DURATION NORMALIZATION
+definita unità canonica tempo in minuti
+durate certe ore/minuti convertite in minuti
+1 ora → 60 minuti
+1,5 ore → 90 minuti
+1 ora e 15 minuti → 75 minuti
+2h30 → 150 minuti
+2 ore 30 → 150 minuti
+90 minuti → 90 minuti
+giorni/settimane riconosciuti come ambigui ma non convertiti
+aggiornato parse_input_controlled
+preview durata aggiornata con forma umana
+introdotto hint “Normalizzato: X minuti”
+introdotto hint durata ambigua
+label cleaning aggiornato per rimuovere durate composte
+insert/update validati runtime
+regressioni euro/date/numeri semantici superate
+nessuna modifica DB
+nessuna modifica button_input_confirm
+nessuna modifica insert_event/update_event
+nessuna modifica matching
+nessuna type classification
+aggiornamento prossimo nodo consigliato: ENGINE BASE — TYPE CLASSIFICATION BASE

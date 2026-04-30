@@ -1,4 +1,4 @@
-# 04_LOGOS_Retool_Architecture_v07
+# 04_LOGOS_Retool_Architecture_v08
 
 DATA: 2026-04-30
 
@@ -14,11 +14,13 @@ C (Completezza): 10/10
 - confirm flow aggiornato  
 - refresh lista dopo save documentato  
 - preview alignment documentato  
+- duration normalization documentata   
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
 - distinzione chiara tra parsing, normalization base, preview, matching e save  
 - preview visualmente allineata ai dati normalizzati  
+- durate certe ore/minuti normalizzate in minuti   
 - debiti residui esplicitati  
 - non introduce modello ideale non implementato  
 
@@ -27,6 +29,7 @@ D (Deployabilità): 10/10
 - coerente con implementazione Retool attuale  
 - utile per ricostruzione runtime  
 - nodo Preview Alignment Base validato runtime  
+- nodo Duration Normalization validato runtime   
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -43,6 +46,7 @@ Il documento descrive:
 - flussi operativi reali
 - parsing controllato
 - normalization layer base
+- duration normalization base
 - preview alignment base
 - insert/update flow
 - stato UI condiviso
@@ -217,6 +221,7 @@ Caratteristiche:
 ✔ preview rappresenta i dati principali parsati
 ✔ preview legge amount/unit/event_date da ui_state.parsed
 ✔ preview visualizza amount/unit in formato italiano
+
 ✔ preview non modifica DB
 ✔ preview non blocca input
 ✔ preview supporta create/edit
@@ -251,11 +256,30 @@ Preview Alignment Base:
 ✔ bug "minuti" → "uti" risolto  
 ✔ separatore data/descrizione uniformato  
 ✔ unità tecniche escluse dall'highlight locale  
+✔ durata visualizzata in forma umana dopo Duration Normalization  
+✔ hint normalizzazione durata introdotto  
+✔ hint durata ambigua introdotto  
 
 Nota:
 
 la formattazione è solo visuale.
 Il dato interno resta numerico e viene salvato invariato.
+
+Per le durate certe, dopo Duration Normalization:
+
+- il dato interno è salvato in minuti
+- amount = totale minuti
+- unit = "minuti"
+- raw_input conserva la forma originale
+- la preview mostra una forma umana leggibile
+
+Esempio:
+
+2h30 rendering
+→ ui_state.parsed.amount = 150
+→ ui_state.parsed.unit = minuti
+→ preview = 2 ore 30 minuti • rendering
+→ hint = Normalizzato: 150 minuti
 
 INPUT FLOW
 
@@ -289,6 +313,7 @@ parse_input_controlled:
 
 esegue parsing
 applica normalization base
+applica duration normalization base
 restituisce amount/unit/event_date
 
 ui_state.parsed:
@@ -307,6 +332,8 @@ Risultato:
 ✔ parsing non duplicato nel save
 ✔ create/edit più coerenti
 ✔ input e salvataggio allineati
+✔ durate certe ore/minuti normalizzate in minuti
+✔ raw_input durata preservato
 
 TRIGGER_PARSE_DEBOUNCED
 
@@ -335,7 +362,7 @@ Nota:
 Il debounce permette preview reattiva
 senza parsing continuo a ogni singolo carattere.
 
-PARSING FLOW + NORMALIZATION BASE
+PARSING FLOW + NORMALIZATION BASE + DURATION NORMALIZATION
 
 Eseguito in:
 
@@ -376,6 +403,10 @@ Caratteristiche:
 ✔ esclusione formato HH:MM
 ✔ supporto unit compatte
 ✔ supporto forme testuali compatte
+✔ duration normalization base
+✔ conversione ore/minuti in minuti
+✔ supporto durate composte
+✔ supporto forme compatte tipo 2h30
 ✔ gestione input multi-numero
 ✔ nessun amount se manca unità
 ✔ output stabile in ui_state.parsed
@@ -400,7 +431,11 @@ min
 minuto
 minuti
 
-Formati:
+Output canonico dopo Duration Normalization:
+
+minuti
+
+Formati supportati:
 
 2h
 h2
@@ -414,6 +449,23 @@ min30
 0.5h
 1.5 ore
 1,5 ore
+1 ora e 15 minuti
+1 ora 15 minuti
+2 ore e 30 minuti
+2 ore 30
+2h30
+2 h 30
+90 minuti
+
+Conversioni validate:
+
+1 ora → amount 60, unit minuti
+2 ore → amount 120, unit minuti
+1,5 ore → amount 90, unit minuti
+1 ora e 15 minuti → amount 75, unit minuti
+2h30 → amount 150, unit minuti
+2 ore 30 → amount 150, unit minuti
+90 minuti → amount 90, unit minuti
 
 AMOUNT NORMALIZATION:
 
@@ -436,10 +488,11 @@ cliente 2026 → amount null
 
 LIMITI:
 
-⚠ multi-unit non supportato
-⚠ 1 ora e 15 minuti non normalizzato
-⚠ 2h30 non normalizzato
-⚠ giorni non supportati
+⚠ giorni/settimane non convertiti automaticamente
+⚠ giornata / mezza giornata non normalizzate
+⚠ parole numeriche tipo “due ore” non supportate
+⚠ forme colloquiali tipo “un paio d’ore” non supportate
+⚠ 2h e mezza non supportato
 ⚠ parsing non semantico
 ⚠ type classification non consolidata
 
@@ -500,6 +553,24 @@ evitati falsi positivi tipo "macchina"
 economico non distingue spesa/incasso
 type non è ancora un dato affidabile per output/KPI
 
+Nota post Duration Normalization:
+
+le durate certe vengono ora salvate con:
+
+unit = minuti
+
+La logica select1/type non è ancora pienamente allineata a questa evoluzione.
+
+Esempio osservato:
+
+2h30 rendering
+→ parsed.amount = 150
+→ parsed.unit = minuti
+→ select1 può restare Evento
+
+Questo è fuori scope nel nodo Duration Normalization
+e diventa tema del nodo TYPE CLASSIFICATION BASE.
+
 NON IMPLEMENTATO:
 
 classificazione spesa/incasso
@@ -530,6 +601,8 @@ normalizzazione spazi
 preservazione numeri semantici
 compound token
 gestione unità compatte
+rimozione durate composte già normalizzate
+rimozione residui “e/ed” dopo cleaning durata
 label leggibile
 
 Aggiornamenti Preview Alignment Base:
@@ -540,6 +613,9 @@ Aggiornamenti Preview Alignment Base:
 ✔ bug "minuti" → "uti" risolto  
 ✔ "villa 2" preservato  
 ✔ data separata dalla descrizione  
+✔ durate composte rimosse dalla label dopo Duration Normalization  
+✔ forme compatte tipo 2h30 rimosse dalla label  
+✔ residui congiunzione “e/ed” rimossi  
 
 Nota:
 
@@ -587,6 +663,9 @@ Caratteristiche:
 ✔ mostra dati principali
 ✔ legge amount/unit/event_date da ui_state.parsed
 ✔ visualizza amount/unit in formato italiano
+✔ visualizza durata normalizzata in forma umana
+✔ mostra valore tecnico normalizzato come hint
+✔ segnala giorni/settimane come durata ambigua
 ✔ separa correttamente data e descrizione
 ✔ applica label cleaning sui casi normalizzati
 ✔ highlight locale reso unit-safe
@@ -606,6 +685,8 @@ Funzioni runtime introdotte:
 
 formatAmountIT
 formatUnitIT
+formatDurationHumanIT
+formatDurationMinutesIT
 
 Comportamento:
 
@@ -626,12 +707,26 @@ Esempi:
 
 1ora lavoro
 → 1 ora • lavoro
+→ Normalizzato: 60 minuti
 
 18min test
 → 18 minuti • test
 
 2,7 ore sviluppo sistema aspri
-→ 2,7 ore • sviluppo sistema aspri
+→ 2 ore 42 minuti • sviluppo sistema aspri
+→ Normalizzato: 162 minuti
+
+1 ora e 15 minuti sopralluogo
+→ 1 ora 15 minuti • sopralluogo
+→ Normalizzato: 75 minuti
+
+2h30 rendering
+→ 2 ore 30 minuti • rendering
+→ Normalizzato: 150 minuti
+
+2 giorni rendering
+→ 2 giorni rendering
+→ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
 
 REGOLA CRITICA:
 
@@ -656,6 +751,32 @@ preview:
 DB:
 amount 1500.5
 unit euro
+
+REGOLA DURATION:
+
+Per le durate certe il dato interno viene salvato in minuti.
+
+Esempio:
+
+input:
+2h30 rendering
+
+ui_state.parsed.amount:
+150
+
+ui_state.parsed.unit:
+minuti
+
+preview:
+2 ore 30 minuti • rendering
+
+hint:
+Normalizzato: 150 minuti
+
+DB:
+amount 150
+unit minuti
+raw_input 2h30 rendering
 
 DATE DISPLAY:
 
@@ -689,6 +810,12 @@ minuto
 minuti
 euro
 eur
+giorno
+giorni
+settimana
+settimane
+giornata
+giornate
 
 Funzioni runtime:
 
@@ -860,6 +987,7 @@ Validato:
 → amount 1500.5
 → unit euro
 → status NEW
+
 UPDATE_EVENT
 
 Tipo:
@@ -888,9 +1016,14 @@ updated_at
 
 Validato:
 
-1,5 ore test engine update
-→ amount 1.5
-→ unit ore
+1 ora e 45 minuti regressione finale update
+→ amount 105
+→ unit minuti
+→ status NEW
+
+2 ore e 30 minuti test duration update
+→ amount 150
+→ unit minuti
 → status NEW
 
 Fix recente:
@@ -1031,6 +1164,14 @@ RISOLTI:
 ✔ bug "minuti" → "uti" → risolto
 ✔ separatore data/descrizione → risolto
 ✔ highlight improprio su unità → risolto
+✔ duration normalization base → completata
+✔ durate ore/minuti non confrontabili → risolte
+✔ 1 ora e 15 minuti non normalizzato → risolto
+✔ 2h30 non normalizzato → risolto
+✔ 2 ore 30 non normalizzato → risolto
+✔ ore decimali non convertite in minuti → risolto
+✔ preview durata tecnica poco leggibile → risolta
+✔ giorni/settimane silenziosi → ridotti tramite hint ambiguità
 
 UI:
 
@@ -1058,7 +1199,8 @@ ARCHITETTURA:
 ⚠ accoppiamento preview / label / hint
 ⚠ matching non unificato
 ⚠ hint non completamente state-driven
-⚠ duration normalization non implementata
+⚠ giorni/settimane non convertiti automaticamente
+⚠ type detection non pienamente allineata a unit = minuti
 
 STATO ARCHITETTURA
 
@@ -1070,6 +1212,9 @@ STATO ARCHITETTURA
 ✔ parsing affidabile
 ✔ normalization base implementata
 ✔ preview alignment base completato
+✔ duration normalization base completata
+✔ durate certe ore/minuti salvate in minuti
+✔ preview durata in forma umana
 ✔ amount/unit/date visualizzati coerentemente
 ✔ label pipeline stabile
 ✔ UX migliorata
@@ -1078,42 +1223,44 @@ STATO ARCHITETTURA
 ⚠ preview ancora ibrida
 ⚠ matching funzionale ma non unificato
 ⚠ type classification debole
-⚠ duration normalization non implementata
+⚠ giorni/settimane non convertiti automaticamente
+⚠ type classification da allineare alla durata normalizzata
 ⚠ output non attivo
 
 NEXT STEP ARCHITETTURALE CONSIGLIATO
 
-ENGINE BASE — DURATION NORMALIZATION
+ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Obiettivo:
 
-definire e implementare il primo livello controllato di normalizzazione durata
-partendo dai casi tempo già riconosciuti dal parser base.
+definire e implementare, se coerente, il primo livello controllato
+di classificazione evento.
 
 Casi target:
 
-- 1 ora e 15 minuti
-- 2h30
-- 2 ore 30
-- 90 minuti
-- valutazione giorni/settimane come decisione dedicata
+- tempo se parsed.unit = minuti
+- economico se parsed.unit = euro
+- evento come default controllato
+- verifica select1 su input tipo 2h30 rendering
+- valutazione spesa/incasso solo come decisione separata e controllata
 
 Ammesso:
 
-- definizione unità canonica durata
-- chiarimento rapporto tra raw_input, amount, unit e durata normalizzata
-- eventuale micro-estensione parser solo se necessaria
-- test runtime controllati
+- analisi comportamento attuale select1
+- allineamento minimo con ui_state.parsed
+- uso di parsed.unit come segnale controllato
+- mantenimento selezione manuale utente
+- test runtime su preview/save
 
 Vietato nel prossimo nodo:
 
-- type classification
-- spesa/incasso
 - dashboard/KPI
 - match engine unification
 - refactor globale parser
 - refactor globale preview
 - modifica schema DB non motivata
+- parole chiave economiche aggressive
+- automazioni decisionali definitive
 - retro-normalizzazione storico
 
 CHANGELOG
@@ -1187,3 +1334,29 @@ highlight locale reso unit-safe
 confermato che preview non modifica DB
 confermato save flow invariato
 aggiornamento prossimo nodo consigliato: STEP 6.2 — DURATION NORMALIZATION
+
+v08 — 2026-04-30
+
+completamento ENGINE BASE — DURATION NORMALIZATION
+definita unità canonica tempo in minuti
+durate certe ore/minuti convertite in minuti
+1 ora → 60 minuti
+1,5 ore → 90 minuti
+1 ora e 15 minuti → 75 minuti
+2h30 → 150 minuti
+2 ore 30 → 150 minuti
+90 minuti → 90 minuti
+giorni/settimane riconosciuti come ambigui ma non convertiti
+aggiornato parse_input_controlled
+preview durata aggiornata con forma umana
+introdotto hint “Normalizzato: X minuti”
+introdotto hint durata ambigua
+label cleaning aggiornato per rimuovere durate composte
+insert/update validati runtime
+regressioni euro/date/numeri semantici superate
+nessuna modifica DB
+nessuna modifica button_input_confirm
+nessuna modifica insert_event/update_event
+nessuna modifica matching
+nessuna type classification
+aggiornamento prossimo nodo consigliato: STEP 6.3 — TYPE CLASSIFICATION BASE
