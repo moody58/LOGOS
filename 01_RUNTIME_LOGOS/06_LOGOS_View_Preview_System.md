@@ -1,4 +1,4 @@
-# 06_LOGOS_View_Preview_System_v03
+# 06_LOGOS_View_Preview_System_v04
 
 DATA: 2026-04-30
 
@@ -17,6 +17,7 @@ Il documento descrive:
 - come si comporta a runtime
 - quali fonti dati utilizza dopo l’introduzione di ui_state.parsed
 - quali limiti restano aperti dopo il Normalization Layer Base
+- quali allineamenti visuali sono stati completati con Preview Alignment Base
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -92,12 +93,16 @@ Rispetto allo stato precedente:
 ✔ il parsing strutturato non è più duplicato nel confirm  
 ✔ amount/unit/event_date arrivano da ui_state.parsed  
 ✔ save/DB sono più coerenti  
+✔ amount/unit sono ora visualizzati in formato italiano coerente  
+✔ label cleaning aggiornato sui casi già normalizzati  
+✔ date separate correttamente dalla descrizione  
+✔ highlight locale reso unit-safe  
 
 Ma:
 
 ⚠ la preview contiene ancora trasformazioni proprie  
-⚠ la preview non è ancora pienamente allineata alla normalizzazione base  
 ⚠ la preview non è ancora un layer read-only puro  
+⚠ label cleaning, hint logic e highlight restano embedded nella sintesi    
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -171,7 +176,9 @@ eventuale hint
 
 Nota:
 
-Il dato interno può essere corretto anche quando la visualizzazione non è ancora nel formato desiderato.
+Il dato interno resta numerico e non localizzato.
+
+La visualizzazione viene formattata solo nella preview.
 
 Esempio:
 
@@ -180,48 +187,113 @@ Dato interno:
 amount: 1500.5
 unit: euro
 
-Possibile preview attuale:
-
-1500.5 €
-
-Preview desiderata futura:
+Preview attuale:
 
 1.500,50 €
+
+DB:
+
+amount 1500.5
+unit euro
+
+Regola:
+
+la formattazione italiana è solo visuale.
+
 COMPONENTI LOGICI INTERNI
 
 La preview contiene attualmente:
 
 VALUE BUILDER
+
 costruzione amount + unit
-gestione formati:
+lettura da ui_state.parsed
+formattazione visuale italiana
+
+Gestione formati:
+
 euro
 ore
 minuti
-evidenziazione visuale
 
-⚠ non ancora pienamente allineato alla formattazione italiana amount
+Funzioni introdotte:
+
+- formatAmountIT
+- formatUnitIT
+
+Comportamento:
+
+- euro → simbolo €
+- euro → due decimali
+- amount euro con grouping migliaia
+- ore/minuti → massimo due decimali
+- virgola italiana nei decimali
+- singolare/plurale unit gestito
+
+Esempi:
+
+1500 euro → 1.500,00 €
+1.500,50 euro → 1.500,50 €
+1ora → 1 ora
+18min → 18 minuti
+2,7 ore → 2,7 ore
+
+Nota:
+
+il value builder non modifica ui_state.parsed
+e non modifica il dato salvato.
 
 DATE FORMATTER
 converte YYYY-MM-DD → formato breve leggibile
 mesi localizzati
+
 LABEL CLEANING (ATTIVO)
 
 Operazioni:
 
-normalizzazione testo
-separazione simboli (€)
-gestione unit compatte
-rimozione amount + unit
-rimozione date
-compressione spazi
+- normalizzazione testo
+- separazione simboli (€)
+- gestione unit compatte
+- rimozione amount + unit già rappresentati dal value
+- rimozione date già parse
+- compressione spazi
+- preservazione numeri semantici
+- ricomposizione parola + numero
 
-⚠ alcune logiche possono non essere allineate al parser aggiornato
+Aggiornamenti Preview Alignment Base:
+
+✔ rimozione migliorata di euro separati e compatti  
+✔ rimozione migliorata di ore separate e compatte  
+✔ rimozione migliorata di minuti separati e compatti  
+✔ corretto bug "minuti" → "uti"  
+✔ preservato caso "villa 2"  
+✔ label più coerente con ui_state.parsed  
+
+Esempi:
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+18 minuti test
+→ 18 minuti • test
+
+18min test
+→ 18 minuti • test
+
+villa 2 mario
+→ villa 2 mario
+
+Nota:
+
+il label cleaning resta visuale,
+embedded nella sintesi e non persistito.
 
 TOKEN LOGIC
 split parole
 recombine parola + numero
 (es: "villa 2")
 limitazione lunghezza label
+
 LABEL BUILDING
 
 Struttura:
@@ -230,13 +302,22 @@ MAIN:
 
 [data] • [value] • [primary]
 
-SECONDARY:
+oppure, senza amount/unit:
 
-resto label
+[data] • [primary]
 
 Output:
 
-labelFull
+labelFull / labelStyled
+
+Aggiornamento:
+
+la data viene separata dalla descrizione anche quando non esiste amount/unit.
+
+Esempio:
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
 
 HIGHLIGHT ENGINE
 
@@ -253,6 +334,37 @@ project → dopo
 protezione:
 
 escape regex
+
+Aggiornamento Preview Alignment Base:
+
+è stato introdotto un filtro locale per evitare che unità tecniche
+vengano evidenziate come match.
+
+Token esclusi:
+
+- ora
+- ore
+- h
+- min
+- minuto
+- minuti
+- euro
+- eur
+
+Funzione runtime introdotta:
+
+previewStopTokens
+getPreviewTokens
+
+Risultato:
+
+"ore", "minuti", "euro" non interferiscono più con l'highlight locale.
+
+Nota:
+
+questo intervento non modifica project_state,
+entity_state, select_project o select_entity.
+Agisce solo sull'highlight locale della preview.
 
 HINT SYSTEM
 
@@ -372,34 +484,58 @@ RELAZIONE CON NORMALIZATION LAYER BASE
 
 Il Normalization Layer Base ha consolidato:
 
-amount normalization
-unit normalization
-numeri senza unità ignorati come amount
-formato numerico italiano convertito a numero
-insert/update basati su ui_state.parsed
+- amount normalization
+- unit normalization
+- numeri senza unità ignorati come amount
+- formato numerico italiano convertito a numero
+- insert/update basati su ui_state.parsed
 
-La preview deve ora essere allineata a questo nuovo stato.
+Preview Alignment Base ha allineato la rappresentazione visuale
+a questo stato.
 
-Punti da verificare nel prossimo nodo:
+Implementato:
 
-Formattazione amount
-1500.5 → 1.500,50
-1.5 → 1,5
-Visualizzazione unit
-euro → €
-ore → ora/ore
-minuti → minuto/minuti
-Label cleaning coerente con parser aggiornato
+✔ 1500.5 → 1.500,50 €  
+✔ 1500 → 1.500,00 €  
+✔ 1.5 ore → 1,5 ore  
+✔ 1 ora → 1 ora  
+✔ 18 minuti → 18 minuti  
+✔ 6/4/26 → 6 apr separato dalla descrizione  
+✔ label cleaning coerente con amount/unit già rappresentati  
+✔ unità tecniche escluse dall'highlight locale  
 
-Esempi critici:
+Esempi validati:
 
 1.500,50 euro materiale
-1ora lavoro
-30minuti test
-villa 2 mario
-Nessuna alterazione del dato salvato
+→ 1.500,50 € • materiale
 
-La preview deve restare visuale.
+1500 euro materiale
+→ 1.500,00 € • materiale
+
+18 minuti test
+→ 18 minuti • test
+
+18min test
+→ 18 minuti • test
+
+1ora lavoro
+→ 1 ora • lavoro
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ 4 apr • 50,00 € • benzina alfie allevamento aspri
+
+villa 2 mario
+→ villa 2 mario
+
+2 ore sopralluogo villa 2
+→ 2 ore • sopralluogo villa 2
+
+Nessuna alterazione del dato salvato.
+
+La preview resta visuale.
 
 RELAZIONE CON INSERT / UPDATE
 
@@ -451,7 +587,9 @@ MA:
 
 ⚠ dipende da aggiornamenti multipli
 ⚠ usa fonti non completamente orchestrate
-⚠ non completamente allineata al Normalization Layer Base
+✔ allineata visualmente al Normalization Layer Base per amount/unit/date
+
+⚠ non ancora separata come view pura
 
 LIMITI STRUTTURALI
 DUPLICAZIONE LOGICA
@@ -480,17 +618,24 @@ type select
 
 → assenza di preview model unico
 
-FORMATO AMOUNT NON ALLINEATO
+FORMATO AMOUNT ALLINEATO IN PREVIEW
+
 dato interno numerico corretto
-visualizzazione non ancora localizzata
+visualizzazione localizzata in preview
 
 Esempio:
 
-1500.5 €
+dato interno:
+1500.5
 
-invece di:
-
+preview:
 1.500,50 €
+
+Nota:
+
+questa localizzazione resta visuale
+e non modifica il valore persistito.
+
 PROPRIETÀ DEL SISTEMA
 
 ✔ deterministico localmente
@@ -501,11 +646,15 @@ PROPRIETÀ DEL SISTEMA
 
 MA:
 
-⚠ non allineato al modello ideale
+✔ allineato visualmente ai dati normalizzati principali
+
+⚠ non allineato al modello ideale di view pura
 ⚠ accoppiamento alto
 ⚠ difficile evoluzione
 ⚠ ancora non completamente coerente globalmente
 ⚠ non ancora pronto per output/KPI
+
+STATO ATTUALE
 
 STATO ATTUALE
 
@@ -514,44 +663,37 @@ STATO ATTUALE
 ✔ preview alimentata da ui_state.parsed
 ✔ save flow non dipende dalla preview
 ✔ DB coerente con dati normalizzati
+✔ amount/unit/date visualizzati coerentemente
+✔ formattazione italiana amount implementata
+✔ label cleaning aggiornato
+✔ date separate correttamente dalla descrizione
+✔ highlight unit-safe
 
 ⚠ preview ancora ibrida
-⚠ formattazione amount da allineare
-⚠ label cleaning da verificare dopo normalizzazione
 ⚠ hint non completamente state-driven
 ⚠ matching non unificato
 ⚠ architettura non separata
+⚠ preview non ancora view pura
 
 OBIETTIVO FUTURO IMMEDIATO
 
-PREVIEW ALIGNMENT BASE
+Nessun ulteriore nodo preview attivo.
 
-Scopo:
+Il prossimo nodo logico di roadmap è:
 
-allineare la visualizzazione ai dati normalizzati
-senza modificare salvataggio, DB, matching o type classification.
+ENGINE BASE — DURATION NORMALIZATION
 
-Ammesso:
+La preview potrà essere aggiornata solo come conseguenza controllata
+di eventuali nuove regole di durata, senza refactor globale.
 
-✔ formattazione italiana amount
-✔ formattazione unit leggibile
-✔ coerenza visuale con ui_state.parsed
-✔ controllo label cleaning su casi aggiornati
-✔ nessuna modifica DB
-✔ nessuna modifica matching
-✔ nessuna nuova semantica
+Preview Alignment Base è completato.
 
-Vietato:
+Restano futuri, ma non attivi:
 
-✘ duration normalization
-✘ 1 ora e 15 minuti
-✘ 2h30
-✘ giorni/settimane
-✘ spesa/incasso
-✘ type classification
-✘ matching unification
-✘ dashboard/KPI
-✘ refactor globale preview
+- separazione preview come view pura
+- estrazione label cleaning in modulo dedicato
+- hint completamente state-driven
+- unificazione matching preview/select/state
 
 OBIETTIVO FUTURO NON ATTIVO
 
@@ -581,6 +723,12 @@ nessuna trasformazione strutturale
 
 ⚠ NON implementato attualmente
 
+Nota:
+
+questo obiettivo resta non attivo.
+Preview Alignment Base ha migliorato la rappresentazione visuale,
+ma non ha separato architetturalmente la preview.
+
 CHANGELOG
 
 v01 — 2026-04-07
@@ -606,3 +754,19 @@ documentata normalizzazione amount/unit
 documentato che il save flow non dipende più dalla preview
 aggiornati limiti preview dopo normalizzazione
 apertura nodo consigliato PREVIEW ALIGNMENT BASE
+
+v04 — 2026-04-30
+
+completamento PREVIEW ALIGNMENT BASE
+documentata formattazione italiana amount in preview
+documentate funzioni formatAmountIT / formatUnitIT
+documentato grouping migliaia visuale
+documentato euro con due decimali
+documentata gestione singolare/plurale unit
+documentato label cleaning aggiornato
+documentata correzione bug "minuti" → "uti"
+documentato separatore data/descrizione
+documentato filtro previewStopTokens
+documentato highlight unit-safe
+confermato che preview non modifica DB/save flow
+confermato che preview resta layer ibrido non ancora view pura

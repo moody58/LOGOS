@@ -1,4 +1,4 @@
-# 01_LOGOS_Input_System_v05
+# 01_LOGOS_Input_System_v06
 
 DATA: 2026-04-30
 
@@ -16,6 +16,7 @@ Il documento è utilizzato per:
 - gestione preview
 - controllo qualità input
 - normalizzazione base dei dati parsati
+- allineamento preview ai dati parsati
 - allineamento insert/update
 
 ------------------------------------------------
@@ -83,8 +84,9 @@ parse_input_controlled
 ui_state.parsed
 → fonte unica per preview/save/edit
 
-label (preview)
+label / sintesi (preview)
 → derivato UI (non persistito)
+→ allineato visualmente a ui_state.parsed per amount/unit/date
 
 ---
 
@@ -206,6 +208,7 @@ if (window.__parseTimer) {
 window.__parseTimer = setTimeout(() => {
   parse_input_controlled.trigger();
 }, 350);
+
 UI_STATE.PARSED
 
 Ruolo:
@@ -243,6 +246,28 @@ Regole:
 ✔ parsed non deve tornare null
 ✔ parsed deve contenere sempre amount/unit/event_date
 ✔ button_input_confirm usa parsed senza ricalcolare parsing
+
+Relazione con preview:
+
+✔ preview legge ui_state.parsed
+✔ preview formatta amount/unit solo visualmente
+✔ preview non modifica parsed
+✔ preview non modifica il payload di salvataggio
+✔ preview non modifica il DB
+
+Esempio:
+
+ui_state.parsed.amount = 1500.5
+ui_state.parsed.unit = euro
+
+preview:
+
+1.500,50 €
+
+DB:
+
+amount 1500.5
+unit euro
 
 PARSING SYSTEM
 
@@ -559,7 +584,8 @@ ieri
 prossima settimana
 date relative
 intervalli date
-LABEL (RUNTIME)
+
+LABEL / SINTESI (RUNTIME)
 
 FUNZIONE:
 
@@ -570,21 +596,55 @@ TIPO:
 ✔ derivato runtime
 ✔ non persistito
 ✔ non strutturato
+✔ visuale
 
 INPUT:
 
 raw_input
-amount
-unit
-event_date
+ui_state.parsed.amount
+ui_state.parsed.unit
+ui_state.parsed.event_date
 
 COMPORTAMENTO:
 
-rimozione amount + unit best-effort
+rimozione amount + unit già rappresentati dal value
 rimozione date già parse
 normalizzazione spazi
 preservazione numeri semantici
 gestione compound token
+formattazione visuale amount/unit
+
+AGGIORNAMENTO PREVIEW ALIGNMENT BASE:
+
+✔ formattazione italiana amount implementata nella sintesi
+✔ euro mostrato con due decimali
+✔ grouping migliaia visuale
+✔ ore/minuti visualizzati coerentemente
+✔ singolare/plurale unit gestito
+✔ label cleaning aggiornato
+✔ bug "minuti" → "uti" risolto
+✔ data separata correttamente dalla descrizione
+✔ highlight locale reso unit-safe
+
+ESEMPI:
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+1500 euro materiale
+→ 1.500,00 € • materiale
+
+18min test
+→ 18 minuti • test
+
+1ora lavoro
+→ 1 ora • lavoro
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+villa 2 mario
+→ villa 2 mario
 
 IMPORTANTE:
 
@@ -592,11 +652,12 @@ IMPORTANTE:
 ✔ logica applicata direttamente nella preview
 ✔ NON riutilizzabile come modulo indipendente
 ✔ NON influisce su parsing
+✔ NON modifica ui_state.parsed
 ✔ NON salvata nel DB
 
 ⚠ logica accoppiata alla preview
 ⚠ non isolata come layer indipendente
-⚠ non completamente allineata al nuovo Normalization Layer Base
+⚠ preview non ancora view pura
 
 TYPE DETECTION (BASE)
 
@@ -652,7 +713,7 @@ STRUTTURA:
 
 MAIN:
 
-amount + unit + label
+event_date + amount + unit + label
 
 META:
 
@@ -668,10 +729,12 @@ hint durata ambigua
 REGOLE:
 
 ✔ preview non blocca
-✔ preview può essere errata
+✔ preview può essere parzialmente errata
 ✔ preview non modifica input
 ✔ preview non modifica DB
 ✔ preview legge dati parsati/normalizzati
+✔ preview visualizza amount/unit/date in formato leggibile
+✔ preview resta visuale
 
 Preview = rendering di:
 
@@ -680,11 +743,17 @@ label runtime
 stato matching project/entity
 hint
 
-⚠ presenza logica interna
-⚠ non pura view
-⚠ dipendenza da più fonti
-⚠ formattazione italiana amount non ancora allineata
-⚠ possibile divergenza visuale rispetto al dato interno normalizzato
+AGGIORNAMENTO PREVIEW ALIGNMENT BASE:
+
+✔ amount formattato in stile italiano
+✔ euro visualizzato con simbolo €
+✔ euro visualizzato con due decimali
+✔ migliaia visualizzate correttamente
+✔ ore/minuti visualizzati coerentemente
+✔ singolare/plurale unit gestito
+✔ label cleaning coerente con amount/unit già rappresentati
+✔ date separate correttamente dalla descrizione
+✔ highlight locale non interferisce più con unità tecniche
 
 Esempio:
 
@@ -693,17 +762,37 @@ Dato interno:
 amount: 1500.5
 unit: euro
 
-Preview attuale possibile:
-
-1500.5 €
-
-Preview futura desiderata:
+Preview:
 
 1.500,50 €
 
-Questa correzione appartiene a:
+DB:
 
-PREVIEW ALIGNMENT BASE
+amount: 1500.5
+unit: euro
+
+REGOLA CRITICA:
+
+La formattazione italiana è solo visuale.
+
+Non modifica:
+
+- parse_input_controlled
+- ui_state.parsed
+- button_input_confirm
+- insert_event
+- update_event
+- DB
+
+⚠ presenza logica interna
+⚠ non pura view
+⚠ dipendenza da più fonti
+⚠ matching locale preview non unificato
+⚠ hint non completamente state-driven
+
+Preview Alignment Base:
+
+✔ COMPLETATO
 
 MATCHING BASE
 
@@ -1046,6 +1135,44 @@ update_event
 → await save
 → events_new refresh
 → lista aggiornata subito
+
+PREVIEW ALIGNMENT BASE:
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+1500 euro materiale
+→ 1.500,00 € • materiale
+
+18 minuti test
+→ 18 minuti • test
+
+18min test
+→ 18 minuti • test
+
+1ora lavoro
+→ 1 ora • lavoro
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ 4 apr • 50,00 € • benzina alfie allevamento aspri
+
+villa 2 mario
+→ villa 2 mario
+
+2 ore sopralluogo villa 2
+→ 2 ore • sopralluogo villa 2
+
+2,7 ore sviluppo sistema aspri
+→ 2,7 ore • sviluppo sistema aspri
+
+Nota:
+
+eventuale hint "Verifica durata" resta ammesso.
+La duration normalization non è stata implementata.
+
 LIMITI ATTUALI
 
 INPUT / PARSING:
@@ -1083,9 +1210,11 @@ no gerarchia entity
 PREVIEW:
 
 non completamente read-only
-formattazione italiana non ancora allineata
+formattazione italiana base allineata nella sintesi
 contiene ancora logica label/hint
 non è una view pura
+label cleaning ancora embedded
+hint non completamente state-driven
 
 ARCHITETTURA:
 
@@ -1110,16 +1239,9 @@ completamente automatico
 semantico avanzato
 decisionale
 orientato a KPI prima della qualità dati
+
 NEXT STEP CONSIGLIATI
-PREVIEW ALIGNMENT BASE
 
-Obiettivo:
-
-formattazione italiana amount
-visualizzazione coerente con ui_state.parsed
-riduzione divergenza sintesi/parser
-nessuna modifica DB
-nessuna semantica nuova
 ENGINE BASE — DURATION NORMALIZATION
 
 Obiettivo:
@@ -1129,6 +1251,9 @@ Obiettivo:
 2 ore 30
 90 minuti
 eventuale gestione giorni
+definizione unità canonica durata
+chiarimento rapporto tra raw_input, amount, unit e durata normalizzata
+
 ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Obiettivo:
@@ -1137,6 +1262,7 @@ evento / tempo / economico
 eventuale spesa/incasso
 parole chiave controllate
 mantenimento controllo utente
+
 MATCH ENGINE UNIFICATION
 
 Obiettivo:
@@ -1145,6 +1271,7 @@ eliminazione logiche parallele
 priority match
 hint state-driven
 select / preview / matching coerenti
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -1187,3 +1314,21 @@ validazione insert con dati normalizzati
 validazione update con dati normalizzati
 fix refresh lista dopo update
 esplicitazione limiti: multi-unit, duration normalization, type classification
+
+v06 — 2026-04-30
+
+completamento PREVIEW ALIGNMENT BASE
+documentato allineamento preview a ui_state.parsed
+documentata formattazione italiana amount solo visuale
+documentata visualizzazione euro con due decimali
+documentato grouping migliaia visuale
+documentata visualizzazione coerente ore/minuti
+documentato singolare/plurale unit
+documentato label cleaning preview aggiornato
+documentata correzione bug "minuti" → "uti"
+documentato separatore data/descrizione
+documentato highlight unit-safe
+confermato che parse_input_controlled non è stato modificato
+confermato che ui_state.parsed non è stato modificato
+confermato che save flow e DB restano invariati
+aggiornamento prossimo nodo consigliato: ENGINE BASE — DURATION NORMALIZATION

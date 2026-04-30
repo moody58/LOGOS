@@ -1,4 +1,4 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v05
+# LOGOS_RETOOL_RUNTIME_REAL_v06
 
 DATA: 2026-04-30
 
@@ -13,10 +13,12 @@ C (Completezza): 10/10
 - insert/update flow documentato  
 - ui_state.parsed documentato come fonte unica  
 - refresh lista post-save documentato  
+- preview alignment documentato  
 
-Q (Qualità): 9/10  
+Q (Qualità): 9.5/10  
 - runtime reale aggiornato  
 - distinzione chiara tra parser, normalization base, preview e save flow  
+- preview allineata visualmente ai dati normalizzati  
 - debiti residui esplicitati  
 - non descrive funzionalità non implementate come attive  
 
@@ -24,6 +26,7 @@ D (Deployabilità): 10/10
 - utilizzabile come riferimento tecnico reale  
 - allineato a Retool  
 - utile per ricostruire il runtime effettivo  
+- nodo Preview Alignment Base validato runtime   
 
 ------------------------------------------------
 STATO
@@ -33,7 +36,8 @@ STATO
 
 Runtime aggiornato dopo completamento:
 
-ENGINE BASE — NORMALIZATION LAYER BASE
+ENGINE BASE — NORMALIZATION LAYER BASE  
+PREVIEW ALIGNMENT BASE
 
 ------------------------------------------------
 DESCRIZIONE OPERATIVA DEL SISTEMA
@@ -58,7 +62,9 @@ INPUT
 ✔ allineamento save → DB verificato  
 ✔ insert e update usano ui_state.parsed  
 ✔ normalizzazione amount/unit base attiva  
-✔ update visibile in lista senza refresh pagina  
+✔ preview visualmente allineata a ui_state.parsed  
+✔ amount/unit/date mostrati in formato leggibile italiano  
+✔ update visibile in lista senza refresh pagina    
 
 ------------------------------------------------
 1. INPUT UTENTE
@@ -535,7 +541,7 @@ liste projects/entities
 
 MAIN:
 
-amount + unit + label
+event_date + amount + unit + label
 
 META:
 
@@ -554,6 +560,11 @@ Caratteristiche:
 ✔ non modifica DB
 ✔ visualizza i dati principali parsati
 ✔ supporta create/edit
+✔ legge amount/unit/event_date da ui_state.parsed
+✔ visualizza amount/unit in formato italiano
+✔ separa correttamente data e descrizione
+✔ applica label cleaning sui casi già normalizzati
+✔ highlight locale reso unit-safe
 
 Limiti:
 
@@ -562,26 +573,143 @@ Limiti:
 ⚠ contiene hint logic
 ⚠ utilizza fonti multiple
 ⚠ non è view pura
-⚠ formattazione italiana amount non ancora allineata
+⚠ matching locale preview non unificato
+⚠ hint non completamente state-driven
 
-Esempio limite:
+VALUE BUILDER:
 
-Dato interno:
+Il value builder della sintesi costruisce il valore visuale partendo da ui_state.parsed.
 
-amount: 1500.5
-unit: euro
+Funzioni runtime introdotte:
 
-Possibile preview attuale:
+formatAmountIT
+formatUnitIT
 
-1500.5 €
+Comportamento:
 
-Preview desiderata futura:
+- euro → simbolo €
+- euro → due decimali
+- amount euro con grouping migliaia
+- ore/minuti → massimo due decimali
+- virgola italiana nei decimali
+- singolare/plurale unit gestito
 
+Esempi:
+
+1500 euro materiale
+→ 1.500,00 € • materiale
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+1ora lavoro
+→ 1 ora • lavoro
+
+18min test
+→ 18 minuti • test
+
+2,7 ore sviluppo sistema aspri
+→ 2,7 ore • sviluppo sistema aspri
+
+REGOLA CRITICA:
+
+La formattazione italiana è solo visuale.
+
+Il dato interno resta numerico.
+
+Esempio:
+
+input:
+1.500,50 euro
+
+ui_state.parsed.amount:
+1500.5
+
+ui_state.parsed.unit:
+euro
+
+preview:
 1.500,50 €
 
-Nodo futuro:
+DB:
+amount 1500.5
+unit euro
 
-PREVIEW ALIGNMENT BASE
+LABEL CLEANING PREVIEW:
+
+La label viene generata runtime nella sintesi.
+
+Aggiornamenti Preview Alignment Base:
+
+✔ rimozione amount + unit già rappresentati dal value  
+✔ gestione euro separati e compatti  
+✔ gestione ore separate e compatte  
+✔ gestione minuti separati e compatti  
+✔ bug "minuti" → "uti" risolto  
+✔ numeri semantici preservati  
+✔ data rimossa dalla label se già rappresentata come displayDate  
+
+Esempi:
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+18 minuti test
+→ 18 minuti • test
+
+18min test
+→ 18 minuti • test
+
+villa 2 mario
+→ villa 2 mario
+
+DATE DISPLAY:
+
+La data viene formattata in forma breve:
+
+YYYY-MM-DD → d mese breve
+
+Esempi:
+
+2026-04-06 → 6 apr
+2026-04-04 → 4 apr
+
+La data viene separata dalla descrizione anche quando non esiste amount/unit.
+
+Esempio:
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+HIGHLIGHT UNIT-SAFE:
+
+È stato introdotto filtro locale per evitare che unità tecniche vengano evidenziate come match.
+
+Token esclusi:
+
+ora
+ore
+h
+min
+minuto
+minuti
+euro
+eur
+
+Funzioni runtime:
+
+previewStopTokens
+getPreviewTokens
+
+Risultato:
+
+2 ore sopralluogo villa 2
+→ "ore" non viene più colorato impropriamente
+
+Nota:
+
+questo filtro agisce solo sull'highlight locale della preview.
+Non modifica project_state, entity_state, select_project o select_entity.
 
 LABEL RUNTIME
 
@@ -595,21 +723,34 @@ Caratteristiche:
 ✔ non persistita
 ✔ derivata da raw_input
 ✔ utile per UX
+✔ allineata ai casi normalizzati principali
+✔ non modifica ui_state.parsed
+✔ non modifica DB
 
 Operazioni:
 
-rimozione amount + unit best-effort
+rimozione amount + unit già rappresentati dal value
 rimozione date già parse
 normalizzazione spazi
 preservazione numeri semantici
 compound token
+gestione unità compatte
+
+Aggiornamenti validati:
+
+✔ euro separati / compatti rimossi dalla label  
+✔ ore separate / compatte rimosse dalla label  
+✔ minuti separati / compatti rimossi dalla label  
+✔ bug "minuti" → "uti" risolto  
+✔ "villa 2" preservato  
+✔ data separata dalla descrizione  
 
 Limiti:
 
 ⚠ non è modulo separato
 ⚠ non è riutilizzabile
 ⚠ embedded nella preview
-⚠ non completamente allineata al Normalization Layer Base
+⚠ non è view pura
 
 INSERT / UPDATE EVENT
 
@@ -947,9 +1088,11 @@ parole chiave non implementate
 UI / PREVIEW:
 
 input non multilinea
-preview migliorabile
+preview migliorabile come architettura
 preview non pura
-formattazione italiana amount non allineata
+formattazione italiana amount allineata nella sintesi
+label cleaning ancora embedded
+hint non completamente state-driven
 
 ARCHITETTURA:
 
@@ -977,6 +1120,8 @@ Runtime attuale:
 ✔ stabile su update
 ✔ normalizzazione base attiva
 ✔ parser controllato attivo
+✔ preview alignment base completato
+✔ amount/unit/date visualizzati coerentemente
 ✔ save flow ripulito
 ✔ refresh lista corretto
 ✔ DB coerente con payload
@@ -984,11 +1129,138 @@ Runtime attuale:
 
 Debiti:
 
-⚠ preview alignment da fare
 ⚠ duration normalization da fare
 ⚠ type classification da definire
 ⚠ matching unification da fare
+⚠ preview ancora non view pura
 ⚠ output non attivo
+
+------------------------------------------------
+PREVIEW ALIGNMENT BASE — TEST VALIDATI
+------------------------------------------------
+
+Input:
+
+1.500,50 euro materiale
+
+Output preview:
+
+1.500,50 € • materiale
+
+Esito: OK
+
+---
+
+Input:
+
+1500 euro materiale
+
+Output preview:
+
+1.500,00 € • materiale
+
+Esito: OK
+
+---
+
+Input:
+
+18 minuti test
+
+Output preview:
+
+18 minuti • test
+
+Esito: OK
+
+---
+
+Input:
+
+18min test
+
+Output preview:
+
+18 minuti • test
+
+Esito: OK
+
+---
+
+Input:
+
+1ora lavoro
+
+Output preview:
+
+1 ora • lavoro
+
+Esito: OK
+
+---
+
+Input:
+
+6/4/26 inseminazione alfie
+
+Output preview:
+
+6 apr • inseminazione alfie
+
+Esito: OK
+
+---
+
+Input:
+
+4 aprile benzina 50 euro alfie allevamento aspri
+
+Output preview:
+
+4 apr • 50,00 € • benzina alfie allevamento aspri
+
+Esito: OK
+
+---
+
+Input:
+
+villa 2 mario
+
+Output preview:
+
+villa 2 mario
+
+Esito: OK
+
+---
+
+Input:
+
+2 ore sopralluogo villa 2
+
+Output preview:
+
+2 ore • sopralluogo villa 2
+
+Esito: OK
+
+---
+
+Input:
+
+2,7 ore sviluppo sistema aspri
+
+Output preview:
+
+2,7 ore • sviluppo sistema aspri
+
+Esito: OK
+
+Nota:
+
+eventuale hint "Verifica durata" resta ammesso.
+La duration normalization non è stata implementata.
 
 CHANGELOG
 
@@ -1038,3 +1310,24 @@ validazione update con dati normalizzati
 fix race condition update → events_new
 refresh lista dopo save completato
 apertura prossimo nodo: Preview Alignment Base
+
+v06 — 2026-04-30
+
+completamento PREVIEW ALIGNMENT BASE
+documentata formattazione italiana amount nella sintesi
+introduzione formatAmountIT
+introduzione formatUnitIT
+euro visualizzato con due decimali
+grouping migliaia visuale
+unità tempo visualizzate coerentemente
+singolare/plurale unit gestito
+label cleaning preview aggiornato
+rimozione amount/unit dalla label migliorata
+risolto bug "minuti" → "uti"
+separatore data/descrizione uniformato
+introduzione previewStopTokens
+introduzione getPreviewTokens
+highlight locale reso unit-safe
+confermato che preview non modifica DB
+confermato save flow invariato
+prossimo nodo operativo consigliato: STEP 6.2 — DURATION NORMALIZATION

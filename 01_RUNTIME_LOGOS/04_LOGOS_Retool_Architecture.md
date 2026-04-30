@@ -1,4 +1,4 @@
-# 04_LOGOS_Retool_Architecture_v06
+# 04_LOGOS_Retool_Architecture_v07
 
 DATA: 2026-04-30
 
@@ -8,15 +8,17 @@ CQD — VALIDAZIONE DOCUMENTO
 
 C (Completezza): 10/10  
 - struttura UI completa  
-- flow input → parsing → normalization → insert/update documentato  
+- flow input → parsing → normalization → preview → insert/update documentato  
 - query e componenti allineati al runtime reale  
 - ui_state.parsed documentato come fonte unica  
 - confirm flow aggiornato  
 - refresh lista dopo save documentato  
+- preview alignment documentato  
 
-Q (Qualità): 9/10  
+Q (Qualità): 9.5/10  
 - architettura reale documentata  
 - distinzione chiara tra parsing, normalization base, preview, matching e save  
+- preview visualmente allineata ai dati normalizzati  
 - debiti residui esplicitati  
 - non introduce modello ideale non implementato  
 
@@ -24,6 +26,7 @@ D (Deployabilità): 10/10
 - utilizzabile come riferimento tecnico reale  
 - coerente con implementazione Retool attuale  
 - utile per ricostruzione runtime  
+- nodo Preview Alignment Base validato runtime  
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -40,6 +43,7 @@ Il documento descrive:
 - flussi operativi reali
 - parsing controllato
 - normalization layer base
+- preview alignment base
 - insert/update flow
 - stato UI condiviso
 
@@ -211,14 +215,20 @@ project_matches > 1 → "Seleziona progetto"
 Caratteristiche:
 
 ✔ preview rappresenta i dati principali parsati
+✔ preview legge amount/unit/event_date da ui_state.parsed
+✔ preview visualizza amount/unit in formato italiano
 ✔ preview non modifica DB
 ✔ preview non blocca input
 ✔ preview supporta create/edit
+✔ label cleaning aggiornato sui casi normalizzati
+✔ date separate correttamente dalla descrizione
+✔ highlight locale reso unit-safe
 
 ⚠ contiene ancora logiche di derivazione
 ⚠ contiene label + hint
 ⚠ non è una view completamente pura
-⚠ formattazione italiana amount non ancora pienamente allineata
+⚠ matching locale preview non unificato
+⚠ hint non completamente state-driven
 
 Nota:
 
@@ -228,6 +238,24 @@ La label è:
 ✔ non persistita
 ✔ derivata da raw_input
 ✔ embedded nella preview
+
+Preview Alignment Base:
+
+✔ completato  
+✔ formattazione italiana amount implementata nella sintesi  
+✔ euro visualizzato con due decimali  
+✔ grouping migliaia visuale  
+✔ ore/minuti visualizzati coerentemente  
+✔ singolare/plurale unit gestito  
+✔ rimozione amount/unit dalla label migliorata  
+✔ bug "minuti" → "uti" risolto  
+✔ separatore data/descrizione uniformato  
+✔ unità tecniche escluse dall'highlight locale  
+
+Nota:
+
+la formattazione è solo visuale.
+Il dato interno resta numerico e viene salvato invariato.
 
 INPUT FLOW
 
@@ -478,6 +506,7 @@ classificazione spesa/incasso
 parole chiave controllate
 type engine
 persistenza type pienamente affidabile
+
 LABEL (RUNTIME)
 
 Eseguito in:
@@ -490,26 +519,39 @@ Caratteristiche:
 ✔ non persistita
 ✔ non esiste come layer separato
 ✔ derivata da raw_input
+✔ utile per UX
+✔ allineata ai casi normalizzati principali
 
 Operazioni:
 
-rimozione amount + unit best-effort
+rimozione amount + unit già rappresentati dal value
 rimozione date già parse
 normalizzazione spazi
 preservazione numeri semantici
 compound token
+gestione unità compatte
 label leggibile
+
+Aggiornamenti Preview Alignment Base:
+
+✔ euro separati / compatti rimossi dalla label  
+✔ ore separate / compatte rimosse dalla label  
+✔ minuti separati / compatti rimossi dalla label  
+✔ bug "minuti" → "uti" risolto  
+✔ "villa 2" preservato  
+✔ data separata dalla descrizione  
 
 Nota:
 
 ✔ utile per UX
 ✔ non modifica DB
 ✔ non è fonte dati strutturata
+✔ non modifica ui_state.parsed
 
 ⚠ parte della logica preview
 ⚠ non riutilizzabile come modulo
 ⚠ non isolata
-⚠ non completamente allineata al Normalization Layer Base
+⚠ preview non ancora view pura
 
 PREVIEW (SINTESI)
 
@@ -543,31 +585,125 @@ Caratteristiche:
 ✔ non salva dati
 ✔ supporta correzione utente
 ✔ mostra dati principali
+✔ legge amount/unit/event_date da ui_state.parsed
+✔ visualizza amount/unit in formato italiano
+✔ separa correttamente data e descrizione
+✔ applica label cleaning sui casi normalizzati
+✔ highlight locale reso unit-safe
 
 ⚠ contiene logiche di trasformazione
 ⚠ contiene label cleaning
 ⚠ contiene hint logic
 ⚠ non è ancora view pura
-⚠ formattazione italiana amount non ancora allineata
+⚠ utilizza fonti multiple
+⚠ matching locale preview non unificato
 
-Esempio limite attuale:
+VALUE BUILDER:
 
-Dato interno:
+Il value builder costruisce la rappresentazione visuale del dato normalizzato.
 
-amount = 1500.5
-unit = euro
+Funzioni runtime introdotte:
 
-Possibile preview attuale:
+formatAmountIT
+formatUnitIT
 
-1500.5 €
+Comportamento:
 
-Preview desiderata futura:
+- euro → simbolo €
+- euro → due decimali
+- amount euro con grouping migliaia
+- ore/minuti → massimo due decimali
+- virgola italiana nei decimali
+- singolare/plurale unit gestito
 
+Esempi:
+
+1500 euro materiale
+→ 1.500,00 € • materiale
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+1ora lavoro
+→ 1 ora • lavoro
+
+18min test
+→ 18 minuti • test
+
+2,7 ore sviluppo sistema aspri
+→ 2,7 ore • sviluppo sistema aspri
+
+REGOLA CRITICA:
+
+La formattazione italiana è solo visuale.
+
+Il dato interno resta numerico.
+
+Esempio:
+
+input:
+1.500,50 euro
+
+ui_state.parsed.amount:
+1500.5
+
+ui_state.parsed.unit:
+euro
+
+preview:
 1.500,50 €
 
-Nodo dedicato:
+DB:
+amount 1500.5
+unit euro
 
-PREVIEW ALIGNMENT BASE
+DATE DISPLAY:
+
+La data viene formattata in forma breve:
+
+YYYY-MM-DD → d mese breve
+
+Esempi:
+
+2026-04-06 → 6 apr
+2026-04-04 → 4 apr
+
+La data viene separata dalla descrizione anche quando non esiste amount/unit.
+
+Esempio:
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+HIGHLIGHT UNIT-SAFE:
+
+È stato introdotto un filtro locale per evitare che unità tecniche vengano evidenziate come match.
+
+Token esclusi:
+
+ora
+ore
+h
+min
+minuto
+minuti
+euro
+eur
+
+Funzioni runtime:
+
+previewStopTokens
+getPreviewTokens
+
+Risultato:
+
+2 ore sopralluogo villa 2
+→ "ore" non viene più colorato impropriamente
+
+Nota:
+
+questo filtro agisce solo sull'highlight locale della preview.
+Non modifica project_state, entity_state, select_project o select_entity.
 
 CONFIRM FLOW
 
@@ -889,13 +1025,22 @@ RISOLTI:
 ✔ race condition update → events_new → risolta
 ✔ lista vecchia dopo update → risolta
 ✔ loop input/parsing critico → risolto
+✔ preview alignment base → completato
+✔ formattazione italiana amount in preview → risolta
+✔ grouping migliaia visuale → risolto
+✔ bug "minuti" → "uti" → risolto
+✔ separatore data/descrizione → risolto
+✔ highlight improprio su unità → risolto
 
 UI:
 
 ⚠ input non multilinea
-⚠ preview migliorabile
-⚠ formattazione italiana amount non allineata
+⚠ preview migliorabile come architettura
 ⚠ preview non pura
+⚠ label cleaning ancora embedded
+⚠ hint non completamente state-driven
+
+✔ formattazione italiana amount allineata nella sintesi
 
 DATA:
 
@@ -924,6 +1069,8 @@ STATO ARCHITETTURA
 ✔ lista eventi coerente dopo save
 ✔ parsing affidabile
 ✔ normalization base implementata
+✔ preview alignment base completato
+✔ amount/unit/date visualizzati coerentemente
 ✔ label pipeline stabile
 ✔ UX migliorata
 
@@ -931,29 +1078,44 @@ STATO ARCHITETTURA
 ⚠ preview ancora ibrida
 ⚠ matching funzionale ma non unificato
 ⚠ type classification debole
+⚠ duration normalization non implementata
 ⚠ output non attivo
 
 NEXT STEP ARCHITETTURALE CONSIGLIATO
 
-PREVIEW ALIGNMENT BASE
+ENGINE BASE — DURATION NORMALIZATION
 
 Obiettivo:
 
-allineare preview/lista ai dati normalizzati
-formattare amount in stile italiano
-ridurre divergenza visiva parser/sintesi
-mantenere preview non decisionale
-non toccare DB
-non toccare matching
-non introdurre spesa/incasso
+definire e implementare il primo livello controllato di normalizzazione durata
+partendo dai casi tempo già riconosciuti dal parser base.
+
+Casi target:
+
+- 1 ora e 15 minuti
+- 2h30
+- 2 ore 30
+- 90 minuti
+- valutazione giorni/settimane come decisione dedicata
+
+Ammesso:
+
+- definizione unità canonica durata
+- chiarimento rapporto tra raw_input, amount, unit e durata normalizzata
+- eventuale micro-estensione parser solo se necessaria
+- test runtime controllati
 
 Vietato nel prossimo nodo:
 
-duration normalization
-type classification
-match engine unification
-dashboard/KPI
-refactor globale
+- type classification
+- spesa/incasso
+- dashboard/KPI
+- match engine unification
+- refactor globale parser
+- refactor globale preview
+- modifica schema DB non motivata
+- retro-normalizzazione storico
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -1004,3 +1166,24 @@ validazione update con amount/unit normalizzati
 fix race condition update → events_new
 aggiornamento lista eventi dopo save completato
 apertura prossimo nodo consigliato: Preview Alignment Base
+
+v07 — 2026-04-30
+
+completamento PREVIEW ALIGNMENT BASE
+documentata formattazione italiana amount nella sintesi
+introduzione formatAmountIT
+introduzione formatUnitIT
+euro visualizzato con due decimali
+grouping migliaia visuale
+unità tempo visualizzate coerentemente
+singolare/plurale unit gestito
+label cleaning preview aggiornato
+rimozione amount/unit dalla label migliorata
+risolto bug "minuti" → "uti"
+separatore data/descrizione uniformato
+introduzione previewStopTokens
+introduzione getPreviewTokens
+highlight locale reso unit-safe
+confermato che preview non modifica DB
+confermato save flow invariato
+aggiornamento prossimo nodo consigliato: STEP 6.2 — DURATION NORMALIZATION

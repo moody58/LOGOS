@@ -1,4 +1,4 @@
-# 00_PROJECT_Roadmap_v04
+# 00_PROJECT_Roadmap_v05
 
 DATA: 2026-04-30
 
@@ -65,18 +65,19 @@ FASE COMPLETATA:
 ✔ STEP 3.5 — STRUCTURE STABILIZATION (COMPLETATO)  
 ✔ STEP 4 — EVENT EDITING (COMPLETATO)  
 ✔ STEP 6.1 — ENGINE BASE / NORMALIZATION LAYER BASE (COMPLETATO)  
+✔ PREVIEW ALIGNMENT BASE (COMPLETATO)  
 
 ---
 
-FASE ATTIVA:
+FASE ATTIVA CONSIGLIATA:
 
-TRANSIZIONE → PREVIEW ALIGNMENT BASE
+STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
 
 ---
 
 FASE SUCCESSIVA CANDIDATA:
 
-STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
+STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
 
 ------------------------------------------------
 ROADMAP MASTER
@@ -174,7 +175,7 @@ Limiti residui:
 
 ⚠ label ancora embedded nella preview  
 ⚠ preview non ancora view pura  
-⚠ formattazione visuale non completamente allineata ai dati normalizzati  
+✔ formattazione visuale base allineata ai dati normalizzati    
 
 ------------------------------------------------
 
@@ -328,7 +329,8 @@ Regole consolidate:
 - unit viene salvata come testo normalizzato
 - raw_input resta preservato
 - numeri senza unità non diventano amount
-- formattazione italiana è responsabilità futura della preview/output
+- formattazione italiana base implementata nella preview
+- output/analytics futuri dovranno mantenere la stessa coerenza visuale
 - nessuna modifica schema DB
 
 ---
@@ -344,7 +346,101 @@ Limiti espliciti:
 
 ------------------------------------------------
 
-STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (CANDIDATO FUTURO)
+PREVIEW ALIGNMENT BASE (COMPLETATO)
+
+Obiettivo:
+
+Allineare la visualizzazione della sintesi ai dati già normalizzati in ui_state.parsed,
+senza introdurre nuova logica semantica e senza modificare parser, DB, matching o save flow.
+
+---
+
+Interventi eseguiti:
+
+✔ formattazione italiana amount in preview  
+✔ euro visualizzato con due decimali  
+✔ grouping migliaia visuale  
+✔ ore/minuti visualizzati coerentemente  
+✔ gestione singolare/plurale unit  
+✔ label cleaning preview aggiornato  
+✔ rimozione amount/unit già rappresentati dal value  
+✔ risolto bug "minuti" → "uti"  
+✔ separatore data/descrizione uniformato  
+✔ highlight locale reso unit-safe  
+✔ nessuna modifica a parse_input_controlled  
+✔ nessuna modifica a insert_event / update_event  
+✔ nessuna modifica DB  
+✔ nessuna modifica matching  
+
+---
+
+Output raggiunto:
+
+✔ preview coerente con ui_state.parsed  
+✔ maggiore leggibilità sintesi  
+✔ ridotta divergenza visuale parser / preview  
+✔ dati interni invariati  
+✔ save flow invariato  
+✔ DB invariato  
+
+---
+
+Esempi validati:
+
+1.500,50 euro materiale  
+→ 1.500,50 € • materiale  
+
+1500 euro materiale  
+→ 1.500,00 € • materiale  
+
+18 minuti test  
+→ 18 minuti • test  
+
+18min test  
+→ 18 minuti • test  
+
+1ora lavoro  
+→ 1 ora • lavoro  
+
+6/4/26 inseminazione alfie  
+→ 6 apr • inseminazione alfie  
+
+4 aprile benzina 50 euro alfie allevamento aspri  
+→ 4 apr • 50,00 € • benzina alfie allevamento aspri  
+
+villa 2 mario  
+→ villa 2 mario  
+
+2 ore sopralluogo villa 2  
+→ 2 ore • sopralluogo villa 2  
+
+---
+
+Regole consolidate:
+
+- la preview legge ui_state.parsed
+- amount resta numerico nel dato interno
+- la formattazione italiana è solo visuale
+- la label resta derivata runtime e non persistita
+- la preview resta un layer ibrido, non ancora view pura
+- matching, parser e DB non sono stati modificati
+
+---
+
+Limiti espliciti:
+
+⚠ duration normalization non implementata  
+⚠ 1 ora e 15 minuti non supportato  
+⚠ 2h30 non supportato  
+⚠ giorni/settimane non supportati  
+⚠ type classification non implementata  
+⚠ spesa/incasso non implementati  
+⚠ matching non unificato  
+⚠ preview non ancora view pura  
+
+------------------------------------------------
+
+STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (FASE ATTIVA CONSIGLIATA)
 
 Obiettivo:
 
@@ -374,8 +470,13 @@ Decisioni richieste prima dell’implementazione:
 
 Stato:
 
-⚠ non attivo  
+Stato:
+
+→ fase attiva consigliata  
 ⚠ da aprire solo in nodo dedicato  
+⚠ richiede definizione regole prima dell’implementazione  
+⚠ non deve introdurre type classification  
+⚠ non deve modificare dashboard/KPI    
 
 ------------------------------------------------
 
@@ -471,47 +572,56 @@ Motivazione:
 
 Il sistema NON può avanzare allo STEP 7 finché:
 
-- preview non è allineata ai dati normalizzati
-- duration normalization non è definita
-- type classification non è almeno base
+- duration normalization non è definita o esclusa consapevolmente
+- type classification non è almeno base o mantenuta manuale consapevolmente
+- matching non è stabilizzato nei punti critici
 - dati non sono sufficientemente confrontabili
+
+Nota:
+
+Preview Alignment Base è stato completato.
 
 ------------------------------------------------
 NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-PREVIEW ALIGNMENT BASE
+ENGINE BASE — DURATION NORMALIZATION
 
 ------------------------------------------------
 SCOPO NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-Allineare la visualizzazione ai dati normalizzati
-senza introdurre nuova logica semantica.
+Definire e implementare il primo livello controllato di normalizzazione durata,
+partendo dai casi tempo già riconosciuti dal parser base.
 
 ---
 
 Ammesso:
 
-✔ formattazione italiana amount  
-✔ visualizzazione coerente di amount/unit  
-✔ riduzione divergenza tra parser e sintesi  
-✔ mantenimento ui_state.parsed come fonte  
-✔ nessuna modifica DB  
-✔ nessuna modifica matching  
-✔ nessuna classificazione spesa/incasso  
+✔ analisi casi durata complessa  
+✔ 1 ora e 15 minuti  
+✔ 2h30  
+✔ 2 ore 30  
+✔ 90 minuti  
+✔ valutazione giorni/settimane solo come decisione, non implementazione automatica obbligatoria  
+✔ definizione unità canonica durata  
+✔ chiarimento rapporto tra raw_input, amount, unit e durata normalizzata  
+✔ eventuale micro-estensione parser solo se necessaria e controllata  
+✔ test runtime su preview/save solo dopo definizione regole  
 
 ---
 
 Vietato:
 
-❌ duration normalization  
-❌ 1 ora e 15 minuti  
-❌ giorni/settimane  
 ❌ type classification  
-❌ matching unification  
+❌ spesa/incasso  
 ❌ dashboard/KPI  
+❌ match engine unification  
+❌ refactor globale parser  
 ❌ refactor globale preview  
+❌ modifica schema DB non motivata  
+❌ conversioni semantiche non dichiarate  
+❌ retro-normalizzazione storico    
 
 ------------------------------------------------
 REGOLE OPERATIVE
@@ -626,10 +736,13 @@ Il sistema è ora entrato nello STEP 6 in modo reale.
 Il sistema NON può avanzare allo STEP 7 (OUTPUT)
 finché non vengono completati almeno:
 
-1. Preview Alignment Base
-2. Duration Normalization o decisione esplicita di non implementarla subito
-3. Type Classification Base o decisione esplicita di mantenerla manuale
-4. Match Engine Unification o almeno stabilizzazione delle incoerenze critiche
+1. Duration Normalization o decisione esplicita di non implementarla subito
+2. Type Classification Base o decisione esplicita di mantenerla manuale
+3. Match Engine Unification o almeno stabilizzazione delle incoerenze critiche
+
+Nota:
+
+Preview Alignment Base è completato.
 
 ---
 
@@ -683,3 +796,18 @@ v04 — 2026-04-30
 - apertura nodo consigliato PREVIEW ALIGNMENT BASE
 - definizione candidati futuri: Duration Normalization, Type Classification Base, Match Engine Unification
 - confermato blocco verso OUTPUT fino a dati più coerenti
+
+v05 — 2026-04-30
+
+- completamento PREVIEW ALIGNMENT BASE
+- formattazione italiana amount in preview
+- euro visualizzato con due decimali
+- grouping migliaia visuale
+- unità tempo visualizzate coerentemente
+- label cleaning preview aggiornato
+- risolto bug "minuti" → "uti"
+- separatore data/descrizione uniformato
+- highlight locale reso unit-safe
+- nessuna modifica a parser, DB, matching o save flow
+- aggiornamento fase attiva consigliata a STEP 6.2 — DURATION NORMALIZATION
+- mantenuto blocco verso OUTPUT fino a duration/type/matching

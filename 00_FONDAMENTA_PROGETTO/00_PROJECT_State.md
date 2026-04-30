@@ -1,4 +1,4 @@
-# 00_PROJECT_State_v10
+# 00_PROJECT_State_v11
 
 DATA: 2026-04-30
 
@@ -6,7 +6,7 @@ DATA: 2026-04-30
 NODO ATTIVO:
 ------------------------------------------------
 
-ENGINE BASE — NORMALIZATION LAYER BASE COMPLETED
+PREVIEW ALIGNMENT BASE — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -18,7 +18,9 @@ STEP 4.1 — INPUT SYSTEM STABILIZATION (COMPLETATO)
 
 STEP 6.1 — ENGINE BASE / NORMALIZATION LAYER BASE (COMPLETATO)
 
-TRANSIZIONE → PREVIEW ALIGNMENT BASE / ENGINE BASE CONTINUATION
+PREVIEW ALIGNMENT BASE (COMPLETATO)
+
+TRANSIZIONE → STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -30,11 +32,14 @@ C (Completezza): 10/10
 - label layer integrato  
 - normalizzazione base documentata  
 - insert/update flow aggiornato  
+- preview alignment documentato  
+- limiti duration/type/matching esplicitati  
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
-- distinzione chiara parsing / matching / label / normalization  
+- distinzione chiara parsing / matching / label / normalization / preview  
 - UX migliorata senza regressioni  
+- sintesi allineata ai dati normalizzati  
 - debiti residui esplicitati  
 
 D (Deployabilità): 10/10  
@@ -42,6 +47,7 @@ D (Deployabilità): 10/10
 - stato completamente ricostruibile  
 - nessuna dipendenza mancante  
 - codice runtime principale documentato nei checkpoint  
+- nodo Preview Alignment Base completato e validato runtime    
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -77,42 +83,47 @@ INPUT
 ✔ comportamento quasi deterministico  
 ✔ parsing base stabilizzato  
 ✔ normalizzazione amount/unit base implementata  
+✔ preview allineata visivamente a ui_state.parsed  
 ✔ insert/update verificati su DB reale  
 ✔ refresh lista eventi corretto dopo save/update  
 
 ⚠ accoppiamento input / processing / UI ancora presente  
-⚠ preview non ancora completamente allineata al nuovo layer normalizzato  
+⚠ preview ancora layer ibrido, non view pura  
 ⚠ matching non unificato  
 ⚠ hint non completamente state-driven  
 ⚠ type classification ancora limitata  
+⚠ duration normalization non implementata    
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su quattro layer fondamentali:
+Il sistema è stabilizzato su cinque layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
 3. LABEL QUALITY  
 4. ENGINE BASE — NORMALIZATION LAYER BASE  
+5. PREVIEW ALIGNMENT BASE    
 
 ---
 
 RISULTATO:
 
-✔ eliminata fragilità input  
-✔ eliminata divergenza preview / confirm nei dati persistiti  
-✔ ridotti falsi positivi matching  
-✔ introdotta normalizzazione base di amount/unit  
-✔ rimosso parsing duplicato dal bottone confirm  
 ✔ insert e update usano ui_state.parsed come fonte unica  
 ✔ aggiornata lista eventi dopo save completato  
+✔ preview visualmente allineata ai dati normalizzati  
+✔ amount mostrato in formato italiano  
+✔ unit visualizzate in modo coerente  
+✔ label cleaning migliorato sui casi normalizzati  
+✔ date separate correttamente nella sintesi  
+✔ highlight preview non interferisce più con unità tecniche  
 
 ⚠ matching basato su stringhe (no fuzzy)  
 ⚠ hint limitati a logica base  
 ⚠ preview contiene ancora logiche proprie  
-⚠ normalizzazione durata avanzata non implementata  
+⚠ preview non è ancora view pura  
+⚠ normalizzazione durata avanzata non implementata    
 
 ✔ introduzione EVENT EDITING
 
@@ -131,6 +142,19 @@ RISULTATO:
 - unit base standardizzate
 - formato italiano numerico gestito
 - numeri senza unità non interpretati come amount
+
+✔ completamento PREVIEW ALIGNMENT BASE
+
+- amount formattato in stile italiano nella sintesi
+- euro mostrato con due decimali
+- migliaia visualizzate correttamente
+- ore/minuti mostrati con virgola italiana
+- singolare/plurale unit gestito
+- label ripulita da amount/unit già rappresentati
+- bug "minuti" → "uti" risolto
+- date separate dalla descrizione anche senza amount
+- token tecnici esclusi dall'highlight locale
+- nessuna modifica a parser, DB, matching o save flow
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO — INPUT FLOW
@@ -342,26 +366,140 @@ Non implementato:
 - date relative
 
 ------------------------------------------------
+PREVIEW ALIGNMENT — BASE
+------------------------------------------------
+
+È stato completato il nodo:
+
+PREVIEW ALIGNMENT BASE
+
+Obiettivo:
+
+- allineare la sintesi ai dati già normalizzati in ui_state.parsed
+- migliorare la leggibilità del dato parsato
+- formattare amount/unit in stile italiano
+- correggere label cleaning nei casi già normalizzati
+- evitare interferenze visuali dell'highlight sulle unità tecniche
+- mantenere invariati parser, DB, matching e save flow
+
+---
+
+AMBITO IMPLEMENTATO:
+
+✔ formatAmountIT  
+✔ formatUnitIT  
+✔ grouping migliaia  
+✔ euro con due decimali  
+✔ ore/minuti con decimali italiani  
+✔ singolare/plurale unit  
+✔ label cleaning amount/unit  
+✔ rimozione residuo "uti"  
+✔ separatore data/descrizione  
+✔ previewStopTokens per highlight locale  
+
+---
+
+ESEMPI VALIDATI:
+
+1.500,50 euro materiale  
+→ 1.500,50 € • materiale  
+
+1500 euro materiale  
+→ 1.500,00 € • materiale  
+
+18 minuti test  
+→ 18 minuti • test  
+
+18min test  
+→ 18 minuti • test  
+
+1ora lavoro  
+→ 1 ora • lavoro  
+
+6/4/26 inseminazione alfie  
+→ 6 apr • inseminazione alfie  
+
+4 aprile benzina 50 euro alfie allevamento aspri  
+→ 4 apr • 50,00 € • benzina alfie allevamento aspri  
+
+villa 2 mario  
+→ villa 2 mario  
+
+2 ore sopralluogo villa 2  
+→ 2 ore • sopralluogo villa 2  
+
+2,7 ore sviluppo sistema aspri  
+→ 2,7 ore • sviluppo sistema aspri  
+
+---
+
+REGOLA CRITICA:
+
+La formattazione italiana è solo visuale.
+
+Il dato interno resta numerico.
+
+Esempio:
+
+input:
+1.500,50 euro
+
+ui_state.parsed.amount:
+1500.5
+
+ui_state.parsed.unit:
+euro
+
+preview:
+1.500,50 €
+
+DB:
+amount 1500.5
+unit euro
+
+---
+
+AMBITO NON IMPLEMENTATO:
+
+✘ duration normalization  
+✘ 1 ora e 15 minuti  
+✘ 2h30  
+✘ giorni / settimane  
+✘ type classification  
+✘ spesa / incasso  
+✘ matching unificato  
+✘ preview come view pura completa  
+
+------------------------------------------------
 AGGIORNAMENTO UX
 ------------------------------------------------
 
-Il sistema è stato aggiornato nel layer preview/hint prima del presente nodo:
+Il sistema è stato aggiornato nel layer preview/hint:
 
-✔ introduzione hint multipli
-✔ introduzione gerarchia visiva
-✔ eliminazione hint prematuri
-✔ attivazione controllata
-✔ separazione semantica colori
+✔ introduzione hint multipli  
+✔ introduzione gerarchia visiva  
+✔ eliminazione hint prematuri  
+✔ attivazione controllata  
+✔ separazione semantica colori  
+✔ allineamento visuale amount/unit  
+✔ formattazione italiana amount  
+✔ separazione data/descrizione  
+✔ label cleaning migliorato  
+✔ highlight unit-safe  
 
 RISULTATO:
 
-✔ UX più chiara
-✔ nessuna ambiguità nascosta
-✔ miglior supporto decisionale utente
+✔ UX più chiara  
+✔ nessuna ambiguità nascosta  
+✔ miglior supporto decisionale utente  
+✔ sintesi più leggibile  
+✔ dato visuale coerente con dato normalizzato  
+✔ ridotta divergenza parser / preview  
 
-⚠ hint ancora scollegati da state unificato
-⚠ duplicazione logica detection
-⚠ preview non ancora completamente allineata alla normalizzazione base
+⚠ hint ancora scollegati da state unificato  
+⚠ duplicazione logica detection  
+⚠ preview ancora layer ibrido  
+⚠ preview non ancora view pura  
 
 ------------------------------------------------
 COMPONENTI ATTIVI
@@ -402,6 +540,9 @@ LABEL LOGIC (EMBEDDED)
 
 - generazione label dentro preview
 - pipeline non distruttiva
+- cleaning amount/unit aggiornato
+- gestione unità compatte migliorata
+- preservazione numeri semantici
 - NON separata come layer runtime
 - NON persistita
 
@@ -644,9 +785,14 @@ OUTPUT:
 - variabilità ridotta
 - maggiore leggibilità
 
-⚠ preview/label non sono ancora view pure
-⚠ formattazione italiana amount non ancora allineata
-⚠ logica ancora embedded nella sintesi
+✔ formattazione italiana amount allineata nella preview  
+✔ rimozione amount/unit dalla label migliorata  
+✔ bug residuo "uti" risolto  
+✔ numeri semantici preservati  
+
+⚠ preview/label non sono ancora view pure  
+⚠ logica ancora embedded nella sintesi  
+⚠ cleaning non ancora separato come modulo runtime  
 
 ------------------------------------------------
 MATCHING SYSTEM (STABILIZZATO MA NON UNIFICATO)
@@ -735,18 +881,27 @@ PREVIEW SYSTEM
 ✔ preview = parsing reale + label  
 ✔ rappresentazione coerente lato utente  
 ✔ allineata ai dati salvati nei valori principali  
+✔ allineata visualmente a ui_state.parsed per amount/unit/date  
+✔ amount formattato in stile italiano  
+✔ euro con due decimali  
+✔ migliaia visualizzate correttamente  
+✔ unit tempo coerenti  
+✔ singolare/plurale gestito  
+✔ date separate correttamente dalla descrizione  
+✔ label cleaning migliorato sui casi normalizzati  
+✔ highlight unit-safe  
 
-⚠ contiene logiche di trasformazione
-⚠ non è una view pura
-⚠ formattazione italiana amount non ancora implementata
-⚠ hint non completamente state-driven
-⚠ presenza duplicazione detected vs state
+⚠ contiene ancora logiche di trasformazione  
+⚠ non è una view pura  
+⚠ hint non completamente state-driven  
+⚠ presenza duplicazione detected vs state  
+⚠ matching locale preview non unificato  
 
 STRUTTURA:
 
 MAIN:
 
-amount + unit + label  
+event_date + amount + unit + label  
 
 META:
 
@@ -769,17 +924,33 @@ Gerarchia visiva:
 
 ---
 
+Esempi validati:
+
+1.500,50 euro materiale
+→ 1.500,50 € • materiale
+
+18 minuti test
+→ 18 minuti • test
+
+6/4/26 inseminazione alfie
+→ 6 apr • inseminazione alfie
+
+2 ore sopralluogo villa 2
+→ 2 ore • sopralluogo villa 2
+
+---
+
 NOTA:
 
-Dopo Normalization Layer Base, la preview può ancora mostrare valori tecnici come:
+La preview rappresenta meglio i dati normalizzati,
+ma resta ancora embedded con:
 
-1500.5 €
+- label cleaning
+- hint logic
+- highlight locale
+- detection locale project/entity
 
-La trasformazione visuale:
-
-1500.5 → 1.500,50
-
-è rinviata a nodo Preview Alignment Base.
+La separazione in view pura non è stata implementata.
 
 ------------------------------------------------
 INSERT
@@ -968,7 +1139,16 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ centralizzazione UI state  
 ✔ stabilizzazione feedback flow  
 ✔ parser duplicato nel bottone rimosso  
-✔ refresh lista dopo save completato  
+✔ refresh lista dopo save completato
+✔ preview alignment base completato  
+✔ formattazione italiana amount in preview  
+✔ euro con due decimali visuali  
+✔ grouping migliaia visuale  
+✔ unità tempo visualizzate coerentemente  
+✔ label cleaning preview aggiornato  
+✔ bug "minuti" → "uti" risolto  
+✔ date separate correttamente in sintesi  
+✔ highlight unit-safe    
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -1062,8 +1242,9 @@ PROBLEMI REALI IDENTIFICATI
 4. UI LIMITI
 
 - input non multilinea
-- preview migliorabile
-- formattazione amount non localizzata
+- preview ancora ibrida
+- preview migliorabile come separazione architetturale
+- formattazione amount localizzata in preview
 
 ---
 
@@ -1106,6 +1287,7 @@ RISOLTO per input/parsing principale
 
 - input non completamente separato da processing
 - preview non read-only puro
+- preview alignment migliorato ma non separato come view pura
 
 ---
 
@@ -1143,7 +1325,15 @@ PROBLEMI RISOLTI
 ✔ blocco UX su save → RISOLTO  
 ✔ amount senza unità → RISOLTO  
 ✔ formato italiano numerico → RISOLTO  
-✔ refresh lista dopo update → RISOLTO  
+✔ refresh lista dopo update → RISOLTO 
+✔ formattazione amount preview → RISOLTA  
+✔ visualizzazione euro italiana → RISOLTA  
+✔ grouping migliaia preview → RISOLTO  
+✔ bug "minuti" → "uti" → RISOLTO  
+✔ duplicazione amount/unit nella label → RIDOTTA  
+✔ separatore data/label → RISOLTO  
+✔ highlight improprio su unità → RISOLTO  
+✔ preview alignment base → COMPLETATO   
 
 ------------------------------------------------
 STATO LAYER SISTEMA
@@ -1151,17 +1341,17 @@ STATO LAYER SISTEMA
 
 Layer 1 — Input: ~96%  
 Layer 2 — Matching: ~75%  
-Layer 3 — View / Preview: ~80%  
+Layer 3 — View / Preview: ~88%  
 Layer HINT SYSTEM: ~90%  
 Layer 4 — Data Structure: ~20%  
-Layer 5 — Engine: ~15%  
+Layer 5 — Engine: ~18%  
 Layer 6 — Output: 0%  
 
 ---
 
 STATO COMPLESSIVO:
 
-~70%
+~72%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -1173,32 +1363,34 @@ FASE ATTUALE
 ✔ EVENT EDITING — COMPLETATO  
 ✔ INPUT SYSTEM STABILIZATION — COMPLETATA  
 ✔ ENGINE BASE — NORMALIZATION LAYER BASE — COMPLETATO  
+✔ PREVIEW ALIGNMENT BASE — COMPLETATO  
 
 ---
 
 TRANSIZIONE:
 
-→ PREVIEW ALIGNMENT BASE  
-→ poi ENGINE BASE CONTINUATION
+→ STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Stabilizzare il passaggio successivo senza introdurre nuova complessità.
+Stabilizzare il passaggio successivo dell'Engine Base senza introdurre nuova complessità.
 
 Priorità immediata consigliata:
 
-PREVIEW ALIGNMENT BASE
+ENGINE BASE — DURATION NORMALIZATION
 
 Obiettivo:
 
-- allineare la visualizzazione ai dati normalizzati
-- formattare amount in modo italiano
-- evitare divergenza visiva parser / sintesi
-- non modificare DB
-- non modificare matching
+- definire regole minime per durate complesse
+- valutare casi 1 ora e 15 minuti
+- valutare casi 2h30 / 2 ore 30
+- chiarire unità canonica durata
+- non modificare DB salvo decisione dedicata
 - non introdurre type classification
+- non introdurre dashboard/KPI
+- non rifare preview
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -1240,11 +1432,11 @@ Priorità aggiornata:
 1. input reliability ✔  
 2. label quality ✔  
 3. normalization layer base ✔  
-4. preview alignment  
+4. preview alignment ✔  
 5. duration normalization  
 6. type classification base  
 7. match engine unification  
-8. output  
+8. output    
 
 ---
 
@@ -1259,41 +1451,31 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. preview alignment base  
-2. duration normalization  
-3. type classification base  
-4. matching unification  
-5. hint state-driven  
-6. semantic engine  
-7. dashboard / KPI  
+1. duration normalization  
+2. type classification base  
+3. matching unification  
+4. hint state-driven  
+5. semantic engine  
+6. dashboard / KPI   
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. PREVIEW ALIGNMENT BASE
-
-Scopo:
-
-- allineare sintesi/lista ai valori normalizzati
-- formattare numeri in stile italiano
-- mantenere preview come visualizzazione
-- non introdurre nuova logica semantica
-
----
-
-2. ENGINE BASE — DURATION NORMALIZATION
+1. ENGINE BASE — DURATION NORMALIZATION
 
 Scopo:
 
 - gestire 1 ora e 15 minuti
 - gestire 2h30
+- gestire 2 ore 30
 - valutare giorni / ore / minuti
 - definire unità canonica durata
+- chiarire rapporto tra raw_input, amount, unit e durata normalizzata
 
 ---
 
-3. ENGINE BASE — TYPE CLASSIFICATION BASE
+2. ENGINE BASE — TYPE CLASSIFICATION BASE
 
 Scopo:
 
@@ -1303,7 +1485,7 @@ Scopo:
 
 ---
 
-4. MATCH ENGINE UNIFICATION
+3. MATCH ENGINE UNIFICATION
 
 Scopo:
 
@@ -1374,3 +1556,21 @@ validazione update con dati normalizzati
 fix refresh lista eventi dopo update  
 aggiornamento stato Engine da 0% a 15%  
 apertura transizione verso Preview Alignment Base  
+
+v11 — 2026-04-30  
+completamento PREVIEW ALIGNMENT BASE  
+formattazione italiana amount in preview  
+introduzione formatAmountIT  
+introduzione formatUnitIT  
+euro visualizzato con due decimali  
+grouping migliaia visuale  
+ore/minuti visualizzati coerentemente  
+singolare/plurale unit gestito  
+label cleaning preview aggiornato  
+rimozione amount/unit dalla label migliorata  
+risolto bug "minuti" → "uti"  
+separatore data/label uniformato  
+introduzione previewStopTokens  
+highlight unit-safe  
+nessuna modifica a parser, DB, matching o save flow  
+transizione verso STEP 6.2 — DURATION NORMALIZATION  
