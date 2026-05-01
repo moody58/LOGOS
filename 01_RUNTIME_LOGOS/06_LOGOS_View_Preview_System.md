@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v05
+# 06_LOGOS_View_Preview_System_v06
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -20,6 +20,8 @@ Il documento descrive:
 - quali allineamenti visuali sono stati completati con Preview Alignment Base
 - come la preview rappresenta la Duration Normalization Base
 - come vengono mostrati durata normalizzata e durata ambigua
+- come la preview interagisce con select1 / Type Classification Base
+- cosa la preview mostra ma non salva direttamente
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -38,6 +40,7 @@ input_raw
 → trigger_parse_debounced
 → parse_input_controlled
 → ui_state.parsed
+→ select1 / type classification base
 → preview (sintesi)
 → confirm (insert/update)
 
@@ -48,12 +51,30 @@ e legge i dati strutturati principalmente da:
 
 ui_state.parsed
 
+Per il type, la preview legge anche:
+
+select1.value
+
+Nota terminologica:
+
+select1 è un componente UI Select di Retool,
+non una query.
+
 ---
 
 Nota:
 
 Il save flow non dipende più da parsing interno alla preview
 né da parsing duplicato nel bottone confirm.
+
+Il save flow non dipende dalla preview per il type.
+
+Il type viene salvato tramite:
+
+select1.value
+→ button_input_confirm payload.type
+→ insert_event / update_event
+→ events.type
 
 ------------------------------------------------
 RUOLO DELLA PREVIEW
@@ -68,7 +89,9 @@ Mostra:
 ✔ durate normalizzate in minuti  
 ✔ durata in forma umana  
 ✔ hint normalizzazione durata  
-✔ hint durata ambigua   
+✔ hint durata ambigua 
+✔ type corrente tramite select1.value  
+✔ supporto visivo alla Type Classification Base    
 ✔ label derivata  
 ✔ stato matching  
 ✔ hint utente  
@@ -106,12 +129,17 @@ Rispetto allo stato precedente:
 ✔ durata certa visualizzata in forma umana  
 ✔ valore tecnico normalizzato mostrato come hint  
 ✔ giorni/settimane segnalati come durata ambigua  
+✔ select1 allineato a ui_state.parsed.unit  
+✔ parsed.unit = minuti → type Tempo  
+✔ Spesa / Incasso / Evento gestiti tramite select1  
+✔ scelta manuale utente preservata  
 
 Ma:
 
 ⚠ la preview contiene ancora trasformazioni proprie  
 ⚠ la preview non è ancora un layer read-only puro  
 ⚠ label cleaning, hint logic e highlight restano embedded nella sintesi    
+⚠ type mostrato/supportato dalla preview, ma salvato dal confirm flow  
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -128,6 +156,15 @@ Fonti dati utilizzate:
 - project_state.data?.matches
 - entity_state.data?.matches
 - select1.value
+
+Nota:
+
+select1.value è la fonte runtime del type per la preview.
+
+La preview può usare select1.value per rappresentare il type,
+ma non scrive direttamente events.type.
+
+La persistenza avviene solo nel confirm flow.
 
 ---
 
@@ -146,6 +183,7 @@ parsed data
 raw input
 matching state
 select values
+select1.value
 local label logic
 local hint logic
 
@@ -178,6 +216,7 @@ Output visivo attuale:
 
 amount
 unit
+type / typeBadge
 label
 eventuale data
 eventuale project/entity
@@ -215,6 +254,38 @@ Regola:
 la durata viene salvata come minuti canonici.
 La forma umana è solo visuale.
 raw_input conserva la forma originaria inserita dall’utente.
+
+Esempio type classification:
+
+Dato interno parsing:
+
+amount: 150
+unit: minuti
+
+raw_input:
+
+2h30 rendering
+
+select1:
+
+Tempo
+
+Preview:
+
+2 ore 30 minuti • rendering
+Normalizzato: 150 minuti
+typeBadge / select1: Tempo
+
+DB dopo confirm:
+
+type Tempo
+amount 150
+unit minuti
+
+Regola:
+
+la preview rappresenta il type corrente,
+ma non salva direttamente il dato.
 
 COMPONENTI LOGICI INTERNI
 
@@ -282,6 +353,64 @@ Normalizzato: 150 minuti
 DATE FORMATTER
 converte YYYY-MM-DD → formato breve leggibile
 mesi localizzati
+
+TYPE DISPLAY / SELECT1 SUPPORT
+
+La preview utilizza select1.value come fonte runtime del type.
+
+select1 è il componente UI Select dedicato alla classificazione base.
+
+Valori attuali:
+
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+Relazione con Type Classification Base:
+
+parsed.unit = minuti
+→ select1 = Tempo
+
+euro + keyword controllate di uscita
+→ select1 = Spesa
+
+euro + keyword controllate di entrata
+→ select1 = Incasso
+
+euro senza direzione chiara
+→ select1 = Evento
+
+segnali contrastanti
+→ select1 = Evento
+
+nessuna unit significativa
+→ select1 = Evento
+
+Esempi:
+
+2h30 rendering
+→ preview durata: 2 ore 30 minuti
+→ select1: Tempo
+
+20 euro spesa materiale
+→ preview amount: 20,00 €
+→ select1: Spesa
+
+20 euro incasso cliente
+→ preview amount: 20,00 €
+→ select1: Incasso
+
+20 euro materiale
+→ preview amount: 20,00 €
+→ select1: Evento
+
+Nota:
+
+la preview non decide autonomamente il type.
+La logica è nel Default value del componente select1.
+
+La preview mostra/supporta lo stato risultante.
 
 LABEL CLEANING (ATTIVO)
 
@@ -447,9 +576,16 @@ AMBIGUITÀ:
 ⚠️ Seleziona entità
 ⚠️ Seleziona progetto
 
-ECONOMICO:
+ECONOMICO / TYPE:
 
 ℹ️ Definisci spesa o incasso
+
+Usato quando:
+
+- è presente euro
+- manca una direzione economica chiara
+- select1 resta Evento
+- l’utente deve scegliere manualmente Spesa o Incasso
 
 TEMPO:
 
@@ -472,6 +608,15 @@ Aggiornamento Duration Normalization Base:
 ⚠ utilizza logiche parallele
 ⚠ possibile incoerenza con select
 ⚠ logiche duplicate rispetto ad altri layer
+
+Aggiornamento Type Classification Base:
+
+- select1 è allineato a ui_state.parsed.unit
+- le durate certe con unit = minuti impostano Tempo
+- euro + keyword controllate imposta Spesa o Incasso
+- euro senza direzione chiara resta Evento
+- la preview può guidare l’utente alla scelta manuale
+- il type viene poi salvato dal confirm flow
 
 COMPORTAMENTO MATCHING IN PREVIEW
 
@@ -519,6 +664,17 @@ ui_state.parsed.amount
 ui_state.parsed.unit
 ui_state.parsed.event_date
 
+Per il type, la preview legge:
+
+select1.value
+
+select1.value può dipendere da ui_state.parsed.unit.
+
+Esempio:
+
+ui_state.parsed.unit = minuti
+→ select1.value = Tempo
+
 Dopo il Normalization Layer Base:
 
 ui_state.parsed contiene:
@@ -538,6 +694,28 @@ Esempi dati interni:
 2 ore 30 rendering → amount 150, unit minuti
 villa 2 mario → amount null, unit null
 2 giorni rendering → amount null, unit null
+
+Esempi type:
+
+2h30 rendering
+→ amount 150, unit minuti
+→ select1 Tempo
+
+20 euro spesa materiale
+→ amount 20, unit euro
+→ select1 Spesa
+
+20 euro incasso cliente
+→ amount 20, unit euro
+→ select1 Incasso
+
+20 euro materiale
+→ amount 20, unit euro
+→ select1 Evento
+
+villa 2 mario
+→ amount null, unit null
+→ select1 Evento
 
 Nota:
 
@@ -565,7 +743,7 @@ Quindi:
 ✔ la preview è più coerente nei dati principali
 ✘ ma non è ancora pura rappresentazione
 
-RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION
+RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION
 
 Il Normalization Layer Base ha consolidato:
 
@@ -588,6 +766,16 @@ Duration Normalization Base ha poi introdotto:
 - hint “Normalizzato: X minuti”
 - hint durata ambigua per giorni/settimane
 
+Type Classification Base ha poi introdotto:
+
+- select1 allineato a ui_state.parsed.unit
+- parsed.unit = minuti → Tempo
+- euro + keyword controllate di uscita → Spesa
+- euro + keyword controllate di entrata → Incasso
+- euro senza direzione chiara → Evento
+- scelta manuale utente preservata
+- type salvato tramite confirm flow
+
 Implementato:
 
 ✔ 1500.5 → 1.500,50 €  
@@ -606,6 +794,11 @@ Implementato:
 ✔ preview durata in forma umana  
 ✔ hint valore normalizzato  
 ✔ hint durata ambigua  
+✔ select1 allineato a unit = minuti  
+✔ 2h30 rendering → Tempo  
+✔ Spesa / Incasso base tramite keyword controllate  
+✔ euro senza direzione chiara → Evento  
+✔ type rappresentato in preview tramite select1.value  
 
 Esempi validati:
 
@@ -650,30 +843,61 @@ villa 2 mario
 → 2 giorni rendering
 → Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
 
-Nessuna alterazione del dato salvato.
+Type Classification Base — esempi validati:
+
+2h30 rendering
+→ preview: 2 ore 30 minuti • rendering
+→ select1: Tempo
+→ DB dopo confirm: type Tempo, amount 150, unit minuti
+
+20 euro spesa materiale
+→ preview: 20,00 € • spesa materiale
+→ select1: Spesa
+→ DB dopo confirm: type Spesa, amount 20, unit euro
+
+20 euro incasso cliente
+→ preview: 20,00 € • incasso cliente
+→ select1: Incasso
+→ DB dopo confirm: type Incasso, amount 20, unit euro
+
+20 euro materiale
+→ preview: 20,00 € • materiale
+→ select1: Evento
+→ DB dopo confirm: type Evento, amount 20, unit euro
+
+villa 2 mario
+→ preview: villa 2 mario
+→ select1: Evento
+→ DB dopo confirm: type Evento, amount null, unit null
+
+Nessuna alterazione diretta del dato salvato da parte della preview.
 
 La preview resta visuale.
+
+Il type viene salvato dal confirm flow leggendo select1.value.
 
 RELAZIONE CON INSERT / UPDATE
 
 Dati salvati:
 
 raw_input
+type
 amount
 unit
 event_date
 project_id
 entity_id
 
-Fonte dati salvata:
+Fonti dati salvate:
 
-✔ ui_state.parsed
+✔ ui_state.parsed per amount/unit/event_date  
+✔ select1.value per type  
 
 button_input_confirm:
 
 ✔ non ricalcola più parsing
 ✔ non contiene più parsing legacy
-✔ costruisce payload da ui_state.parsed
+✔ costruisce payload da ui_state.parsed e select1.value
 ✔ usa insert_event/update_event
 ✔ aggiorna events_new dopo save completato
 
@@ -682,10 +906,11 @@ Relazione:
 ✔ preview e DB leggono lo stesso parsed data di base
 ✔ dati persistiti sono coerenti con parser controllato
 ✔ durate certe persistite come amount in minuti e unit = minuti
+✔ type persistito in events.type
 ✘ label NON persistita
 ✘ preview applica ancora trasformazioni visive aggiuntive
 
-Esempio durata:
+Esempio durata + type:
 
 input:
 
@@ -696,8 +921,13 @@ ui_state.parsed:
 amount: 150
 unit: minuti
 
+select1:
+
+Tempo
+
 DB:
 
+type: Tempo
 amount: 150
 unit: minuti
 raw_input: 2h30 rendering
@@ -715,6 +945,8 @@ VINCOLI ATTUALI (REALI)
 ✔ preview non modifica DB
 ✔ preview non è fonte del salvataggio
 ✔ preview legge ui_state.parsed per amount/unit/event_date
+✔ preview legge select1.value per type
+✔ preview non salva direttamente type
 
 MA:
 
@@ -724,6 +956,7 @@ MA:
 ✘ contiene hint logic
 ✘ contiene highlight logic
 ✘ non è ancora view pura
+✘ type display e hint sono ancora accoppiati alla preview/select
 
 ⚠ dipende da aggiornamenti multipli
 ⚠ usa fonti non completamente orchestrate
@@ -755,7 +988,8 @@ difficile isolare origine problemi visuali
 MULTI-SOURCE STATE
 parsed
 raw_input
-select
+select_project/select_entity
+select1.value
 matching state
 liste project/entity
 type select
@@ -819,6 +1053,8 @@ PROPRIETÀ DEL SISTEMA
 ✔ funzionante lato utente
 ✔ coerente con DB nei dati principali
 ✔ usa ui_state.parsed come fonte strutturata
+✔ usa select1.value come fonte runtime type
+✔ type persistito dal confirm flow
 ✔ non modifica DB
 
 MA:
@@ -830,6 +1066,7 @@ MA:
 ⚠ difficile evoluzione
 ⚠ ancora non completamente coerente globalmente
 ⚠ non ancora pronto per output/KPI
+⚠ type base non sufficiente da solo per report avanzati
 
 STATO ATTUALE
 
@@ -847,6 +1084,10 @@ STATO ATTUALE
 ✔ durata certa mostrata in forma umana
 ✔ hint normalizzato introdotto
 ✔ hint durata ambigua introdotto
+✔ Type Classification Base completata
+✔ select1 allineato a ui_state.parsed.unit
+✔ type rappresentato tramite select1.value
+✔ type persistito da insert/update tramite confirm flow
 
 ⚠ preview ancora ibrida
 ⚠ hint non completamente state-driven
@@ -860,13 +1101,15 @@ Nessun ulteriore nodo preview attivo.
 
 Il prossimo nodo logico di roadmap è:
 
-ENGINE BASE — TYPE CLASSIFICATION BASE
+MATCH ENGINE UNIFICATION
 
 La preview potrà essere aggiornata solo come conseguenza controllata
-di eventuali regole type/select1, senza refactor globale.
+di eventuali regole di matching/select/hint,
+senza refactor globale.
 
 Preview Alignment Base è completato.
 Duration Normalization Base è completata.
+Type Classification Base è completata.
 
 Restano futuri, ma non attivi:
 
@@ -874,6 +1117,7 @@ Restano futuri, ma non attivi:
 - estrazione label cleaning in modulo dedicato
 - hint completamente state-driven
 - unificazione matching preview/select/state
+- type/economic direction advanced
 
 OBIETTIVO FUTURO NON ATTIVO
 
@@ -881,6 +1125,7 @@ Separazione layer:
 
 parsing
 normalization
+type classification
 label
 matching
 preview
@@ -892,6 +1137,7 @@ Preview target:
 Input target:
 
 parsed data
+type già determinato
 selected project/entity
 hint state già calcolato
 
@@ -967,3 +1213,21 @@ confermato che amount tempo resta salvato in minuti
 confermato che raw_input preserva la forma originale
 confermato che preview resta layer ibrido non ancora view pura
 aggiornato prossimo nodo logico: TYPE CLASSIFICATION BASE
+
+v06 — 2026-05-01
+
+completamento ENGINE BASE — TYPE CLASSIFICATION BASE
+documentata relazione preview / select1
+chiarito che select1 è componente UI Retool, non query
+documentato che select1.value alimenta type visuale
+documentato che la preview non salva direttamente type
+documentata catena select1.value → button_input_confirm payload.type → events.type
+documentato parsed.unit = minuti → select1 Tempo
+documentati esempi type: Tempo, Spesa, Incasso, Evento
+documentato euro senza direzione chiara → Evento
+documentato override manuale utente
+documentato che type viene persistito da insert/update
+confermato che preview resta layer ibrido non ancora view pura
+confermato che preview non modifica DB/save flow
+confermato che type base non abilita ancora KPI/output
+aggiornato prossimo nodo logico: MATCH ENGINE UNIFICATION

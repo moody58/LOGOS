@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v07
+# 01_LOGOS_Input_System_v08
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -17,8 +17,10 @@ Il documento è utilizzato per:
 - controllo qualità input
 - normalizzazione base dei dati parsati
 - duration normalization base
+- type classification base
 - allineamento preview ai dati parsati
 - allineamento insert/update
+- salvataggio type in events.type
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -56,13 +58,18 @@ Il sistema suggerisce, l’utente decide.
 
 ---
 
-6. FONTE UNICA PER IL SALVATAGGIO
+6. FONTI CONTROLLATE PER IL SALVATAGGIO
 
-I dati strutturati salvati nel DB devono derivare da:
+I dati strutturati salvati nel DB devono derivare da fonti runtime controllate:
 
-ui_state.parsed
+- amount / unit / event_date → ui_state.parsed
+- type → select1.value
+- project_id → select_project.value
+- entity_id → select_entity.value
 
-e non da parsing duplicato nel bottone di conferma.
+Il bottone di conferma NON deve ricalcolare parsing.
+
+Deve solo costruire il payload usando lo stato già disponibile.
 
 ------------------------------------------------
 ARCHITETTURA INPUT
@@ -85,10 +92,15 @@ parse_input_controlled
 ui_state.parsed
 → fonte unica per preview/save/edit
 
+select1
+→ fonte runtime per type classification base
+→ valore salvato in events.type
+
 label / sintesi (preview)
 → derivato UI (non persistito)
 → allineato visualmente a ui_state.parsed per amount/unit/date
 → mostra durata normalizzata in forma umana + hint tecnico
+→ mostra/supporta type tramite select1
 
 ---
 
@@ -100,6 +112,7 @@ input_home
 → trigger_parse_debounced
 → parse_input_controlled
 → ui_state.parsed
+→ select1 / type classification base
 → preview
 → conferma
 → insert_event / update_event
@@ -115,6 +128,7 @@ evento selezionato
 → input_raw
 → parse_input_controlled
 → ui_state.parsed
+→ select1 / type classification base
 → preview
 → modifica utente
 → update_event
@@ -248,6 +262,7 @@ Regole:
 ✔ parsed non deve tornare null
 ✔ parsed deve contenere sempre amount/unit/event_date
 ✔ button_input_confirm usa parsed senza ricalcolare parsing
+✔ parsed.unit alimenta select1 per la classificazione Tempo
 
 Relazione con preview:
 
@@ -270,6 +285,12 @@ DB:
 
 amount 1500.5
 unit euro
+
+Nota:
+
+ui_state.parsed NON contiene type.
+
+Il type viene gestito da select1.value e salvato nel DB tramite payload.type.
 
 PARSING SYSTEM
 
@@ -295,7 +316,8 @@ REGOLE:
 ✔ parsing può fallire
 ✔ parsing può essere parziale
 ✔ parsing non interpreta semanticamente l’evento
-✔ parsing non classifica spesa/incasso
+✔ parsing non classifica direttamente spesa/incasso
+✔ parsing fornisce però unit utili alla type classification base
 ✔ parsing non modifica raw_input
 
 CASI:
@@ -338,17 +360,21 @@ Esempio:
 
 raw_input resta sempre preservato.
 
-Non riguarda:
+Non riguarda direttamente:
 
 label
 project
 entity
-type
 spesa/incasso
 matching
 hint
 dashboard
 KPI
+
+Nota:
+
+type classification base usa ui_state.parsed.unit come segnale,
+ma resta gestita da select1, non dal parser.
 
 Obiettivo:
 
@@ -834,71 +860,324 @@ IMPORTANTE:
 ⚠ non isolata come layer indipendente
 ⚠ preview non ancora view pura
 
-TYPE DETECTION (BASE)
+------------------------------------------------
+TYPE CLASSIFICATION BASE
+------------------------------------------------
 
-Tipi attuali:
+La Type Classification Base è stata implementata.
 
-tempo
-economico
-evento
+Componente principale:
 
-Regole attuali:
+select1
 
-tempo:
+Ruolo:
 
-→ presenza unità tempo
+classificare l’evento in modo minimo, prudente e correggibile dall’utente.
 
-Nota post Duration Normalization:
+Valori reali disponibili in select1:
 
-il parser ora normalizza le durate certe in:
+- Evento
+- Tempo
+- Spesa
+- Incasso
 
+------------------------------------------------
+REGOLE ATTUALI
+------------------------------------------------
+
+TEMPO:
+
+parsed.unit = "minuti"
+→ select1 = Tempo
+
+Motivo:
+
+dopo Duration Normalization,
+tutte le durate certe ore/minuti vengono salvate come:
+
+amount = totale minuti
 unit = minuti
 
-La type detection attuale può non essere ancora completamente allineata
-alla nuova duration normalization.
+Esempi:
+
+2h30 rendering
+→ parsed.amount = 150
+→ parsed.unit = minuti
+→ select1 = Tempo
+
+1 ora lavoro
+→ parsed.amount = 60
+→ parsed.unit = minuti
+→ select1 = Tempo
+
+18min test
+→ parsed.amount = 18
+→ parsed.unit = minuti
+→ select1 = Tempo
+
+------------------------------------------------
+SPESA
+------------------------------------------------
+
+Regola:
+
+euro + keyword controllate di uscita
+→ select1 = Spesa
+
+Keyword base:
+
+- spesa
+- acquisto
+- acquistato
+- comprato
+- pagato
+- pagamento
+- costo
+- costi
+- uscita
+- acconto dato
+- acconto versato
+- saldo pagato
+- saldo versato
+
+Esempi:
+
+20 euro spesa materiale
+→ select1 = Spesa
+
+20 euro acquisto materiale
+→ select1 = Spesa
+
+20 euro pagato materiale
+→ select1 = Spesa
+
+20 euro acconto dato
+→ select1 = Spesa
+
+20 euro saldo pagato
+→ select1 = Spesa
+
+------------------------------------------------
+INCASSO
+------------------------------------------------
+
+Regola:
+
+euro + keyword controllate di entrata
+→ select1 = Incasso
+
+Keyword base:
+
+- incasso
+- incassato
+- entrata
+- vendita
+- venduto
+- pagamento ricevuto
+- acconto ricevuto
+- saldo ricevuto
+
+Esempi:
+
+20 euro incasso cliente
+→ select1 = Incasso
+
+20 euro vendita cucciolo
+→ select1 = Incasso
+
+20 euro acconto ricevuto
+→ select1 = Incasso
+
+20 euro pagamento ricevuto
+→ select1 = Incasso
+
+------------------------------------------------
+EVENTO / FALLBACK PRUDENTE
+------------------------------------------------
+
+Regola:
+
+euro senza direzione chiara
+→ select1 = Evento
+
+segnali economici contrastanti
+→ select1 = Evento
+
+nessuna unit significativa
+→ select1 = Evento
+
+Esempi:
+
+20 euro materiale
+→ select1 = Evento
+
+20 euro acconto
+→ select1 = Evento
+
+20 euro spesa incasso
+→ select1 = Evento
+
+materiale ricevuto 20 euro
+→ select1 = Evento
+
+saldo 20 euro
+→ select1 = Evento
+
+villa 2 mario
+→ select1 = Evento
+
+2 giorni rendering
+→ select1 = Evento
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ select1 = Evento
+
+Nota:
+
+"benzina" non viene classificata automaticamente come Spesa.
+È una parola di dominio, non una direzione contabile esplicita.
+
+------------------------------------------------
+PRINCIPIO DI CONTROLLO UTENTE
+------------------------------------------------
+
+La classificazione automatica è solo base.
+
+L’utente può sempre modificare manualmente select1.
+
+La scelta manuale prevale sul default automatico
+e viene salvata in events.type.
+
+Esempi validati:
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Spesa
+→ DB: type = Spesa
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Incasso
+→ DB: type = Incasso
+
+------------------------------------------------
+PERSISTENZA TYPE
+------------------------------------------------
+
+Catena runtime:
+
+select1.value
+→ payload.type
+→ insert_event / update_event
+→ events.type
+
+Il type viene salvato in DB.
+
+Insert:
+
+- salva type
+
+Update:
+
+- aggiorna type
 
 Esempio:
 
 2h30 rendering
+→ select1 = Tempo
+→ DB: type Tempo, amount 150, unit minuti
 
-può essere correttamente parsato come:
+20 euro spesa materiale
+→ select1 = Spesa
+→ DB: type Spesa, amount 20, unit euro
 
-amount 150
-unit minuti
+20 euro incasso cliente
+→ select1 = Incasso
+→ DB: type Incasso, amount 20, unit euro
 
-ma select1 può ancora mostrare Evento invece di Tempo.
+------------------------------------------------
+CODICE LOGICO select1 — DEFAULT VALUE
+------------------------------------------------
 
-Questo è un limite del nodo TYPE CLASSIFICATION BASE futuro.
+{{
+(() => {
+  const text = (input_raw.value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
-economico:
+  const parsed = ui_state.value?.parsed || {};
+  const parsedUnit = String(parsed.unit || "").toLowerCase();
 
-→ presenza euro
+  if (parsedUnit === "minuti") {
+    return "Tempo";
+  }
 
-evento:
+  const hasEuro =
+    parsedUnit === "euro" ||
+    /€|\beuro\b|\beur\b/.test(text);
 
-→ default
+  const isIncasso =
+    /\bincasso\b/.test(text) ||
+    /\bincassato\b/.test(text) ||
+    /\bentrata\b/.test(text) ||
+    /\bvendita\b/.test(text) ||
+    /\bvenduto\b/.test(text) ||
+    /\bpagamento ricevuto\b/.test(text) ||
+    /\bacconto ricevuto\b/.test(text) ||
+    /\bsaldo ricevuto\b/.test(text);
 
-IMPORTANTE:
+  const isSpesa =
+    /\bspesa\b/.test(text) ||
+    /\bacquisto\b/.test(text) ||
+    /\bacquistato\b/.test(text) ||
+    /\bcomprato\b/.test(text) ||
+    /\bpagato\b/.test(text) ||
+    /\bpagamento\b/.test(text) ||
+    /\bcosto\b/.test(text) ||
+    /\bcosti\b/.test(text) ||
+    /\buscita\b/.test(text) ||
+    /\bacconto dato\b/.test(text) ||
+    /\bacconto versato\b/.test(text) ||
+    /\bsaldo pagato\b/.test(text) ||
+    /\bsaldo versato\b/.test(text);
 
-economico NON distingue:
+  if (isIncasso && isSpesa) {
+    return "Evento";
+  }
 
-spesa
-incasso
+  if (isIncasso) {
+    return "Incasso";
+  }
 
-→ decisione utente
+  if (isSpesa) {
+    return "Spesa";
+  }
 
-NON IMPLEMENTATO:
+  if (hasEuro) {
+    return "Evento";
+  }
 
-classificazione da parole chiave
-benzina → spesa
-acconto → incasso
-pagamento → spesa
-ricevuto → incasso
-tipo persistito affidabile
+  return "Evento";
+})()
+}}
 
-Nota:
+------------------------------------------------
+LIMITI TYPE
+------------------------------------------------
 
-La type classification sarà un nodo dedicato futuro.
+Non implementato:
+
+- classificazione economica avanzata
+- dizionario esteso keyword
+- classificazione automatica da parole di dominio
+- benzina → Spesa automatica
+- materiale → Spesa automatica
+- mangime → Spesa automatica
+- amount firmato
+- direction field
+- KPI/reportistica
+- retro-normalizzazione eventi storici
 
 PREVIEW SYSTEM
 
@@ -936,6 +1215,7 @@ REGOLE:
 Preview = rendering di:
 
 parsed (amount, unit, event_date)
+select1.value / type
 label runtime
 stato matching project/entity
 hint
@@ -1019,6 +1299,22 @@ DB:
 amount: 150
 unit: minuti
 
+AGGIORNAMENTO TYPE CLASSIFICATION BASE:
+
+✔ select1 allineato a ui_state.parsed.unit
+✔ parsed.unit = minuti → Tempo
+✔ euro + keyword controllate → Spesa / Incasso
+✔ euro senza direzione chiara → Evento
+✔ scelta manuale utente preservata
+✔ type persistito nel DB tramite confirm
+
+Esempio:
+
+2h30 rendering
+→ preview durata: 2 ore 30 minuti
+→ select1: Tempo
+→ DB: type Tempo, amount 150, unit minuti
+
 MATCHING BASE
 
 Oggetti:
@@ -1087,7 +1383,8 @@ matching unificato
 entity hierarchy
 deduplicazione entità
 ranking affidabile
-CONFIRMA EVENTO
+
+CONFERMA EVENTO
 
 AZIONE:
 
@@ -1134,12 +1431,14 @@ Payload:
 
 const payload = {
   raw_input: input_raw.value,
+  type: select1.value || "Evento",
   amount: parsed.amount,
   unit: parsed.unit,
   event_date: parsed.event_date,
   project_id: select_project.value || null,
   entity_id: select_entity.value || null
 };
+
 BUTTON_INPUT_CONFIRM — FLOW FINALE
 
 Codice logico finale:
@@ -1153,6 +1452,7 @@ const parsed = ui_state.value?.parsed || {
 
 const payload = {
   raw_input: input_raw.value,
+  type: select1.value || "Evento",
   amount: parsed.amount,
   unit: parsed.unit,
   event_date: parsed.event_date,
@@ -1205,6 +1505,7 @@ Risultato:
 
 ✔ parsing duplicato rimosso
 ✔ insert/update usano ui_state.parsed
+✔ insert/update salvano type da select1.value
 ✔ feedback immediato
 ✔ lista eventi aggiornata dopo save reale
 ✔ update visibile senza refresh pagina
@@ -1218,6 +1519,7 @@ insert_event
 Payload:
 
 raw_input
+type
 amount
 unit
 event_date
@@ -1235,16 +1537,40 @@ Caratteristiche:
 ✔ amount coerente con ui_state.parsed
 ✔ unit coerente con ui_state.parsed
 ✔ raw_input preservato
+✔ type salvato in events.type
 
-Test validato:
+Test validati:
 
-1.500,50 euro test engine
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+→ status NEW
 
-DB:
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+→ status NEW
 
-amount: 1500.5
-unit: euro
-status: NEW
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+→ status NEW
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+→ status NEW
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+→ status NEW
+
 UPDATE FLOW
 
 Trigger:
@@ -1258,6 +1584,7 @@ edit_mode = true
 Payload:
 
 raw_input
+type
 amount
 unit
 event_date
@@ -1270,7 +1597,24 @@ Caratteristiche:
 ✔ modifica eventi NEW
 ✔ status invariato
 ✔ dati aggiornati correttamente in DB
+✔ type aggiornato correttamente in DB
 ✔ lista eventi aggiornata dopo salvataggio completato
+
+Test validato:
+
+Evento precedente senza type valorizzato
+modificato in:
+
+1 ora e 45 minuti lavoro
+
+DB:
+
+type Tempo
+amount 105
+unit minuti
+raw_input aggiornato
+updated_at aggiornato
+status NEW
 
 Problema risolto:
 
@@ -1317,8 +1661,6 @@ COMPORTAMENTO:
 ✔ preservare possibilità di correzione
 
 TEST VALIDATI
-
-PARSER / PREVIEW:
 
 PARSER / PREVIEW:
 
@@ -1486,6 +1828,111 @@ villa 2 test duration
 → raw_input preservato
 → status NEW
 
+TYPE CLASSIFICATION BASE — ANTEPRIMA:
+
+2h30 rendering
+→ select1 Tempo
+
+1 ora lavoro
+→ select1 Tempo
+
+18min test
+→ select1 Tempo
+
+20 euro spesa materiale
+→ select1 Spesa
+
+20 euro acquisto materiale
+→ select1 Spesa
+
+20 euro pagato materiale
+→ select1 Spesa
+
+20 euro incasso cliente
+→ select1 Incasso
+
+20 euro vendita cucciolo
+→ select1 Incasso
+
+20 euro acconto ricevuto
+→ select1 Incasso
+
+20 euro acconto dato
+→ select1 Spesa
+
+20 euro acconto
+→ select1 Evento
+
+20 euro materiale
+→ select1 Evento
+
+20 euro spesa incasso
+→ select1 Evento
+
+villa 2 mario
+→ select1 Evento
+
+2 giorni rendering
+→ select1 Evento
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ select1 Evento
+
+TYPE CLASSIFICATION BASE — INSERT DB:
+
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+
+TYPE CLASSIFICATION BASE — UPDATE DB:
+
+1 ora e 45 minuti lavoro
+→ type Tempo
+→ amount 105
+→ unit minuti
+→ updated_at aggiornato
+
+TYPE CLASSIFICATION BASE — OVERRIDE MANUALE:
+
+20 euro materiale + select1 manuale Spesa
+→ DB type Spesa
+
+20 euro materiale + select1 manuale Incasso
+→ DB type Incasso
+
+TYPE CLASSIFICATION BASE — RESET / STALE VALUE:
+
+20 euro materiale
+→ select1 manuale Spesa
+→ conferma
+→ nuovo input villa 2 mario
+→ select1 Evento
+
+Esito:
+
+nessuna modifica necessaria al reset select1.
+
 PREVIEW ALIGNMENT BASE:
 
 1.500,50 euro materiale
@@ -1548,9 +1995,16 @@ nessun campo duration_minutes dedicato
 
 TYPE:
 
-economico non distingue spesa/incasso
-type non usato in modo affidabile
-parole chiave non implementate
+type classification base implementata
+Tempo / Spesa / Incasso / Evento persistiti in events.type
+spesa/incasso riconosciuti solo tramite keyword controllate o scelta manuale
+euro senza direzione chiara resta Evento
+amount firmato non implementato
+direction field non implementato
+classificazione economica avanzata non implementata
+parole di dominio non usate come classificazione automatica
+type non ancora sufficiente da solo per KPI avanzati
+eventi storici non retro-normalizzati
 
 MATCHING:
 
@@ -1596,17 +2050,6 @@ orientato a KPI prima della qualità dati
 
 NEXT STEP CONSIGLIATI
 
-ENGINE BASE — TYPE CLASSIFICATION BASE
-
-Obiettivo:
-
-evento / tempo / economico
-allineamento select1 a ui_state.parsed
-gestione corretta unit = minuti come tempo
-eventuale spesa/incasso tramite parole chiave controllate
-mantenimento controllo utente
-nessuna automazione decisionale definitiva
-
 MATCH ENGINE UNIFICATION
 
 Obiettivo:
@@ -1615,6 +2058,24 @@ eliminazione logiche parallele
 priority match
 hint state-driven
 select / preview / matching coerenti
+riduzione incoerenze project/entity
+
+LINTING / STATE HELPER CLEANUP
+
+Obiettivo:
+
+risolvere linting residui Retool:
+
+- edit_mode: 'value' is not defined
+- editing_event: 'value' is not defined
+
+ECONOMIC DIRECTION ADVANCED
+
+Obiettivo futuro non attivo:
+
+valutare amount firmato
+valutare direction field
+valutare regole contabili avanzate Spesa/Incasso
 
 CHANGELOG
 
@@ -1702,3 +2163,27 @@ nessuna modifica insert_event/update_event
 nessuna modifica matching
 nessuna type classification
 aggiornamento prossimo nodo consigliato: ENGINE BASE — TYPE CLASSIFICATION BASE
+
+v08 — 2026-05-01
+
+completamento ENGINE BASE — TYPE CLASSIFICATION BASE
+select1 allineato a ui_state.parsed.unit
+parsed.unit = minuti → Tempo
+euro + keyword controllate di uscita → Spesa
+euro + keyword controllate di entrata → Incasso
+euro senza direzione chiara → Evento
+segnali economici contrastanti → Evento
+scelta manuale utente preservata
+type aggiunto al payload di button_input_confirm
+insert_event salva events.type
+update_event aggiorna events.type
+override manuale validato su Spesa / Incasso
+reset/stale value verificato
+type persistito in DB
+nessuna modifica schema DB
+nessuna modifica parser
+nessuna modifica matching
+nessun refactor preview
+nessun output/KPI anticipato
+linting Retool residuo registrato come anomalia non bloccante
+aggiornamento prossimo nodo consigliato: MATCH ENGINE UNIFICATION

@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v03
+# 00_PROJECT_Gap_Register_v04
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 SCOPO
@@ -92,12 +92,11 @@ button_input_confirm tramite payload derivato
 
 Non esiste ancora un modulo engine separato.
 
-RISCHIO RESIDUO:
-
 Dati ancora parzialmente confrontabili perché restano non implementati:
 
-type classification
-spesa/incasso
+type classification avanzata
+economic direction advanced
+amount firmato / direction field
 normalizzazione project/entity
 giorni/settimane come durata automatica
 retro-normalizzazione storico
@@ -108,8 +107,8 @@ Mantenere il gap aperto come INTEGRATO PARZIALE.
 
 Prossimi sotto-gap:
 
-Type Classification Base
 Match Engine Unification
+Economic Direction Advanced
 Duration Advanced — giorni/settimane
 
 ID: G02
@@ -139,17 +138,20 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati due blocchi engine base:
+Sono stati avviati e completati tre blocchi engine base:
 
 - Normalization Layer Base
 - Duration Normalization Base
+- Type Classification Base
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
 Attualmente:
 
-parsing, normalization base e duration normalization sono in Retool
+parsing, normalization base, duration normalization e type classification base sono in Retool
 durate certe ore/minuti sono normalizzate in minuti
+type viene salvato in events.type
+Spesa / Incasso / Tempo / Evento sono persistiti a livello base
 matching resta distribuito
 preview contiene logiche proprie
 processing resta manuale
@@ -169,9 +171,9 @@ AZIONE:
 Non creare ancora un documento engine globale.
 Procedere per nodi minimi:
 
-Type Classification Base
 Match Engine Unification
 Data Structure / Entity Hierarchy
+Economic Direction Advanced
 Duration Advanced — giorni/settimane
 
 ID: G03
@@ -305,9 +307,9 @@ Non prioritario ora.
 
 Da rivalutare dopo:
 
-Type Classification Base
 Match Engine Unification
 Data Structure / Entity Hierarchy
+Economic Direction Advanced
 
 Possibile uso futuro:
 
@@ -345,7 +347,7 @@ solo input manuale Retool
 sistema non ancora pronto per fonti multiple
 parsing base stabilizzato ma non completo
 duration normalization base completata
-type classification ancora assente
+type classification base completata
 matching ancora non unificato
 
 RISCHIO:
@@ -508,7 +510,8 @@ RISCHIO RESIDUO:
 - parole numeriche tipo “due ore” non supportate
 - forme colloquiali tipo “un paio d’ore” non supportate
 - dati storici non retro-normalizzati
-- type/select1 non sempre allineato a unit = minuti
+- type/select1 ora allineato a unit = minuti
+- resta aperta solo type classification avanzata / economic direction
 
 AZIONE:
 
@@ -526,68 +529,134 @@ NOME:
 Type Classification Base
 
 FONTE:
-Input System + domanda utente + Roadmap
+Input System + domanda utente + Roadmap + Checkpoint Type Classification Base
 
 STATO:
-VALIDATO
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Classificazione base evento:
+Classificazione base evento tramite select1:
 
-evento
-tempo
-economico
-spesa
-incasso
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+Nota terminologica:
+
+select1 è un componente UI Select di Retool,
+non una query.
+
+La logica Type Classification Base è contenuta nel Default value del componente select1.
+
+Il valore runtime:
+
+select1.value
+
+viene letto da button_input_confirm e salvato come:
+
+payload.type
+→ events.type
+
+STATO REALE:
+
+Il nodo ENGINE BASE — TYPE CLASSIFICATION BASE è stato completato.
+
+Implementato:
+
+- parsed.unit = minuti → Tempo
+- euro + keyword controllate di uscita → Spesa
+- euro + keyword controllate di entrata → Incasso
+- euro senza direzione chiara → Evento
+- segnali economici contrastanti → Evento
+- nessuna unit significativa → Evento
+- scelta manuale utente preservata
+- type aggiunto al payload di button_input_confirm
+- insert_event salva events.type
+- update_event aggiorna events.type
+- override manuale validato
+- reset/stale value verificato
+
+Esempi validati:
+
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+
+1 ora e 45 minuti lavoro
+→ type Tempo
+→ amount 105
+→ unit minuti
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+
+Override manuale validato:
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Spesa
+→ DB type Spesa
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Incasso
+→ DB type Incasso
 
 NOTE:
 
-Attualmente:
+La classificazione automatica resta prudente.
 
-tempo dedotto da unità tempo
-economico dedotto da euro
-evento come default
-nessuna distinzione affidabile spesa/incasso
-type non utilizzato per KPI
+"benzina", "materiale", "mangime" e altre parole di dominio
+non classificano automaticamente Spesa.
 
-Problema reale emerso dopo Duration Normalization:
+Il sistema suggerisce,
+ma l’utente mantiene controllo finale.
 
-input come 2h30 rendering viene normalizzato correttamente:
+RISCHIO RESIDUO:
 
-amount 150
-unit minuti
-
-ma select1 può restare su Evento.
-
-La type detection deve essere allineata a ui_state.parsed,
-in particolare a:
-
-unit = minuti → tempo
-unit = euro → economico
-
-RISCHIO:
-
-Senza type affidabile:
-
-dashboard economiche non fondate
-spese/incassi non distinguibili
-reportistica prematura fuorviante
+- classificazione economica avanzata non implementata
+- dizionario keyword esteso non implementato
+- amount firmato non implementato
+- direction field non implementato
+- type non sufficiente da solo per KPI avanzati
+- eventi storici non retro-normalizzati
+- matching non unificato
 
 AZIONE:
 
-Da aprire in nodo dedicato futuro.
+Gap integrato a livello base.
 
-Nodo attualmente candidato come prossimo step operativo:
+Non riaprire come Type Classification Base.
 
-ENGINE BASE — TYPE CLASSIFICATION BASE
+Tenere aperti solo sotto-gap futuri:
 
-Vincoli:
+- Economic Direction Advanced
+- Type Classification Advanced
+- eventuale bonifica type storico
 
-nessuna automazione decisionale nascosta
-utente sempre in controllo
-parole chiave controllate
-nessun KPI prima della validazione
+Nodo operativo successivo consigliato:
+
+MATCH ENGINE UNIFICATION
 
 ID: G10
 
@@ -598,7 +667,7 @@ FONTE:
 Match Engine + Preview System + State
 
 STATO:
-VALIDATO
+VALIDATO — PROSSIMO NODO CONSIGLIATO
 
 DESCRIZIONE:
 
@@ -629,11 +698,29 @@ output basato su project/entity fragile
 
 AZIONE:
 
-Nodo futuro dedicato:
+Nodo operativo successivo consigliato:
 
 MATCH ENGINE UNIFICATION
 
-Non aprire durante Preview Alignment Base.
+Motivo:
+
+dopo il completamento di Type Classification Base,
+la catena type è ora coerente:
+
+ui_state.parsed.unit
+→ select1.value
+→ payload.type
+→ events.type
+
+Resta invece non unificato il matching project/entity.
+
+Non anticipare:
+
+- dashboard/KPI
+- data structure avanzata
+- deduplicazione
+- gerarchie entity/project
+- output
 
 ID: G11
 
@@ -755,13 +842,85 @@ Scope:
 - nessuna modifica parsing
 - nessuna modifica DB salvo decisione dedicata
 
+ID: G13
+
+NOME:
+Economic Direction Advanced
+
+FONTE:
+Type Classification Base + Database Schema + Roadmap
+
+STATO:
+IDENTIFICATO
+
+DESCRIZIONE:
+
+Gestione avanzata della direzione economica degli eventi.
+
+Dopo Type Classification Base il sistema distingue:
+
+- Spesa
+- Incasso
+
+ma il valore amount resta positivo.
+
+Attualmente:
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+NON esiste ancora:
+
+- amount firmato
+- direction field
+- money_direction
+- regola contabile applicativa
+- report economico attivo
+- KPI basato su entrate/uscite
+
+NOTE:
+
+La distinzione Spesa / Incasso è già persistita in events.type.
+
+La direzione economica può essere interpretata in futuro dai report,
+oppure consolidata tramite nodo dedicato.
+
+Rischio:
+
+anticipare amount firmato o direction field ora potrebbe introdurre
+complessità contabile prima della stabilizzazione matching/data quality.
+
+AZIONE:
+
+Non prioritario ora.
+
+Da rivalutare dopo:
+
+- Match Engine Unification
+- prima definizione output/report
+- valutazione dati economici reali
+
+Possibili decisioni future:
+
+1. mantenere amount sempre positivo e usare type per la direzione
+2. introdurre direction field
+3. introdurre amount firmato
+4. derivare entrate/uscite solo in fase report
+
 ORDINE CONSIGLIATO GAP / NODI
 
 Ordine attuale consigliato:
 
-G09 — Type Classification Base
 G10 — Match Engine Unification
 G12 — Events List Label / Updated At Display
+G13 — Economic Direction Advanced
 G11 — Data Structure / Entity Hierarchy
 G08A — Duration Advanced / Giorni-Settimane
 G04 — Logging / Versioning
@@ -772,6 +931,7 @@ Gap già integrati:
 
 G07 — Preview Alignment
 G08 — Duration Normalization Base
+G09 — Type Classification Base
 
 Nota:
 
@@ -822,3 +982,24 @@ aggiornato G09 Type Classification Base come prossimo nodo candidato
 aggiunto G12 Events List Label / Updated At Display
 aggiornato ordine consigliato gap/nodi
 allineamento con State v12 e Roadmap v06
+
+v04 — 2026-05-01
+
+aggiornato G09 Type Classification Base a INTEGRATO BASE
+documentato select1 come componente UI Retool, non query
+documentata catena select1.value → payload.type → events.type
+documentato type persistito in DB
+documentati valori type: Evento, Tempo, Spesa, Incasso
+documentato parsed.unit = minuti → Tempo
+documentate keyword controllate per Spesa / Incasso
+documentato euro senza direzione chiara → Evento
+documentato override manuale utente
+documentato reset/stale value verificato
+aggiornato G10 Match Engine Unification come prossimo nodo consigliato
+aggiunto G13 Economic Direction Advanced
+aggiornato G01 Normalization Model
+aggiornato G02 Processor / Engine Flow
+aggiornato G06 Multi-source Input
+aggiornato G08 Duration Normalization
+aggiornato ordine consigliato gap/nodi
+allineamento con State v13 e Roadmap v07

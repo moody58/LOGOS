@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v06
+# 00_PROJECT_Roadmap_v07
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -67,18 +67,19 @@ FASE COMPLETATA:
 ✔ STEP 6.1 — ENGINE BASE / NORMALIZATION LAYER BASE (COMPLETATO)  
 ✔ PREVIEW ALIGNMENT BASE (COMPLETATO)  
 ✔ STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)  
+✔ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)  
 
 ---
 
 FASE ATTIVA CONSIGLIATA:
 
-STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
+STEP 6.4 — MATCH ENGINE UNIFICATION
 
 ---
 
 FASE SUCCESSIVA CANDIDATA:
 
-STEP 6.4 — MATCH ENGINE UNIFICATION
+STEP 6.5 — HINT / PREVIEW STATE ALIGNMENT
 
 ------------------------------------------------
 ROADMAP MASTER
@@ -349,9 +350,9 @@ Limiti ancora aperti:
 ⚠ giorni/settimane non convertiti automaticamente  
 ⚠ giornata / mezza giornata non normalizzate  
 ⚠ parole numeriche tipo “due ore” non supportate  
-⚠ type classification non implementata  
-⚠ spesa/incasso non implementati  
-⚠ matching non toccato   
+✔ type classification base implementata nello STEP 6.3  
+✔ Spesa / Incasso base implementati tramite keyword controllate e scelta manuale  
+⚠ matching non unificato     
 
 ------------------------------------------------
 
@@ -447,10 +448,10 @@ Limiti espliciti dopo evoluzione successiva:
 Limiti ancora aperti:
 
 ⚠ giorni/settimane non convertiti automaticamente  
-⚠ type classification non implementata  
-⚠ spesa/incasso non implementati  
+✔ type classification base implementata nello STEP 6.3  
+✔ Spesa / Incasso base implementati tramite keyword controllate e scelta manuale  
 ⚠ matching non unificato  
-⚠ preview non ancora view pura   
+⚠ preview non ancora view pura     
 
 ------------------------------------------------
 
@@ -552,13 +553,13 @@ Limiti espliciti:
 ⚠ forme colloquiali tipo “un paio d’ore” non supportate  
 ⚠ 2h e mezza non supportato  
 ⚠ dati storici non retro-normalizzati  
-⚠ type classification non implementata  
-⚠ select1 può restare incoerente su alcune durate  
-⚠ flash preview durante debounce non corretto     
+✔ type classification base implementata nello STEP 6.3  
+✔ select1 allineato a parsed.unit = minuti  
+⚠ flash preview durante debounce non corretto        
 
 ------------------------------------------------
 
-STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (FASE ATTIVA CONSIGLIATA)
+STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
 
 Obiettivo:
 
@@ -566,52 +567,148 @@ Classificare in modo controllato il tipo evento.
 
 ---
 
-Possibili categorie:
+Categorie reali implementate:
 
-- evento
-- tempo
-- economico
-- spesa
-- incasso
-
----
-
-Possibili segnali:
-
-- unità tempo
-- presenza euro
-- parole chiave controllate
-- selezione manuale utente
+- Evento
+- Tempo
+- Spesa
+- Incasso
 
 ---
 
-Problema reale emerso:
+Decisione:
 
-- input come 2h30 rendering viene normalizzato correttamente come durata
-- parsed.amount = 150
-- parsed.unit = minuti
-- select1 può però restare su “Evento”
-- la type detection attuale non è pienamente allineata alla nuova normalizzazione durata
+La categoria logica "economico" non è stata introdotta come opzione separata,
+perché nel sistema reale select1 distingue già:
 
-Obiettivo minimo del nodo:
+- Spesa
+- Incasso
 
-- rendere coerente evento / tempo / economico
-- evitare classificazioni automatiche rischiose
-- mantenere controllo utente
-- non introdurre ancora KPI/output
+Quando è presente euro ma manca direzione chiara,
+il sistema resta su Evento per preservare controllo utente.
+
+---
+
+Segnali implementati:
+
+- parsed.unit = minuti → Tempo
+- euro + keyword controllate di uscita → Spesa
+- euro + keyword controllate di entrata → Incasso
+- euro senza direzione chiara → Evento
+- segnali economici contrastanti → Evento
+- nessuna unit significativa → Evento
+- selezione manuale utente sempre preservata
+
+---
+
+Interventi eseguiti:
+
+✔ select1 allineato a ui_state.parsed.unit  
+✔ parsed.unit = "minuti" → Tempo  
+✔ keyword controllate per Spesa  
+✔ keyword controllate per Incasso  
+✔ fallback prudente a Evento  
+✔ type aggiunto al payload di button_input_confirm  
+✔ insert_event salva events.type  
+✔ update_event aggiorna events.type  
+✔ override manuale utente validato  
+✔ reset/stale value verificato  
+✔ nessuna modifica schema DB  
+✔ nessuna modifica parser  
+✔ nessuna modifica matching  
+✔ nessun refactor preview  
+✔ nessun output/KPI anticipato  
+
+---
+
+Esempi validati:
+
+2h30 rendering  
+→ type Tempo  
+→ amount 150  
+→ unit minuti  
+
+1 ora e 45 minuti lavoro  
+→ type Tempo  
+→ amount 105  
+→ unit minuti  
+
+20 euro spesa materiale  
+→ type Spesa  
+→ amount 20  
+→ unit euro  
+
+20 euro incasso cliente  
+→ type Incasso  
+→ amount 20  
+→ unit euro  
+
+20 euro materiale  
+→ type Evento  
+→ amount 20  
+→ unit euro  
+
+villa 2 mario  
+→ type Evento  
+→ amount null  
+→ unit null  
+
+---
+
+Override manuale validato:
+
+20 euro materiale + select1 manuale Spesa  
+→ type Spesa  
+
+20 euro materiale + select1 manuale Incasso  
+→ type Incasso  
+
+---
+
+Output raggiunto:
+
+✔ type classification base funzionante  
+✔ type persistito in events.type  
+✔ Tempo coerente con Duration Normalization  
+✔ Spesa / Incasso distinguibili a livello base  
+✔ Evento resta default prudente  
+✔ utente mantiene controllo finale  
+✔ dati più utili per futuri report  
+✔ nessuna automazione decisionale aggressiva  
+
+---
+
+Limiti espliciti:
+
+⚠ classificazione economica avanzata non implementata  
+⚠ dizionario keyword esteso non implementato  
+⚠ parole di dominio come benzina/materiale/mangime non classificano automaticamente Spesa  
+⚠ amount resta positivo  
+⚠ nessun amount firmato  
+⚠ nessun direction field  
+⚠ type base non ancora sufficiente da solo per KPI avanzati  
+⚠ eventi storici non retro-normalizzati  
+⚠ matching non unificato  
+⚠ linting Retool residuo non bloccante  
+
+---
+
+Anomalie residue:
+
+- edit_mode: 'value' is not defined
+- editing_event: 'value' is not defined
 
 Stato:
 
-→ fase attiva consigliata  
-⚠ da aprire solo in nodo dedicato  
-⚠ richiede attenzione perché introduce semantica leggera  
-⚠ non deve diventare automazione decisionale  
-⚠ deve tenere conto della nuova duration normalization in minuti  
-⚠ non deve anticipare dashboard/KPI   
+non bloccanti, fuori scope.
+
+Nodo candidato:
+
+LINTING / STATE HELPER CLEANUP 
 
 ------------------------------------------------
 
-STEP 6.4 — MATCH ENGINE UNIFICATION (CANDIDATO FUTURO)
+STEP 6.4 — MATCH ENGINE UNIFICATION (FASE ATTIVA CONSIGLIATA)
 
 Obiettivo:
 
@@ -619,21 +716,54 @@ Eliminare logiche parallele di matching.
 
 ---
 
-Interventi previsti:
+Problema reale:
 
-- unificazione select / preview / state
-- priority match
-- hint state-driven
-- riduzione incoerenze
-- gestione ambiguità più affidabile
+Il sistema ha ora una catena type più coerente:
+
+ui_state.parsed.unit
+→ select1
+→ payload.type
+→ events.type
+
+Ma il matching project/entity resta distribuito tra più logiche:
+
+1. input_raw / ranking
+2. select_project / select_entity deterministico
+3. preview / detected locale
+
+Conseguenze:
+
+- incoerenza architetturale
+- duplicazione logica
+- possibili divergenze tra select e preview
+- hint non sempre perfettamente allineati
+- ambiguità project/entity difficili da governare
+- priority match non implementato
+
+---
+
+Interventi candidati:
+
+- analisi comportamento attuale project_state / entity_state
+- analisi select_project / select_entity
+- analisi detection locale preview
+- definizione fonte unica per matching base
+- allineamento hint/select/preview
+- riduzione duplicazione logica
+- eventuale priority match minimo
+- nessuna deduplicazione strutturale
+- nessuna gerarchia entity/project fuori scope
 
 ---
 
 Stato:
 
-⚠ non attivo  
+→ fase attiva consigliata  
 ⚠ nodo dedicato necessario  
-⚠ non anticipare durante preview alignment  
+⚠ non anticipare data structure  
+⚠ non introdurre dashboard/KPI  
+⚠ non modificare schema DB  
+⚠ non automatizzare creazione project/entity   
 
 ------------------------------------------------
 
@@ -668,10 +798,11 @@ Motivazione:
 
 Il sistema NON può avanzare allo STEP 7 finché:
 
-- type classification non è almeno base o mantenuta manuale consapevolmente
+- type classification base è completata ma non ancora sufficiente per KPI avanzati
 - matching non è stabilizzato nei punti critici
 - incoerenze select / preview / state non sono ridotte
-- dati non sono sufficientemente confrontabili per tipo evento
+- dati non sono sufficientemente coerenti per aggregazioni affidabili
+- eventuale direzione economica avanzata non è stata ancora valutata
 
 Nota:
 
@@ -682,59 +813,71 @@ Nota:
 
 Preview Alignment Base è stato completato.
 
+Nota:
+
+Type Classification Base è stata completata.
+events.type viene ora valorizzato con:
+
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+Tuttavia l’uso per KPI/report resta non attivo
+finché matching e qualità dati non saranno ulteriormente stabilizzati.
+
 ------------------------------------------------
 NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-ENGINE BASE — TYPE CLASSIFICATION BASE
+MATCH ENGINE UNIFICATION
 
 ------------------------------------------------
 SCOPO NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
 Definire e implementare, se coerente, il primo livello controllato
-di classificazione evento.
+di unificazione del matching.
 
 Obiettivo:
 
-distinguere in modo minimo e non distruttivo:
+ridurre incoerenze tra:
 
-- evento
-- tempo
-- economico
-
-Valutare separatamente se e come trattare:
-
-- spesa
-- incasso
+- input_raw / ranking
+- select_project / select_entity
+- preview / detected locale
+- hint ambiguità
 
 ---
 
 Ammesso:
 
-✔ analisi comportamento attuale select1  
-✔ verifica incoerenze evento / tempo / economico  
-✔ allineamento minimo con ui_state.parsed  
-✔ uso di parsed.unit come segnale controllato  
-✔ tempo se parsed.unit = minuti  
-✔ economico se parsed.unit = euro  
-✔ mantenimento selezione manuale utente  
-✔ test runtime su preview/save  
-✔ nessuna automazione decisionale definitiva  
+✔ analisi comportamento attuale project_state  
+✔ analisi comportamento attuale entity_state  
+✔ analisi select_project / select_entity  
+✔ analisi detected locale preview  
+✔ confronto select / preview / hint  
+✔ definizione fonte unica minima per matching base  
+✔ eventuale priority match minimo  
+✔ mantenimento auto-select solo se match univoco  
+✔ mantenimento controllo utente  
+✔ test runtime su project/entity ambigui  
 
 ---
 
 Vietato:
 
 ❌ dashboard/KPI  
-❌ match engine unification  
-❌ refactor globale parser  
+❌ data structure avanzata  
+❌ deduplicazione entity/project  
+❌ gerarchie entity/project  
+❌ creazione automatica project/entity  
+❌ modifica schema DB  
 ❌ refactor globale preview  
-❌ modifica schema DB non motivata  
-❌ classificazione spesa/incasso automatica non dichiarata  
-❌ parole chiave economiche aggressive  
+❌ refactor globale parser  
+❌ classificazione type  
 ❌ retro-normalizzazione storico  
-❌ sostituire controllo utente con decisione automatica     
+❌ automazioni decisionali definitive        
 
 ------------------------------------------------
 REGOLE OPERATIVE
@@ -849,9 +992,10 @@ Il sistema è ora entrato nello STEP 6 in modo reale.
 Il sistema NON può avanzare allo STEP 7 (OUTPUT)
 finché non vengono completati almeno:
 
-1. Type Classification Base o decisione esplicita di mantenerla manuale
-2. Match Engine Unification o almeno stabilizzazione delle incoerenze critiche
-3. riduzione delle incoerenze tra parsed data, select, preview e hint
+1. Match Engine Unification o almeno stabilizzazione delle incoerenze critiche
+2. riduzione delle incoerenze tra parsed data, select, preview e hint
+3. valutazione della sufficienza di Type Classification Base per report iniziali
+4. eventuale decisione su direzione economica avanzata / amount firmato / direction field
 
 Nota:
 
@@ -861,6 +1005,12 @@ Le durate certe ore/minuti sono ora normalizzate in minuti.
 Nota:
 
 Preview Alignment Base è completato.
+
+Nota:
+
+Type Classification Base è completata.
+Il campo events.type viene ora valorizzato dal frontend,
+ma non abilita ancora automaticamente KPI/reportistica.
 
 ---
 
@@ -954,3 +1104,28 @@ v06 — 2026-04-30
 - nessuna type classification
 - aggiornamento fase attiva consigliata a STEP 6.3 — TYPE CLASSIFICATION BASE
 - mantenuto blocco verso OUTPUT fino a type/matching/data quality
+
+v07 — 2026-05-01
+
+- completamento STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
+- select1 allineato a ui_state.parsed.unit
+- parsed.unit = minuti → Tempo
+- euro + keyword controllate di uscita → Spesa
+- euro + keyword controllate di entrata → Incasso
+- euro senza direzione chiara → Evento
+- segnali economici contrastanti → Evento
+- scelta manuale utente preservata
+- type aggiunto al payload di button_input_confirm
+- insert_event salva events.type
+- update_event aggiorna events.type
+- override manuale validato su Spesa / Incasso
+- reset/stale value verificato
+- type persistito in DB
+- nessuna modifica schema DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessun refactor preview
+- nessun output/KPI anticipato
+- linting Retool residuo registrato come anomalia non bloccante
+- aggiornamento fase attiva consigliata a STEP 6.4 — MATCH ENGINE UNIFICATION
+- mantenuto blocco verso OUTPUT fino a matching/data quality/report readiness

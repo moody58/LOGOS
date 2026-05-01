@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v07
+# LOGOS_RETOOL_RUNTIME_REAL_v08
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -8,19 +8,23 @@ CQD — VALIDAZIONE DOCUMENTO
 
 C (Completezza): 10/10  
 - copertura completa runtime reale  
-- input → parsing → normalization → matching → preview → insert/update → processing  
+- input → parsing → normalization → duration normalization → type classification → matching → preview → insert/update → processing  
 - script allineati al sistema attuale  
 - insert/update flow documentato  
-- ui_state.parsed documentato come fonte unica  
+- ui_state.parsed documentato come fonte amount/unit/event_date  
+- select1.value documentato come fonte type  
 - refresh lista post-save documentato  
 - preview alignment documentato  
-- duration normalization documentata   
+- duration normalization documentata  
+- type classification base documentata   
 
 Q (Qualità): 9.5/10  
 - runtime reale aggiornato  
-- distinzione chiara tra parser, normalization base, preview e save flow  
+- distinzione chiara tra parser, normalization base, duration normalization, type classification, preview e save flow  
 - preview allineata visualmente ai dati normalizzati  
-- durate certe ore/minuti normalizzate in minuti   
+- durate certe ore/minuti normalizzate in minuti  
+- type persistito in events.type  
+- controllo manuale utente preservato  
 - debiti residui esplicitati  
 - non descrive funzionalità non implementate come attive  
 
@@ -29,7 +33,8 @@ D (Deployabilità): 10/10
 - allineato a Retool  
 - utile per ricostruire il runtime effettivo  
 - nodo Preview Alignment Base validato runtime  
-- nodo Duration Normalization validato runtime     
+- nodo Duration Normalization validato runtime  
+- nodo Type Classification Base validato runtime         
 
 ------------------------------------------------
 STATO
@@ -41,7 +46,8 @@ Runtime aggiornato dopo completamento:
 
 ENGINE BASE — NORMALIZATION LAYER BASE  
 PREVIEW ALIGNMENT BASE  
-ENGINE BASE — DURATION NORMALIZATION
+ENGINE BASE — DURATION NORMALIZATION  
+ENGINE BASE — TYPE CLASSIFICATION BASE
 
 ------------------------------------------------
 DESCRIZIONE OPERATIVA DEL SISTEMA
@@ -58,17 +64,22 @@ INPUT
 → PARSING CONTROLLED  
 → NORMALIZATION BASE  
 → DURATION NORMALIZATION  
+→ TYPE CLASSIFICATION BASE  
 → MATCHING  
 → PREVIEW  
 → INSERT / UPDATE  
 → REFRESH LISTA  
-→ PROCESSING  
+→ PROCESSING   
 
 ✔ allineamento save → DB verificato  
 ✔ insert e update usano ui_state.parsed  
 ✔ normalizzazione amount/unit base attiva 
 ✔ duration normalization base attiva  
-✔ durate certe ore/minuti salvate in minuti canonici   
+✔ durate certe ore/minuti salvate in minuti canonici  
+✔ type classification base attiva  
+✔ select1 allineato a ui_state.parsed.unit  
+✔ events.type valorizzato in insert/update  
+✔ Spesa / Incasso / Tempo / Evento persistiti nel DB   
 ✔ preview visualmente allineata a ui_state.parsed  
 ✔ amount/unit/date mostrati in formato leggibile italiano  
 ✔ update visibile in lista senza refresh pagina    
@@ -180,6 +191,13 @@ alimenta preview
 alimenta insert/update
 conserva feedback post-save
 
+Nota:
+
+ui_state.parsed alimenta amount/unit/event_date.
+
+Il type non è contenuto in ui_state.parsed.
+Il type viene alimentato da select1.value.
+
 Regola critica:
 
 ui_state.parsed deve restare sempre strutturato.
@@ -254,6 +272,15 @@ update_event
 Non più duplicato in:
 
 button_input_confirm
+
+Nota Type Classification Base:
+
+parse_input_controlled non classifica direttamente Spesa/Incasso/Eventi.
+
+Tuttavia il suo output unit viene usato da select1:
+
+parsed.unit = "minuti"
+→ select1 = Tempo
 
 6.1 SUCCESS HANDLER parse_input_controlled
 
@@ -537,9 +564,11 @@ parole numeriche tipo “due ore”
 forme colloquiali tipo “un paio d’ore”
 2h e mezza
 date relative
-type classification semantica
-spesa/incasso
-parole chiave economiche
+type classification avanzata
+spesa/incasso avanzati
+amount firmato
+direction field
+parole chiave economiche estese
 retro-normalizzazione storico
 
 MATCHING
@@ -602,52 +631,339 @@ gerarchia entity
 ranking affidabile unico
 matching engine centralizzato
 
-TYPE DETECTION
+------------------------------------------------
+TYPE CLASSIFICATION BASE
+------------------------------------------------
 
 Componente:
 
 select1
 
-Logica attuale:
-
-Tempo → presenza unità tempo
-Economico → presenza euro
-Evento → default
-
-Nota post Duration Normalization:
-
-il parser ora salva le durate certe come:
-
-unit = minuti
-
-La type detection non è ancora pienamente allineata alla nuova normalizzazione.
-
-Esempio osservato:
-
-2h30 rendering
-
-parsed:
-amount 150
-unit minuti
-
-ma select1 può restare su Evento.
-
 Stato:
 
-fuori scope nel nodo Duration Normalization.
-Da trattare in STEP 6.3 — TYPE CLASSIFICATION BASE.
+✔ implementata
+
+Ruolo:
+
+classificare l’evento in modo minimo, prudente e correggibile dall’utente.
+
+Valori reali disponibili:
+
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+------------------------------------------------
+LOGICA ATTUALE
+------------------------------------------------
+
+Fonte primaria per Tempo:
+
+ui_state.parsed.unit
+
+Regola:
+
+parsed.unit = "minuti"
+→ Tempo
+
+Motivo:
+
+dopo Duration Normalization tutte le durate certe ore/minuti vengono salvate come:
+
+amount = totale minuti
+unit = minuti
+
+Esempi:
+
+2h30 rendering
+→ parsed.amount = 150
+→ parsed.unit = minuti
+→ select1 = Tempo
+
+1 ora lavoro
+→ parsed.amount = 60
+→ parsed.unit = minuti
+→ select1 = Tempo
+
+18min test
+→ parsed.amount = 18
+→ parsed.unit = minuti
+→ select1 = Tempo
+
+---
+
+SPESA:
+
+Regola:
+
+euro + keyword controllate di uscita
+→ Spesa
+
+Keyword base:
+
+- spesa
+- acquisto
+- acquistato
+- comprato
+- pagato
+- pagamento
+- costo
+- costi
+- uscita
+- acconto dato
+- acconto versato
+- saldo pagato
+- saldo versato
+
+Esempi:
+
+20 euro spesa materiale
+→ select1 = Spesa
+
+20 euro acquisto materiale
+→ select1 = Spesa
+
+20 euro pagato materiale
+→ select1 = Spesa
+
+20 euro acconto dato
+→ select1 = Spesa
+
+---
+
+INCASSO:
+
+Regola:
+
+euro + keyword controllate di entrata
+→ Incasso
+
+Keyword base:
+
+- incasso
+- incassato
+- entrata
+- vendita
+- venduto
+- pagamento ricevuto
+- acconto ricevuto
+- saldo ricevuto
+
+Esempi:
+
+20 euro incasso cliente
+→ select1 = Incasso
+
+20 euro vendita cucciolo
+→ select1 = Incasso
+
+20 euro acconto ricevuto
+→ select1 = Incasso
+
+20 euro pagamento ricevuto
+→ select1 = Incasso
+
+---
+
+EVENTO / FALLBACK PRUDENTE:
+
+Regola:
+
+euro senza direzione chiara
+→ Evento
+
+segnali economici contrastanti
+→ Evento
+
+nessuna unit significativa
+→ Evento
+
+Esempi:
+
+20 euro materiale
+→ select1 = Evento
+
+20 euro acconto
+→ select1 = Evento
+
+20 euro spesa incasso
+→ select1 = Evento
+
+materiale ricevuto 20 euro
+→ select1 = Evento
+
+saldo 20 euro
+→ select1 = Evento
+
+villa 2 mario
+→ select1 = Evento
+
+2 giorni rendering
+→ select1 = Evento
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ select1 = Evento
 
 Nota:
 
-evitato fallback aggressivo su "h"
-evitati falsi positivi tipo "macchina"
+"benzina" non viene classificata automaticamente come Spesa.
+È una parola di dominio, non una direzione contabile esplicita.
 
-Limiti:
+------------------------------------------------
+CODICE RUNTIME select1 — DEFAULT VALUE
+------------------------------------------------
 
-⚠ nessuna distinzione spesa/incasso
-⚠ type non è ancora affidabile per KPI/output
-⚠ non esiste type classification engine
-⚠ parole chiave non implementate
+{{
+(() => {
+  const text = (input_raw.value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const parsed = ui_state.value?.parsed || {};
+  const parsedUnit = String(parsed.unit || "").toLowerCase();
+
+  if (parsedUnit === "minuti") {
+    return "Tempo";
+  }
+
+  const hasEuro =
+    parsedUnit === "euro" ||
+    /€|\beuro\b|\beur\b/.test(text);
+
+  const isIncasso =
+    /\bincasso\b/.test(text) ||
+    /\bincassato\b/.test(text) ||
+    /\bentrata\b/.test(text) ||
+    /\bvendita\b/.test(text) ||
+    /\bvenduto\b/.test(text) ||
+    /\bpagamento ricevuto\b/.test(text) ||
+    /\bacconto ricevuto\b/.test(text) ||
+    /\bsaldo ricevuto\b/.test(text);
+
+  const isSpesa =
+    /\bspesa\b/.test(text) ||
+    /\bacquisto\b/.test(text) ||
+    /\bacquistato\b/.test(text) ||
+    /\bcomprato\b/.test(text) ||
+    /\bpagato\b/.test(text) ||
+    /\bpagamento\b/.test(text) ||
+    /\bcosto\b/.test(text) ||
+    /\bcosti\b/.test(text) ||
+    /\buscita\b/.test(text) ||
+    /\bacconto dato\b/.test(text) ||
+    /\bacconto versato\b/.test(text) ||
+    /\bsaldo pagato\b/.test(text) ||
+    /\bsaldo versato\b/.test(text);
+
+  if (isIncasso && isSpesa) {
+    return "Evento";
+  }
+
+  if (isIncasso) {
+    return "Incasso";
+  }
+
+  if (isSpesa) {
+    return "Spesa";
+  }
+
+  if (hasEuro) {
+    return "Evento";
+  }
+
+  return "Evento";
+})()
+}}
+
+------------------------------------------------
+CONTROLLO UTENTE
+------------------------------------------------
+
+La classificazione automatica è base.
+
+L’utente può sempre modificare manualmente select1.
+
+La scelta manuale prevale sul default automatico
+e viene salvata in events.type.
+
+Validato:
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Spesa
+→ DB: type Spesa
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Incasso
+→ DB: type Incasso
+
+------------------------------------------------
+PERSISTENZA TYPE
+------------------------------------------------
+
+Catena runtime:
+
+select1.value
+→ payload.type
+→ insert_event / update_event
+→ events.type
+
+Insert:
+
+✔ salva type
+
+Update:
+
+✔ aggiorna type
+
+Esempi DB validati:
+
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+
+------------------------------------------------
+LIMITI TYPE
+------------------------------------------------
+
+Non implementato:
+
+- classificazione economica avanzata
+- dizionario esteso keyword
+- parole di dominio automatiche
+- amount firmato
+- direction field
+- report/KPI
+- retro-normalizzazione eventi storici
+
+Nota:
+
+type è ora persistito come classificazione base,
+ma non abilita ancora automaticamente reportistica o KPI.
 
 PREVIEW / SINTESI
 
@@ -661,6 +977,12 @@ project_state
 entity_state
 select1
 liste projects/entities
+
+Nota:
+
+select1 alimenta il type visuale e il payload di salvataggio.
+La preview può mostrare/supportare il type,
+ma non salva direttamente il dato.
 
 MAIN:
 
@@ -748,6 +1070,23 @@ Esempi:
 2h30 rendering
 → 2 ore 30 minuti • rendering
 → Normalizzato: 150 minuti
+
+TYPE CLASSIFICATION BASE — ESEMPI:
+
+2h30 rendering
+→ preview: 2 ore 30 minuti • rendering
+→ select1: Tempo
+→ DB: type Tempo, amount 150, unit minuti
+
+20 euro materiale
+→ preview: 20,00 € • materiale
+→ select1: Evento
+→ scelta manuale richiesta se è Spesa o Incasso
+
+20 euro spesa materiale
+→ preview: 20,00 € • spesa materiale
+→ select1: Spesa
+→ DB: type Spesa, amount 20, unit euro
 
 REGOLA CRITICA:
 
@@ -932,6 +1271,7 @@ Payload:
 
 const payload = {
   raw_input: input_raw.value,
+  type: select1.value || "Evento",
   amount: parsed.amount,
   unit: parsed.unit,
   event_date: parsed.event_date,
@@ -950,6 +1290,7 @@ Conferma disabilitata se:
 
 entity_state.data?.matches > 1
 project_state.data?.matches > 1
+
 11.1 BUTTON_INPUT_CONFIRM — CODICE LOGICO
 // --- INSERT / UPDATE SWITCH ---
 const parsed = ui_state.value?.parsed || {
@@ -960,6 +1301,7 @@ const parsed = ui_state.value?.parsed || {
 
 const payload = {
   raw_input: input_raw.value,
+  type: select1.value || "Evento",
   amount: parsed.amount,
   unit: parsed.unit,
   event_date: parsed.event_date,
@@ -1012,6 +1354,7 @@ Risultati:
 
 ✔ parsing legacy rimosso
 ✔ save flow pulito
+✔ type salvato tramite select1.value
 ✔ feedback immediato
 ✔ update lista corretto
 ✔ nessuna divergenza save/DB osservata
@@ -1029,6 +1372,7 @@ REST Query Supabase
 Payload:
 
 raw_input
+type
 amount
 unit
 event_date
@@ -1042,6 +1386,7 @@ Body:
 
 JSON.stringify({
   raw_input: raw_input,
+  type: type,
   amount: amount,
   unit: unit,
   event_date: event_date,
@@ -1056,12 +1401,38 @@ Origine valori:
 
 additionalScope da button_input_confirm.
 
-Validazione:
+Validazioni:
 
-1.500,50 euro test engine
-→ amount 1500.5
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+→ status NEW
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
 → unit euro
 → status NEW
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+→ status NEW
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+→ status NEW
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+→ status NEW
+
 UPDATE_EVENT
 
 Trigger:
@@ -1081,6 +1452,7 @@ status invariato
 Campi aggiornati:
 
 raw_input
+type
 amount
 unit
 event_date
@@ -1104,6 +1476,24 @@ Validazione:
 → unit minuti
 → status NEW
 
+Validazione Type Classification Base:
+
+Evento precedente senza type valorizzato,
+modificato in:
+
+1 ora e 45 minuti lavoro
+
+DB:
+
+type Tempo
+amount 105
+unit minuti
+raw_input aggiornato
+status NEW
+updated_at aggiornato
+
+Esito: OK
+
 RESET & FEEDBACK
 
 Sequenza attuale:
@@ -1116,6 +1506,8 @@ reset input_home
 reset input_raw
 clear select_project
 clear select_entity
+select1 non richiede reset manuale dedicato:
+reset/stale value validato runtime
 cancel debounce pending
 insert/update async
 await savePromise
@@ -1181,6 +1573,20 @@ project_state
 entity_state
 focus_input_home
 
+COMPONENTI UI RILEVANTI:
+
+select1
+select_project
+select_entity
+
+Nota:
+
+select1 è un componente UI Select di Retool,
+non una query.
+Il suo Default value contiene la logica Type Classification Base.
+Il valore runtime select1.value viene letto da button_input_confirm
+e salvato come payload.type.
+
 INPUT / PARSING:
 
 trigger_parse_debounced
@@ -1209,9 +1615,14 @@ parsing
 normalizzazione
 matching
 validazione business
-type classification
+type classification autonoma
 deduplicazione
 KPI
+
+Nota:
+
+Supabase riceve events.type già determinato lato Retool.
+Il DB non decide e non corregge il type.
 
 LIMITI ATTUALI
 
@@ -1243,9 +1654,16 @@ no priority match
 
 TYPE:
 
-nessuna distinzione spesa/incasso
-type non affidabile per output
-parole chiave non implementate
+type classification base implementata
+Evento / Tempo / Spesa / Incasso persistiti in events.type
+Spesa / Incasso riconosciuti tramite keyword controllate o scelta manuale
+euro senza direzione chiara resta Evento
+amount firmato non implementato
+direction field non implementato
+classificazione economica avanzata non implementata
+parole di dominio non usate come classificazione automatica
+type non ancora sufficiente da solo per KPI avanzati
+eventi storici non retro-normalizzati
 
 UI / PREVIEW:
 
@@ -1261,6 +1679,7 @@ ARCHITETTURA:
 accoppiamento preview / label / hint
 matching distribuito
 hint non completamente state-driven
+
 PRINCIPI RUNTIME
 
 ✔ client-side logic
@@ -1269,7 +1688,8 @@ PRINCIPI RUNTIME
 ✔ editing solo su NEW
 ✔ suggerire ≠ decidere
 ✔ input non bloccante
-✔ salvataggio da ui_state.parsed
+✔ salvataggio amount/unit/event_date da ui_state.parsed
+✔ salvataggio type da select1.value
 ✔ normalizzazione progressiva
 ✔ nessuna automazione decisionale
 
@@ -1284,6 +1704,9 @@ Runtime attuale:
 ✔ parser controllato attivo
 ✔ preview alignment base completato
 ✔ duration normalization base completata
+✔ type classification base completata
+✔ select1 allineato a ui_state.parsed.unit
+✔ type persistito in events.type
 ✔ amount/unit/date visualizzati coerentemente
 ✔ durate certe ore/minuti salvate in minuti
 ✔ preview durata in forma umana
@@ -1295,7 +1718,8 @@ Runtime attuale:
 Debiti:
 
 ⚠ giorni/settimane durata non convertiti automaticamente
-⚠ type classification da definire
+⚠ type classification avanzata da definire
+⚠ economic direction advanced non implementata
 ⚠ matching unification da fare
 ⚠ preview ancora non view pura
 ⚠ output non attivo
@@ -1570,6 +1994,146 @@ villa 2 test duration
 6/4/26 inseminazione alfie
 → event_date 2026-04-06
 
+------------------------------------------------
+TYPE CLASSIFICATION BASE — TEST VALIDATI
+------------------------------------------------
+
+ANTEPRIMA:
+
+2h30 rendering
+→ select1 Tempo
+→ preview durata coerente
+
+1 ora lavoro
+→ select1 Tempo
+
+18min test
+→ select1 Tempo
+
+20 euro spesa materiale
+→ select1 Spesa
+
+20 euro acquisto materiale
+→ select1 Spesa
+
+20 euro pagato materiale
+→ select1 Spesa
+
+20 euro incasso cliente
+→ select1 Incasso
+
+20 euro vendita cucciolo
+→ select1 Incasso
+
+20 euro acconto ricevuto
+→ select1 Incasso
+
+20 euro acconto dato
+→ select1 Spesa
+
+20 euro acconto
+→ select1 Evento
+
+20 euro materiale
+→ select1 Evento
+
+20 euro spesa incasso
+→ select1 Evento
+
+villa 2 mario
+→ select1 Evento
+
+2 giorni rendering
+→ select1 Evento
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ select1 Evento
+
+---
+
+INSERT DB:
+
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+
+---
+
+UPDATE DB:
+
+1 ora e 45 minuti lavoro
+→ type Tempo
+→ amount 105
+→ unit minuti
+→ raw_input aggiornato
+→ updated_at aggiornato
+
+---
+
+OVERRIDE MANUALE:
+
+20 euro materiale + select1 manuale Spesa
+→ DB type Spesa
+
+20 euro materiale + select1 manuale Incasso
+→ DB type Incasso
+
+---
+
+RESET / STALE VALUE:
+
+Sequenza:
+
+20 euro materiale
+→ select1 manuale Spesa
+→ conferma
+→ nuovo input villa 2 mario
+→ select1 Evento
+
+Esito:
+
+OK
+
+Nessuna modifica necessaria al reset select1.
+
+---
+
+ANOMALIE RESIDUE:
+
+Linting Retool non bloccante:
+
+- edit_mode: 'value' is not defined
+- editing_event: 'value' is not defined
+
+Stato:
+
+non bloccante per insert/update/type classification.
+
+Azione futura:
+
+micro-nodo LINTING / STATE HELPER CLEANUP.
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -1665,3 +2229,27 @@ nessuna modifica insert_event/update_event
 nessuna modifica matching
 nessuna type classification
 prossimo nodo operativo consigliato: STEP 6.3 — TYPE CLASSIFICATION BASE
+
+v08 — 2026-05-01
+
+completamento ENGINE BASE — TYPE CLASSIFICATION BASE
+select1 allineato a ui_state.parsed.unit
+parsed.unit = minuti → Tempo
+euro + keyword controllate di uscita → Spesa
+euro + keyword controllate di entrata → Incasso
+euro senza direzione chiara → Evento
+segnali economici contrastanti → Evento
+scelta manuale utente preservata
+type aggiunto al payload di button_input_confirm
+insert_event salva events.type
+update_event aggiorna events.type
+override manuale validato su Spesa / Incasso
+reset/stale value verificato
+type persistito in DB
+nessuna modifica schema DB
+nessuna modifica parser
+nessuna modifica matching
+nessun refactor preview
+nessun output/KPI anticipato
+linting Retool residuo registrato come anomalia non bloccante
+aggiornamento prossimo nodo consigliato: STEP 6.4 — MATCH ENGINE UNIFICATION

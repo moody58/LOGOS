@@ -1,6 +1,6 @@
-# 05_LOGOS_Database_Schema_v05
+# 05_LOGOS_Database_Schema_v06
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -12,21 +12,26 @@ C (Completezza): 10/10
 - comportamento runtime incluso  
 - update flow documentato  
 - normalization base lato frontend integrata  
-- duration normalization lato frontend integrata   
+- duration normalization lato frontend integrata  
+- type classification base lato frontend integrata  
+- utilizzo reale di events.type documentato   
 
-Q (Qualità): 9/10  
+Q (Qualità): 9.5/10  
 - struttura corretta  
 - schema invariato esplicitato  
 - append-only controllato documentato  
-- distinzione chiara tra DB passivo e normalizzazione frontend  
+- distinzione chiara tra DB passivo e logica frontend  
 - chiarito che le durate certe vengono salvate in minuti canonici  
-- limiti versioning / type / relazioni esplicitati  
+- chiarito che type viene deciso lato Retool e salvato nel DB  
+- chiarito che il DB non decide type  
+- limiti versioning / relazioni / output esplicitati  
 
 D (Deployabilità): 10/10  
 - documento utilizzabile come riferimento AS-IS  
 - coerente con Supabase runtime  
 - non introduce modifiche schema non implementate  
-- conferma schema invariato dopo Duration Normalization   
+- conferma schema invariato dopo Duration Normalization  
+- conferma schema invariato dopo Type Classification Base   
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -44,6 +49,7 @@ Il documento descrive:
 - rapporto tra schema DB e runtime Retool
 - stato dei dati dopo Normalization Layer Base
 - stato dei dati dopo Duration Normalization Base
+- stato dei dati dopo Type Classification Base
 
 ------------------------------------------------
 PRINCIPIO ARCHITETTURALE
@@ -59,7 +65,7 @@ NON contiene:
 - parsing
 - matching
 - normalizzazione
-- classificazione tipo evento
+- classificazione autonoma tipo evento
 
 ---
 
@@ -83,6 +89,7 @@ Supabase riceve già:
 - unit testuale normalizzata
 - raw_input preservato
 - durate certe ore/minuti normalizzate in minuti
+- type determinato lato Retool
 
 Nota Duration Normalization:
 
@@ -93,6 +100,25 @@ NON converte ore/minuti,
 NON interpreta giorni/settimane.
 
 Riceve solo il payload già normalizzato dal frontend.
+
+Nota Type Classification Base:
+
+La classificazione type avviene lato Retool.
+
+Il database NON decide type,
+NON corregge type,
+NON distingue autonomamente Spesa/Incasso/Tempo/Evento.
+
+Riceve solo il valore già determinato dal frontend tramite:
+
+select1.value
+→ payload.type
+→ events.type
+
+Nota terminologica:
+
+select1 è un componente UI Select di Retool,
+non una query.
 
 ------------------------------------------------
 MODELLO DATI
@@ -145,7 +171,7 @@ project_id (uuid, opzionale)
 
 entity_id (uuid, opzionale)
 
-type (text, NON utilizzato attivamente)
+type (text, utilizzato per Type Classification Base)
 
 amount (numeric)
 
@@ -175,7 +201,11 @@ UTILIZZO REALE:
 ✔ unit valorizzata da ui_state.parsed  
 ✔ unit normalizzata lato frontend quando riconosciuta
 ✔ durate certe salvate con unit = minuti  
-✔ amount tempo salvato come totale minuti    
+✔ amount tempo salvato come totale minuti 
+✔ type valorizzato da payload.type  
+✔ type derivato da select1.value lato Retool  
+✔ valori type attuali: Evento, Tempo, Spesa, Incasso  
+✔ type aggiornabile tramite update_event su eventi NEW     
 ✔ event_date valorizzata quando parsata  
 ✔ project_id opzionale  
 ✔ entity_id opzionale  
@@ -186,7 +216,7 @@ UTILIZZO REALE:
 
 ---
 
-NORMALIZATION BASE + DURATION NORMALIZATION — IMPATTO SU events:
+NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE — IMPATTO SU events:
 
 La tabella non è stata modificata.
 
@@ -196,55 +226,86 @@ La qualità del dato è migliorata perché il frontend ora invia:
 - unit coerente
 - numeri senza unità non convertiti in amount
 - durate certe ore/minuti convertite in minuti
+- type base valorizzato
 - raw_input preservato
 
 Esempi:
 
 1.500,50 euro
+→ type: Evento
 → amount: 1500.5
 → unit: euro
 
 1ora lavoro
+→ type: Tempo
 → amount: 60
 → unit: minuti
 
 1 ora e 15 minuti sopralluogo
+→ type: Tempo
 → amount: 75
 → unit: minuti
 
 2h30 rendering
+→ type: Tempo
 → amount: 150
 → unit: minuti
 
 2 ore 30 rendering
+→ type: Tempo
 → amount: 150
 → unit: minuti
 
 1,5 ore sopralluogo
+→ type: Tempo
 → amount: 90
 → unit: minuti
 
 18min test
+→ type: Tempo
 → amount: 18
 → unit: minuti
 
+20 euro spesa materiale
+→ type: Spesa
+→ amount: 20
+→ unit: euro
+
+20 euro incasso cliente
+→ type: Incasso
+→ amount: 20
+→ unit: euro
+
+20 euro materiale
+→ type: Evento
+→ amount: 20
+→ unit: euro
+
 2 giorni rendering
+→ type: Evento
 → amount: null
 → unit: null
 → raw_input preservato
 
 villa 2 mario
+→ type: Evento
 → amount: null
 → unit: null
 
 CAMPI NON UTILIZZATI O NON CONSOLIDATI:
 
-type
 reference_id
 source
 payment_method
 notes
 payload
+
+CAMPI ORA UTILIZZATI A LIVELLO BASE:
+
+type
+→ utilizzato per Type Classification Base
+→ valori attuali: Evento, Tempo, Spesa, Incasso
+→ non ancora sufficiente da solo per KPI avanzati
 
 COMPORTAMENTO:
 
@@ -358,6 +419,7 @@ input
 → parsing controlled
 → normalization base
 → duration normalization
+→ type classification base
 → matching
 → preview
 → insert_event
@@ -370,10 +432,12 @@ evento NEW
 → parsing controlled
 → normalization base
 → duration normalization
+→ type classification base
 → matching
 → preview
 → update_event
 → status invariato NEW
+→ type aggiornato
 → updated_at aggiornato
 
 Il database:
@@ -386,18 +450,21 @@ non decide type
 non decide project/entity
 non mantiene storico revisioni
 
-NORMALIZATION BASE / DURATION NORMALIZATION E DATABASE
+Il database riceve type già determinato lato frontend.
 
-La normalizzazione base e la duration normalization NON hanno modificato lo schema.
+NORMALIZATION BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION E DATABASE
+
+La normalizzazione base, la duration normalization e la type classification base NON hanno modificato lo schema.
 
 Hanno modificato solo la qualità del payload inviato a Supabase.
 
-Normalizzazione lato Retool:
+Normalizzazione / classificazione lato Retool:
 
 amount numeric
 unit text normalizzata
 event_date preservata/parsata
 durate certe ore/minuti convertite in minuti
+type valorizzato a livello base
 raw_input preservato
 
 Regole principali:
@@ -439,6 +506,42 @@ La visualizzazione futura potrà mostrare:
 1.500,50
 
 Questo appartiene al layer preview/output, non allo schema DB.
+
+Type Classification Base:
+
+parsed.unit = minuti → type Tempo
+euro + keyword controllate di uscita → type Spesa
+euro + keyword controllate di entrata → type Incasso
+euro senza direzione chiara → type Evento
+segnali economici contrastanti → type Evento
+nessuna unit significativa → type Evento
+
+Esempi:
+
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
 
 ------------------------------------------------
 DURATION NORMALIZATION E DATABASE
@@ -509,12 +612,150 @@ Motivo:
 
 La conversione automatica non viene eseguita senza nodo dedicato.
 
+------------------------------------------------
+TYPE CLASSIFICATION BASE E DATABASE
+------------------------------------------------
+
+Decisione:
+
+Il type viene salvato usando il campo esistente:
+
+events.type
+
+Non sono stati aggiunti campi dedicati.
+
+Valori attuali:
+
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+Origine runtime:
+
+select1.value lato Retool
+
+Catena:
+
+select1.value
+→ payload.type
+→ insert_event / update_event
+→ events.type
+
+Nota terminologica:
+
+select1 è un componente UI Select di Retool,
+non una query.
+
+------------------------------------------------
+INSERT
+------------------------------------------------
+
+insert_event ora invia:
+
+type: type
+
+Esempi validati:
+
+2h30 rendering
+→ type Tempo
+→ amount 150
+→ unit minuti
+
+20 euro spesa materiale
+→ type Spesa
+→ amount 20
+→ unit euro
+
+20 euro incasso cliente
+→ type Incasso
+→ amount 20
+→ unit euro
+
+20 euro materiale
+→ type Evento
+→ amount 20
+→ unit euro
+
+villa 2 mario
+→ type Evento
+→ amount null
+→ unit null
+
+------------------------------------------------
+UPDATE
+------------------------------------------------
+
+update_event ora aggiorna anche:
+
+type
+
+Esempio validato:
+
+Evento precedente senza type valorizzato,
+modificato in:
+
+1 ora e 45 minuti lavoro
+
+DB dopo update:
+
+type Tempo
+amount 105
+unit minuti
+raw_input aggiornato
+updated_at aggiornato
+status NEW
+
+------------------------------------------------
+CONTROLLO UTENTE
+------------------------------------------------
+
+La classificazione automatica è prudente.
+
+L’utente può modificare manualmente select1.
+
+La scelta manuale viene salvata in events.type.
+
+Esempi validati:
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Spesa
+→ DB type Spesa
+
+20 euro materiale
+→ default Evento
+→ utente seleziona Incasso
+→ DB type Incasso
+
+------------------------------------------------
+LIMITI
+------------------------------------------------
+
+Non implementato:
+
+- classificazione economica avanzata
+- dizionario esteso keyword
+- classificazione automatica da parole di dominio
+- benzina/materiale/mangime → Spesa automatica
+- amount firmato
+- direction field
+- KPI/reportistica
+- retro-normalizzazione eventi storici
+
+Nota:
+
+events.type è ora valorizzato a livello base,
+ma non abilita automaticamente output/KPI.
+
 DATI PARZIALMENTE NORMALIZZATI
 amount/unit base ora normalizzati lato frontend
 duration normalization base implementata lato frontend
 durate certe ore/minuti salvate in minuti
+type classification base implementata lato frontend
+events.type valorizzato per nuovi insert/update
 giorni/settimane non convertiti automaticamente
-type non affidabile
+type non sufficiente da solo per KPI avanzati
 dati storici non retro-normalizzati
 
 RELAZIONI DEBOLI
@@ -527,10 +768,34 @@ nessuna gerarchia
 ambiguità possibile
 duplicati possibili
 
-TYPE NON UTILIZZATO
-non distingue spesa/incasso
-non affidabile per output/KPI
-non gestito da engine
+TYPE UTILIZZATO A LIVELLO BASE
+
+events.type è ora utilizzato per Type Classification Base.
+
+Valori attuali:
+
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+Caratteristiche:
+
+- deciso lato Retool
+- derivato da select1.value
+- salvato in insert_event
+- aggiornato in update_event
+- correggibile manualmente dall’utente
+
+Limiti:
+
+- non è calcolato dal DB
+- non è vincolato da constraint DB
+- non è retro-normalizzato sugli eventi storici
+- non è ancora sufficiente da solo per KPI avanzati
+- non gestisce amount firmato
+- non gestisce direction field
+- non contiene logica contabile avanzata
 
 PAYLOAD INUTILIZZATO
 sempre vuoto
@@ -557,6 +822,7 @@ update_event sovrascrive evento NEW
 DATI STORICI
 eventi inseriti prima del Normalization Layer Base possono avere qualità inferiore
 eventi inseriti prima della Duration Normalization possono avere durate in forma precedente
+eventi inseriti prima della Type Classification Base possono avere type null o non valorizzato
 nessuna retro-normalizzazione automatica implementata
 eventuale bonifica futura richiede nodo dedicato
 
@@ -569,7 +835,10 @@ non introdurre trigger DB per logica applicativa
 non spostare duration normalization in Supabase
 non aggiungere campo duration_minutes senza nodo schema dedicato
 non usare payload.duration senza decisione architetturale dedicata
-non usare type per KPI finché non è affidabile
+non usare type per KPI finché matching/data quality/report readiness non saranno stabilizzati
+non introdurre amount firmato senza nodo dedicato
+non introdurre direction field senza nodo dedicato
+non aggiungere constraint DB su type senza nodo schema dedicato
 
 Motivazione:
 
@@ -584,11 +853,12 @@ Possibili estensioni:
 
 TYPE:
 
-spesa
-incasso
-tempo
-evento
-classificazione controllata
+classificazione economica avanzata
+dizionario esteso keyword
+amount firmato
+direction field
+eventuale vincolo valori type
+eventuale bonifica type storico
 
 ENTITY:
 
@@ -608,7 +878,8 @@ ENGINE SUPPORT:
 tabelle derivate
 normalizzazione avanzata
 duration advanced per giorni/settimane
-type classification
+type classification avanzata
+economic direction advanced
 deduplicazione
 eventuale campo duration_minutes solo con nodo schema dedicato
 eventuale payload.duration solo con nodo architetturale dedicato
@@ -653,9 +924,11 @@ incoerenze possibili se il frontend invia dati errati.
 
 Mitigazione attuale:
 
-ui_state.parsed come fonte unica
+ui_state.parsed come fonte per amount/unit/event_date
+select1.value come fonte per type
 normalization base lato Retool
 duration normalization lato Retool
+type classification base lato Retool
 insert/update validati su casi reali
 raw_input preservato per debug/correzione futura
 
@@ -702,3 +975,24 @@ documentato che non è stato introdotto duration_minutes
 documentato che Supabase resta passivo
 validati insert/update con durate normalizzate
 esplicitati limiti: dati storici non retro-normalizzati, type non affidabile, giorni/settimane non normalizzati
+
+v06 — 2026-05-01
+
+nessuna modifica schema DB
+integrazione Type Classification Base lato frontend
+chiarito utilizzo reale di events.type
+definiti valori attuali type: Evento, Tempo, Spesa, Incasso
+documentato che type deriva da select1.value
+chiarito che select1 è componente UI Retool, non query
+documentata catena select1.value → payload.type → events.type
+documentato insert_event con type
+documentato update_event con type
+documentato che DB non decide type
+documentato che Supabase resta passivo
+documentato amount ancora positivo per Spesa/Incasso
+documentato che non esiste direction field
+documentato che non esiste amount firmato
+validati insert/update con type persistito
+documentato override manuale utente su Spesa/Incasso
+esplicitati limiti: no KPI automatici, no retro-normalizzazione storico, no classificazione economica avanzata
+aggiornamento prossimo nodo consigliato: MATCH ENGINE UNIFICATION

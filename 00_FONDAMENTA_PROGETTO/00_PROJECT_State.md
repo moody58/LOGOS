@@ -1,12 +1,12 @@
-# 00_PROJECT_State_v12
+# 00_PROJECT_State_v13
 
-DATA: 2026-04-30
+DATA: 2026-05-01
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-ENGINE BASE — DURATION NORMALIZATION — COMPLETATO
+ENGINE BASE — TYPE CLASSIFICATION BASE — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -22,7 +22,9 @@ PREVIEW ALIGNMENT BASE (COMPLETATO)
 
 STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)
 
-TRANSIZIONE → STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
+STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
+
+TRANSIZIONE → STEP 6.4 — MATCH ENGINE UNIFICATION
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -36,14 +38,18 @@ C (Completezza): 10/10
 - insert/update flow aggiornato  
 - preview alignment documentato  
 - duration normalization documentata  
-- limiti type/matching/output esplicitati    
+- type classification base documentata  
+- type persistito in events.type documentato  
+- limiti matching/output esplicitati    
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
-- distinzione chiara parsing / matching / label / normalization / preview  
+- distinzione chiara parsing / matching / label / normalization / preview / type  
 - UX migliorata senza regressioni  
 - sintesi allineata ai dati normalizzati  
 - durate certe rese confrontabili tramite minuti canonici  
+- type classification base prudente e controllata  
+- controllo manuale utente preservato  
 - debiti residui esplicitati  
 
 D (Deployabilità): 10/10  
@@ -52,7 +58,8 @@ D (Deployabilità): 10/10
 - nessuna dipendenza mancante  
 - codice runtime principale documentato nei checkpoint  
 - nodo Preview Alignment Base completato e validato runtime  
-- nodo Duration Normalization completato e validato runtime       
+- nodo Duration Normalization completato e validato runtime  
+- nodo Type Classification Base completato e validato runtime             
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -93,26 +100,32 @@ INPUT
 ✔ preview allineata visivamente a ui_state.parsed  
 ✔ insert/update verificati su DB reale  
 ✔ refresh lista eventi corretto dopo save/update  
+✔ type classification base implementata  
+✔ select1 allineato a ui_state.parsed  
+✔ type salvato in events.type  
+✔ Spesa / Incasso / Tempo / Evento persistiti in DB  
+✔ override manuale utente validato  
 
 ⚠ accoppiamento input / processing / UI ancora presente  
 ⚠ preview ancora layer ibrido, non view pura  
 ⚠ matching non unificato  
 ⚠ hint non completamente state-driven  
-⚠ type classification ancora limitata  
+⚠ type classification base completata ma non ancora sufficiente per KPI avanzati    
 ⚠ giorni/settimane non convertiti automaticamente     
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su sei layer fondamentali:
+Il sistema è stabilizzato su sette layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
 3. LABEL QUALITY  
 4. ENGINE BASE — NORMALIZATION LAYER BASE  
 5. PREVIEW ALIGNMENT BASE  
-6. ENGINE BASE — DURATION NORMALIZATION      
+6. ENGINE BASE — DURATION NORMALIZATION  
+7. ENGINE BASE — TYPE CLASSIFICATION BASE           
 
 ---
 
@@ -132,7 +145,15 @@ RISULTATO:
 ✔ 2 ore 30 supportato  
 ✔ 1,5 ore convertito in minuti  
 ✔ preview durata mostra forma umana + valore normalizzato  
-✔ giorni/settimane segnalati come durata ambigua   
+✔ giorni/settimane segnalati come durata ambigua 
+✔ select1 usa ui_state.parsed.unit come fonte primaria per il tempo  
+✔ parsed.unit = "minuti" imposta Tempo  
+✔ parsed.unit = "euro" con keyword controllate distingue Spesa / Incasso  
+✔ euro senza direzione chiara resta Evento  
+✔ scelta manuale utente preservata  
+✔ type inserito nel payload di salvataggio  
+✔ insert_event salva events.type  
+✔ update_event aggiorna events.type    
 
 ⚠ matching basato su stringhe (no fuzzy)  
 ⚠ hint limitati a logica base  
@@ -189,6 +210,27 @@ RISULTATO:
 - nessuna modifica save flow
 - nessuna modifica matching
 - nessuna type classification
+
+✔ completamento ENGINE BASE — TYPE CLASSIFICATION BASE
+
+- select1 allineato a ui_state.parsed
+- parsed.unit = "minuti" → Tempo
+- euro + keyword controllate di uscita → Spesa
+- euro + keyword controllate di entrata → Incasso
+- euro senza direzione chiara → Evento
+- segnali economici contrastanti → Evento
+- scelta manuale utente preservata
+- type aggiunto al payload di button_input_confirm
+- type salvato da insert_event
+- type aggiornato da update_event
+- events.type ora valorizzato nel DB
+- override manuale validato su Spesa / Incasso
+- reset/stale value verificato
+- nessuna modifica schema DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessun refactor preview
+- nessun output/KPI anticipato
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO — INPUT FLOW
@@ -532,6 +574,271 @@ AMBITO NON IMPLEMENTATO:
 ✘ preview come view pura completa  
 
 ------------------------------------------------
+TYPE CLASSIFICATION — BASE
+------------------------------------------------
+
+È stato completato il nodo:
+
+ENGINE BASE — TYPE CLASSIFICATION BASE
+
+Obiettivo:
+
+- distinguere in modo controllato Evento / Tempo / Spesa / Incasso
+- allineare select1 alla nuova Duration Normalization
+- usare ui_state.parsed.unit come segnale primario
+- rendere persistente il type nel DB
+- mantenere controllo manuale utente
+- evitare classificazioni economiche aggressive
+
+---
+
+AMBITO IMPLEMENTATO:
+
+✔ select1 allineato a ui_state.parsed.unit  
+✔ parsed.unit = "minuti" → Tempo  
+✔ euro + keyword controllate di uscita → Spesa  
+✔ euro + keyword controllate di entrata → Incasso  
+✔ euro senza direzione chiara → Evento  
+✔ segnali contrastanti → Evento  
+✔ type aggiunto al payload di button_input_confirm  
+✔ insert_event salva events.type  
+✔ update_event aggiorna events.type  
+✔ override manuale utente validato  
+✔ reset/stale value verificato  
+✔ DB schema invariato  
+✔ parser invariato  
+✔ matching invariato  
+✔ preview globale invariata  
+
+---
+
+VALORI TYPE ATTUALI:
+
+- Evento
+- Tempo
+- Spesa
+- Incasso
+
+---
+
+REGOLE CONSOLIDATE:
+
+Tempo:
+
+parsed.unit = "minuti"
+→ select1 = Tempo
+
+Esempi:
+
+2h30 rendering  
+→ type Tempo  
+→ amount 150  
+→ unit minuti  
+
+1 ora e 45 minuti lavoro  
+→ type Tempo  
+→ amount 105  
+→ unit minuti  
+
+---
+
+Spesa:
+
+euro + keyword controllate di uscita
+
+Esempi:
+
+20 euro spesa materiale  
+→ type Spesa  
+
+20 euro acquisto materiale  
+→ type Spesa  
+
+20 euro pagato materiale  
+→ type Spesa  
+
+20 euro acconto dato  
+→ type Spesa  
+
+20 euro saldo pagato  
+→ type Spesa  
+
+---
+
+Incasso:
+
+euro + keyword controllate di entrata
+
+Esempi:
+
+20 euro incasso cliente  
+→ type Incasso  
+
+20 euro vendita cucciolo  
+→ type Incasso  
+
+20 euro acconto ricevuto  
+→ type Incasso  
+
+20 euro pagamento ricevuto  
+→ type Incasso  
+
+---
+
+Evento / fallback prudente:
+
+euro senza direzione chiara
+→ Evento
+
+segnali economici contrastanti
+→ Evento
+
+nessuna unit significativa
+→ Evento
+
+Esempi:
+
+20 euro materiale  
+→ type Evento  
+
+20 euro acconto  
+→ type Evento  
+
+20 euro spesa incasso  
+→ type Evento  
+
+villa 2 mario  
+→ type Evento  
+
+2 giorni rendering  
+→ type Evento  
+
+4 aprile benzina 50 euro alfie allevamento aspri  
+→ type Evento  
+
+---
+
+REGOLA CRITICA:
+
+La classificazione automatica è prudente.
+
+Il sistema suggerisce una classificazione base,
+ma l’utente può sempre modificare select1 manualmente.
+
+La scelta manuale viene salvata in events.type.
+
+---
+
+TEST VALIDATI:
+
+2h30 rendering  
+→ type Tempo  
+→ amount 150  
+→ unit minuti  
+
+20 euro spesa materiale  
+→ type Spesa  
+→ amount 20  
+→ unit euro  
+
+20 euro incasso cliente  
+→ type Incasso  
+→ amount 20  
+→ unit euro  
+
+20 euro materiale  
+→ type Evento  
+→ amount 20  
+→ unit euro  
+
+villa 2 mario  
+→ type Evento  
+→ amount null  
+→ unit null  
+
+Update evento precedente:
+
+1 ora e 45 minuti lavoro  
+→ type Tempo  
+→ amount 105  
+→ unit minuti  
+→ updated_at aggiornato  
+
+Override manuale:
+
+20 euro materiale + select1 manuale Spesa  
+→ type Spesa  
+
+20 euro materiale + select1 manuale Incasso  
+→ type Incasso  
+
+---
+
+AMBITO NON IMPLEMENTATO:
+
+✘ classificazione economica avanzata  
+✘ dizionario esteso keyword  
+✘ classificazione automatica da parole di dominio  
+✘ benzina/materiale/mangime → Spesa automatica  
+✘ valori negativi automatici per Spesa  
+✘ valori positivi automatici per Incasso  
+✘ amount firmato  
+✘ direction field  
+✘ KPI / dashboard / reportistica  
+✘ retro-normalizzazione eventi storici  
+✘ bonifica type eventi precedenti  
+✘ match engine unification  
+
+---
+
+ANOMALIE RESIDUE:
+
+1. Linting Retool non bloccante:
+
+- edit_mode: 'value' is not defined
+- editing_event: 'value' is not defined
+
+Stato:
+
+non bloccante, fuori scope.
+
+Azione futura:
+
+micro-nodo LINTING / STATE HELPER CLEANUP.
+
+---
+
+2. Matching non unificato:
+
+restano logiche separate:
+
+- input_raw / ranking
+- select_project / select_entity deterministico
+- preview / detected locale
+
+Stato:
+
+fuori scope.
+
+Azione futura:
+
+STEP 6.4 — MATCH ENGINE UNIFICATION.
+
+---
+
+3. Eventi storici senza type:
+
+eventi creati prima della patch possono avere type null.
+
+Stato:
+
+fuori scope.
+
+Azione futura:
+
+eventuale bonifica solo con nodo dedicato.
+
+------------------------------------------------
 AGGIORNAMENTO UX
 ------------------------------------------------
 
@@ -588,6 +895,21 @@ NORMALIZATION BASE
 - non modifica raw_input
 - non modifica DB schema
 - non converte automaticamente giorni/settimane
+
+---
+
+TYPE CLASSIFICATION BASE
+
+- select1
+- usa ui_state.parsed.unit come segnale primario
+- classifica Tempo se unit = minuti
+- classifica Spesa / Incasso tramite keyword controllate
+- mantiene Evento come default prudente
+- mantiene scelta manuale utente
+- type salvato in events.type
+- non modifica parser
+- non modifica matching
+- non modifica schema DB
 
 ---
 
@@ -1047,6 +1369,7 @@ insert_event attivo
 Scrittura:
 
 - raw_input
+- type
 - amount
 - unit
 - event_date
@@ -1058,6 +1381,7 @@ Scrittura:
 
 ✔ amount coerente con ui_state.parsed
 ✔ unit coerente con ui_state.parsed
+✔ type coerente con select1.value
 ✔ raw_input sempre valorizzato
 ✔ dati salvati correttamente
 ✔ nessun blocco runtime attuale
@@ -1081,6 +1405,7 @@ update_event attivo
 Scrittura:
 
 - raw_input
+- type
 - amount
 - unit
 - project_id
@@ -1092,6 +1417,7 @@ Scrittura:
 ✔ riuso pipeline input
 ✔ update consentito solo su eventi NEW
 ✔ update usa ui_state.parsed
+✔ update aggiorna events.type
 ✔ DB aggiornato correttamente
 ✔ lista eventi aggiornata subito dopo save
 
@@ -1128,7 +1454,7 @@ CARATTERISTICHE:
 LIMITI:
 
 - entity senza gerarchia
-- type non utilizzato
+- type utilizzato per classificazione base Evento / Tempo / Spesa / Incasso
 - dati storici non normalizzati retroattivamente
 - nessun versioning modifiche
 - payload non utilizzato
@@ -1244,7 +1570,16 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ 1,5 ore convertito in 90 minuti  
 ✔ preview durata in forma umana  
 ✔ hint normalizzazione durata  
-✔ hint durata ambigua per giorni/settimane    
+✔ hint durata ambigua per giorni/settimane 
+✔ type classification base completata  
+✔ select1 allineato a ui_state.parsed  
+✔ parsed.unit = minuti → Tempo  
+✔ euro + keyword controllate → Spesa / Incasso  
+✔ euro senza direzione chiara → Evento  
+✔ type salvato in events.type  
+✔ update_event aggiorna type  
+✔ override manuale utente validato  
+✔ reset/stale value type verificato     
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -1273,9 +1608,13 @@ NORMALIZATION
 
 TYPE
 
-- spesa/incasso
-- classificazione da parole chiave
-- classificazione economico/tempo/evento consolidata
+- classificazione economica avanzata
+- dizionario esteso keyword
+- classificazione automatica da parole di dominio
+- amount firmato per Spesa/Incasso
+- direction field
+- retro-normalizzazione type eventi storici
+- uso type per KPI avanzati
 
 ---
 
@@ -1331,10 +1670,15 @@ PROBLEMI REALI IDENTIFICATI
 
 ---
 
-3. TYPE LIMITATO
+3. TYPE BASE IMPLEMENTATO MA NON AVANZATO
 
-- nessuna distinzione spesa/incasso
-- type non utilizzato in modo operativo
+- type classification base completata
+- Evento / Tempo / Spesa / Incasso salvati in events.type
+- Spesa / Incasso distinguibili solo tramite keyword controllate o scelta manuale
+- euro senza direzione chiara resta Evento
+- amount resta positivo
+- nessuna logica contabile avanzata
+- type non ancora sufficiente da solo per KPI avanzati
 
 ---
 
@@ -1353,7 +1697,8 @@ PROBLEMI REALI IDENTIFICATI
 - engine semantico non implementato
 - duration normalization base implementata
 - duration avanzata giorni/settimane non implementata
-- type classification non implementata
+- type classification base implementata
+- type classification avanzata non implementata
 
 ---
 
@@ -1441,7 +1786,13 @@ PROBLEMI RISOLTI
 ✔ 2 ore 30 non normalizzato → RISOLTO  
 ✔ ore decimali non convertite in minuti → RISOLTO  
 ✔ preview durata tecnica poco leggibile → RISOLTA  
-✔ giorni/settimane silenziosi → RIDOTTI tramite hint ambiguità   
+✔ giorni/settimane silenziosi → RIDOTTI tramite hint ambiguità  
+✔ select1 non allineato a Duration Normalization → RISOLTO  
+✔ 2h30 mostrato come Evento → RISOLTO  
+✔ type non persistito in DB → RISOLTO  
+✔ insert_event senza type → RISOLTO  
+✔ update_event senza type → RISOLTO  
+✔ override manuale type non validato → RISOLTO   
 
 ------------------------------------------------
 STATO LAYER SISTEMA
@@ -1452,14 +1803,14 @@ Layer 2 — Matching: ~75%
 Layer 3 — View / Preview: ~88%  
 Layer HINT SYSTEM: ~90%  
 Layer 4 — Data Structure: ~20%  
-Layer 5 — Engine: ~28%  
+Layer 5 — Engine: ~36%  
 Layer 6 — Output: 0%  
 
 ---
 
 STATO COMPLESSIVO:
 
-~75%
+~78%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -1473,12 +1824,13 @@ FASE ATTUALE
 ✔ ENGINE BASE — NORMALIZATION LAYER BASE — COMPLETATO  
 ✔ PREVIEW ALIGNMENT BASE — COMPLETATO  
 ✔ ENGINE BASE — DURATION NORMALIZATION — COMPLETATO  
+✔ ENGINE BASE — TYPE CLASSIFICATION BASE — COMPLETATO  
 
 ---
 
 TRANSIZIONE:
 
-→ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE
+→ STEP 6.4 — MATCH ENGINE UNIFICATION
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
@@ -1488,17 +1840,18 @@ Stabilizzare il passaggio successivo dell'Engine Base senza introdurre nuova com
 
 Priorità immediata consigliata:
 
-ENGINE BASE — TYPE CLASSIFICATION BASE
+STEP 6.4 — MATCH ENGINE UNIFICATION
 
 Obiettivo:
 
-- distinguere in modo controllato evento / tempo / economico
-- valutare se mantenere type manuale o semi-guidato
-- correggere incoerenze select1 su durate normalizzate
+- eliminare incoerenze tra logiche parallele di matching
+- allineare input_raw / ranking, select deterministico e preview detection
+- ridurre duplicazione logica project/entity
+- migliorare coerenza hint/select/preview
+- mantenere controllo utente
 - non introdurre dashboard/KPI
-- non automatizzare spesa/incasso senza regole esplicite
-- non modificare DB salvo decisione dedicata
-- non rifare matching
+- non modificare schema DB
+- non introdurre relazioni entity/project fuori nodo
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -1542,9 +1895,9 @@ Priorità aggiornata:
 3. normalization layer base ✔  
 4. preview alignment ✔  
 5. duration normalization ✔  
-6. type classification base  
+6. type classification base ✔  
 7. match engine unification  
-8. output      
+8. output          
 
 ---
 
@@ -1559,34 +1912,37 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. type classification base  
-2. matching unification  
-3. hint state-driven  
-4. data structure / entity relations  
-5. semantic engine  
-6. dashboard / KPI     
+1. matching unification  
+2. hint state-driven  
+3. data structure / entity relations  
+4. semantic engine avanzato  
+5. dashboard / KPI        
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. ENGINE BASE — TYPE CLASSIFICATION BASE
-
-Scopo:
-
-- distinguere evento / tempo / economico
-- valutare spesa/incasso tramite parole chiave
-- mantenere controllo utente
-
----
-
-2. MATCH ENGINE UNIFICATION
+1. MATCH ENGINE UNIFICATION
 
 Scopo:
 
 - eliminare logiche parallele
 - costruire priority match
 - rendere hint/select/preview coerenti
+- ridurre ambiguità project/entity
+- mantenere controllo utente
+
+---
+
+2. LINTING / STATE HELPER CLEANUP
+
+Scopo:
+
+- risolvere linting residui Retool:
+  - edit_mode: 'value' is not defined
+  - editing_event: 'value' is not defined
+- verificare binding/helper state
+- evitare rumore tecnico futuro
 
 ---
 
@@ -1609,7 +1965,18 @@ Scopo:
 - valutare giornata lavorativa
 - valutare mezza giornata
 - evitare conversioni automatiche ambigue
-- nodo non prioritario rispetto a type/matching
+- nodo non prioritario rispetto a matching
+
+---
+
+5. ECONOMIC DIRECTION ADVANCED
+
+Scopo:
+
+- valutare amount firmato
+- valutare direction field
+- valutare regole contabili per Spesa/Incasso
+- non attivo finché type base e matching non sono stabili
 
 ------------------------------------------------
 CHANGELOG
@@ -1715,3 +2082,27 @@ nessuna modifica matching
 nessuna type classification  
 insert/update validati runtime con amount/unit normalizzati  
 transizione verso STEP 6.3 — TYPE CLASSIFICATION BASE  
+
+v13 — 2026-05-01  
+completamento ENGINE BASE — TYPE CLASSIFICATION BASE  
+select1 allineato a ui_state.parsed.unit  
+parsed.unit = minuti → Tempo  
+euro + keyword controllate di uscita → Spesa  
+euro + keyword controllate di entrata → Incasso  
+euro senza direzione chiara → Evento  
+segnali economici contrastanti → Evento  
+scelta manuale utente preservata  
+type aggiunto al payload di button_input_confirm  
+insert_event salva events.type  
+update_event aggiorna events.type  
+override manuale validato su Spesa / Incasso  
+reset/stale value verificato  
+type persistito in DB  
+nessuna modifica schema DB  
+nessuna modifica parser  
+nessuna modifica matching  
+nessun refactor preview  
+nessun output/KPI anticipato  
+linting Retool residuo registrato come anomalia non bloccante  
+matching non unificato confermato come prossimo nodo logico  
+transizione verso STEP 6.4 — MATCH ENGINE UNIFICATION  
