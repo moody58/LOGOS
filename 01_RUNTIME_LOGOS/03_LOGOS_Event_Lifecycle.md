@@ -1,4 +1,4 @@
-# 03_LOGOS_Event_Lifecycle_v05
+# 03_LOGOS_Event_Lifecycle_v06
 
 DATA: 2026-05-02
 
@@ -12,6 +12,10 @@ C (Completezza): 10/10
 - integrazione con input, normalization base, duration normalization, type classification, matching e processing esplicitata  
 - update flow reale documentato  
 - edit flow aggiornato con match state live  
+- annulla modifica documentato
+- no-op edit guard documentato
+- distinzione edit reale / edit senza modifiche documentata
+- lista eventi search/filter e label creato/modificato documentate come processing UX
 - refresh lista dopo update documentato  
 - fonti runtime di salvataggio chiarite  
 
@@ -21,6 +25,8 @@ Q (Qualità): 9.5/10
 - limiti storicizzazione / versioning esplicitati  
 - distinzione tra correzione NEW e validazione WRITTEN mantenuta  
 - chiarito che matching/type/duration migliorano qualità dati ma non validano l’evento  
+- chiarito che Annulla non modifica evento e non aggiorna updated_at
+- chiarito che edit senza modifiche reali non produce update_event
 - nessuna anticipazione output/KPI  
 
 D (Deployabilità): 10/10  
@@ -29,6 +35,10 @@ D (Deployabilità): 10/10
 - allineato al runtime Retool/Supabase attuale  
 - create flow validato  
 - edit flow validato  
+- annulla modifica validato
+- edit senza modifiche validato
+- search/filter lista eventi validato
+- WRITTEN / ERROR rivalidati dopo cleanup UX
 - DB invariato
 
 ------------------------------------------------
@@ -45,6 +55,8 @@ Il documento stabilisce:
 - responsabilità utente
 - qualità del dato
 - correzione pre-validazione
+- annullamento modifica pre-validazione
+- distinzione tra modifica reale e conferma senza variazioni
 - rapporto tra input, normalization base, duration normalization, type classification, matching e processing
 - evoluzione futura
 
@@ -64,6 +76,8 @@ Gli eventi:
 
 - sono append-only dopo validazione
 - possono essere modificati in stato NEW
+- possono uscire dall’edit mode senza modifiche tramite Annulla
+- non vengono aggiornati se l’edit viene confermato senza cambiamenti reali
 - mantengono raw_input come memoria dell’input utente
 - non mantengono ancora storico revisioni
 
@@ -128,6 +142,8 @@ NEW
 - può contenere type base valorizzato
 - può contenere project_id/entity_id derivati da select_project/select_entity
 - può essere corretto tramite edit flow con match state live
+- può uscire dall’edit flow tramite Annulla senza update_event
+- può essere confermato in edit senza modifiche reali senza aggiornare updated_at
 - resta sotto controllo utente
 
 ---
@@ -175,7 +191,11 @@ NEW
 ↓  
 EDIT opzionale  
 ↓  
-UPDATE  
+UPDATE se modifica reale  
+oppure  
+ANNULLA senza update_event  
+oppure  
+CONFERMA senza modifiche → no-op  
 ↓  
 NEW  
 ↓  
@@ -196,10 +216,12 @@ EDIT:
 - rilancia project_state / entity_state
 - riallinea select_project / select_entity
 - preserva project_id/entity_id salvati se presenti
-- usa update_event
+- usa update_event solo se c’è una modifica reale
 - mantiene status NEW
-- aggiorna updated_at
-- aggiorna lista eventi dopo save completato
+- aggiorna updated_at solo se c’è update_event
+- può essere annullato senza update_event
+- può essere confermato senza modifiche reali come no-op
+- aggiorna lista eventi dopo save completato quando avviene update_event
 
 ---
 
@@ -213,6 +235,46 @@ e il match state migliorano la qualità strutturale dell’evento,
 ma NON validano l’evento.
 
 La validazione resta manuale.
+
+---
+
+ANNULLA MODIFICA:
+
+- disponibile solo in edit mode
+- usa btn_cancel_edit
+- non esegue update_event
+- non aggiorna updated_at
+- resetta edit_mode
+- resetta editing_event
+- resetta input_home / input_raw
+- resetta select_project / select_entity / select1
+- resetta ui_state.parsed
+- torna alla lista eventi NEW
+
+---
+
+NO-OP EDIT GUARD:
+
+Se l’utente entra in edit mode e conferma senza modificare campi utente,
+button_input_confirm non esegue update_event.
+
+Campi confrontati:
+
+- raw_input
+- type
+- project_id
+- entity_id
+
+Campi esclusi dal confronto:
+
+- amount
+- unit
+- event_date
+
+Motivo:
+
+amount / unit / event_date sono derivati dal parser.
+Una rielaborazione del parser non deve essere trattata come modifica utente.
 
 ------------------------------------------------
 TRANSIZIONI CONSENTITE
@@ -234,6 +296,44 @@ NEW → NEW (EDIT)
 - project_id/entity_id derivano da select_project/select_entity
 - select_project/select_entity sono alimentati da project_state/entity_state
 - aggiorna updated_at
+
+---
+
+NEW → NEW (ANNULLA EDIT)
+
+- azione: annulla modifica
+- eseguita da utente
+- runtime: btn_cancel_edit
+- status invariato
+- nessun update_event
+- raw_input invariato
+- amount invariato
+- unit invariata
+- event_date invariata
+- type invariato
+- project_id invariato
+- entity_id invariato
+- updated_at invariato
+- ritorno alla lista eventi
+
+---
+
+NEW → NEW (EDIT NO-OP)
+
+- azione: conferma edit senza modifiche reali
+- eseguita da utente
+- runtime: button_input_confirm con no-op edit guard
+- status invariato
+- nessun update_event
+- raw_input invariato
+- amount invariato
+- unit invariata
+- event_date invariata
+- type invariato
+- project_id invariato
+- entity_id invariato
+- updated_at invariato
+- ritorno alla lista eventi
 
 ---
 
@@ -270,6 +370,7 @@ L’utente deve:
 
 - validare eventi
 - correggere tramite editing o selezione
+- annullare l’edit se non vuole salvare modifiche
 - selezionare project/entity quando necessario
 - risolvere ambiguità project/entity prima della conferma
 - correggere manualmente type se la classificazione base non è sufficiente
@@ -461,15 +562,38 @@ evento NEW selezionato
 → ui_state.parsed  
 → select_project / select_entity  
 → select1  
-→ button_input_confirm  
+→ scelta utente  
+
+Percorsi possibili:
+
+1. Conferma con modifica reale:
+button_input_confirm  
 → update_event  
-→ NEW   
+→ events_new refresh  
+→ NEW
+
+2. Conferma senza modifiche reali:
+button_input_confirm  
+→ no-op edit guard  
+→ nessun update_event  
+→ NEW
+
+3. Annulla:
+btn_cancel_edit  
+→ nessun update_event  
+→ NEW  
 
 Nota edit flow:
 
 btn_edit rilancia anche project_state/entity_state.
 Questo mantiene coerenti suggerimenti, select, hint e confirm guard
 anche in modalità modifica evento.
+
+Nota no-op:
+
+Il sistema distingue edit reale da semplice apertura/conferma.
+Questo evita aggiornamenti impropri di updated_at
+e false label “modificato” nella lista eventi.
 
 ------------------------------------------------
 INTEGRAZIONE CON MATCHING
@@ -688,7 +812,9 @@ Azioni:
 
 NEW → WRITTEN  
 NEW → ERROR  
-NEW → NEW (EDIT)  
+NEW → NEW (EDIT con modifica reale)  
+NEW → NEW (ANNULLA EDIT)  
+NEW → NEW (EDIT NO-OP)  
 
 ---
 
@@ -719,6 +845,32 @@ Dopo:
 - lista aggiornata subito dopo update
 - nessun refresh pagina necessario
 
+---
+
+Lista eventi dopo UX Cleanup:
+
+La lista eventi NEW supporta ora:
+
+- ricerca/filtro client-side
+- label creato/modificato
+- marcatore leggero per eventi modificati
+
+La ricerca non modifica il lifecycle.
+
+La label creato/modificato è UX di processing:
+
+- non viene persistita
+- non cambia status
+- non valida evento
+- non modifica DB
+
+Regole label:
+
+- evento mai modificato → creato
+- evento modificato realmente → modificato
+- edit annullato → resta creato/modificato come prima
+- edit senza modifiche reali → resta creato/modificato come prima
+
 ------------------------------------------------
 LIMITI ATTUALI
 ------------------------------------------------
@@ -727,9 +879,10 @@ LIMITI ATTUALI
 - nessuna correzione post-WRITTEN
 - nessuna correzione post-ERROR
 - nessun tracking storico modifiche
+- no-op edit guard evita update non necessari ma non crea storico revisioni
 - nessuna revisione batch
 - assenza versioning modifiche
-- update distruttivo su evento NEW
+- update distruttivo su evento NEW solo quando avviene modifica reale
 - dati storici non retro-normalizzati
 - giorni/settimane non convertiti automaticamente
 - type classification avanzata non implementata
@@ -754,6 +907,8 @@ Conseguenze:
 
 - update_event sovrascrive i valori precedenti
 - updated_at mostra ultima modifica
+- updated_at non cambia su Annulla
+- updated_at non cambia su edit confermato senza modifiche reali
 - raw_input mostra ultima versione
 - non esiste audit trail revisioni
 - non esiste event_version
@@ -860,7 +1015,9 @@ INTERAZIONE CON ALTRI LAYER
 INPUT SYSTEM
 
 → genera eventi NEW  
-→ consente modifica eventi NEW  
+→ consente modifica eventi NEW
+→ consente annulla modifica senza update_event
+→ impedisce update_event su edit senza modifiche reali 
 → produce ui_state.parsed  
 
 ---
@@ -894,6 +1051,7 @@ PREVIEW
 DATABASE
 
 → memorizza eventi  
+→ viene aggiornato solo se l’edit produce una modifica reale
 → non interpreta  
 
 ---
@@ -932,6 +1090,8 @@ Strategia:
 
 1. salvare velocemente
 2. correggere in NEW
+2A. evitare aggiornamenti inutili se l’edit non cambia il dato
+2B. permettere uscita sicura dall’edit senza salvare
 3. normalizzare progressivamente
 4. validare manualmente
 5. usare per output solo quando sufficientemente affidabile
@@ -963,6 +1123,10 @@ Il lifecycle attuale è:
 ✔ migliorato da duration normalization base  
 ✔ migliorato da type classification base  
 ✔ migliorato da match engine unification first controlled level  
+✔ migliorato da UX / Cleanup Micro-Batch Post Match Engine
+✔ edit mode ora supporta Annulla
+✔ edit senza modifiche reali non aggiorna updated_at
+✔ lista eventi distingue creato/modificato in modo più coerente
 
 ---
 
@@ -993,10 +1157,11 @@ solo dopo stabilizzazione:
 7. duration normalization ✔  
 8. type classification ✔  
 9. match engine unification first controlled level ✔  
-10. micro-nodi UX/helper  
-11. data structure / project-entity evolution  
-12. economic direction advanced  
-13. output
+10. UX / cleanup post match engine ✔  
+11. linting / state helper cleanup oppure accettazione residuo non bloccante  
+12. data structure / project-entity evolution  
+13. economic direction advanced  
+14. output
 
 ------------------------------------------------
 CHANGELOG
@@ -1048,4 +1213,27 @@ v05 — 2026-05-02
 - aggiornati limiti: no alias, no fuzzy, no gerarchie, no deduplicazione, no creazione guidata project/entity
 - confermato DB passivo
 - confermato lifecycle invariato negli stati NEW / WRITTEN / ERROR
+- nessun output/KPI anticipato
+
+v06 — 2026-05-02  
+
+- integrazione UX / Cleanup Micro-Batch Post Match Engine nel lifecycle
+- documentato btn_cancel_edit
+- documentato Annulla modifica come NEW → NEW senza update_event
+- documentato reset edit_mode / editing_event / input / select / ui_state.parsed
+- documentato no-op edit guard
+- documentato edit senza modifiche reali come NEW → NEW senza update_event
+- chiarito che updated_at non cambia su Annulla
+- chiarito che updated_at non cambia su edit confermato senza modifiche reali
+- documentata distinzione tra edit reale e conferma senza variazioni
+- documentata label lista eventi creato/modificato
+- documentato search/filter client-side lista eventi come processing UX
+- chiarito che ricerca e label lista non modificano lifecycle
+- WRITTEN / ERROR rivalidati dopo cleanup UX
+- create/edit/lista/annulla/search validati
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
 - nessun output/KPI anticipato

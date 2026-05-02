@@ -1,4 +1,4 @@
-# 04_LOGOS_Retool_Architecture_v10
+# 04_LOGOS_Retool_Architecture_v11
 
 DATA: 2026-05-02
 
@@ -21,6 +21,12 @@ C (Completezza): 10/10
 - duration normalization documentata  
 - type classification base documentata  
 - Match Engine Unification First Controlled Level documentato   
+- UX / Cleanup Micro-Batch Post Match Engine documentato
+- btn_cancel_edit documentato
+- input_events_search documentato
+- no-op edit guard documentato
+- label creato/modificato lista eventi documentata
+- fix UI state nuovo input da lista documentato
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
@@ -42,6 +48,8 @@ D (Deployabilità): 10/10
 - nodo Duration Normalization validato runtime  
 - nodo Type Classification Base validato runtime  
 - nodo Match Engine Unification First Controlled Level validato runtime  
+- nodo UX / Cleanup Micro-Batch Post Match Engine validato runtime
+- create/edit/lista/annulla/ricerca/WRITTEN/ERROR validati
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -68,6 +76,12 @@ Il documento descrive:
 - match state project/entity
 - allineamento select / hint / highlight / confirm guard
 - match state live in create/edit flow
+- UX / Cleanup Micro-Batch Post Match Engine
+- annulla modifica evento
+- search/filter lista eventi
+- label creato/modificato lista eventi
+- no-op edit guard
+- fix UI state nuovo input da lista eventi
 
 ------------------------------------------------
 STRUTTURA GENERALE
@@ -234,6 +248,7 @@ select1 (type)
 select_project
 select_entity
 button_input_confirm
+btn_cancel_edit
 project_state
 entity_state
 
@@ -244,6 +259,7 @@ classificazione type base tramite select1
 validazione manuale
 selezione project/entity
 conferma inserimento o modifica
+annullamento modifica senza update_event
 
 Preview:
 
@@ -395,6 +411,23 @@ input_home:
 
 source of truth lato UX
 campo modificato dall’utente
+
+Fix post UX Cleanup:
+
+quando l’utente scrive un nuovo input partendo dalla lista eventi,
+input_home change handler forza la vista corretta:
+
+- ui_state.view = "home"
+- container_events_list nascosto
+- container_feedback nascosto
+- container_home visibile
+- container_input visibile
+- input_raw sincronizzato
+- trigger_parse_debounced rilanciato
+
+Motivo:
+
+evitare doppia visibilità tra sintesi/input e lista eventi.
 
 input_raw:
 
@@ -1601,6 +1634,46 @@ const payload = {
   entity_id: select_entity.value || null
 };
 
+NO-OP EDIT GUARD:
+
+In edit mode, prima di eseguire update_event,
+button_input_confirm verifica se i campi realmente modificabili dall’utente
+sono rimasti invariati.
+
+Campi confrontati:
+
+- raw_input
+- type
+- project_id
+- entity_id
+
+Campi esclusi dal confronto:
+
+- amount
+- unit
+- event_date
+
+Motivo:
+
+amount / unit / event_date sono derivati dal parser.
+Una rielaborazione del parser non deve essere considerata modifica utente.
+
+Comportamento:
+
+se edit_mode = true
+e raw_input / type / project_id / entity_id non cambiano:
+
+- update_event NON viene eseguito
+- updated_at NON viene aggiornato
+- edit_mode viene chiuso
+- editing_event viene azzerato
+- input/select/ui_state.parsed vengono resettati
+- la UI torna alla lista eventi
+
+Risultato:
+
+edit senza modifiche reali non produce falsa label “modificato”.
+
 Disabled logic:
 
 button_input_confirm non ricalcola parsing.
@@ -1661,6 +1734,9 @@ Risultati:
 ✔ feedback immediato
 ✔ lista aggiornata dopo salvataggio reale
 ✔ update visibile senza refresh pagina
+✔ edit senza modifiche reali non esegue update_event
+✔ updated_at non cambia su conferma senza modifiche
+✔ label creato/modificato resta coerente
 
 INSERT_EVENT
 
@@ -1808,6 +1884,22 @@ Risultato:
 ✔ lista aggiornata subito
 ✔ nessun refresh pagina necessario
 
+No-op edit guard:
+
+button_input_confirm impedisce update_event quando l’utente conferma una modifica
+senza cambiare realmente:
+
+- raw_input
+- type
+- project_id
+- entity_id
+
+In questo caso:
+
+- update_event non parte
+- updated_at resta invariato
+- l’evento resta visualizzato come creato nella lista
+
 BTN_EDIT — FLOW AGGIORNATO
 
 Il pulsante edit rilancia anche il match state.
@@ -1817,6 +1909,8 @@ Sequenza:
 1. editing_event.trigger({ value: item })
 2. edit_mode.trigger({ value: true })
 3. mostra container input
+3A. forza container_events_list nascosto
+3B. forza container_feedback nascosto
 4. pulisce select_project / select_entity
 5. carica item.raw_input in input_home e input_raw
 6. rilancia:
@@ -1831,6 +1925,69 @@ Risultato:
 ✔ suggerimenti funzionano in modalità modifica  
 ✔ select/hint/confirm guard aggiornati anche in edit  
 ✔ dati salvati precedenti preservati se presenti  
+✔ doppia visibilità input/lista dopo Annulla evitata
+
+------------------------------------------------
+BTN_CANCEL_EDIT — FLOW
+------------------------------------------------
+
+Componente:
+
+btn_cancel_edit
+
+Tipo:
+
+Button
+
+Ruolo:
+
+annullare una modifica evento NEW
+senza eseguire update_event.
+
+Visibilità:
+
+visibile solo in edit mode.
+
+Hidden:
+
+{{ !edit_mode.data }}
+
+Label:
+
+Annulla
+
+Posizione:
+
+dentro container_input,
+sotto button_input_confirm,
+con priorità mobile.
+
+Comportamento:
+
+1. cancella eventuale debounce pendente
+2. esce da edit_mode
+3. svuota editing_event
+4. resetta input_home
+5. resetta input_raw
+6. pulisce select_project
+7. pulisce select_entity
+8. pulisce select1
+9. resetta ui_state.parsed
+10. imposta ui_state.view = "events"
+11. nasconde container_input
+12. nasconde container_home
+13. nasconde container_feedback
+14. mostra container_events_list
+
+Risultato:
+
+✔ annulla modifica senza salvare
+✔ nessun update_event eseguito
+✔ updated_at invariato
+✔ ritorno lista eventi
+✔ edit_mode.data = false
+✔ editing_event.data = null
+✔ create/edit non regressi
 
 EVENTS_NEW
 
@@ -1857,6 +2014,129 @@ await events_new.trigger()
 Motivo:
 
 evitare race condition tra save e refresh lista.
+
+Lista eventi:
+
+events_new alimenta list_events.
+
+Dopo UX Cleanup, list_events usa un filtro client-side
+basato su input_events_search.
+
+events_new NON è stato modificato.
+
+La Data source di list_events filtra su:
+
+- raw_input
+- type
+- status
+- nome progetto
+- nome entità
+
+La ricerca è solo UX client-side:
+
+- non modifica DB
+- non modifica query Supabase
+- non modifica status eventi
+- non modifica insert/update
+
+------------------------------------------------
+LISTA EVENTI — SEARCH / FILTER / LABEL
+------------------------------------------------
+
+Componenti:
+
+container_events_list
+events_title
+input_events_search
+list_events
+
+---
+
+INPUT_EVENTS_SEARCH
+
+Tipo:
+
+Text Input
+
+Ruolo:
+
+filtrare rapidamente la lista eventi NEW.
+
+Placeholder:
+
+Cerca evento...
+
+Comportamento:
+
+- campo vuoto → lista completa
+- testo inserito → filtro client-side
+
+Ricerca su:
+
+- item.raw_input
+- item.type
+- item.status
+- nome progetto
+- nome entità
+
+Vincoli:
+
+✔ nessuna modifica events_new
+✔ nessuna modifica DB
+✔ nessuna modifica insert/update
+✔ nessuna modifica parser
+✔ nessuna modifica matching
+✔ nessuna modifica type/duration
+
+---
+
+LIST_EVENTS
+
+Tipo:
+
+ListView
+
+Data source:
+
+events_new.data filtrato client-side tramite input_events_search.
+
+Azioni disponibili:
+
+- edit
+- WRITTEN
+- ERROR
+
+---
+
+LABEL DATA LISTA EVENTI
+
+La lista eventi distingue:
+
+- creato
+- modificato
+
+Regole:
+
+- created_at / updated_at normalizzati in modo robusto
+- date DB trattate coerentemente come UTC
+- visualizzazione convertita Europe/Rome
+- updated_at vicino a created_at non viene considerato modifica reale
+- eventi mai modificati → creato
+- eventi modificati realmente → modificato
+- eventi modificati mostrano marcatore leggero
+
+Esempio:
+
+creato oggi • 13:02
+
+✎ modificato oggi • 13:19
+
+Nota:
+
+La label lista eventi è UX/processing.
+Non è preview.
+Non viene persistita.
+Non modifica DB.
 
 QUERY ATTIVE
 
@@ -1896,6 +2176,9 @@ PAGE1 — COMPONENTI UI RILEVANTI:
 select1
 select_project
 select_entity
+btn_cancel_edit
+input_events_search
+list_events
 
 Nota:
 
@@ -1960,7 +2243,11 @@ PATTERN ARCHITETTURALI
 ✔ Progressive enhancement
 ✔ Match State Pattern per project/entity  
 ✔ Controlled Select Pattern tramite singleMatch  
-✔ Confirm Guard basata su ambiguità non risolta  
+✔ Confirm Guard basata su ambiguità non risolta 
+✔ No-op Edit Guard
+✔ Client-side List Filter
+✔ Controlled Edit Cancel Flow
+✔ Created/Updated Display Guard 
 
 PROBLEMI NOTI
 
@@ -2006,6 +2293,12 @@ RISOLTI:
 ✔ villa 2 evidenziato solo come villa → RISOLTO  
 ✔ bug €500 nella label preview → RISOLTO  
 ✔ linting project_state/entity_state → RISOLTO  
+✔ assenza annulla modifica in edit mode → RISOLTO
+✔ doppia visibilità input/lista dopo Annulla → RISOLTO
+✔ lista eventi non filtrabile → RISOLTO
+✔ eventi appena inseriti mostrati come modificati → RISOLTO
+✔ edit senza modifiche aggiornava updated_at → RISOLTO
+✔ nuovo input da lista eventi lasciava visibili input e lista insieme → RISOLTO
 
 UI:
 
@@ -2014,6 +2307,10 @@ UI:
 ⚠ preview non pura
 ⚠ label cleaning ancora embedded
 ✔ hint matching project/entity state-driven  
+✔ annulla modifica implementato
+✔ lista eventi filtrabile
+✔ label creato/modificato coerente
+✔ nuovo input da lista eventi non lascia più doppia vista
 ⚠ hint duration/type ancora embedded nella preview  
 
 ✔ formattazione italiana amount allineata nella sintesi
@@ -2070,6 +2367,13 @@ STATO ARCHITETTURA
 ✔ match state live in create flow  
 ✔ match state live in edit flow  
 ✔ bug €500 preview risolto  
+✔ UX / Cleanup Micro-Batch Post Match Engine completato
+✔ btn_cancel_edit implementato
+✔ input_events_search implementato
+✔ no-op edit guard implementato
+✔ label creato/modificato lista eventi corretta
+✔ nuovo input da lista eventi gestito correttamente
+✔ create/edit/lista/WRITTEN/ERROR validati dopo cleanup
 
 ⚠ non completamente stabile nei layer evolutivi
 ⚠ preview ancora ibrida
@@ -2082,9 +2386,9 @@ STATO ARCHITETTURA
 NEXT STEP ARCHITETTURALE CONSIGLIATO
 ------------------------------------------------
 
-NEXT NODE DA DEFINIRE DOPO AGGIORNAMENTO DOCUMENTALE
+NEXT NODE DA DEFINIRE DOPO CHIUSURA AGGIORNAMENTO DOCUMENTALE MINIMO
 
-Candidati principali:
+Candidati principali residui:
 
 1. LINTING / STATE HELPER CLEANUP
 
@@ -2092,47 +2396,35 @@ Candidati principali:
   - edit_mode: 'value' is not defined
   - editing_event: 'value' is not defined
 - preservare edit flow
+- non usare Temporary State se instabile nel setup reale
+- non modificare parser / matching / DB
 
-2. EDIT MODE CANCEL / RETURN TO EVENTS LIST
-
-- aggiungere controllo per annullare modifica evento
-- uscire da edit_mode
-- svuotare input_home/input_raw
-- pulire select_project/select_entity
-- ripristinare ui_state.parsed
-- tornare alla lista eventi o vista coerente
-
-3. EVENTS LIST SEARCH / FILTER BAR
-
-- aggiungere barra di ricerca nella lista eventi
-- filtrare rapidamente eventi visualizzati
-- ricerca testuale su raw_input / descrizione evento
-- nessuna modifica DB obbligatoria nella prima versione
-
-4. EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
-
-- distinguere visivamente created_at / updated_at
-- evitare falso messaggio “modificato oggi” su eventi appena inseriti
-
-5. PROJECT / ENTITY CREATE SUGGESTION
+2. PROJECT / ENTITY CREATE SUGGESTION
 
 - proporre creazione guidata project/entity quando nessun match viene trovato
 - utile per input vocali / Siri
 - nessuna creazione automatica silenziosa
 - creazione solo previa conferma utente
 
-6. ECONOMIC DIRECTION ADVANCED
+3. ECONOMIC DIRECTION ADVANCED
 
 - valutare amount firmato
 - valutare direction field
 - valutare regole contabili avanzate Spesa/Incasso
 
-7. DATA STRUCTURE / ENTITY HIERARCHY
+4. DATA STRUCTURE / ENTITY HIERARCHY
 
 - valutare gerarchie
 - alias
 - deduplicazione
 - relazioni entity-project
+
+5. DURATION ADVANCED — GIORNI / SETTIMANE
+
+- decidere conversione giorni/settimane
+- valutare giornata lavorativa
+- valutare mezza giornata
+- evitare conversioni automatiche ambigue
 
 Vincolo:
 
@@ -2300,3 +2592,33 @@ nessuna modifica parser
 nessuna modifica type classification
 nessuna modifica duration normalization
 nessun output/KPI anticipato
+
+v11 — 2026-05-02
+
+completamento UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+documentato btn_cancel_edit
+documentato annulla modifica senza update_event
+documentato reset edit_mode / editing_event / input / select / ui_state.parsed
+documentato fix doppia visibilità input/lista dopo Annulla
+documentato input_events_search
+documentato filtro client-side su list_events
+documentata ricerca su raw_input / type / status / project / entity
+documentata label creato/modificato lista eventi
+documentata normalizzazione robusta created_at / updated_at
+documentato marcatore leggero per eventi modificati
+documentato no-op edit guard in button_input_confirm
+documentato edit senza modifiche reali non aggiorna updated_at
+documentato fix UI state per nuovo input da lista eventi
+create flow validato
+edit flow validato
+annulla modifica validato
+search/filter lista validato
+WRITTEN / ERROR validati
+regressione match/type/duration validata
+DB invariato
+parser invariato
+Match Engine invariato
+Type Classification invariata
+Duration Normalization invariata
+linting edit_mode/editing_event ancora residui non bloccanti
+aggiornamento prossimo nodo consigliato a NEXT NODE da definire dopo chiusura aggiornamento documentale minimo

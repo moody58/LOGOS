@@ -1,4 +1,4 @@
-# 00_PROJECT_Gap_Register_v05
+# 00_PROJECT_Gap_Register_v06
 
 DATA: 2026-05-02
 
@@ -174,15 +174,21 @@ Anticipare engine completo può rompere il sistema esistente.
 AZIONE:
 
 Non creare ancora un documento engine globale.
-Procedere per nodi minimi:
+Procedere per nodi minimi.
 
-Linting / State Helper Cleanup
-Edit Mode Cancel / Return to Events List
-Events List Search / Filter Bar
-Project / Entity Create Suggestion
-Data Structure / Entity Hierarchy
-Economic Direction Advanced
-Duration Advanced — giorni/settimane
+Micro-nodi UX post Match Engine già completati:
+
+- Edit Mode Cancel / Return to Events List
+- Events List Search / Filter Bar
+- Events List Label / Updated At Display
+
+Nodi residui candidati:
+
+- Linting / State Helper Cleanup
+- Project / Entity Create Suggestion
+- Data Structure / Entity Hierarchy
+- Economic Direction Advanced
+- Duration Advanced — giorni/settimane
 
 ID: G03
 
@@ -938,57 +944,77 @@ NOME:
 Events List Label / Updated At Display
 
 FONTE:
-Duration Normalization Session + Test runtime
+Duration Normalization Session + Test runtime + UX Cleanup Micro-Batch
 
 STATO:
-IDENTIFICATO
+INTEGRATO
 
 DESCRIZIONE:
 
-La lista eventi mostra la dicitura “modificato oggi”
+La lista eventi mostrava la dicitura “modificato oggi”
 anche per eventi appena inseriti.
 
-Causa probabile:
+Il problema era visuale / UX,
+ma poteva generare confusione utente.
 
-updated_at viene valorizzato anche in insert_event.
-La UI della lista interpreta la presenza di updated_at come modifica,
-senza distinguere created_at / updated_at o insert/update.
+CAUSE IDENTIFICATE:
 
-NOTE:
+- updated_at valorizzato anche in insert_event
+- created_at / updated_at con formati timezone non omogenei
+- confronto iniziale troppo fragile
+- edit senza modifiche reali aggiornava comunque updated_at
 
-Il problema è solo visuale / UX.
+STATO REALE:
 
-Non impatta:
+Il nodo EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+è stato completato dentro:
 
-- parsing
-- duration normalization
-- save flow
-- DB
-- amount/unit
-- status evento
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 
-RISCHIO:
+Implementato:
 
-Può generare confusione utente,
-facendo apparire modificato un evento appena creato.
+- normalizzazione robusta created_at / updated_at
+- parsing date DB trattato in modo coerente come UTC
+- conversione visuale Europe/Rome
+- soglia anti-falso positivo tra created_at e updated_at
+- label “creato” per eventi mai modificati
+- label “modificato” solo per eventi realmente aggiornati
+- marcatore leggero per eventi modificati
+- no-op edit guard in button_input_confirm
+- conferma edit senza modifiche reali non esegue update_event
+- updated_at non cambia se non cambiano campi utente
+- amount / unit / event_date esclusi dal confronto no-op perché derivati dal parser
+
+TEST VALIDATI:
+
+- nuovo evento mostra “creato”
+- edit senza modifiche resta “creato”
+- annulla modifica resta “creato”
+- edit con modifica reale mostra “modificato”
+- evento modificato sale in alto nella lista
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica Match Engine
+- nessuna modifica Type Classification
+- nessuna modifica Duration Normalization
+
+RISCHIO RESIDUO:
+
+- non esiste audit trail storico delle modifiche
+- updated_at traccia solo ultima modifica
+- distinzione storica completa richiederebbe logging/versioning dedicato
 
 AZIONE:
 
-Nodo candidato dopo Match Engine Unification,
-soprattutto come micro-fix UX.
+Gap integrato.
 
-Possibile micro-nodo futuro:
+Non riaprire come fix label lista eventi.
 
-EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+Eventuali evoluzioni future devono passare da nodo dedicato:
 
-Scope:
-
-- distinguere “creato oggi” da “modificato oggi”
-- confrontare created_at / updated_at
-- evitare falsa indicazione di modifica su primo inserimento
-- nessuna modifica engine
-- nessuna modifica parsing
-- nessuna modifica DB salvo decisione dedicata
+- Logging / Versioning
+- Event Revisions
+- UI finale lista eventi
 
 ID: G13
 
@@ -1093,8 +1119,20 @@ Stato runtime:
 
 NOTE:
 
-Durante Match Engine Unification sono stati invece risolti
+Durante Match Engine Unification sono stati risolti
 i linting project_state/entity_state.
+
+Durante UX / Cleanup Micro-Batch Post Match Engine
+è stato verificato che:
+
+- edit_mode funziona correttamente
+- editing_event funziona correttamente
+- btn_cancel_edit funziona
+- no-op edit guard funziona
+- create/edit/lista non regrediscono
+
+Temporary State non viene considerato soluzione prioritaria,
+perché storicamente instabile nel setup reale.
 
 RISCHIO:
 
@@ -1114,6 +1152,15 @@ Scope:
 - nessuna modifica parser
 - nessuna modifica DB
 
+Priorità:
+
+Residuo non bloccante.
+
+Da affrontare solo se:
+- il rumore linting ostacola debug futuri
+- si individua una soluzione helper sicura
+- non si rischia regressione edit flow
+
 ---
 
 ID: G15
@@ -1122,43 +1169,73 @@ NOME:
 Edit Mode Cancel / Return to Events List
 
 FONTE:
-Match Engine Unification Session + osservazione UX
+Match Engine Unification Session + osservazione UX + UX Cleanup Micro-Batch
 
 STATO:
-IDENTIFICATO — MICRO-NODO CANDIDATO
+INTEGRATO
 
 DESCRIZIONE:
 
-In modalità modifica evento manca un pulsante per annullare
-e tornare alla lista eventi.
+In modalità modifica evento mancava un pulsante per annullare
+e tornare alla lista eventi senza salvare.
 
-Attualmente:
+STATO REALE:
 
-- edit flow funziona
-- btn_edit carica evento
-- match state viene rilanciato
-- update_event funziona
-- ma manca uscita esplicita da edit mode senza salvare
+Il nodo EDIT MODE CANCEL / RETURN TO EVENTS LIST
+è stato completato dentro:
 
-RISCHIO:
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 
-L’utente può restare nel flusso modifica senza chiara via di uscita.
-Possibile confusione tra inserimento nuovo e modifica evento.
+Implementato:
+
+- nuovo pulsante btn_cancel_edit
+- visibile solo in edit mode
+- label “Annulla”
+- stile secondario / outline neutro
+- posizionato sotto Conferma per priorità mobile
+
+Comportamento:
+
+- reset edit_mode
+- reset editing_event
+- reset input_home
+- reset input_raw
+- reset select_project
+- reset select_entity
+- reset select1
+- reset ui_state.parsed
+- ritorno a container_events_list
+- nessuna chiamata update_event
+
+Fix collegato:
+
+btn_edit è stato rafforzato per evitare doppia visibilità tra:
+
+- container_input
+- container_events_list
+
+TEST VALIDATI:
+
+- entra in edit mode
+- Annulla visibile solo in edit mode
+- Annulla torna alla lista eventi
+- nessun update_event eseguito
+- edit_mode.data = false
+- editing_event.data = null
+- edit evento A → annulla → edit evento B senza doppia lista
+- create/edit non regressi
+
+RISCHIO RESIDUO:
+
+Nessun rischio operativo rilevato.
 
 AZIONE:
 
-Micro-nodo candidato.
+Gap integrato.
 
-Scope:
-
-- aggiungere controllo “Annulla modifica”
-- uscire da edit_mode
-- svuotare input_home/input_raw
-- pulire select_project/select_entity
-- ripristinare ui_state.parsed
-- tornare alla lista eventi o vista coerente
-- nessuna modifica engine
-- nessuna modifica DB
+Non riaprire come micro-nodo base.
+Eventuali miglioramenti grafici del pulsante devono restare fuori scope
+fino a revisione UI finale del sistema stabile.
 
 ---
 
@@ -1168,37 +1245,68 @@ NOME:
 Events List Search / Filter Bar
 
 FONTE:
-Richiesta utente + gestione lista eventi
+Richiesta utente + gestione lista eventi + UX Cleanup Micro-Batch
 
 STATO:
-IDENTIFICATO — MICRO-NODO CANDIDATO
+INTEGRATO
 
 DESCRIZIONE:
 
 Aggiungere una barra di ricerca nella lista eventi
 per facilitare ricerca e filtro degli eventi visualizzati.
 
-Motivo:
+STATO REALE:
 
-con l’aumento degli eventi NEW,
-la lista diventa più difficile da gestire manualmente.
+Il nodo EVENTS LIST SEARCH / FILTER BAR
+è stato completato dentro:
 
-Scope possibile:
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 
-- ricerca testuale su raw_input / descrizione evento
-- eventuale filtro futuro per project/entity/type/status
-- nessuna modifica engine
-- nessuna modifica DB obbligatoria nella prima versione
-- nessuna alterazione insert/update
+Implementato:
 
-RISCHIO:
+- input_events_search
+- posizionato nella testata della lista eventi
+- filtro client-side sulla Data source di list_events
+- nessuna modifica a events_new
+- nessuna modifica DB
+- nessuna modifica insert/update
+- nessuna modifica parser/matching/type/duration
 
-Basso, se implementato come filtro UI client-side o query controllata.
-Evitare però refactor lista eventi non necessario.
+La ricerca filtra su:
+
+- raw_input
+- type
+- status
+- nome progetto
+- nome entità
+
+TEST VALIDATI:
+
+- campo vuoto mostra lista completa
+- ricerca “materiale” funzionante
+- ricerca “villa” funzionante
+- ricerca “alfie” funzionante
+- clear search funzionante
+- lista resta operativa
+- pulsanti WRITTEN / ERROR / EDIT invariati
+- edit da lista filtrata funzionante
+- annulla da lista filtrata funzionante
+
+RISCHIO RESIDUO:
+
+- layout UI provvisorio
+- revisione grafica rimandata a sistema stabile
+- non sono stati introdotti filtri avanzati strutturali
 
 AZIONE:
 
-Micro-nodo candidato post Match Engine Unification.
+Gap integrato.
+
+Non riaprire come Search / Filter Bar base.
+Eventuali filtri avanzati devono essere nodo dedicato,
+non semplice estensione implicita.
+
+---
 
 ID: G17
 
@@ -1231,6 +1339,13 @@ Restano embedded nella preview:
 - highlight rendering
 - formattazioni locali
 
+Nota post UX Cleanup:
+
+La label creato/modificato della lista eventi è stata corretta,
+ma non modifica il modello preview.
+Resta un intervento di lista/processing UX,
+non un refactor preview.
+
 RISCHIO:
 
 Un refactor preview globale può introdurre regressioni
@@ -1258,25 +1373,22 @@ Vincoli:
 
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo Match Engine Unification:
+Ordine attuale consigliato dopo UX / Cleanup Micro-Batch Post Match Engine:
 
-MICRO-NODI CANDIDATI:
+MICRO-NODI RESIDUI:
 
 1. G14 — Linting / State Helper Cleanup
-2. G15 — Edit Mode Cancel / Return to Events List
-3. G16 — Events List Search / Filter Bar
-4. G12 — Events List Label / Updated At Display
 
 NODI STRUTTURALI FUTURI:
 
-5. G03 — Project / Entity Create Suggestion
-6. G11 — Data Structure / Entity Hierarchy
-7. G13 — Economic Direction Advanced
-8. G08A — Duration Advanced / Giorni-Settimane
-9. G17 — Preview Model / Hint State Consolidation
-10. G04 — Logging / Versioning
-11. G05 — Input Modes
-12. G06 — Multi-source Input
+2. G03 — Project / Entity Create Suggestion
+3. G11 — Data Structure / Entity Hierarchy
+4. G13 — Economic Direction Advanced
+5. G08A — Duration Advanced / Giorni-Settimane
+6. G17 — Preview Model / Hint State Consolidation
+7. G04 — Logging / Versioning
+8. G05 — Input Modes
+9. G06 — Multi-source Input
 
 Gap già integrati:
 
@@ -1284,6 +1396,9 @@ G07 — Preview Alignment
 G08 — Duration Normalization Base
 G09 — Type Classification Base
 G10 — Match Engine Unification First Controlled Level
+G12 — Events List Label / Updated At Display
+G15 — Edit Mode Cancel / Return to Events List
+G16 — Events List Search / Filter Bar
 
 Nota:
 
@@ -1359,3 +1474,28 @@ aggiornato G06 Multi-source Input
 aggiornato ordine consigliato gap/nodi
 confermato output/KPI non attivi
 allineamento con State v14 e Roadmap v08
+
+v06 — 2026-05-02
+
+aggiornato Gap Register dopo UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+aggiornato G12 Events List Label / Updated At Display a INTEGRATO
+documentata correzione label creato/modificato
+documentata normalizzazione robusta created_at / updated_at
+documentato no-op edit guard
+documentato che edit senza modifiche non aggiorna updated_at
+aggiornato G15 Edit Mode Cancel / Return to Events List a INTEGRATO
+documentato btn_cancel_edit
+documentato reset edit_mode / editing_event / input / select / ui_state.parsed
+documentato ritorno lista eventi senza update_event
+documentato fix doppia visibilità input/lista
+aggiornato G16 Events List Search / Filter Bar a INTEGRATO
+documentato input_events_search
+documentato filtro client-side su list_events
+documentata ricerca su raw_input / type / status / project / entity
+aggiornato G14 Linting / State Helper Cleanup come unico micro-nodo residuo
+confermato linting edit_mode/editing_event come residuo non bloccante
+aggiornato G02 Processor / Engine Flow
+aggiornato G17 Preview Model / Hint State Consolidation con nota post UX cleanup
+aggiornato ordine consigliato gap/nodi
+confermato output/KPI non attivi
+allineamento con State v15 e Roadmap v09

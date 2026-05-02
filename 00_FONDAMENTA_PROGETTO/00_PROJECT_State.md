@@ -1,4 +1,4 @@
-# 00_PROJECT_State_v14
+# 00_PROJECT_State_v15
 
 DATA: 2026-05-02
 
@@ -6,7 +6,7 @@ DATA: 2026-05-02
 NODO ATTIVO:
 ------------------------------------------------
 
-MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL — COMPLETATO
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -26,7 +26,9 @@ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
 
 STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL (COMPLETATO)
 
-TRANSIZIONE → NEXT NODE DA DEFINIRE IN ROADMAP
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)
+
+TRANSIZIONE → NEXT NODE DA DEFINIRE IN ROADMAP DOPO AGGIORNAMENTO DOCUMENTALE
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -42,7 +44,13 @@ C (Completezza): 10/10
 - confirm guard allineata ad ambiguità non risolta  
 - create flow e edit flow aggiornati  
 - preview highlight allineato a match state  
-- nodi futuri residui esplicitati    
+- nodi futuri residui esplicitati
+- UX / Cleanup Micro-Batch Post Match Engine documentato
+- annulla modifica documentato
+- search/filter lista eventi documentato
+- label creato/modificato lista eventi documentata
+- no-op edit guard documentato
+- fix UI state nuovo input da lista documentato    
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
@@ -119,7 +127,15 @@ INPUT
 ✔ priority match minimo implementato  
 ✔ hint informativo per match più specifici implementato  
 ✔ match state live in create flow  
-✔ match state live in edit flow  
+✔ match state live in edit flow 
+✔ UX / Cleanup Micro-Batch Post Match Engine completato
+✔ annulla modifica evento implementato
+✔ edit senza modifiche reali non aggiorna updated_at
+✔ lista eventi filtrabile con ricerca client-side
+✔ label lista eventi distingue creato / modificato
+✔ eventi modificati marcati visivamente
+✔ nuovo input da lista eventi ripristina correttamente la vista input
+✔ WRITTEN / ERROR validati dopo cleanup UX 
 
 ⚠ accoppiamento input / processing / UI ancora presente  
 ⚠ matching unificato solo a primo livello controllato  
@@ -132,7 +148,7 @@ INPUT
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su otto layer fondamentali:
+Il sistema è stabilizzato su nove layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
@@ -141,7 +157,8 @@ Il sistema è stabilizzato su otto layer fondamentali:
 5. PREVIEW ALIGNMENT BASE  
 6. ENGINE BASE — DURATION NORMALIZATION  
 7. ENGINE BASE — TYPE CLASSIFICATION BASE  
-8. MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL          
+8. MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL  
+9. UX / CLEANUP MICRO-BATCH POST MATCH ENGINE                   
 
 ---
 
@@ -280,6 +297,44 @@ RISULTATO:
 - parser invariato
 - type classification invariata
 - duration normalization invariata
+- nessun output/KPI anticipato
+
+✔ completamento UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+
+- aggiunto pulsante Annulla in edit mode
+- pulsante Annulla visibile solo durante modifica evento
+- Annulla resetta edit_mode
+- Annulla resetta editing_event
+- Annulla resetta input_home / input_raw
+- Annulla resetta select_project / select_entity / select1
+- Annulla ripristina ui_state.parsed
+- Annulla torna alla lista eventi senza update_event
+- btn_edit rafforzato per evitare doppia visibilità input/lista
+- aggiunta barra ricerca nella lista eventi
+- filtro client-side su eventi NEW
+- ricerca su raw_input / type / status / nome progetto / nome entità
+- nessuna modifica a events_new
+- nessuna modifica DB
+- corretta label lista eventi creato / modificato
+- normalizzazione robusta created_at / updated_at
+- confronto date coerente UTC → Europe/Rome
+- marcatore leggero per eventi modificati
+- aggiunto no-op edit guard in button_input_confirm
+- edit senza modifiche reali non esegue update_event
+- updated_at non cambia se il payload utente non cambia
+- amount / unit / event_date esclusi dal confronto no-op perché derivati dal parser
+- fix UI state quando si scrive un nuovo input partendo dalla lista eventi
+- create flow validato
+- edit flow validato
+- annulla modifica validato
+- search/filter lista validato
+- WRITTEN / ERROR validati
+- regressione match/type/duration validata
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
 - nessun output/KPI anticipato
 
 ------------------------------------------------
@@ -1009,6 +1064,10 @@ PROCESSING LAYER
 - lista eventi NEW
 - gestione WRITTEN / ERROR
 - supporto edit su eventi NEW
+- supporto annulla modifica
+- search/filter client-side lista eventi
+- label creato/modificato su lista eventi
+- no-op edit guard per evitare update_event senza modifiche reali
 
 ---
 
@@ -1533,6 +1592,9 @@ Scrittura:
 ✔ update aggiorna events.type
 ✔ DB aggiornato correttamente
 ✔ lista eventi aggiornata subito dopo save
+✔ edit senza modifiche reali non esegue update_event
+✔ updated_at non viene aggiornato su conferma senza modifiche
+✔ distinzione creato/modificato coerente nella lista eventi
 
 Problema risolto:
 
@@ -1594,12 +1656,18 @@ Azioni:
 ✔ decisione manuale
 ✔ nessuna automazione
 ✔ supporto EDIT
+✔ supporto ANNULLA MODIFICA
+✔ filtro ricerca lista eventi
+✔ label creato/modificato coerente
+✔ marcatore eventi modificati
 
 FLOW:
 
 NEW → EDIT → NEW  
 NEW → WRITTEN  
 NEW → ERROR  
+NEW → EDIT → ANNULLA → NEW
+NEW → EDIT senza modifiche → NEW senza update_event
 
 ---
 
@@ -1703,7 +1771,14 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ highlight preview da matches  
 ✔ match state live in create flow  
 ✔ match state live in edit flow  
-✔ bug €500 label preview risolto    
+✔ bug €500 label preview risolto
+✔ annulla modifica evento implementato
+✔ edit senza modifiche reali non aggiorna updated_at
+✔ search/filter lista eventi implementato
+✔ label creato/modificato lista eventi corretta
+✔ marcatore visuale per eventi modificati
+✔ nuovo input da lista eventi ripristina correttamente la vista input
+✔ WRITTEN / ERROR validati dopo cleanup UX    
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -1943,15 +2018,21 @@ PROBLEMI RISOLTI
 ✔ ristrutturazione bagno ambiguo con Ristrutturazione → RISOLTO  
 ✔ villa 2 evidenziato solo come villa → RISOLTO  
 ✔ bug €500 nella label preview → RISOLTO  
-✔ linting project_state/entity_state → RISOLTO    
+✔ linting project_state/entity_state → RISOLTO   
+✔ assenza annulla modifica in edit mode → RISOLTO
+✔ doppia visibilità input/lista dopo Annulla → RISOLTO
+✔ lista eventi non filtrabile → RISOLTO
+✔ eventi appena inseriti mostrati come modificati → RISOLTO
+✔ edit senza modifiche aggiornava updated_at → RISOLTO
+✔ nuovo input da lista eventi lasciava visibili input e lista insieme → RISOLTO 
 
 ------------------------------------------------
 STATO LAYER SISTEMA
 ------------------------------------------------
 
-Layer 1 — Input: ~96%  
+Layer 1 — Input: ~97%  
 Layer 2 — Matching: ~88%  
-Layer 3 — View / Preview: ~90%  
+Layer 3 — View / Preview: ~92%  
 Layer HINT SYSTEM: ~93%  
 Layer 4 — Data Structure: ~20%  
 Layer 5 — Engine: ~44%  
@@ -1961,7 +2042,7 @@ Layer 6 — Output: 0%
 
 STATO COMPLESSIVO:
 
-~82%
+~83%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -1976,19 +2057,21 @@ FASE ATTUALE
 ✔ PREVIEW ALIGNMENT BASE — COMPLETATO  
 ✔ ENGINE BASE — DURATION NORMALIZATION — COMPLETATO  
 ✔ ENGINE BASE — TYPE CLASSIFICATION BASE — COMPLETATO  
-✔ MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL — COMPLETATO  
+✔ MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL — COMPLETATO 
+✔ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE — COMPLETATO 
 
 ---
 
 TRANSIZIONE:
 
-→ NEXT NODE DA DEFINIRE IN ROADMAP
+→ NEXT NODE DA DEFINIRE IN ROADMAP DOPO AGGIORNAMENTO DOCUMENTALE
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Dopo il completamento del primo livello di Match Engine Unification,
+Dopo il completamento di Match Engine Unification First Controlled Level
+e del successivo UX / Cleanup Micro-Batch Post Match Engine,
 il sistema ha stabilizzato le catene principali:
 
 amount / unit / event_date:
@@ -2008,18 +2091,29 @@ input_raw
 → select_project / select_entity
 → events.project_id / events.entity_id
 
+processing UX:
+events_new
+→ lista eventi NEW
+→ search/filter client-side
+→ edit / annulla / WRITTEN / ERROR
+
+edit flow:
+btn_edit
+→ editing_event
+→ edit_mode
+→ input pipeline
+→ conferma update oppure no-op guard oppure annulla
+
 La prossima priorità deve essere definita in Roadmap,
 senza anticipare output/KPI.
 
-Nodi candidati principali:
+Nodi candidati principali residui:
 
 - LINTING / STATE HELPER CLEANUP
-- EDIT MODE CANCEL / RETURN TO EVENTS LIST
-- EVENTS LIST SEARCH / FILTER BAR
-- EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
 - PROJECT / ENTITY CREATE SUGGESTION
 - ECONOMIC DIRECTION ADVANCED
 - DATA STRUCTURE / ENTITY HIERARCHY
+- DURATION ADVANCED — GIORNI / SETTIMANE
 
 Vincolo:
 
@@ -2058,8 +2152,9 @@ Priorità aggiornata:
 5. duration normalization ✔  
 6. type classification base ✔  
 7. match engine unification first controlled level ✔  
-8. next operational node da definire  
-9. output         
+8. UX / cleanup post match engine ✔  
+9. next operational node da definire  
+10. output                 
 
 ---
 
@@ -2098,46 +2193,7 @@ Scopo:
 
 ---
 
-2. EDIT MODE CANCEL / RETURN TO EVENTS LIST
-
-Scopo:
-
-- aggiungere controllo per annullare modifica evento
-- uscire da edit_mode
-- svuotare input_home/input_raw
-- pulire select_project/select_entity
-- ripristinare ui_state.parsed
-- tornare alla lista eventi o vista coerente
-- nessuna modifica engine
-- nessuna modifica DB
-
----
-
-3. EVENTS LIST SEARCH / FILTER BAR
-
-Scopo:
-
-- aggiungere barra di ricerca nella lista eventi
-- filtrare rapidamente eventi visualizzati
-- ricerca testuale su raw_input / descrizione evento
-- eventuale filtro futuro per project/entity/type/status
-- nessuna modifica engine
-- nessuna modifica DB obbligatoria nella prima versione
-
----
-
-4. EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
-
-Scopo:
-
-- correggere dicitura "modificato oggi" su eventi appena inseriti
-- distinguere visivamente created_at / updated_at
-- evitare falso messaggio di modifica su primo inserimento
-- intervento UX/lista eventi, non engine
-
----
-
-5. PROJECT / ENTITY CREATE SUGGESTION
+2. PROJECT / ENTITY CREATE SUGGESTION
 
 Scopo:
 
@@ -2150,7 +2206,7 @@ Scopo:
 
 ---
 
-6. ECONOMIC DIRECTION ADVANCED
+3. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -2161,7 +2217,7 @@ Scopo:
 
 ---
 
-7. DATA STRUCTURE / ENTITY HIERARCHY
+4. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -2173,7 +2229,7 @@ Scopo:
 
 ---
 
-8. DURATION ADVANCED — GIORNI / SETTIMANE
+5. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -2342,5 +2398,37 @@ nessuna modifica DB
 nessuna modifica parser  
 nessuna modifica type classification  
 nessuna modifica duration normalization  
+nessun output/KPI anticipato  
+transizione verso NEXT NODE da definire in Roadmap
+
+v15 — 2026-05-02  
+completamento UX / CLEANUP MICRO-BATCH POST MATCH ENGINE  
+aggiunto btn_cancel_edit in edit mode  
+Annulla modifica resetta edit_mode / editing_event / input / select / ui_state.parsed  
+Annulla torna alla lista eventi senza update_event  
+rafforzato btn_edit per evitare doppia visibilità input/lista  
+aggiunta barra ricerca lista eventi  
+filtro client-side su raw_input / type / status / project / entity  
+nessuna modifica a events_new  
+corretta label creato/modificato nella lista eventi  
+normalizzazione robusta created_at / updated_at  
+marcatore leggero per eventi modificati  
+aggiunto no-op edit guard in button_input_confirm  
+edit senza modifiche reali non esegue update_event  
+updated_at non cambia su conferma senza modifiche  
+amount / unit / event_date esclusi dal confronto no-op perché derivati dal parser  
+fix input_home change handler per nuovo input da lista eventi  
+create flow validato  
+edit flow validato  
+annulla modifica validato  
+search/filter lista validato  
+WRITTEN / ERROR validati  
+regressione match/type/duration validata  
+linting edit_mode/editing_event ancora residui non bloccanti  
+DB invariato  
+parser invariato  
+Match Engine invariato  
+Type Classification invariata  
+Duration Normalization invariata  
 nessun output/KPI anticipato  
 transizione verso NEXT NODE da definire in Roadmap

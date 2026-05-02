@@ -1,4 +1,4 @@
-# 00_PROJECT_Roadmap_v08
+# 00_PROJECT_Roadmap_v09
 
 DATA: 2026-05-02
 
@@ -68,26 +68,28 @@ FASE COMPLETATA:
 ✔ PREVIEW ALIGNMENT BASE (COMPLETATO)  
 ✔ STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)  
 ✔ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
-✔ STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL (COMPLETATO)    
+✔ STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL (COMPLETATO)  
+✔ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)  
 
 ---
 
 FASE ATTIVA CONSIGLIATA:
 
-NEXT NODE DA DEFINIRE DOPO AGGIORNAMENTO DOCUMENTALE
+NEXT NODE DA DEFINIRE DOPO CHIUSURA AGGIORNAMENTO DOCUMENTALE MINIMO
 
 ---
 
 FASE SUCCESSIVA CANDIDATA:
 
-MICRO-NODO UX / CLEANUP
+NEXT NODE POST UX CLEANUP DA DEFINIRE
 
-Candidati principali:
+Candidati principali residui:
 
 - LINTING / STATE HELPER CLEANUP
-- EDIT MODE CANCEL / RETURN TO EVENTS LIST
-- EVENTS LIST SEARCH / FILTER BAR
-- EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+- PROJECT / ENTITY CREATE SUGGESTION
+- ECONOMIC DIRECTION ADVANCED
+- DATA STRUCTURE / ENTITY HIERARCHY
+- DURATION ADVANCED — GIORNI / SETTIMANE
 
 Candidato non immediato:
 
@@ -922,6 +924,77 @@ Eventuali evoluzioni future devono essere nodi dedicati:
 
 ------------------------------------------------
 
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)
+
+Obiettivo:
+
+Chiudere micro-problemi UX e cleanup emersi dopo Match Engine Unification,
+senza modificare engine, parser, database o architettura.
+
+---
+
+Interventi eseguiti:
+
+✔ aggiunto pulsante Annulla in edit mode  
+✔ Annulla visibile solo durante modifica evento  
+✔ Annulla torna alla lista eventi senza update_event  
+✔ reset controllato edit_mode / editing_event  
+✔ reset controllato input_home / input_raw  
+✔ reset controllato select_project / select_entity / select1  
+✔ reset ui_state.parsed  
+✔ rafforzato btn_edit per evitare doppia visibilità input/lista  
+✔ aggiunta barra ricerca nella lista eventi  
+✔ filtro client-side su eventi NEW  
+✔ ricerca su raw_input / type / status / project / entity  
+✔ corretta label creato/modificato nella lista eventi  
+✔ normalizzazione robusta created_at / updated_at  
+✔ confronto UTC → Europe/Rome  
+✔ marcatore leggero per eventi modificati  
+✔ aggiunto no-op edit guard in button_input_confirm  
+✔ edit senza modifiche reali non esegue update_event  
+✔ updated_at non cambia se non cambiano campi utente  
+✔ amount / unit / event_date esclusi dal confronto no-op perché derivati dal parser  
+✔ fix UI state per nuovo input partendo dalla lista eventi  
+
+---
+
+Output raggiunto:
+
+✔ create flow validato  
+✔ edit flow validato  
+✔ annulla modifica validato  
+✔ search/filter lista validato  
+✔ WRITTEN / ERROR validati  
+✔ regressione match/type/duration validata  
+✔ lista eventi più usabile da mobile  
+✔ edit flow più sicuro  
+✔ label lista eventi meno fuorviante  
+✔ nessuna regressione DB  
+✔ nessuna regressione parser  
+✔ nessuna regressione Match Engine  
+✔ nessuna regressione Type Classification  
+✔ nessuna regressione Duration Normalization  
+
+---
+
+Limiti residui:
+
+⚠ linting edit_mode / editing_event ancora presenti  
+⚠ runtime corretto  
+⚠ anomalia non bloccante  
+
+---
+
+Stato:
+
+COMPLETATO.
+
+Non riaprire come UX Cleanup base.
+Eventuali evoluzioni grafiche future devono essere nodo dedicato,
+solo dopo sistema stabile.
+
+------------------------------------------------
+
 STEP 7 — OUTPUT (NON ATTIVO)
 
 Obiettivo:
@@ -955,6 +1028,7 @@ Il sistema NON può avanzare allo STEP 7 finché:
 
 - type classification base è completata ma non ancora sufficiente per KPI avanzati
 - matching è stato stabilizzato a primo livello, ma non è ancora un engine avanzato
+- UX cleanup post matching è completato, ma resta un linting helper residuo non bloccante
 - data structure / entity relations non sono ancora consolidate
 - direzione economica avanzata non è stata ancora valutata
 - dati storici non sono retro-normalizzati
@@ -987,10 +1061,10 @@ non saranno ulteriormente consolidati.
 NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-NEXT NODE DA DEFINIRE DOPO AGGIORNAMENTO DOCUMENTALE
+NEXT NODE DA DEFINIRE DOPO CHIUSURA AGGIORNAMENTO DOCUMENTALE MINIMO
 
 ------------------------------------------------
-NODI CANDIDATI POST STEP 6.4
+NODI CANDIDATI POST UX / CLEANUP MICRO-BATCH
 ------------------------------------------------
 
 1. LINTING / STATE HELPER CLEANUP
@@ -1002,49 +1076,12 @@ Scopo:
   - editing_event: 'value' is not defined
 - preservare edit flow
 - evitare rumore tecnico futuro
+- non usare Temporary State se instabile nel setup reale
+- non modificare parser / matching / DB
 
 ---
 
-2. EDIT MODE CANCEL / RETURN TO EVENTS LIST
-
-Scopo:
-
-- aggiungere controllo per annullare modifica evento
-- uscire da edit_mode
-- svuotare input_home/input_raw
-- pulire select_project/select_entity
-- ripristinare ui_state.parsed
-- tornare alla lista eventi o vista coerente
-- nessuna modifica engine
-- nessuna modifica DB
-
----
-
-3. EVENTS LIST SEARCH / FILTER BAR
-
-Scopo:
-
-- aggiungere barra di ricerca nella lista eventi
-- filtrare rapidamente eventi visualizzati
-- ricerca testuale su raw_input / descrizione evento
-- eventuale filtro futuro per project/entity/type/status
-- nessuna modifica engine
-- nessuna modifica DB obbligatoria nella prima versione
-
----
-
-4. EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
-
-Scopo:
-
-- correggere dicitura "modificato oggi" su eventi appena inseriti
-- distinguere visivamente created_at / updated_at
-- evitare falso messaggio di modifica su primo inserimento
-- intervento UX/lista eventi, non engine
-
----
-
-5. PROJECT / ENTITY CREATE SUGGESTION
+2. PROJECT / ENTITY CREATE SUGGESTION
 
 Scopo:
 
@@ -1057,7 +1094,7 @@ Scopo:
 
 ---
 
-6. ECONOMIC DIRECTION ADVANCED
+3. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -1068,7 +1105,7 @@ Scopo:
 
 ---
 
-7. DATA STRUCTURE / ENTITY HIERARCHY
+4. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -1080,7 +1117,7 @@ Scopo:
 
 ---
 
-8. DURATION ADVANCED — GIORNI / SETTIMANE
+5. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -1091,7 +1128,7 @@ Scopo:
 
 ---
 
-9. PREVIEW MODEL / HINT STATE CONSOLIDATION
+6. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
@@ -1220,7 +1257,7 @@ Il sistema è ora entrato nello STEP 6 in modo reale.
 Il sistema NON può avanzare allo STEP 7 (OUTPUT)
 finché non vengono completati o valutati almeno:
 
-1. stabilizzazione residui UX / helper state dopo STEP 6.4
+1. valutazione Linting / State Helper Cleanup oppure accettazione formale come residuo non bloccante
 2. valutazione Data Structure / Entity Hierarchy
 3. valutazione Project / Entity Create Suggestion
 4. valutazione Economic Direction Advanced
@@ -1240,9 +1277,10 @@ Nota:
 
 Type Classification Base è completata.
 Il campo events.type viene ora valorizzato dal frontend.
-
 Match Engine Unification First Controlled Level è completato.
 project_id/entity_id sono ora più coerenti grazie al match state minimo.
+UX / Cleanup Micro-Batch Post Match Engine è completato.
+create/edit/lista/annulla/ricerca/WRITTEN/ERROR sono validati.
 
 Tuttavia type + matching base non abilitano ancora automaticamente KPI/reportistica.
 
@@ -1403,4 +1441,35 @@ v08 — 2026-05-02
 - nessuna modifica duration normalization
 - nessun output/KPI anticipato
 - aggiornamento fase attiva consigliata a NEXT NODE da definire dopo aggiornamento documentale
+- mantenuto blocco verso OUTPUT fino a data structure / economic direction / report readiness
+
+v09 — 2026-05-02
+
+- completamento UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+- aggiunto pulsante Annulla in edit mode
+- Annulla modifica senza update_event
+- reset edit_mode / editing_event / input / select / ui_state.parsed
+- fix doppia visibilità input/lista dopo Annulla
+- aggiunta barra ricerca lista eventi
+- filtro client-side su eventi NEW
+- ricerca su raw_input / type / status / project / entity
+- corretta label creato/modificato nella lista eventi
+- normalizzazione robusta created_at / updated_at
+- marcatore leggero per eventi modificati
+- aggiunto no-op edit guard in button_input_confirm
+- edit senza modifiche reali non aggiorna updated_at
+- fix UI state per nuovo input da lista eventi
+- create flow validato
+- edit flow validato
+- annulla modifica validato
+- search/filter lista validato
+- WRITTEN / ERROR validati
+- regressione match/type/duration validata
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
+- linting edit_mode/editing_event ancora residui non bloccanti
+- aggiornamento fase attiva consigliata a NEXT NODE da definire dopo chiusura aggiornamento documentale minimo
 - mantenuto blocco verso OUTPUT fino a data structure / economic direction / report readiness
