@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v06
+# 06_LOGOS_View_Preview_System_v07
 
-DATA: 2026-05-01
+DATA: 2026-05-02
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -22,6 +22,11 @@ Il documento descrive:
 - come vengono mostrati durata normalizzata e durata ambigua
 - come la preview interagisce con select1 / Type Classification Base
 - cosa la preview mostra ma non salva direttamente
+- come la preview legge il match state project/entity
+- come gli hint ambiguità matching derivano da isAmbiguous
+- come l’highlight project/entity deriva da matches
+- come vengono mostrati i match più specifici
+- come la preview resta non decisionale per project/entity
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -40,6 +45,8 @@ input_raw
 → trigger_parse_debounced
 → parse_input_controlled
 → ui_state.parsed
+→ project_state / entity_state
+→ select_project / select_entity
 → select1 / type classification base
 → preview (sintesi)
 → confirm (insert/update)
@@ -60,6 +67,19 @@ Nota terminologica:
 select1 è un componente UI Select di Retool,
 non una query.
 
+Per il matching project/entity, la preview legge anche:
+
+project_state.data
+entity_state.data
+
+In particolare:
+
+- matches
+- count
+- isAmbiguous
+- singleMatch
+- hasMoreSpecificMatches
+
 ---
 
 Nota:
@@ -75,6 +95,22 @@ select1.value
 → button_input_confirm payload.type
 → insert_event / update_event
 → events.type
+
+Il save flow non dipende dalla preview per project/entity.
+
+project_id viene salvato tramite:
+
+select_project.value
+→ button_input_confirm payload.project_id
+→ insert_event / update_event
+→ events.project_id
+
+entity_id viene salvato tramite:
+
+select_entity.value
+→ button_input_confirm payload.entity_id
+→ insert_event / update_event
+→ events.entity_id
 
 ------------------------------------------------
 RUOLO DELLA PREVIEW
@@ -94,6 +130,10 @@ Mostra:
 ✔ supporto visivo alla Type Classification Base    
 ✔ label derivata  
 ✔ stato matching  
+✔ match state project/entity  
+✔ hint ambiguità da isAmbiguous  
+✔ hint match più specifici  
+✔ highlight project/entity da matches  
 ✔ hint utente  
 
 ---
@@ -138,8 +178,10 @@ Ma:
 
 ⚠ la preview contiene ancora trasformazioni proprie  
 ⚠ la preview non è ancora un layer read-only puro  
-⚠ label cleaning, hint logic e highlight restano embedded nella sintesi    
+⚠ label cleaning, hint logic e highlight restano embedded nella sintesi  
 ⚠ type mostrato/supportato dalla preview, ma salvato dal confirm flow  
+⚠ hint duration/type restano embedded nella preview  
+⚠ preview model unico non implementato   
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -153,8 +195,8 @@ Fonti dati utilizzate:
 - select_entity.value
 - projects_list.data
 - entities_list.data
-- project_state.data?.matches
-- entity_state.data?.matches
+- project_state.data
+- entity_state.data
 - select1.value
 
 Nota:
@@ -165,6 +207,18 @@ La preview può usare select1.value per rappresentare il type,
 ma non scrive direttamente events.type.
 
 La persistenza avviene solo nel confirm flow.
+
+Dopo Match Engine Unification First Controlled Level:
+
+project_state.data / entity_state.data forniscono:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
 
 ---
 
@@ -181,7 +235,7 @@ Fonti ancora multiple:
 
 parsed data
 raw input
-matching state
+match state project/entity
 select values
 select1.value
 local label logic
@@ -191,7 +245,9 @@ Conseguenza:
 
 ✔ dati principali coerenti con save flow
 ⚠ preview ancora dipendente da più fonti
-⚠ possibile incoerenza visuale
+✔ matching project/entity più coerente con select/confirm
+⚠ preview ancora dipendente da più fonti
+⚠ possibile incoerenza visuale su hint non matching
 ⚠ possibile divergenza tra dato interno e formattazione mostrata
 
 OUTPUT DELLA PREVIEW
@@ -438,7 +494,9 @@ Aggiornamenti Preview Alignment Base:
 ✔ label più coerente con ui_state.parsed 
 ✔ durate composte rimosse dopo Duration Normalization  
 ✔ forme compatte 2h30 / 2 h 30 rimosse dalla label  
-✔ residui “e/ed” rimossi dopo cleaning durata   
+✔ residui “e/ed” rimossi dopo cleaning durata  
+✔ gestione € prima del numero corretta  
+✔ bug duplicazione €500 risolto   
 
 Esempi:
 
@@ -465,6 +523,9 @@ Esempi:
 
 villa 2 mario
 → villa 2 mario
+
+€500 acconto alfie mario rossi
+→ 500,00 € • acconto alfie mario rossi
 
 Nota:
 
@@ -509,21 +570,35 @@ evidenzia:
 entity → verde (#059669)
 project → blu (#2563eb)
 
-ordine:
+Fonte dati dopo Match Engine Unification First Controlled Level:
 
-entity → prima
-project → dopo
+project_state.data.matches
+entity_state.data.matches
 
-protezione:
+---
+
+Comportamento:
+
+- project evidenziati dai matches di project_state
+- entity evidenziate dai matches di entity_state
+- quando possibile viene evidenziato il nome completo
+- la preview non calcola più detection locale come fonte decisionale matching
+
+Esempio:
+
+villa 2 mario
+→ villa 2 evidenziato come project
+→ mario evidenziato come entity
+
+---
+
+Protezione:
 
 escape regex
 
-Aggiornamento Preview Alignment Base:
+---
 
-è stato introdotto un filtro locale per evitare che unità tecniche
-vengano evidenziate come match.
-
-Token esclusi:
+Token tecnici esclusi:
 
 - ora
 - ore
@@ -540,41 +615,62 @@ Token esclusi:
 - giornata
 - giornate
 
-Funzione runtime introdotta:
+Funzioni runtime ancora presenti:
 
 previewStopTokens
 getPreviewTokens
 
-Risultato:
-
-"ore", "minuti", "euro" non interferiscono più con l'highlight locale.
-
-Dopo Duration Normalization, anche token lunghi ambigui come
-“giorni”, “settimane”, “giornata” vengono esclusi dall’highlight locale.
-
 Nota:
 
-questo intervento non modifica project_state,
-entity_state, select_project o select_entity.
-Agisce solo sull'highlight locale della preview.
+questo filtro resta utile per evitare highlight impropri
+su unità tecniche o parole non rilevanti.
+
+Dopo Match Engine Unification,
+l’highlight project/entity legge però i matches da:
+
+- project_state.data.matches
+- entity_state.data.matches
+
+La preview non usa più detection locale come fonte decisionale matching.
 
 HINT SYSTEM
 
 Basato su:
 
-entity_matches
-project_matches
-parsed.unit
-select1.value
-contenuto testo
-condizioni locali
+- project_state.data
+- entity_state.data
+- parsed.unit
+- select1.value
+- contenuto testo
+- condizioni locali preview
+
+---
 
 TIPI DI HINT:
 
-AMBIGUITÀ:
+AMBIGUITÀ MATCHING:
 
-⚠️ Seleziona entità
-⚠️ Seleziona progetto
+entity_state.isAmbiguous = true
+e select_entity vuoto
+→ "⚠️ Più entità trovate"
+
+project_state.isAmbiguous = true
+e select_project vuoto
+→ "⚠️ Più progetti trovati"
+
+---
+
+MATCH PIÙ SPECIFICI:
+
+entity_state.hasMoreSpecificMatches = true
+e singleMatch selezionato
+→ "ℹ️ Esistono entità più specifiche"
+
+project_state.hasMoreSpecificMatches = true
+e singleMatch selezionato
+→ "ℹ️ Esistono progetti più specifici"
+
+---
 
 ECONOMICO / TYPE:
 
@@ -587,16 +683,26 @@ Usato quando:
 - select1 resta Evento
 - l’utente deve scegliere manualmente Spesa o Incasso
 
+---
+
 TEMPO:
 
 ℹ️ Normalizzato: X minuti
+
 ⚠️ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile
+
+---
 
 Caratteristiche:
 
-✔ non bloccante
-✔ condizionale
-✔ visivo
+✔ hint matching project/entity alimentati da state  
+✔ hint ambiguità matching bloccanti finché non risolti  
+✔ hint match più specifici informativi e non bloccanti  
+✔ hint rossi spariscono se l’utente risolve manualmente l’ambiguità  
+✔ hint duration/type ancora embedded nella preview  
+✔ controllo utente preservato  
+
+---
 
 Aggiornamento Duration Normalization Base:
 
@@ -604,10 +710,7 @@ Aggiornamento Duration Normalization Base:
 - le durate certe mostrano il valore tecnico normalizzato
 - giorni/settimane mostrano hint ambiguità
 
-⚠ non basato su stato unificato completo
-⚠ utilizza logiche parallele
-⚠ possibile incoerenza con select
-⚠ logiche duplicate rispetto ad altri layer
+---
 
 Aggiornamento Type Classification Base:
 
@@ -618,35 +721,92 @@ Aggiornamento Type Classification Base:
 - la preview può guidare l’utente alla scelta manuale
 - il type viene poi salvato dal confirm flow
 
+---
+
+Aggiornamento Match Engine Unification First Controlled Level:
+
+- hint matching project/entity derivano da project_state/entity_state
+- hint ambiguità derivano da isAmbiguous
+- hint più specifici derivano da hasMoreSpecificMatches
+- preview non ricalcola matching decisionale
+- confirm guard blocca solo ambiguità non risolte
+
+Limite:
+
+non esiste ancora un hint engine globale separato.
+
 COMPORTAMENTO MATCHING IN PREVIEW
 
-La preview NON dovrebbe essere fonte primaria di matching.
+La preview NON è fonte primaria di matching.
 
-Attualmente:
+Dopo Match Engine Unification First Controlled Level:
 
-✔ utilizza risultati di matching
-✔ evidenzia selezioni attive
-✔ mostra ambiguità tramite hint
+✔ utilizza project_state/entity_state  
+✔ evidenzia matches da match state  
+✔ mostra ambiguità tramite isAmbiguous  
+✔ mostra match più specifici tramite hasMoreSpecificMatches  
+✔ non usa detection locale come fonte decisionale  
+✔ resta supporto visuale alla scelta utente  
 
-Ma:
-
-⚠ utilizza risultati da sistemi multipli non unificati
-⚠ può mostrare hint non perfettamente coerenti con select
-⚠ dipende da project_state/entity_state e logiche locali
+---
 
 Regole generali:
 
-match = 1 → evidenziazione attiva
-match > 1 → hint ambiguità
-match = 0 → nessuna evidenza
+count = 1
+→ singleMatch
+→ select_project/select_entity valorizzati
+→ preview evidenzia match
+→ conferma abilitata
 
-Integrazione ancora problematica:
+count > 1
+→ isAmbiguous
+→ select vuota
+→ hint rosso
+→ conferma disabilitata finché l’utente non sceglie
 
-matching ranking / input_raw
-matching select / deterministico
-detection locale preview
+count = 0
+→ nessuna evidenza obbligatoria
+→ conferma non bloccata
 
-→ possibile divergenza risultati
+hasMoreSpecificMatches = true
+→ hint informativo non bloccante
+
+---
+
+Esempi:
+
+villa 2 mario
+→ project Villa 2
+→ entity Mario
+→ evidenza project/entity
+→ conferma abilitata
+
+mario
+→ entity Mario
+→ hint Esistono entità più specifiche
+→ conferma abilitata
+
+villa
+→ project Villa
+→ hint Esistono progetti più specifici
+→ conferma abilitata
+
+alfie mario rossi
+→ ambiguità reale entity
+→ hint Più entità trovate
+→ conferma disabilitata
+
+---
+
+Nota:
+
+la preview rappresenta il match state,
+ma non salva direttamente project/entity.
+
+Il salvataggio avviene tramite:
+
+select_project.value
+select_entity.value
 
 RELAZIONE CON PARSING
 
@@ -743,7 +903,7 @@ Quindi:
 ✔ la preview è più coerente nei dati principali
 ✘ ma non è ancora pura rappresentazione
 
-RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION
+RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION / MATCH ENGINE
 
 Il Normalization Layer Base ha consolidato:
 
@@ -776,6 +936,18 @@ Type Classification Base ha poi introdotto:
 - scelta manuale utente preservata
 - type salvato tramite confirm flow
 
+Match Engine Unification First Controlled Level ha poi introdotto:
+
+- project_state / entity_state come fonte minima matching
+- select_project / select_entity alimentati da singleMatch
+- hint ambiguità alimentati da isAmbiguous
+- hint match più specifici alimentati da hasMoreSpecificMatches
+- highlight alimentato da matches
+- confirm guard basata su ambiguità non risolta
+- match state live in create flow
+- match state live in edit flow
+- bug €500 label preview risolto
+
 Implementato:
 
 ✔ 1500.5 → 1.500,50 €  
@@ -798,7 +970,15 @@ Implementato:
 ✔ 2h30 rendering → Tempo  
 ✔ Spesa / Incasso base tramite keyword controllate  
 ✔ euro senza direzione chiara → Evento  
-✔ type rappresentato in preview tramite select1.value  
+✔ type rappresentato in preview tramite select1.value 
+✔ villa 2 mario → project Villa 2 + entity Mario  
+✔ ristrutturazione bagno → Ristrutturazione Bagno  
+✔ mario → Mario + hint entità più specifiche  
+✔ villa → Villa + hint progetti più specifici  
+✔ alfie mario rossi → ambiguità reale entity  
+✔ €500 → 500,00 € senza duplicazione in label  
+✔ highlight project/entity alimentato da matches  
+✔ hint matching alimentati da project_state/entity_state   
 
 Esempi validati:
 
@@ -876,6 +1056,36 @@ La preview resta visuale.
 
 Il type viene salvato dal confirm flow leggendo select1.value.
 
+Match Engine Unification — esempi validati:
+
+villa 2 mario
+→ preview evidenzia Villa 2 e Mario
+→ Conferma abilitata
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ project ASPRI
+→ entity ambigua
+→ hint Più entità trovate
+→ Conferma disabilitata finché non viene scelta entità
+
+18 min ristrutturazione bagno
+→ project Ristrutturazione Bagno
+→ type Tempo
+→ Conferma abilitata
+
+mario
+→ entity Mario
+→ hint Esistono entità più specifiche
+→ Conferma abilitata
+
+villa
+→ project Villa
+→ hint Esistono progetti più specifici
+→ Conferma abilitata
+
+€500 acconto alfie mario rossi
+→ 500,00 € • acconto alfie mario rossi
+
 RELAZIONE CON INSERT / UPDATE
 
 Dati salvati:
@@ -892,6 +1102,8 @@ Fonti dati salvate:
 
 ✔ ui_state.parsed per amount/unit/event_date  
 ✔ select1.value per type  
+✔ select_project.value per project_id  
+✔ select_entity.value per entity_id  
 
 button_input_confirm:
 
@@ -907,6 +1119,9 @@ Relazione:
 ✔ dati persistiti sono coerenti con parser controllato
 ✔ durate certe persistite come amount in minuti e unit = minuti
 ✔ type persistito in events.type
+✔ project_id/entity_id persistiti solo tramite select_project/select_entity  
+✔ preview non è fonte di salvataggio project/entity  
+✔ match state influenza select/hint/confirm, non scrive direttamente DB  
 ✘ label NON persistita
 ✘ preview applica ancora trasformazioni visive aggiuntive
 
@@ -947,22 +1162,30 @@ VINCOLI ATTUALI (REALI)
 ✔ preview legge ui_state.parsed per amount/unit/event_date
 ✔ preview legge select1.value per type
 ✔ preview non salva direttamente type
+✔ preview legge project_state/entity_state per matching  
+✔ preview mostra hint ambiguità da isAmbiguous  
+✔ preview mostra hint più specifici da hasMoreSpecificMatches  
+✔ preview evidenzia project/entity da matches  
+✔ preview non decide project/entity  
+
 
 MA:
 
 ✘ contiene logica duplicata
 ✘ contiene cleaning
 ✘ contiene costruzione label
-✘ contiene hint logic
-✘ contiene highlight logic
+✘ contiene hint logic embedded
+✘ contiene highlight logic embedded
 ✘ non è ancora view pura
 ✘ type display e hint sono ancora accoppiati alla preview/select
 
 ⚠ dipende da aggiornamenti multipli
-⚠ usa fonti non completamente orchestrate
+⚠ usa ancora fonti multiple
 ✔ allineata visualmente al Normalization Layer Base per amount/unit/date
 ✔ allineata visualmente alla Duration Normalization Base per ore/minuti
 ✔ mostra durata normalizzata senza modificare il dato salvato
+✔ matching project/entity allineato a primo livello  
+✔ hint matching project/entity state-driven  
 
 ⚠ non ancora separata come view pura
 
@@ -975,10 +1198,10 @@ parsing controllato
 preview
 label cleaning
 HINT NON CENTRALIZZATI
-parte derivata da matching
-parte da logica locale
+hint matching project/entity ora derivati da match state
 hint durata normalizzata ancora locale alla preview
 hint durata ambigua ancora locale alla preview
+hint type/economico ancora locale alla preview/select1
 NON È VIEW PURA
 contiene trasformazioni dati
 contiene label logic
@@ -990,7 +1213,8 @@ parsed
 raw_input
 select_project/select_entity
 select1.value
-matching state
+match state project/entity
+project_state/entity_state
 liste project/entity
 type select
 duration hint locale
@@ -1056,6 +1280,10 @@ PROPRIETÀ DEL SISTEMA
 ✔ usa select1.value come fonte runtime type
 ✔ type persistito dal confirm flow
 ✔ non modifica DB
+✔ usa project_state/entity_state come fonte matching project/entity  
+✔ preview hint matching allineati a isAmbiguous  
+✔ preview highlight alimentato da matches  
+✔ confirm guard coerente con ambiguità non risolta  
 
 MA:
 
@@ -1064,7 +1292,7 @@ MA:
 ⚠ non allineato al modello ideale di view pura
 ⚠ accoppiamento alto
 ⚠ difficile evoluzione
-⚠ ancora non completamente coerente globalmente
+⚠ ancora non completamente separato architetturalmente
 ⚠ non ancora pronto per output/KPI
 ⚠ type base non sufficiente da solo per report avanzati
 
@@ -1088,36 +1316,47 @@ STATO ATTUALE
 ✔ select1 allineato a ui_state.parsed.unit
 ✔ type rappresentato tramite select1.value
 ✔ type persistito da insert/update tramite confirm flow
+✔ Match Engine Unification First Controlled Level completato  
+✔ preview legge project_state/entity_state per matching  
+✔ hint ambiguità matching allineati a isAmbiguous  
+✔ hint match più specifici introdotti  
+✔ highlight project/entity alimentato da matches  
+✔ detection locale preview non più fonte decisionale matching  
+✔ bug €500 label preview risolto  
 
 ⚠ preview ancora ibrida
-⚠ hint non completamente state-driven
-⚠ matching non unificato
+✔ hint matching project/entity state-driven  
+✔ matching project/entity unificato a primo livello controllato  
+⚠ hint duration/type ancora embedded nella preview  
+⚠ match engine avanzato separato non implementato  
 ⚠ architettura non separata
 ⚠ preview non ancora view pura
 
 OBIETTIVO FUTURO IMMEDIATO
 
-Nessun ulteriore nodo preview attivo.
+Nessun ulteriore nodo preview attivo immediato.
 
-Il prossimo nodo logico di roadmap è:
+Match Engine Unification First Controlled Level è completato.
 
-MATCH ENGINE UNIFICATION
+La parte critica di allineamento preview/hint/highlight per project/entity
+è stata risolta a primo livello.
 
-La preview potrà essere aggiornata solo come conseguenza controllata
-di eventuali regole di matching/select/hint,
-senza refactor globale.
+Restano futuri, ma non immediati:
+
+- PREVIEW MODEL / HINT STATE CONSOLIDATION
+- separazione preview come view pura
+- estrazione label cleaning in modulo dedicato
+- hint duration/type separati da preview
+- preview model unico
+- type/economic direction advanced
 
 Preview Alignment Base è completato.
 Duration Normalization Base è completata.
 Type Classification Base è completata.
+Match Engine Unification First Controlled Level è completato.
 
-Restano futuri, ma non attivi:
-
-- separazione preview come view pura
-- estrazione label cleaning in modulo dedicato
-- hint completamente state-driven
-- unificazione matching preview/select/state
-- type/economic direction advanced
+Il prossimo nodo operativo deve essere definito in Roadmap,
+preferibilmente tra micro-nodi UX/helper o cleanup.
 
 OBIETTIVO FUTURO NON ATTIVO
 
@@ -1140,6 +1379,7 @@ parsed data
 type già determinato
 selected project/entity
 hint state già calcolato
+match state già calcolato
 
 Output target:
 
@@ -1154,6 +1394,14 @@ Nota:
 questo obiettivo resta non attivo.
 Preview Alignment Base ha migliorato la rappresentazione visuale,
 ma non ha separato architetturalmente la preview.
+
+Nota:
+
+la preview target futura resta una funzione pura di rendering,
+ma questo non è stato implementato.
+
+Il matching project/entity è stato però allineato
+sufficientemente da non essere più un blocco preview immediato.
 
 CHANGELOG
 
@@ -1231,3 +1479,23 @@ confermato che preview resta layer ibrido non ancora view pura
 confermato che preview non modifica DB/save flow
 confermato che type base non abilita ancora KPI/output
 aggiornato prossimo nodo logico: MATCH ENGINE UNIFICATION
+
+v07 — 2026-05-02
+
+completamento MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL
+documentata relazione preview / project_state / entity_state
+documentato che la preview legge matches da match state
+documentato che hint ambiguità derivano da isAmbiguous
+documentato che hint match più specifici derivano da hasMoreSpecificMatches
+documentato che highlight project/entity deriva da matches
+documentato che detection locale preview non è più fonte decisionale matching
+documentato che preview non salva project/entity
+documentato salvataggio project_id/entity_id tramite select_project/select_entity
+documentato confirm guard da ambiguità non risolta
+documentati esempi villa 2 mario, ristrutturazione bagno, mario, villa, alfie mario rossi
+documentato fix bug €500 nella label preview
+confermato che preview resta layer ibrido non ancora view pura
+confermato che hint duration/type restano embedded nella preview
+confermato che non esiste ancora preview model unico
+confermato che nessun output/KPI è stato anticipato
+aggiornato prossimo nodo: da definire in Roadmap

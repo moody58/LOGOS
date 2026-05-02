@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v04
+# 00_PROJECT_Gap_Register_v05
 
-DATA: 2026-05-01
+DATA: 2026-05-02
 
 ------------------------------------------------
 SCOPO
@@ -28,6 +28,7 @@ Ogni gap può essere:
 - VALIDATO
 - INTEGRATO PARZIALE
 - INTEGRATO
+- INTEGRATO BASE
 - SCARTATO
 - NON PRIORITARIO
 
@@ -97,7 +98,7 @@ Dati ancora parzialmente confrontabili perché restano non implementati:
 type classification avanzata
 economic direction advanced
 amount firmato / direction field
-normalizzazione project/entity
+match engine avanzato project/entity
 giorni/settimane come durata automatica
 retro-normalizzazione storico
 
@@ -107,9 +108,10 @@ Mantenere il gap aperto come INTEGRATO PARZIALE.
 
 Prossimi sotto-gap:
 
-Match Engine Unification
+Match Engine Evolution Advanced
 Economic Direction Advanced
 Duration Advanced — giorni/settimane
+Project / Entity Create Suggestion
 
 ID: G02
 
@@ -138,22 +140,25 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati tre blocchi engine base:
+Sono stati avviati e completati quattro blocchi engine base:
 
 - Normalization Layer Base
 - Duration Normalization Base
 - Type Classification Base
+- Match Engine Unification First Controlled Level
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
 Attualmente:
 
-parsing, normalization base, duration normalization e type classification base sono in Retool
+parsing, normalization base, duration normalization, type classification base e match state project/entity sono in Retool
 durate certe ore/minuti sono normalizzate in minuti
 type viene salvato in events.type
 Spesa / Incasso / Tempo / Evento sono persistiti a livello base
-matching resta distribuito
-preview contiene logiche proprie
+project_state / entity_state sono fonte minima matching project/entity
+select_project / select_entity leggono singleMatch
+matching project/entity è unificato a primo livello controllato
+preview contiene ancora logiche proprie
 processing resta manuale
 output non attivo
 
@@ -171,7 +176,10 @@ AZIONE:
 Non creare ancora un documento engine globale.
 Procedere per nodi minimi:
 
-Match Engine Unification
+Linting / State Helper Cleanup
+Edit Mode Cancel / Return to Events List
+Events List Search / Filter Bar
+Project / Entity Create Suggestion
 Data Structure / Entity Hierarchy
 Economic Direction Advanced
 Duration Advanced — giorni/settimane
@@ -179,43 +187,80 @@ Duration Advanced — giorni/settimane
 ID: G03
 
 NOME:
-Entity/Project Async Workflow
+Project / Entity Create Suggestion
 
 FONTE:
-Gap Analysis + Match Engine
+Gap Analysis + Match Engine + Match Engine Unification First Controlled Level
 
 STATO:
-IN OSSERVAZIONE
+VALIDATO — NODO FUTURO
 
 DESCRIZIONE:
 
-Creazione entità/progetti asincrona con pending state,
-quando l’input cita project/entity non ancora presenti.
+Creazione guidata di project/entity quando l’input cita un project/entity
+non ancora presente nel sistema.
+
+Il sistema dovrà poter proporre all’utente:
+
+- “Crea nuovo progetto?”
+- “Crea nuova entità?”
+
+solo quando non viene trovato un match affidabile.
 
 NOTE:
 
 Attualmente:
 
-solo selezione manuale
-nessuna creazione automatica
-nessun pending state
-nessuna gerarchia entity/project
-matching non unificato
+- matching project/entity unificato a primo livello controllato
+- project_state / entity_state calcolano matches / count / isAmbiguous / singleMatch
+- nessun match project/entity NON blocca il salvataggio
+- project_id/entity_id restano null se non selezionati
+- nessuna creazione automatica
+- nessun pending state
+- nessuna gerarchia entity/project
+- nessuna deduplicazione strutturale
+
+Decisione consolidata:
+
+nessun match → salvataggio consentito con project_id/entity_id null
+
+Questo mantiene input non bloccante
+e prepara un futuro nodo di creazione guidata.
 
 RISCHIO:
 
 Creare project/entity automaticamente può generare duplicati
 e peggiorare la qualità del dato.
 
+Serve quindi:
+
+- conferma esplicita utente
+- controllo duplicati
+- eventuale pending state
+- valutazione Data Structure / Entity Hierarchy
+- eventuale gestione alias
+
 AZIONE:
 
-Non prioritario ora.
+Non implementato nel nodo Match Engine Unification.
 
-Da rivalutare dopo:
+Da sviluppare come nodo futuro dedicato:
 
-Match Engine Unification
-Data Structure / Entity Hierarchy
-eventuale gestione duplicati
+PROJECT / ENTITY CREATE SUGGESTION
+
+Utile per:
+
+- input vocali
+- Siri
+- inserimenti rapidi
+- project/entity non ancora presenti
+
+Vincoli futuri:
+
+- nessuna creazione automatica silenziosa
+- creazione solo previa conferma utente
+- evitare duplicati
+- non modificare schema DB senza nodo dedicato
 
 ID: G04
 
@@ -348,7 +393,9 @@ sistema non ancora pronto per fonti multiple
 parsing base stabilizzato ma non completo
 duration normalization base completata
 type classification base completata
-matching ancora non unificato
+matching project/entity unificato a primo livello controllato
+creazione guidata project/entity non implementata
+input vocali/Siri non ancora pronti
 
 RISCHIO:
 
@@ -361,6 +408,7 @@ Non lavorare ora.
 Da rivalutare solo dopo:
 
 input system maturo
+Project / Entity Create Suggestion implementato o valutato
 engine base più completo
 output/reportistica almeno definita
 sicurezza API valutata
@@ -428,8 +476,9 @@ La preview resta comunque layer ibrido:
 RISCHIO RESIDUO:
 
 - preview non ancora view pura
-- hint non completamente state-driven
-- matching locale preview non unificato
+- hint duration/type ancora embedded nella preview
+- preview model unico non implementato
+- matching project/entity allineato a primo livello nello STEP 6.4
 
 AZIONE:
 
@@ -437,6 +486,18 @@ Gap integrato come Preview Alignment Base.
 
 Non aprire ulteriori nodi preview generici.
 Eventuali modifiche preview devono essere conseguenza controllata di nodi futuri specifici.
+
+Nota post Match Engine Unification:
+
+la parte critica di hint/highlight matching project/entity
+è stata allineata a project_state/entity_state.
+
+Non aprire “Hint / Preview State Alignment” come nodo immediato generico.
+Eventuale nodo futuro:
+
+PREVIEW MODEL / HINT STATE CONSOLIDATION
+
+solo se emerge un problema reale o se si decide un refactor preview dedicato.
 
 ID: G08
 
@@ -640,7 +701,8 @@ RISCHIO RESIDUO:
 - direction field non implementato
 - type non sufficiente da solo per KPI avanzati
 - eventi storici non retro-normalizzati
-- matching non unificato
+- match engine avanzato separato non implementato
+- data structure / entity relations non implementate
 
 AZIONE:
 
@@ -656,7 +718,7 @@ Tenere aperti solo sotto-gap futuri:
 
 Nodo operativo successivo consigliato:
 
-MATCH ENGINE UNIFICATION
+NEXT NODE DA DEFINIRE IN ROADMAP
 
 ID: G10
 
@@ -664,63 +726,132 @@ NOME:
 Match Engine Unification
 
 FONTE:
-Match Engine + Preview System + State
+Match Engine + Preview System + State + Checkpoint Match Engine Unification
 
 STATO:
-VALIDATO — PROSSIMO NODO CONSIGLIATO
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Unificazione dei sistemi di matching attualmente paralleli:
+Unificazione a primo livello controllato dei sistemi di matching project/entity.
 
-input_raw / ranking
-select / deterministico
-preview / detection
+Prima del nodo, il matching era distribuito tra:
+
+- project_state / entity_state
+- select_project / select_entity
+- preview / detection locale
+- hint locali
+- confirm guard
+
+Il nodo ha reso coerenti:
+
+- match state
+- select
+- hint ambiguità
+- highlight preview
+- confirm guard
+- create flow
+- edit flow
+
+STATO REALE:
+
+Il nodo MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL è completato.
+
+Implementato:
+
+- project_state come fonte minima matching project
+- entity_state come fonte minima matching entity
+- output matching:
+  - matches
+  - count
+  - hasMatch
+  - isAmbiguous
+  - singleMatch
+  - moreSpecificMatches
+  - hasMoreSpecificMatches
+- select_project legge project_state.data.singleMatch
+- select_entity legge entity_state.data.singleMatch
+- trigger_parse_debounced rilancia parse_input_controlled + project_state + entity_state
+- btn_edit rilancia parse_input_controlled + project_state + entity_state
+- match state live in create flow
+- match state live in edit flow
+- hint ambiguità da isAmbiguous
+- highlight preview da matches
+- detection locale preview non più fonte decisionale matching
+- confirm guard da ambiguità non risolta
+- ambiguità risolta manualmente non blocca salvataggio
+- nessun match non blocca salvataggio
+- priority match minimo implementato
+- hint informativo per match più specifici
+- bug €500 label preview risolto
+- linting project_state/entity_state ripuliti
+
+Esempi validati:
+
+villa 2 mario
+→ project Villa 2
+→ entity Mario
+→ conferma abilitata
+
+18 min ristrutturazione bagno
+→ project Ristrutturazione Bagno
+→ type Tempo
+→ conferma abilitata
+
+mario
+→ entity Mario
+→ hint entità più specifiche
+→ conferma abilitata
+
+villa
+→ project Villa
+→ hint progetti più specifici
+→ conferma abilitata
+
+alfie mario rossi
+→ ambiguità reale entity
+→ conferma disabilitata finché non viene scelta entità
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ project ASPRI
+→ entity ambigua
+→ conferma disabilitata finché non viene scelta entità
 
 NOTE:
 
-Attualmente:
+Il nodo non ha introdotto:
 
-matching base funzionante
-auto-select solo se match unico
-hint non completamente state-driven
-preview può divergere dai select
-priority match assente
+- fuzzy matching
+- alias
+- gerarchie
+- deduplicazione
+- creazione automatica project/entity
+- match engine separato come modulo autonomo
+- modifica schema DB
+- output/KPI
 
-RISCHIO:
+RISCHIO RESIDUO:
 
-Senza unificazione:
-
-hint incoerenti
-selezioni ambigue
-preview non affidabile
-output basato su project/entity fragile
+- match engine avanzato separato non implementato
+- alias non implementati
+- fuzzy matching non implementato
+- gerarchie project/entity non implementate
+- deduplicazione project/entity non implementata
+- creazione guidata project/entity non implementata
+- preview resta layer ibrido
+- hint duration/type ancora embedded nella preview
+- output/KPI non attivi
 
 AZIONE:
 
-Nodo operativo successivo consigliato:
+Non riaprire come Match Engine Unification base.
 
-MATCH ENGINE UNIFICATION
+Eventuali evoluzioni devono essere nodi dedicati:
 
-Motivo:
-
-dopo il completamento di Type Classification Base,
-la catena type è ora coerente:
-
-ui_state.parsed.unit
-→ select1.value
-→ payload.type
-→ events.type
-
-Resta invece non unificato il matching project/entity.
-
-Non anticipare:
-
-- dashboard/KPI
-- data structure avanzata
-- deduplicazione
-- gerarchie entity/project
-- output
+- ALIAS / SYNONYMS CONTROLLED MATCHING
+- DATA STRUCTURE / ENTITY HIERARCHY
+- PROJECT / ENTITY CREATE SUGGESTION
+- MATCH CONFIDENCE / RANKING ADVANCED
 
 ID: G11
 
@@ -754,6 +885,20 @@ entities senza UNIQUE name
 possibili duplicati
 integrità demandata a Retool
 
+Match Engine Unification First Controlled Level ha ridotto
+le ambiguità operative a livello runtime,
+ma non ha risolto la struttura dati.
+
+Restano aperti:
+
+- parent_project_id non operativo
+- parent_entity_id non operativo
+- entities senza UNIQUE name
+- possibili duplicati
+- alias assenti
+- deduplicazione assente
+- relazioni entity-project assenti
+
 RISCHIO:
 
 Senza struttura:
@@ -765,8 +910,10 @@ report futuri deboli
 
 AZIONE:
 
-Non prioritario immediato.
-Da valutare prima di engine avanzato o output.
+Non prioritario immediato rispetto ai micro-nodi UX/helper.
+
+Da valutare prima di output/KPI avanzati
+o prima di Project / Entity Create Suggestion strutturale.
 
 PRINCIPIO OPERATIVO
 
@@ -827,7 +974,8 @@ facendo apparire modificato un evento appena creato.
 
 AZIONE:
 
-Non prioritario rispetto a Type Classification Base.
+Nodo candidato dopo Match Engine Unification,
+soprattutto come micro-fix UX.
 
 Possibile micro-nodo futuro:
 
@@ -903,7 +1051,9 @@ Non prioritario ora.
 
 Da rivalutare dopo:
 
-- Match Engine Unification
+- Match Engine Unification First Controlled Level completato
+- eventuali micro-nodi UX/helper
+- valutazione Data Structure / Entity Hierarchy
 - prima definizione output/report
 - valutazione dati economici reali
 
@@ -914,24 +1064,226 @@ Possibili decisioni future:
 3. introdurre amount firmato
 4. derivare entrate/uscite solo in fase report
 
+ID: G14
+
+NOME:
+Linting / State Helper Cleanup
+
+FONTE:
+Match Engine Unification Session + Retool runtime
+
+STATO:
+IDENTIFICATO — MICRO-NODO CANDIDATO
+
+DESCRIZIONE:
+
+Restano 2 linting Retool non bloccanti:
+
+- edit_mode: 'value' is not defined
+- editing_event: 'value' is not defined
+
+Stato runtime:
+
+- edit_mode funziona
+- editing_event funziona
+- edit flow validato
+- create flow validato
+- nessun errore runtime rilevato
+- probabile origine: additionalScope { value: ... }
+
+NOTE:
+
+Durante Match Engine Unification sono stati invece risolti
+i linting project_state/entity_state.
+
+RISCHIO:
+
+Rumore tecnico futuro.
+Possibile confusione durante debug Retool.
+
+AZIONE:
+
+Micro-nodo candidato.
+
+Scope:
+
+- ripulire edit_mode / editing_event
+- eliminare riferimento ambiguo a value
+- preservare comportamento edit flow
+- nessuna modifica matching
+- nessuna modifica parser
+- nessuna modifica DB
+
+---
+
+ID: G15
+
+NOME:
+Edit Mode Cancel / Return to Events List
+
+FONTE:
+Match Engine Unification Session + osservazione UX
+
+STATO:
+IDENTIFICATO — MICRO-NODO CANDIDATO
+
+DESCRIZIONE:
+
+In modalità modifica evento manca un pulsante per annullare
+e tornare alla lista eventi.
+
+Attualmente:
+
+- edit flow funziona
+- btn_edit carica evento
+- match state viene rilanciato
+- update_event funziona
+- ma manca uscita esplicita da edit mode senza salvare
+
+RISCHIO:
+
+L’utente può restare nel flusso modifica senza chiara via di uscita.
+Possibile confusione tra inserimento nuovo e modifica evento.
+
+AZIONE:
+
+Micro-nodo candidato.
+
+Scope:
+
+- aggiungere controllo “Annulla modifica”
+- uscire da edit_mode
+- svuotare input_home/input_raw
+- pulire select_project/select_entity
+- ripristinare ui_state.parsed
+- tornare alla lista eventi o vista coerente
+- nessuna modifica engine
+- nessuna modifica DB
+
+---
+
+ID: G16
+
+NOME:
+Events List Search / Filter Bar
+
+FONTE:
+Richiesta utente + gestione lista eventi
+
+STATO:
+IDENTIFICATO — MICRO-NODO CANDIDATO
+
+DESCRIZIONE:
+
+Aggiungere una barra di ricerca nella lista eventi
+per facilitare ricerca e filtro degli eventi visualizzati.
+
+Motivo:
+
+con l’aumento degli eventi NEW,
+la lista diventa più difficile da gestire manualmente.
+
+Scope possibile:
+
+- ricerca testuale su raw_input / descrizione evento
+- eventuale filtro futuro per project/entity/type/status
+- nessuna modifica engine
+- nessuna modifica DB obbligatoria nella prima versione
+- nessuna alterazione insert/update
+
+RISCHIO:
+
+Basso, se implementato come filtro UI client-side o query controllata.
+Evitare però refactor lista eventi non necessario.
+
+AZIONE:
+
+Micro-nodo candidato post Match Engine Unification.
+
+ID: G17
+
+NOME:
+Preview Model / Hint State Consolidation
+
+FONTE:
+Preview System + Roadmap + Match Engine Unification
+
+STATO:
+IN OSSERVAZIONE — NON IMMEDIATO
+
+DESCRIZIONE:
+
+Consolidamento futuro della preview come modello più ordinato,
+eventualmente più vicino a una view pura.
+
+Dopo Match Engine Unification:
+
+- hint matching project/entity sono allineati a project_state/entity_state
+- highlight project/entity legge matches
+- detection locale preview non è più fonte decisionale matching
+
+Restano embedded nella preview:
+
+- label cleaning
+- hint duration normalization
+- hint durata ambigua
+- hint type / Spesa / Incasso
+- highlight rendering
+- formattazioni locali
+
+RISCHIO:
+
+Un refactor preview globale può introdurre regressioni
+in un layer UX già stabilizzato.
+
+AZIONE:
+
+Non immediato.
+
+Non aprire come “Hint / Preview State Alignment” generico.
+
+Eventuale nodo futuro solo se emerge un problema reale
+o se si decide un refactor dedicato:
+
+PREVIEW MODEL / HINT STATE CONSOLIDATION
+
+Vincoli:
+
+- nessun refactor globale senza nodo dedicato
+- preservare preview alignment
+- preservare duration visualization
+- preservare type hints
+- preservare match hints
+- nessuna modifica DB
+
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato:
+Ordine attuale consigliato dopo Match Engine Unification:
 
-G10 — Match Engine Unification
-G12 — Events List Label / Updated At Display
-G13 — Economic Direction Advanced
-G11 — Data Structure / Entity Hierarchy
-G08A — Duration Advanced / Giorni-Settimane
-G04 — Logging / Versioning
-G05 — Input Modes
-G06 — Multi-source Input
+MICRO-NODI CANDIDATI:
+
+1. G14 — Linting / State Helper Cleanup
+2. G15 — Edit Mode Cancel / Return to Events List
+3. G16 — Events List Search / Filter Bar
+4. G12 — Events List Label / Updated At Display
+
+NODI STRUTTURALI FUTURI:
+
+5. G03 — Project / Entity Create Suggestion
+6. G11 — Data Structure / Entity Hierarchy
+7. G13 — Economic Direction Advanced
+8. G08A — Duration Advanced / Giorni-Settimane
+9. G17 — Preview Model / Hint State Consolidation
+10. G04 — Logging / Versioning
+11. G05 — Input Modes
+12. G06 — Multi-source Input
 
 Gap già integrati:
 
 G07 — Preview Alignment
 G08 — Duration Normalization Base
 G09 — Type Classification Base
+G10 — Match Engine Unification First Controlled Level
 
 Nota:
 
@@ -940,7 +1292,6 @@ l’ordine deve sempre essere verificato contro:
 00_PROJECT_State
 00_PROJECT_Roadmap
 checkpoint più recente
-GAP ARCHIVIATI / NON PRIORITARI
 
 Attualmente nessun gap è completamente scartato.
 
@@ -983,23 +1334,28 @@ aggiunto G12 Events List Label / Updated At Display
 aggiornato ordine consigliato gap/nodi
 allineamento con State v12 e Roadmap v06
 
-v04 — 2026-05-01
+v05 — 2026-05-02
 
-aggiornato G09 Type Classification Base a INTEGRATO BASE
-documentato select1 come componente UI Retool, non query
-documentata catena select1.value → payload.type → events.type
-documentato type persistito in DB
-documentati valori type: Evento, Tempo, Spesa, Incasso
-documentato parsed.unit = minuti → Tempo
-documentate keyword controllate per Spesa / Incasso
-documentato euro senza direzione chiara → Evento
-documentato override manuale utente
-documentato reset/stale value verificato
-aggiornato G10 Match Engine Unification come prossimo nodo consigliato
-aggiunto G13 Economic Direction Advanced
-aggiornato G01 Normalization Model
-aggiornato G02 Processor / Engine Flow
+aggiornato G10 Match Engine Unification a INTEGRATO BASE
+documentato completamento Match Engine Unification First Controlled Level
+documentato project_state/entity_state come fonte minima matching
+documentato singleMatch / isAmbiguous / moreSpecificMatches
+documentato select_project/select_entity allineati al match state
+documentato confirm guard su ambiguità non risolta
+documentato match state live in create/edit flow
+documentato priority match minimo
+documentato hint match più specifici
+documentato bug €500 preview risolto
+aggiornato G03 come Project / Entity Create Suggestion
+aggiunto G14 Linting / State Helper Cleanup
+aggiunto G15 Edit Mode Cancel / Return to Events List
+aggiunto G16 Events List Search / Filter Bar
+aggiunto G17 Preview Model / Hint State Consolidation
+aggiornato G07 Preview Alignment con nota post Match Engine
+aggiornato G11 Data Structure / Entity Hierarchy
+aggiornato G12 Events List Label / Updated At Display
+aggiornato G13 Economic Direction Advanced
 aggiornato G06 Multi-source Input
-aggiornato G08 Duration Normalization
 aggiornato ordine consigliato gap/nodi
-allineamento con State v13 e Roadmap v07
+confermato output/KPI non attivi
+allineamento con State v14 e Roadmap v08

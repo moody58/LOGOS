@@ -1,28 +1,42 @@
-# 02_LOGOS_Match_Engine_v04
+# 02_LOGOS_Match_Engine_v05
 
-DATA: 2026-04-30
+DATA: 2026-05-02
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
 ------------------------------------------------
 
 C (Completezza): 10/10  
-- inclusa logica reale aggiornata  
-- coperti project + entity + hint + auto-select  
-- allineato a runtime reale  
-- esplicitato rapporto con Normalization Layer Base  
-- dichiarato che il matching NON è stato modificato nel nodo engine base  
+- inclusa logica reale aggiornata post STEP 6.4  
+- project_state / entity_state documentati come fonte minima matching  
+- coperti project + entity + hint + auto-select + confirm guard  
+- documentato singleMatch  
+- documentato isAmbiguous  
+- documentato moreSpecificMatches  
+- documentato priority match minimo  
+- documentato create flow con match state live  
+- documentato edit flow con match state live  
+- documentato rapporto con preview / highlight / hint  
+- esplicitati limiti residui  
 
-Q (Qualità): 8/10  
-- logica definita ma non unificata  
-- presenza di più sistemi di matching  
-- incoerenza tra select / preview / ranking ancora aperta  
-- separazione chiara tra normalizzazione dati e matching  
+Q (Qualità): 9.5/10  
+- logica matching ora più coerente  
+- ridotta duplicazione tra state / select / preview / confirm  
+- preview non è più fonte decisionale matching  
+- controllo manuale utente preservato  
+- nessuna automazione decisionale aggressiva  
+- nessuna anticipazione data structure / KPI / output  
+- limiti futuri chiari  
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
-- nessuna dipendenza mancante  
-- nessuna modifica operativa implicita richiesta  
+- allineato a implementazione Retool reale  
+- create flow validato  
+- edit flow validato  
+- DB invariato  
+- parser invariato  
+- type classification invariata  
+- duration normalization invariata 
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -118,55 +132,95 @@ input_home
 → ui_state.parsed  
 → project_state / entity_state  
 → select_project / select_entity  
-→ preview  
+→ preview / hint / highlight  
 → button_input_confirm  
 
 ---
 
+Dopo lo STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL:
+
+- amount / unit / event_date restano gestiti da ui_state.parsed
+- type resta gestito da select1.value
+- project/entity matching è calcolato da project_state / entity_state
+- select_project / select_entity leggono singleMatch
+- preview hint legge count / isAmbiguous
+- preview highlight legge matches
+- confirm guard legge ambiguità non risolta
+
 Nota:
 
-Dopo il completamento del Normalization Layer Base:
+Il matching lavora sul testo input_raw,
+non sui valori numerici normalizzati.
 
-- amount/unit/event_date sono più stabili
-- il save flow usa ui_state.parsed
-- il bottone confirm non esegue più parsing duplicato
-
-MA:
-
-- il matching non è stato modificato
-- la logica project/entity resta distribuita
-- la preview può ancora avere detection proprie
+ui_state.parsed NON è stato esteso a project/entity.
+Il matching resta un layer separato.
 
 ------------------------------------------------
 PIPELINE MATCH
 ------------------------------------------------
 
+Pipeline attuale post STEP 6.4:
+
 input_raw  
-→ sistemi di matching paralleli  
-→ calcolo matches  
-→ suggestion / select / preview  
-→ auto-select solo in select layer  
+→ project_state / entity_state  
+→ matches / count / isAmbiguous / singleMatch  
+→ select_project / select_entity  
+→ preview hint / highlight  
+→ button_input_confirm guard  
+→ project_id / entity_id salvati solo se selezionati  
 
 ---
 
-Fonte osservabile principale:
+Fonte minima osservabile:
 
-project_state.data?.matches  
-entity_state.data?.matches  
+project_state  
+entity_state  
 
 ---
 
-Il matching lavora sul testo input,
-non sui valori numerici normalizzati.
+Output standard di project_state / entity_state:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
+
+---
+
+Principio:
+
+project_state / entity_state calcolano il matching.
+
+select_project / select_entity NON ricalcolano più il matching.
+Leggono singleMatch.
+
+preview NON usa più detection locale come fonte decisionale.
+Legge matches / count / isAmbiguous.
+
+button_input_confirm NON valuta più direttamente array matches in modo fragile.
+Legge ambiguità non risolta.
 
 ------------------------------------------------
-NORMALIZZAZIONE
+NORMALIZZAZIONE MATCHING
 ------------------------------------------------
 
-La normalizzazione testuale del matching è ancora gestita
-implicitamente e in modo NON uniforme nei diversi sistemi.
+La normalizzazione testuale del matching è ora concentrata nei due state:
 
-Non esiste ancora un layer esplicito e unico di match normalization.
+- project_state
+- entity_state
+
+Operazioni comuni:
+
+- lowercase
+- trim
+- compressione spazi
+- split parole significative
+- full name match
+- confronto su parole
+- riduzione match generici coperti da match più specifici
 
 ---
 
@@ -177,245 +231,512 @@ NORMALIZATION LAYER BASE:
 - amount
 - unit
 - event_date
+- duration normalization
+
+Fonte:
+parse_input_controlled → ui_state.parsed
 
 MATCH NORMALIZATION:
 
 - testi project/entity
-- token
 - nomi
+- token
 - ambiguità
-- ranking
+- singleMatch
+- moreSpecificMatches
+
+Fonte:
+input_raw → project_state / entity_state
 
 ---
 
-Stato attuale:
+Regola:
 
-✔ normalizzazione amount/unit base completata  
-✘ normalizzazione matching non completata  
-✘ match engine unico non implementato  
+il matching può leggere input_raw perché project/entity sono contenuti nel testo libero.
+
+input_raw NON torna fonte di verità per amount/unit/event_date.
+
+ui_state.parsed resta fonte unica per i dati parsati strutturati.
 
 ------------------------------------------------
 PROJECT MATCH ATTUALE
 ------------------------------------------------
 
-⚠ esistono più logiche:
-
-- matching deterministico nei select
-- matching/ranking legato a input_raw
-- matching/detection in preview
-
-→ non unificate
-
----
-
-COMPORTAMENTO REALE:
-
-matching basato su confronto testuale tra input_raw e projects_list.
-
----
-
-OUTPUT:
-
-- project_matches
-
 Fonte:
 
-project_state.data?.matches
+project_state
+
+Input:
+
+- input_raw.value
+- projects_list.data
+
+Output:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
 
 ---
 
 LOGICA:
 
-match = 1  
-→ auto-select  
+1. Normalizzazione testo
 
-match > 1  
-→ ambiguità  
-→ nessuna selezione  
+- lowercase
+- trim
+- compressione spazi
 
-match = 0  
-→ nessun suggerimento
+2. Match base
+
+- confronto su parole significative del nome progetto
+- parole del progetto devono essere presenti nel testo input
+- gestione numeri nei nomi progetto
+
+3. Gestione numeri
+
+Se il progetto contiene numeri,
+gli stessi numeri devono essere presenti nell’input.
+
+Esempio:
+
+Villa 2
+→ richiede presenza di 2 nell’input
+
+Questo evita che:
+
+villa
+→ selezioni Villa 2
+
+ma consente:
+
+villa 2
+→ selezioni Villa 2
+
+4. Full name match
+
+Se il nome completo del progetto è presente nel testo,
+viene considerato match forte.
+
+5. Priority match minimo
+
+Se esistono match generici e match più specifici,
+vengono rimossi i generici coperti dallo specifico.
+
+Esempi:
+
+Ristrutturazione + Ristrutturazione Bagno
+→ Ristrutturazione Bagno
+
+Casa + Casa Mare
+→ Casa Mare
+
+Villa + Villa 2
+→ Villa 2
+
+6. More specific hint
+
+Se il match esatto breve è valido,
+ma esistono progetti più specifici,
+il sistema mantiene il match e mostra hint informativo non bloccante.
+
+Esempio:
+
+villa
+→ select_project = Villa
+→ hint: Esistono progetti più specifici
+
+---
+
+COMPORTAMENTO:
+
+count = 1  
+→ singleMatch valorizzato  
+→ select_project auto-valorizzato  
+
+count > 1  
+→ isAmbiguous = true  
+→ select_project vuoto  
+→ hint rosso se non risolto  
+→ confirm disabilitato finché l’utente non sceglie  
+
+count = 0  
+→ nessun suggerimento  
+→ select_project vuoto  
+→ confirm non bloccato  
 
 ---
 
 NOTE:
 
-- project_id viene salvato solo se selezionato
+- project_id viene salvato solo da select_project.value
 - il sistema non crea project automaticamente
-- il sistema non decide project in caso di ambiguità
+- il sistema non decide project in caso di ambiguità non risolta
+- la scelta manuale utente prevale
 
 ------------------------------------------------
 ENTITY MATCH ATTUALE
 ------------------------------------------------
 
-⚠ logica non unificata con project match e preview
-
-→ possibili incoerenze nei risultati
-
----
-
-COMPORTAMENTO REALE:
-
-matching basato su confronto testuale tra input_raw e entities_list.
-
----
-
-OUTPUT:
-
-- entity_matches
-
 Fonte:
 
-entity_state.data?.matches
+entity_state
+
+Input:
+
+- input_raw.value
+- entities_list.data
+
+Output:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
 
 ---
 
 LOGICA:
 
-match = 1  
-→ auto-select  
+1. Normalizzazione testo
 
-match > 1  
-→ ambiguità  
-→ nessuna selezione  
+- lowercase
+- trim
+- compressione spazi
 
-match = 0  
-→ nessun suggerimento
+2. Match base
+
+- confronto su parole significative del nome entità
+- parole dell’entità devono essere presenti nel testo input
+
+3. Full name match
+
+Se il nome completo dell’entità è presente nel testo,
+viene considerato match forte.
+
+4. Priority match minimo
+
+Se esistono match generici e match più specifici,
+vengono rimossi i generici coperti dallo specifico.
+
+Esempi:
+
+Marco + Marco Rossi
+→ Marco Rossi
+
+Mario + Mario Rossi
+→ Mario Rossi
+
+Mario Rossi + Mario Rossi Alfredo
+→ Mario Rossi Alfredo, quando il nome completo è presente
+
+5. More specific hint
+
+Se il match esatto breve è valido,
+ma esistono entità più specifiche,
+il sistema mantiene il match e mostra hint informativo non bloccante.
+
+Esempi:
+
+mario
+→ select_entity = Mario
+→ hint: Esistono entità più specifiche
+
+mario rossi
+→ select_entity = Mario Rossi
+→ hint: Esistono entità più specifiche se esiste Mario Rossi Alfredo
+
+mario rossi alfredo
+→ select_entity = Mario Rossi Alfredo
+→ nessun hint più specifico
+
+---
+
+COMPORTAMENTO:
+
+count = 1  
+→ singleMatch valorizzato  
+→ select_entity auto-valorizzato  
+
+count > 1  
+→ isAmbiguous = true  
+→ select_entity vuoto  
+→ hint rosso se non risolto  
+→ confirm disabilitato finché l’utente non sceglie  
+
+count = 0  
+→ nessun suggerimento  
+→ select_entity vuoto  
+→ confirm non bloccato  
 
 ---
 
 NOTE:
 
-- entity_id viene salvato solo se selezionato
+- entity_id viene salvato solo da select_entity.value
 - il sistema non crea entity automaticamente
-- la presenza di duplicati entity può generare ambiguità
-- non esiste gerarchia entity attiva
+- il sistema non decide entity in caso di ambiguità non risolta
+- la scelta manuale utente prevale
+- la presenza di duplicati o entità simili resta un limite strutturale
 
 ------------------------------------------------
 AUTO-SELECT LOGIC
 ------------------------------------------------
 
-Auto-select SOLO se:
+Auto-select SOLO tramite:
 
-- match = 1
-- campo vuoto
+project_state.data.singleMatch  
+entity_state.data.singleMatch  
+
+---
+
+select_project:
+
+legge project_state.data.singleMatch
+
+Se singleMatch esiste:
+→ select_project = singleMatch.id
+
+Altrimenti:
+→ select_project = null
+
+---
+
+select_entity:
+
+legge entity_state.data.singleMatch
+
+Se singleMatch esiste:
+→ select_entity = singleMatch.id
+
+Altrimenti:
+→ select_entity = null
 
 ---
 
 NON auto-select se:
 
-- ambiguità
-- valore già presente
-- match multipli
-- input insufficiente
+- isAmbiguous = true
+- count > 1
+- nessun match
+- valore manuale già scelto dall’utente in caso di ambiguità risolta
 
 ---
 
-⚠ auto-select basato solo su uno dei sistemi di matching,
-principalmente select layer.
+Regola:
 
-Conseguenza:
-
-può non essere sempre coerente con ciò che la preview evidenzia o suggerisce.
+il match engine suggerisce.
+La select è la fonte finale salvabile.
+L’utente mantiene controllo.
 
 ------------------------------------------------
 GESTIONE AMBIGUITÀ
 ------------------------------------------------
 
-Se più match:
+Ambiguità calcolata da:
 
-- mostrare hint:
-  "Più entità trovate" / "Più progetti trovati"
-
-- NON selezionare automaticamente
+project_state.data.isAmbiguous  
+entity_state.data.isAmbiguous  
 
 ---
 
-Obiettivo:
+CASO 1 — Ambiguità non risolta
 
-evitare errori silenziosi.
+Condizione:
+
+project_state.isAmbiguous = true
+e select_project vuoto
+
+oppure:
+
+entity_state.isAmbiguous = true
+e select_entity vuoto
+
+Comportamento:
+
+- mostra hint rosso
+- non auto-seleziona
+- button_input_confirm disabilitato
 
 ---
 
-Effetto sul confirm:
+CASO 2 — Ambiguità risolta manualmente
 
-button_input_confirm viene disabilitato se:
+Condizione:
 
-- entity_state.data?.matches > 1
-- project_state.data?.matches > 1
+project_state.isAmbiguous = true
+ma select_project valorizzato manualmente
+
+oppure:
+
+entity_state.isAmbiguous = true
+ma select_entity valorizzato manualmente
+
+Comportamento:
+
+- hint rosso rimosso
+- button_input_confirm abilitato
+- valore scelto dall’utente viene salvato
 
 ---
 
-Nota:
+CASO 3 — Nessun match
 
-questa regola protegge il salvataggio da ambiguità project/entity,
-ma non risolve l’incoerenza tra i sistemi di matching.
+Condizione:
+
+count = 0
+
+Comportamento:
+
+- nessun hint ambiguità
+- select vuota
+- confirm non bloccato
+
+Motivo:
+
+LOGOS deve restare non bloccante.
+La creazione guidata project/entity sarà nodo futuro dedicato.
+
+---
+
+Confirm guard finale:
+
+Conferma disabilitata se:
+
+- input vuoto
+- project ambiguo e select_project vuoto
+- entity ambigua e select_entity vuoto
+
+Conferma abilitata se:
+
+- match univoco
+- nessun match
+- ambiguità risolta manualmente
 
 ------------------------------------------------
 HINT SYSTEM
 ------------------------------------------------
 
-Basato su stato derivato, non ancora completamente unificato.
+Per il matching project/entity,
+gli hint sono ora alimentati da project_state / entity_state.
 
 ---
 
-Condizioni principali:
+HINT AMBIGUITÀ:
 
-entity_matches > 1  
-→ "Seleziona entità"
+entity_state.isAmbiguous = true
+e select_entity vuoto
+→ "Più entità trovate"
 
-project_matches > 1  
-→ "Seleziona progetto"
+project_state.isAmbiguous = true
+e select_project vuoto
+→ "Più progetti trovati"
+
+---
+
+HINT MATCH PIÙ SPECIFICI:
+
+entity_state.hasMoreSpecificMatches = true
+e singleMatch selezionato
+→ "Esistono entità più specifiche"
+
+project_state.hasMoreSpecificMatches = true
+e singleMatch selezionato
+→ "Esistono progetti più specifici"
 
 ---
 
 Caratteristiche:
 
-- non invasivo
-- derivato da stato osservabile
+- hint ambiguità = bloccante finché non risolto
+- hint match più specifici = informativo non bloccante
 - nessuna inferenza automatica definitiva
+- controllo utente preservato
 
 ---
 
-⚠ utilizzo di detection parallela nella preview  
-⚠ non sempre coerente con select  
-⚠ hint non ancora completamente state-driven  
-⚠ hint system non ancora alimentato da un match engine unico  
+Nota:
+
+gli hint matching sono ora più state-driven.
+
+Restano embedded nella preview altri hint:
+
+- type / Spesa / Incasso
+- durata normalizzata
+- durata ambigua
+
+Questi non sono stati separati in un hint engine globale.
 
 ------------------------------------------------
 RELAZIONE CON PREVIEW
 ------------------------------------------------
 
-La preview utilizza risultati del matching per:
+La preview utilizza project_state / entity_state per:
 
+- mostrare hint ambiguità
+- mostrare hint match più specifici
 - evidenziare project/entity
-- mostrare hint
-- aiutare l’utente nella scelta
+- supportare la scelta utente
 
 ---
 
-MA:
+Dopo STEP 6.4:
 
-la preview contiene ancora logiche proprie:
+la preview NON usa più detection locale project/entity
+come fonte decisionale matching.
 
-- detection locale
-- highlight
-- hint logic
+Prima:
+
+preview calcolava detectedProjects / detectedEntities
+con logica token-based locale.
+
+Dopo:
+
+preview legge:
+
+- project_state.data.matches
+- entity_state.data.matches
+- project_state.data.count
+- entity_state.data.count
+- project_state.data.isAmbiguous
+- entity_state.data.isAmbiguous
+- project_state.data.hasMoreSpecificMatches
+- entity_state.data.hasMoreSpecificMatches
+
+---
+
+Highlight:
+
+- project evidenziati da project_state.matches
+- entity evidenziate da entity_state.matches
+- nome completo evidenziato quando presente
+
+Esempio:
+
+villa 2 mario
+→ villa 2 evidenziato come project
+→ mario evidenziato come entity
+
+---
+
+Nota:
+
+La preview resta layer ibrido:
+
+- rendering
 - label cleaning
+- hint logic
+- highlight
+- formattazione visuale
 
----
-
-Conseguenza:
-
-la preview può divergere dal comportamento dei select.
-
-Esempio strutturale:
-
-- select non auto-seleziona
-- preview evidenzia parzialmente
-- hint segnala ambiguità
-
-Questa divergenza non è stata risolta dal Normalization Layer Base.
+Ma non è più fonte autonoma decisionale per il matching.
 
 ------------------------------------------------
 RELAZIONE CON NORMALIZATION LAYER BASE
@@ -471,8 +792,10 @@ CASI NON SUPPORTATI
 - relazioni entity-project
 - match storico
 - ranking basato su frequenza
-- priority match
+- ranking avanzato
 - disambiguazione automatica
+- alias controllati
+- creazione guidata project/entity
 
 ---
 
@@ -485,127 +808,160 @@ e mantenere controllo utente.
 LIMITI ATTUALI
 ------------------------------------------------
 
-- nessuna gerarchia entity
-- nessun ranking avanzato unificato
-- duplicazione logiche matching
-- incoerenza tra select / preview / ranking
-- assenza priority match
-- nessuna disambiguazione automatica
-- hint non completamente state-driven
-- preview detection non unificata
-- match normalization non centralizzata
-
-------------------------------------------------
-PROBLEMA STRUTTURALE CRITICO
-------------------------------------------------
-
-Attualmente esistono 3 sistemi di matching indipendenti:
-
-1. INPUT_RAW MATCHING / RANKING
-
-- lavora sul testo input_raw
-- contribuisce a suggerimenti o stati osservabili
-- non è match engine unico
+- nessuna gerarchia entity/project
+- nessun alias system
+- nessun fuzzy matching
+- nessun ranking avanzato
+- nessuna deduplicazione entity/project
+- nessuna relazione entity-project
+- nessun match storico
+- nessuna creazione guidata project/entity
+- nessun pending state per nuovi project/entity
+- preview ancora layer ibrido
+- hint duration/type ancora embedded nella preview
+- match engine avanzato separato non implementato
 
 ---
+
+Risolto a primo livello:
+
+✔ duplicazione state / select ridotta  
+✔ preview detection non più fonte decisionale  
+✔ hint ambiguità matching allineati a state  
+✔ priority match minimo implementato  
+✔ confirm guard coerente con ambiguità non risolta  
+✔ create/edit flow allineati  
+
+------------------------------------------------
+PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
+------------------------------------------------
+
+Prima dello STEP 6.4 esistevano 3 sistemi di matching indipendenti:
+
+1. PROJECT_STATE / ENTITY_STATE
+
+- calcolo matches
+- non sempre live
+- non pienamente usato da select / preview / confirm
 
 2. SELECT MATCHING / DETERMINISTICO
 
-- alimenta select_project / select_entity
-- può auto-selezionare se match unico
-- blocca se ambiguità
-
----
+- ricalcolava matching nel Default value
+- poteva divergere da project_state/entity_state
 
 3. PREVIEW DETECTION / TOKEN-BASED
 
-- evidenzia project/entity
-- alimenta parte degli hint
-- contiene logiche locali
+- ricalcolava detection locale
+- alimentava highlight e parte degli hint
+- poteva divergere da select e state
 
 ---
 
-CONSEGUENZE:
+Conseguenze precedenti:
 
 - incoerenza risultati
 - duplicazione logica
 - difficoltà debugging
-- difficoltà evoluzione engine
 - hint non sempre coerenti
 - rischio divergenza tra ciò che si vede e ciò che viene selezionato
 
 ---
 
+STATO DOPO STEP 6.4:
+
+✔ project_state / entity_state sono fonte minima matching  
+✔ select_project / select_entity leggono singleMatch  
+✔ preview hint legge isAmbiguous  
+✔ preview highlight legge matches  
+✔ confirm guard legge ambiguità non risolta  
+✔ match state live in create flow  
+✔ match state live in edit flow  
+✔ priority match minimo implementato  
+
+---
+
 STATO:
 
-❗ NON RISOLTO  
-❗ NON TOCCATO NEL NODO NORMALIZATION LAYER BASE  
-❗ BLOCCANTE PER ENGINE AVANZATO E OUTPUT AFFIDABILE  
+RISOLTO A PRIMO LIVELLO CONTROLLATO
 
 ---
 
-TARGET:
+Non ancora risolto:
 
-unificazione in un unico Match Engine.
+- match engine avanzato separato
+- fuzzy matching
+- alias
+- deduplicazione
+- gerarchie
+- relazioni entity-project
+- creazione guidata project/entity
 
 ------------------------------------------------
-TARGET FUTURO — MATCH ENGINE UNIFICATION
+TARGET FUTURO — MATCH ENGINE EVOLUTION
 ------------------------------------------------
 
-Nodo futuro consigliato:
+Lo STEP 6.4 ha completato:
 
-MATCH ENGINE UNIFICATION
+MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL
 
----
-
-Obiettivo:
-
-rendere project/entity/hint/select/preview coerenti tramite una sola logica osservabile.
+Non riaprire come nodo base.
 
 ---
 
-Output atteso:
+Evoluzioni future possibili solo come nodi dedicati:
 
-- match list unica
-- priority match
-- stato ambiguità unico
-- hint derivati da state
-- select alimentate dallo stesso risultato
-- preview non decisionale
-- eliminazione detection parallela
+1. ALIAS / SYNONYMS CONTROLLED MATCHING
+
+- alias project/entity
+- abbreviazioni controllate
+- sinonimi validati
+- nessun fuzzy aggressivo
+
+2. DATA STRUCTURE / ENTITY HIERARCHY
+
+- gerarchie entity/project
+- parent_entity_id / parent_project_id
+- relazioni entity-project
+- deduplicazione
+
+3. PROJECT / ENTITY CREATE SUGGESTION
+
+- nessun match trovato
+- proposta di creazione guidata
+- creazione solo previa conferma utente
+- utile per input vocali / Siri
+- evitare duplicati
+
+4. MATCH CONFIDENCE / RANKING ADVANCED
+
+- ranking più evoluto
+- confidence controllata
+- audit ambiguità
 
 ---
 
-Possibile struttura futura:
-
-input_raw  
-→ normalize text  
-→ match_engine  
-→ match_state  
-→ select_project / select_entity  
-→ preview / hint  
-→ confirm guard  
-
----
-
-Vincoli:
+Vincoli futuri:
 
 - nessuna auto-decisione se ambiguo
-- nessuna creazione automatica project/entity
+- nessuna creazione automatica silenziosa
 - nessun fuzzy aggressivo senza controllo
 - utente sempre in controllo
+- output/KPI non anticipati
 
 ------------------------------------------------
 EVOLUZIONE FUTURA NON ATTIVA
 ------------------------------------------------
 
-- unificazione sistemi di matching
+- alias/sinonimi controllati
+- fuzzy matching
 - ranking per frequenza
 - storico selezioni
 - entity hierarchy
+- project hierarchy
 - relazioni entity-project
-- disambiguazione guidata
-- alias/sinonimi controllati
+- deduplicazione
+- creazione guidata project/entity
+- pending state per nuovi project/entity
 - confidence score
 - audit ambiguità
 
@@ -635,24 +991,45 @@ NON deve:
 - forzare selezioni ambigue
 - sostituire la validazione utente
 
+---
+
+Stato attuale:
+
+Il primo livello controllato è stato implementato.
+Il Match Engine ora riduce le divergenze tra state, select, preview e confirm.
+
+Il prossimo livello non è “rifare il Match Engine”,
+ma evolverlo tramite nodi dedicati.
+
 ------------------------------------------------
 STATO ATTUALE
 ------------------------------------------------
 
 ✔ matching base funzionante  
-✔ project/entity suggeriti in modo utile  
+✔ Match Engine Unification First Controlled Level completato  
+✔ project_state / entity_state fonte minima matching  
+✔ select_project / select_entity alimentati da singleMatch  
 ✔ auto-select limitato ai casi univoci  
-✔ ambiguità bloccanti gestite almeno nel confirm  
+✔ ambiguità bloccanti gestite tramite isAmbiguous  
+✔ ambiguità risolta manualmente consente conferma  
+✔ nessun match non blocca conferma  
+✔ preview hint matching allineati a state  
+✔ preview highlight alimentato da matches  
+✔ priority match minimo implementato  
+✔ match state live in create flow  
+✔ match state live in edit flow  
 ✔ utente mantiene controllo  
 
 ---
 
-⚠ matching non unificato  
-⚠ hint non completamente coerenti  
-⚠ preview detection parallela  
-⚠ assenza priority match  
-⚠ assenza gerarchie  
-⚠ non pronto per output/KPI affidabili  
+⚠ match engine avanzato separato non implementato  
+⚠ preview ancora ibrida  
+⚠ hint duration/type ancora embedded nella preview  
+⚠ nessuna gerarchia  
+⚠ nessun alias system  
+⚠ nessuna deduplicazione  
+⚠ nessuna creazione guidata project/entity  
+⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
 ------------------------------------------------
 CHANGELOG
@@ -681,3 +1058,35 @@ v04 — 2026-04-30
 - confermato problema strutturale dei tre sistemi di matching paralleli  
 - definito Match Engine Unification come nodo futuro dedicato  
 - confermato che priority match resta non implementato
+v05 — 2026-05-02  
+- completamento MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL  
+- project_state aggiornato come fonte minima matching project  
+- entity_state aggiornato come fonte minima matching entity  
+- aggiunti output matches / count / hasMatch / isAmbiguous / singleMatch / moreSpecificMatches / hasMoreSpecificMatches  
+- select_project allineato a project_state.data.singleMatch  
+- select_entity allineato a entity_state.data.singleMatch  
+- trigger_parse_debounced aggiorna parse_input_controlled + project_state + entity_state  
+- btn_edit aggiorna parse_input_controlled + project_state + entity_state  
+- match state live in create flow  
+- match state live in edit flow  
+- preview hint ambiguità allineati a isAmbiguous  
+- preview highlight alimentato da matches  
+- detection locale preview rimossa come fonte decisionale matching  
+- confirm guard basata su ambiguità non risolta  
+- ambiguità risolta manualmente non blocca salvataggio  
+- nessun match non blocca salvataggio  
+- priority match minimo implementato  
+- ristrutturazione bagno → Ristrutturazione Bagno  
+- casa mare → Casa Mare  
+- villa 2 → Villa 2  
+- hint informativo match più specifici introdotto  
+- mario → Mario + hint entità più specifiche  
+- villa → Villa + hint progetti più specifici  
+- bug €500 nella label preview risolto  
+- linting project_state/entity_state ripuliti  
+- linting residui edit_mode/editing_event mantenuti come nodo futuro  
+- nessuna modifica DB  
+- nessuna modifica parser  
+- nessuna modifica type classification  
+- nessuna modifica duration normalization  
+- nessun output/KPI anticipato

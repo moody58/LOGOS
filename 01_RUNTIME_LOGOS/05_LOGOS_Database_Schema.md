@@ -1,6 +1,6 @@
-# 05_LOGOS_Database_Schema_v06
+# 05_LOGOS_Database_Schema_v07
 
-DATA: 2026-05-01
+DATA: 2026-05-02
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -14,7 +14,10 @@ C (Completezza): 10/10
 - normalization base lato frontend integrata  
 - duration normalization lato frontend integrata  
 - type classification base lato frontend integrata  
-- utilizzo reale di events.type documentato   
+- Match Engine Unification First Controlled Level integrato  
+- utilizzo reale di events.type documentato  
+- utilizzo più coerente di events.project_id / events.entity_id documentato  
+- schema invariato esplicitato  
 
 Q (Qualità): 9.5/10  
 - struttura corretta  
@@ -23,7 +26,9 @@ Q (Qualità): 9.5/10
 - distinzione chiara tra DB passivo e logica frontend  
 - chiarito che le durate certe vengono salvate in minuti canonici  
 - chiarito che type viene deciso lato Retool e salvato nel DB  
+- chiarito che project/entity matching viene deciso lato Retool  
 - chiarito che il DB non decide type  
+- chiarito che il DB non decide project/entity  
 - limiti versioning / relazioni / output esplicitati  
 
 D (Deployabilità): 10/10  
@@ -31,7 +36,8 @@ D (Deployabilità): 10/10
 - coerente con Supabase runtime  
 - non introduce modifiche schema non implementate  
 - conferma schema invariato dopo Duration Normalization  
-- conferma schema invariato dopo Type Classification Base   
+- conferma schema invariato dopo Type Classification Base  
+- conferma schema invariato dopo Match Engine Unification First Controlled Level  
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -50,6 +56,7 @@ Il documento descrive:
 - stato dei dati dopo Normalization Layer Base
 - stato dei dati dopo Duration Normalization Base
 - stato dei dati dopo Type Classification Base
+- stato dei dati dopo Match Engine Unification First Controlled Level
 
 ------------------------------------------------
 PRINCIPIO ARCHITETTURALE
@@ -66,6 +73,9 @@ NON contiene:
 - matching
 - normalizzazione
 - classificazione autonoma tipo evento
+- matching autonomo project/entity
+- creazione automatica project/entity
+- disambiguazione autonoma
 
 ---
 
@@ -119,6 +129,32 @@ Nota terminologica:
 
 select1 è un componente UI Select di Retool,
 non una query.
+
+Nota Match Engine Unification First Controlled Level:
+
+Il matching project/entity avviene lato Retool.
+
+Il database NON decide project_id,
+NON decide entity_id,
+NON corregge associazioni,
+NON risolve ambiguità,
+NON crea project/entity automaticamente.
+
+Riceve solo i valori già scelti o confermati dal frontend tramite:
+
+project_state / entity_state
+→ select_project.value / select_entity.value
+→ payload.project_id / payload.entity_id
+→ events.project_id / events.entity_id
+
+Se non esiste match, o l’utente non seleziona project/entity,
+i campi restano null.
+
+Se esiste ambiguità non risolta,
+il frontend blocca la conferma.
+
+Se l’ambiguità viene risolta manualmente,
+il frontend consente il salvataggio.
 
 ------------------------------------------------
 MODELLO DATI
@@ -208,7 +244,12 @@ UTILIZZO REALE:
 ✔ type aggiornabile tramite update_event su eventi NEW     
 ✔ event_date valorizzata quando parsata  
 ✔ project_id opzionale  
+✔ project_id derivato da select_project.value lato Retool  
 ✔ entity_id opzionale  
+✔ entity_id derivato da select_entity.value lato Retool  
+✔ project/entity matching calcolato lato Retool tramite project_state/entity_state  
+✔ ambiguità project/entity non risolta bloccata lato frontend  
+✔ nessun match project/entity non blocca il salvataggio    
 ✔ status sempre NEW in insert  
 ✔ updated_at valorizzato in insert/update  
 ✔ eventi NEW modificabili tramite update_event  
@@ -216,7 +257,7 @@ UTILIZZO REALE:
 
 ---
 
-NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE — IMPATTO SU events:
+NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION — IMPATTO SU events:
 
 La tabella non è stata modificata.
 
@@ -228,6 +269,10 @@ La qualità del dato è migliorata perché il frontend ora invia:
 - durate certe ore/minuti convertite in minuti
 - type base valorizzato
 - raw_input preservato
+- project_id più coerente quando il progetto è selezionato
+- entity_id più coerente quando l’entità è selezionata
+- ambiguità project/entity non salvate silenziosamente
+- match univoci alimentati da singleMatch
 
 Esempi:
 
@@ -292,6 +337,40 @@ villa 2 mario
 → amount: null
 → unit: null
 
+Esempi Match Engine Unification:
+
+villa 2 mario
+→ type: Evento
+→ amount: null
+→ unit: null
+→ project_id: Villa 2
+→ entity_id: Mario
+
+18 min ristrutturazione bagno
+→ type: Tempo
+→ amount: 18
+→ unit: minuti
+→ project_id: Ristrutturazione Bagno
+
+4 aprile benzina 50 euro alfie allevamento aspri
+→ type: Evento
+→ amount: 50
+→ unit: euro
+→ project_id: ASPRI
+→ entity_id: null finché ambiguità non risolta
+
+alfie mario rossi
+→ entity ambigua
+→ salvataggio bloccato finché l’utente non sceglie entità
+
+acquisto 50 euro materiale nuovo
+→ type: Spesa
+→ amount: 50
+→ unit: euro
+→ project_id: null
+→ entity_id: null
+→ salvataggio consentito
+
 CAMPI NON UTILIZZATI O NON CONSOLIDATI:
 
 reference_id
@@ -311,10 +390,18 @@ COMPORTAMENTO:
 
 nessuna validazione DB
 nessuna constraint forte applicativa
-inserimento consentito lato frontend se non bloccato da ambiguità matching
+inserimento consentito lato frontend se non bloccato da ambiguità project/entity non risolta
 update consentito solo lato applicativo su eventi NEW
 DB non impedisce autonomamente update impropri
 integrità demandata a Retool
+
+Regole matching lato frontend:
+
+- match univoco → select valorizzata → project_id/entity_id salvabili
+- match ambiguo non risolto → conferma bloccata
+- match ambiguo risolto manualmente → conferma consentita
+- nessun match → project_id/entity_id null → conferma consentita
+
 TABELLA: projects
 
 Funzione:
@@ -337,16 +424,28 @@ created_at (timestamp)
 
 UTILIZZO REALE:
 
-✔ usata per matching
-✔ popolamento select_project
-✔ project_id salvato su events quando selezionato
-✔ nessuna gerarchia attiva
+✔ usata per matching lato Retool  
+✔ caricata da projects_list  
+✔ utilizzata da project_state  
+✔ alimenta select_project tramite singleMatch  
+✔ project_id salvato su events quando selezionato  
+✔ priority match minimo gestito lato Retool  
+✔ nessuna gerarchia attiva  
 
 NOTE:
 
 name univoco = base matching
 parent_project_id presente ma non operativo
 relazioni avanzate non implementate
+
+Match Engine Unification First Controlled Level:
+
+- Villa + Villa 2 → Villa 2 quando input contiene “villa 2”
+- Ristrutturazione + Ristrutturazione Bagno → Ristrutturazione Bagno
+- Casa + Casa Mare → Casa Mare
+- match più specifici segnalati con hint informativo
+- nessuna modifica schema projects
+
 TABELLA: entities
 
 Funzione:
@@ -373,10 +472,13 @@ updated_at (timestamp)
 
 UTILIZZO REALE:
 
-✔ caricata in UI
-✔ utilizzata per matching
-✔ entity_id salvato su events quando selezionato
-✔ nessuna gerarchia attiva
+✔ caricata in UI  
+✔ caricata da entities_list  
+✔ utilizzata da entity_state  
+✔ alimenta select_entity tramite singleMatch  
+✔ entity_id salvato su events quando selezionato  
+✔ priority match minimo gestito lato Retool  
+✔ nessuna gerarchia attiva  
 
 LIMITI:
 
@@ -385,6 +487,15 @@ possibili duplicati
 nessuna gerarchia attiva
 parent_entity_id non operativo
 metadata non usato in modo strutturale
+
+Match Engine Unification First Controlled Level:
+
+- Mario + Mario Rossi → Mario Rossi quando input contiene “mario rossi”
+- Mario Rossi + Mario Rossi Alfredo → Mario Rossi Alfredo quando input contiene nome completo
+- Mario → Mario con hint entità più specifiche se esistono varianti
+- Alfie + Mario Rossi nello stesso input resta ambiguità reale
+- nessuna modifica schema entities
+
 TABELLA: system_logs
 
 Funzione:
@@ -420,7 +531,8 @@ input
 → normalization base
 → duration normalization
 → type classification base
-→ matching
+→ match state project/entity
+→ select_project / select_entity
 → preview
 → insert_event
 → status NEW
@@ -433,11 +545,13 @@ evento NEW
 → normalization base
 → duration normalization
 → type classification base
-→ matching
+→ match state project/entity
+→ select_project / select_entity
 → preview
 → update_event
 → status invariato NEW
 → type aggiornato
+→ project_id/entity_id aggiornati se modificati
 → updated_at aggiornato
 
 Il database:
@@ -448,11 +562,16 @@ non corregge dati
 non normalizza dati
 non decide type
 non decide project/entity
+non risolve ambiguità project/entity
+non crea project/entity automaticamente
 non mantiene storico revisioni
 
 Il database riceve type già determinato lato frontend.
 
-NORMALIZATION BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION E DATABASE
+Il database riceve project_id/entity_id già determinati lato frontend
+tramite select_project.value / select_entity.value.
+
+NORMALIZATION BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION / MATCH ENGINE E DATABASE
 
 La normalizzazione base, la duration normalization e la type classification base NON hanno modificato lo schema.
 
@@ -542,6 +661,32 @@ villa 2 mario
 → type Evento
 → amount null
 → unit null
+
+Match Engine Unification First Controlled Level:
+
+project_state / entity_state calcolano:
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
+
+select_project / select_entity sono le fonti finali per:
+- events.project_id
+- events.entity_id
+
+Il DB non riceve match state,
+non riceve matches,
+non riceve confidence,
+non riceve moreSpecificMatches.
+
+Riceve solo:
+- project_id
+- entity_id
+
+oppure null.
 
 ------------------------------------------------
 DURATION NORMALIZATION E DATABASE
@@ -648,6 +793,84 @@ select1 è un componente UI Select di Retool,
 non una query.
 
 ------------------------------------------------
+MATCH ENGINE UNIFICATION E DATABASE
+------------------------------------------------
+
+Decisione:
+
+Il Match Engine Unification First Controlled Level NON modifica lo schema DB.
+
+Sono rimasti invariati:
+
+- events.project_id
+- events.entity_id
+- projects
+- entities
+- payload
+
+Non sono stati aggiunti:
+
+- match_confidence
+- match_source
+- match_payload
+- project_match_status
+- entity_match_status
+- pending_project_name
+- pending_entity_name
+- alias table
+- relation table
+- hierarchy table
+
+Origine runtime:
+
+project_state / entity_state lato Retool
+
+Catena project:
+
+project_state
+→ select_project.value
+→ payload.project_id
+→ insert_event / update_event
+→ events.project_id
+
+Catena entity:
+
+entity_state
+→ select_entity.value
+→ payload.entity_id
+→ insert_event / update_event
+→ events.entity_id
+
+Regole:
+
+- match univoco → select valorizzata
+- match ambiguo non risolto → confirm bloccato
+- match ambiguo risolto manualmente → confirm consentito
+- nessun match → project_id/entity_id null
+- project/entity non vengono creati automaticamente
+
+Esempi:
+
+villa 2 mario
+→ events.project_id = Villa 2
+→ events.entity_id = Mario
+
+18 min ristrutturazione bagno
+→ events.project_id = Ristrutturazione Bagno
+→ events.type = Tempo
+→ events.amount = 18
+→ events.unit = minuti
+
+mario
+→ events.entity_id = Mario
+→ hint più specifici gestito solo in UI
+→ DB salva solo entity_id
+
+alfie mario rossi
+→ ambiguità entity
+→ nessun insert/update finché non viene scelta entità
+
+------------------------------------------------
 INSERT
 ------------------------------------------------
 
@@ -681,6 +904,14 @@ villa 2 mario
 → type Evento
 → amount null
 → unit null
+→ project_id Villa 2
+→ entity_id Mario
+
+18 min ristrutturazione bagno
+→ type Tempo
+→ amount 18
+→ unit minuti
+→ project_id Ristrutturazione Bagno
 
 ------------------------------------------------
 UPDATE
@@ -702,6 +933,37 @@ DB dopo update:
 type Tempo
 amount 105
 unit minuti
+raw_input aggiornato
+updated_at aggiornato
+status NEW
+
+Validazione Match Engine:
+
+Evento modificato in:
+
+villa 2 mario
+
+DB dopo update:
+
+type Evento
+amount null
+unit null
+project_id Villa 2
+entity_id Mario
+raw_input aggiornato
+updated_at aggiornato
+status NEW
+
+Evento modificato in:
+
+18 min ristrutturazione bagno
+
+DB dopo update:
+
+type Tempo
+amount 18
+unit minuti
+project_id Ristrutturazione Bagno
 raw_input aggiornato
 updated_at aggiornato
 status NEW
@@ -742,6 +1004,12 @@ Non implementato:
 - direction field
 - KPI/reportistica
 - retro-normalizzazione eventi storici
+- - match engine avanzato separato
+- alias system
+- fuzzy matching
+- ranking avanzato
+- creazione guidata project/entity
+- pending state project/entity
 
 Nota:
 
@@ -757,16 +1025,26 @@ events.type valorizzato per nuovi insert/update
 giorni/settimane non convertiti automaticamente
 type non sufficiente da solo per KPI avanzati
 dati storici non retro-normalizzati
+Match Engine Unification First Controlled Level implementato lato frontend
+project_id/entity_id più coerenti quando selezionati
+ambiguità project/entity non risolta bloccata lato frontend
+nessun match project/entity non blocca il salvataggio
 
 RELAZIONI DEBOLI
 project/entity opzionali
 nessun vincolo integrità forte documentato
 integrità demandata al frontend
+match state non persistito
+singleMatch non persistito
+moreSpecificMatches non persistito
 
 ENTITY NON STRUTTURATE
 nessuna gerarchia
 ambiguità possibile
 duplicati possibili
+priority match minimo implementato lato Retool
+hint più specifici implementato lato Retool
+nessuna deduplicazione strutturale
 
 TYPE UTILIZZATO A LIVELLO BASE
 
@@ -839,6 +1117,11 @@ non usare type per KPI finché matching/data quality/report readiness non sarann
 non introdurre amount firmato senza nodo dedicato
 non introdurre direction field senza nodo dedicato
 non aggiungere constraint DB su type senza nodo schema dedicato
+non aggiungere alias table senza nodo dedicato
+non aggiungere project/entity relation table senza nodo dedicato
+non aggiungere pending project/entity fields senza nodo dedicato
+non spostare matching logic in Supabase
+non creare project/entity automaticamente lato DB
 
 Motivazione:
 
@@ -865,6 +1148,10 @@ ENTITY:
 gerarchie
 relazioni
 entity-project link
+alias project/entity
+deduplicazione
+creazione guidata project/entity
+pending project/entity workflow
 
 DATA QUALITY:
 
@@ -883,6 +1170,9 @@ economic direction advanced
 deduplicazione
 eventuale campo duration_minutes solo con nodo schema dedicato
 eventuale payload.duration solo con nodo architetturale dedicato
+match engine avanzato
+fuzzy matching controllato
+ranking avanzato
 
 VERSIONING:
 
@@ -926,6 +1216,10 @@ Mitigazione attuale:
 
 ui_state.parsed come fonte per amount/unit/event_date
 select1.value come fonte per type
+project_state/entity_state come fonte minima matching
+select_project.value come fonte per project_id
+select_entity.value come fonte per entity_id
+confirm guard su ambiguità non risolta
 normalization base lato Retool
 duration normalization lato Retool
 type classification base lato Retool
@@ -996,3 +1290,25 @@ validati insert/update con type persistito
 documentato override manuale utente su Spesa/Incasso
 esplicitati limiti: no KPI automatici, no retro-normalizzazione storico, no classificazione economica avanzata
 aggiornamento prossimo nodo consigliato: MATCH ENGINE UNIFICATION
+
+v07 — 2026-05-02
+
+nessuna modifica schema DB
+integrazione Match Engine Unification First Controlled Level lato frontend
+chiarito utilizzo più coerente di events.project_id / events.entity_id
+documentato che project_id deriva da select_project.value
+documentato che entity_id deriva da select_entity.value
+documentato che select_project/select_entity sono alimentati da project_state/entity_state
+documentato che DB non decide project/entity
+documentato che DB non risolve ambiguità
+documentato che DB non crea project/entity automaticamente
+documentato che match state non viene persistito
+documentato che matches/count/isAmbiguous/singleMatch/moreSpecificMatches restano runtime frontend
+documentato confirm guard su ambiguità non risolta lato Retool
+documentato che nessun match project/entity salva null e non blocca
+documentato che ambiguità risolta manualmente consente salvataggio
+documentati esempi villa 2 mario, ristrutturazione bagno, mario, alfie mario rossi
+confermato schema invariato dopo Match Engine Unification
+confermato payload inutilizzato
+confermati limiti: no alias, no fuzzy, no ranking avanzato, no creazione guidata project/entity
+nessun output/KPI anticipato

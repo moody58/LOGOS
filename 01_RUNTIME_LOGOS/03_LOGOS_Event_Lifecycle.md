@@ -1,6 +1,6 @@
-# 03_LOGOS_Event_Lifecycle_v04
+# 03_LOGOS_Event_Lifecycle_v05
 
-DATA: 2026-04-30
+DATA: 2026-05-02
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -9,20 +9,27 @@ CQD — VALIDAZIONE DOCUMENTO
 C (Completezza): 10/10  
 - lifecycle attuale completo  
 - stati, transizioni e responsabilità coperti  
-- integrazione con input, normalization base, matching e processing esplicitata  
+- integrazione con input, normalization base, duration normalization, type classification, matching e processing esplicitata  
 - update flow reale documentato  
+- edit flow aggiornato con match state live  
 - refresh lista dopo update documentato  
+- fonti runtime di salvataggio chiarite  
 
-Q (Qualità): 9/10  
+Q (Qualità): 9.5/10  
 - lifecycle coerente con sistema reale  
 - append-only controllato chiarito  
 - limiti storicizzazione / versioning esplicitati  
 - distinzione tra correzione NEW e validazione WRITTEN mantenuta  
+- chiarito che matching/type/duration migliorano qualità dati ma non validano l’evento  
+- nessuna anticipazione output/KPI  
 
 D (Deployabilità): 10/10  
 - documento stabile  
 - utilizzabile come riferimento operativo  
 - allineato al runtime Retool/Supabase attuale  
+- create flow validato  
+- edit flow validato  
+- DB invariato
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -38,7 +45,7 @@ Il documento stabilisce:
 - responsabilità utente
 - qualità del dato
 - correzione pre-validazione
-- rapporto tra input, normalization base e processing
+- rapporto tra input, normalization base, duration normalization, type classification, matching e processing
 - evoluzione futura
 
 ------------------------------------------------
@@ -82,6 +89,10 @@ Il sistema:
 - suggerisce
 - struttura
 - normalizza dati base
+- normalizza durate certe ore/minuti
+- classifica type a livello base
+- propone matching project/entity
+- blocca ambiguità project/entity non risolte
 - non decide definitivamente
 
 ---
@@ -96,6 +107,9 @@ La qualità viene migliorata progressivamente tramite:
 - selezione manuale
 - editing NEW
 - normalization base
+- duration normalization base
+- type classification base
+- match state project/entity
 - processing manuale
 
 ------------------------------------------------
@@ -110,6 +124,10 @@ NEW
 - può contenere errori o ambiguità
 - modificabile
 - può essere normalizzato base in insert/update
+- può contenere durate certe normalizzate in minuti
+- può contenere type base valorizzato
+- può contenere project_id/entity_id derivati da select_project/select_entity
+- può essere corretto tramite edit flow con match state live
 - resta sotto controllo utente
 
 ---
@@ -141,7 +159,13 @@ PARSE CONTROLLED
 ↓  
 NORMALIZATION BASE  
 ↓  
-MATCH  
+DURATION NORMALIZATION BASE  
+↓  
+TYPE CLASSIFICATION BASE  
+↓  
+MATCH STATE PROJECT/ENTITY  
+↓  
+SELECT PROJECT / ENTITY  
 ↓  
 PREVIEW  
 ↓  
@@ -169,6 +193,9 @@ EDIT:
 - riuso pipeline input
 - usa parse_input_controlled
 - usa ui_state.parsed
+- rilancia project_state / entity_state
+- riallinea select_project / select_entity
+- preserva project_id/entity_id salvati se presenti
 - usa update_event
 - mantiene status NEW
 - aggiorna updated_at
@@ -181,8 +208,11 @@ Nota:
 Il matching migliora la qualità,
 ma NON modifica il lifecycle.
 
-La normalization base migliora la qualità strutturale,
-ma NON valida l’evento.
+La normalization base, la duration normalization, la type classification base
+e il match state migliorano la qualità strutturale dell’evento,
+ma NON validano l’evento.
+
+La validazione resta manuale.
 
 ------------------------------------------------
 TRANSIZIONI CONSENTITE
@@ -198,8 +228,11 @@ NEW → NEW (EDIT)
 - aggiorna amount
 - aggiorna unit
 - aggiorna event_date
+- aggiorna type
 - aggiorna project_id
 - aggiorna entity_id
+- project_id/entity_id derivano da select_project/select_entity
+- select_project/select_entity sono alimentati da project_state/entity_state
 - aggiorna updated_at
 
 ---
@@ -238,6 +271,8 @@ L’utente deve:
 - validare eventi
 - correggere tramite editing o selezione
 - selezionare project/entity quando necessario
+- risolvere ambiguità project/entity prima della conferma
+- correggere manualmente type se la classificazione base non è sufficiente
 - scartare errori
 - confermare solo eventi ritenuti utilizzabili
 
@@ -248,20 +283,25 @@ Il sistema NON:
 - valida automaticamente
 - corregge automaticamente in modo semantico
 - modifica eventi validati WRITTEN / ERROR
-- decide spesa/incasso
+- decide definitivamente spesa/incasso
+- decide definitivamente project/entity in caso di ambiguità
 - decide qualità finale del dato
 
 ------------------------------------------------
 QUALITÀ DEL DATO
 ------------------------------------------------
 
-Dato in NEW:
+Dato in NEW dopo Normalization / Duration / Type / Match Base:
 
-- non affidabile in modo definitivo
-- può essere ambiguo
-- può essere incompleto
-- può essere corretto
-- può contenere dati normalizzati base
+- amount/unit più coerenti
+- formato numerico gestito
+- numeri senza unità non salvati come amount
+- durate certe ore/minuti salvate in minuti
+- raw_input preservato
+- type valorizzato a livello base
+- project/entity più coerenti se match univoco o scelti manualmente
+- ambiguità project/entity non risolta bloccata lato frontend
+- nessun match project/entity consente salvataggio con project_id/entity_id null
 - non è ancora validato dall’utente
 
 ---
@@ -283,6 +323,7 @@ Dato in WRITTEN:
 - utilizzabile
 - non necessariamente normalizzato semanticamente
 - non necessariamente pronto per KPI evoluti
+- type/matching base aiutano ma non sostituiscono validazione e qualità dati avanzata
 
 ---
 
@@ -295,17 +336,19 @@ Dato normalizzato avanzato futuro:
 - eventualmente relazionato
 
 ------------------------------------------------
-NORMALIZATION BASE NEL LIFECYCLE
+NORMALIZATION / DURATION / TYPE BASE NEL LIFECYCLE
 ------------------------------------------------
 
-Il lifecycle attuale include ora un primo livello di normalizzazione base
+Il lifecycle attuale include ora più livelli di miglioramento dati
 prima dell’inserimento o modifica dell’evento.
 
 Normalizzazione implementata:
 
 - amount
 - unit
-- event_date preservato
+- event_date
+- durate certe ore/minuti
+- type base
 
 ---
 
@@ -316,12 +359,34 @@ Esempi:
 → unit euro  
 
 1ora lavoro  
-→ amount 1  
-→ unit ore  
+→ amount 60  
+→ unit minuti  
+→ type Tempo  
+
+1 ora e 15 minuti sopralluogo  
+→ amount 75  
+→ unit minuti  
+→ type Tempo  
+
+2h30 rendering  
+→ amount 150  
+→ unit minuti  
+→ type Tempo  
+
+20 euro spesa materiale  
+→ amount 20  
+→ unit euro  
+→ type Spesa  
+
+20 euro incasso cliente  
+→ amount 20  
+→ unit euro  
+→ type Incasso  
 
 villa 2 mario  
 → amount null  
 → unit null  
+→ type Evento  
 
 ---
 
@@ -331,19 +396,23 @@ Regole:
 - unit salvata come testo normalizzato
 - raw_input preservato
 - numeri senza unità non diventano amount
+- durate certe ore/minuti salvate come minuti
+- type salvato da select1.value
 - nessuna modifica schema DB
-- nessuna classificazione semantica
+- nessuna validazione automatica evento
 
 ---
 
 Non implementato:
 
-- 1 ora e 15 minuti
-- 2h30
-- 2 giorni rendering
-- spesa/incasso
-- type classification base
-- matching unificato
+- giorni/settimane convertiti automaticamente
+- giornata / mezza giornata
+- parole numeriche tipo “due ore”
+- forme colloquiali tipo “un paio d’ore”
+- amount firmato
+- direction field
+- type classification avanzata
+- retro-normalizzazione storico
 
 ------------------------------------------------
 INTEGRAZIONE CON INPUT SYSTEM
@@ -357,6 +426,9 @@ INPUT SYSTEM:
 - usa input_raw come adapter tecnico
 - usa parse_input_controlled come parser runtime
 - usa ui_state.parsed come fonte unica dei dati strutturati
+- usa select1.value come fonte type
+- usa project_state/entity_state come fonte minima matching
+- usa select_project/select_entity come fonte project_id/entity_id
 
 ---
 
@@ -364,36 +436,93 @@ Create flow:
 
 input_home  
 → input_raw  
+→ trigger_parse_debounced  
 → parse_input_controlled  
 → ui_state.parsed  
+→ project_state / entity_state  
+→ select_project / select_entity  
+→ select1  
 → button_input_confirm  
 → insert_event  
-→ NEW  
+→ NEW   
 
 ---
 
 Edit flow:
 
 evento NEW selezionato  
+→ editing_event  
+→ edit_mode = true  
 → load raw_input  
 → input_home  
 → input_raw  
 → parse_input_controlled  
+→ project_state / entity_state  
 → ui_state.parsed  
+→ select_project / select_entity  
+→ select1  
 → button_input_confirm  
 → update_event  
-→ NEW  
+→ NEW   
+
+Nota edit flow:
+
+btn_edit rilancia anche project_state/entity_state.
+Questo mantiene coerenti suggerimenti, select, hint e confirm guard
+anche in modalità modifica evento.
 
 ------------------------------------------------
 INTEGRAZIONE CON MATCHING
 ------------------------------------------------
 
-Il Match Engine:
+Il Match Engine First Controlled Level:
 
 - riduce ambiguità in fase input
 - migliora suggerimenti
 - supporta selezione project/entity
-- può bloccare conferma se ci sono match multipli
+- alimenta select_project/select_entity tramite singleMatch
+- alimenta hint ambiguità tramite isAmbiguous
+- alimenta highlight preview tramite matches
+- può bloccare conferma se ci sono ambiguità project/entity non risolte
+
+---
+
+Fonte minima matching:
+
+project_state  
+entity_state  
+
+Output:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
+
+---
+
+Regole:
+
+match univoco  
+→ select valorizzata  
+→ conferma consentita  
+
+match ambiguo non risolto  
+→ select vuota  
+→ hint rosso  
+→ conferma bloccata  
+
+match ambiguo risolto manualmente  
+→ select valorizzata  
+→ conferma consentita  
+
+nessun match  
+→ select vuota  
+→ project_id/entity_id null  
+→ conferma consentita  
 
 ---
 
@@ -407,17 +536,22 @@ Il matching NON:
 
 - cambia stato evento
 - valida evento
-- normalizza evento
+- normalizza amount/unit/event_date
 - decide type
 - decide spesa/incasso
+- crea project/entity automaticamente
+- risolve ambiguità in modo silenzioso
 
 ---
 
 Limiti:
 
-- matching non ancora unificato
-- priority match non implementato
-- entity hierarchy assente
+- match engine avanzato separato non implementato
+- fuzzy matching non implementato
+- alias system non implementato
+- entity/project hierarchy assente
+- deduplicazione assente
+- creazione guidata project/entity non implementata
 
 ------------------------------------------------
 INTEGRAZIONE CON PREVIEW
@@ -449,20 +583,26 @@ ui_state.parsed
 
 ---
 
+Stato attuale:
+
+- preview allineata visualmente a amount/unit/date
+- preview allineata alla duration normalization base
+- preview mostra type tramite select1
+- preview legge project_state/entity_state per hint/highlight matching
+- preview non è fonte del salvataggio
+- preview resta layer ibrido
+
 Limite attuale:
 
-La preview non è ancora pienamente allineata alla normalizzazione base
-sul piano visuale.
+la preview non è ancora una view pura.
 
-Esempio:
+Restano embedded:
 
-dato interno:
-
-1500.5 euro
-
-visualizzazione desiderata futura:
-
-1.500,50 €
+- label cleaning
+- hint duration/type
+- hint matching
+- highlight
+- formattazioni locali
 
 ------------------------------------------------
 INTEGRAZIONE CON DATABASE
@@ -498,6 +638,10 @@ Il database NON:
 - decide stato
 - gestisce semantica
 - mantiene storico revisioni
+- decide type
+- decide project/entity
+- risolve ambiguità
+- crea project/entity automaticamente
 
 ---
 
@@ -515,6 +659,14 @@ Campi evento principali:
 - payload
 - status
 - updated_at
+
+Fonti runtime dei campi:
+
+- amount / unit / event_date → ui_state.parsed
+- type → select1.value
+- project_id → select_project.value
+- entity_id → select_entity.value
+- raw_input → input_raw.value
 
 ------------------------------------------------
 INTEGRAZIONE CON PROCESSING
@@ -579,10 +731,18 @@ LIMITI ATTUALI
 - assenza versioning modifiche
 - update distruttivo su evento NEW
 - dati storici non retro-normalizzati
-- type non affidabile
-- spesa/incasso non implementati
-- duration normalization non implementata
-- matching non unificato
+- giorni/settimane non convertiti automaticamente
+- type classification avanzata non implementata
+- amount firmato non implementato
+- direction field non implementato
+- match engine avanzato separato non implementato
+- alias system non implementato
+- fuzzy matching non implementato
+- project/entity hierarchy non implementata
+- deduplicazione project/entity non implementata
+- creazione guidata project/entity non implementata
+- preview ancora layer ibrido
+- output/KPI non attivi
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE
@@ -716,7 +876,10 @@ NORMALIZATION BASE
 MATCH ENGINE
 
 → migliora suggerimenti  
+→ alimenta select_project/select_entity  
+→ blocca conferma in caso di ambiguità non risolta  
 → non cambia stato  
+→ non valida evento   
 
 ---
 
@@ -737,9 +900,11 @@ DATABASE
 
 ENGINE FUTURO
 
-→ normalizza durate  
-→ classifica tipi  
-→ migliora confrontabilità dati  
+→ match engine avanzato  
+→ alias / fuzzy / ranking controllato  
+→ economic direction advanced  
+→ data structure / entity relations  
+→ migliora confrontabilità dati   
 
 ---
 
@@ -795,6 +960,9 @@ Il lifecycle attuale è:
 ✔ compatibile con uso reale  
 ✔ migliorato da editing NEW  
 ✔ migliorato da normalization base  
+✔ migliorato da duration normalization base  
+✔ migliorato da type classification base  
+✔ migliorato da match engine unification first controlled level  
 
 ---
 
@@ -805,8 +973,10 @@ Ma:
 ⚠ editing introduce violazione controllata del modello append-only  
 ⚠ accettata per migliorare qualità dati prima della validazione  
 ⚠ non gestisce storico modifiche  
-⚠ non distingue ancora spesa/incasso  
-⚠ non normalizza durate complesse  
+✔ distingue Spesa/Incasso/Tempo/Evento a livello base  
+✔ normalizza durate certe ore/minuti  
+⚠ non gestisce direzione economica avanzata  
+⚠ non normalizza giorni/settimane  
 
 ---
 
@@ -819,10 +989,14 @@ solo dopo stabilizzazione:
 3. label quality ✔  
 4. input stabilization ✔  
 5. normalization layer base ✔  
-6. preview alignment  
-7. duration normalization  
-8. type classification  
-9. output  
+6. preview alignment ✔  
+7. duration normalization ✔  
+8. type classification ✔  
+9. match engine unification first controlled level ✔  
+10. micro-nodi UX/helper  
+11. data structure / project-entity evolution  
+12. economic direction advanced  
+13. output
 
 ------------------------------------------------
 CHANGELOG
@@ -855,3 +1029,23 @@ v04 — 2026-04-30
 - documentato refresh events_new dopo save completato
 - documentata correzione race condition update → lista
 - esplicitati limiti: no versioning, no duration normalization, no type classification
+
+v05 — 2026-05-02  
+
+- integrazione Duration Normalization Base nel lifecycle
+- integrazione Type Classification Base nel lifecycle
+- integrazione Match Engine Unification First Controlled Level nel lifecycle
+- aggiornato flow: input → parsing → normalization → duration → type → match state → select → preview → insert/update
+- documentato type da select1.value
+- documentato project_id da select_project.value
+- documentato entity_id da select_entity.value
+- documentato match state live in create/edit flow
+- documentato btn_edit con rilancio project_state/entity_state
+- documentato confirm guard su ambiguità project/entity non risolta
+- chiarito che matching migliora qualità ma non valida evento
+- chiarito che nessun match non blocca salvataggio
+- chiarito che ambiguità risolta manualmente consente salvataggio
+- aggiornati limiti: no alias, no fuzzy, no gerarchie, no deduplicazione, no creazione guidata project/entity
+- confermato DB passivo
+- confermato lifecycle invariato negli stati NEW / WRITTEN / ERROR
+- nessun output/KPI anticipato

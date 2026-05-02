@@ -1,6 +1,6 @@
-# 00_PROJECT_System_v04
+# 00_PROJECT_System_v05
 
-DATA: 2026-05-01
+DATA: 2026-05-02
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -73,6 +73,8 @@ Logica:
 - duration normalization lato Retool
 - type classification base lato Retool
 - matching lato Retool
+- Match Engine Unification First Controlled Level lato Retool
+- match state project/entity lato Retool
 - preview lato Retool
 
 Server / Database:
@@ -83,6 +85,9 @@ Server / Database:
 - nessuna normalizzazione
 - nessuna classificazione autonoma
 - nessuna decisione type lato DB
+- nessuna decisione project/entity lato DB
+- nessuna risoluzione ambiguità lato DB
+- nessuna creazione automatica project/entity lato DB
 
 ------------------------------------------------
 PRINCIPI ARCHITETTURALI
@@ -100,6 +105,9 @@ Il database:
 - non decide project/entity
 - non decide type
 - riceve type già determinato lato UI
+- riceve project_id/entity_id già determinati lato UI
+- non riceve match state
+- non salva matches / count / isAmbiguous / singleMatch
 
 ---
 
@@ -112,6 +120,9 @@ La UI:
 - normalizza dati base
 - normalizza durate certe ore/minuti
 - classifica type a livello base
+- calcola match state project/entity
+- alimenta select_project/select_entity tramite singleMatch
+- gestisce ambiguità project/entity non risolte
 - costruisce preview
 - guida decisione utente
 - invia payload al database
@@ -133,7 +144,11 @@ raw_input:
 
 amount, unit, event_date, type, project_id, entity_id:
 
-- sono derivati da parsing, normalization, type classification, matching o selezione utente
+- amount / unit / event_date derivano da parsing e normalization
+- type deriva da select1.value
+- project_id deriva da select_project.value
+- entity_id deriva da select_entity.value
+- project_id/entity_id sono supportati da project_state/entity_state
 - possono essere incompleti
 - possono essere corretti mentre l’evento è NEW
 - non sostituiscono raw_input
@@ -178,9 +193,12 @@ Stato attuale:
 ✔ normalization base introdotta  
 ✔ duration normalization base introdotta  
 ✔ type classification base introdotta  
+✔ Match Engine Unification First Controlled Level introdotto  
+✔ matching project/entity unificato a primo livello controllato  
+✔ select / hint / highlight / confirm guard allineati a match state  
 ⚠ preview ancora ibrida  
-⚠ matching ancora non unificato  
-⚠ output non attivo   
+⚠ match engine avanzato separato non implementato  
+⚠ output non attivo    
 
 ------------------------------------------------
 ARCHITETTURA FUNZIONALE
@@ -193,7 +211,7 @@ LIVELLI ATTUALI:
 3. NORMALIZATION BASE LAYER
 4. DURATION NORMALIZATION BASE LAYER
 5. TYPE CLASSIFICATION BASE LAYER
-6. MATCH LAYER
+6. MATCH STATE LAYER — FIRST CONTROLLED LEVEL
 7. PREVIEW / VIEW LAYER
 8. UI STATE LAYER
 9. INSERT / UPDATE LAYER
@@ -201,9 +219,10 @@ LIVELLI ATTUALI:
 
 LIVELLI FUTURI:
 
-11. MATCH ENGINE UNIFICATION
-12. ENGINE ADVANCED
-13. OUTPUT / ANALYTICS LAYER
+11. MATCH ENGINE EVOLUTION ADVANCED
+12. DATA STRUCTURE / ENTITY HIERARCHY
+13. ECONOMIC DIRECTION ADVANCED
+14. OUTPUT / ANALYTICS LAYER
 
 ------------------------------------------------
 1 — INPUT LAYER
@@ -282,6 +301,16 @@ ui_state.parsed
 preview
 insert_event
 update_event
+
+Nota:
+
+project/entity non sono contenuti in ui_state.parsed.
+
+Il matching project/entity è gestito da:
+
+input_raw
+→ project_state / entity_state
+→ select_project / select_entity
 
 ------------------------------------------------
 3 — NORMALIZATION BASE LAYER
@@ -464,11 +493,11 @@ nessun direction field
 nessuna retro-normalizzazione storico
 type non ancora sufficiente per KPI avanzati
 
-6 — MATCH LAYER
+6 — MATCH STATE LAYER — FIRST CONTROLLED LEVEL
 
 Funzione:
 
-Associazione input a dati esistenti.
+Associazione input a project/entity esistenti.
 
 Entità coinvolte:
 
@@ -483,28 +512,84 @@ project_state
 entity_state
 select_project
 select_entity
-preview detection
+
+Fonte minima matching:
+
+project_state
+entity_state
+
+Output standard:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
 
 Strategia attuale:
 
-matching testuale
-token matching
-auto-select solo se univoco
-nessuna inferenza definitiva
+- matching testuale
+- normalizzazione testo base
+- full name match
+- priority match minimo
+- rimozione match generici coperti da match specifici
+- auto-select solo tramite singleMatch
+- nessuna inferenza definitiva
+- nessuna creazione automatica project/entity
 
-Output:
+Regole:
 
-suggerimenti soft
-auto-select solo se match unico
-blocco confirm se match multipli
+match univoco
+→ singleMatch
+→ select_project/select_entity valorizzata
+→ conferma consentita
+
+match ambiguo non risolto
+→ isAmbiguous = true
+→ select vuota
+→ hint rosso
+→ conferma bloccata
+
+match ambiguo risolto manualmente
+→ select valorizzata dall’utente
+→ conferma consentita
+
+nessun match
+→ select vuota
+→ project_id/entity_id null
+→ conferma consentita
+
+Esempi:
+
+villa 2 mario
+→ project Villa 2
+→ entity Mario
+
+18 min ristrutturazione bagno
+→ project Ristrutturazione Bagno
+
+mario
+→ entity Mario
+→ hint entità più specifiche
+
+villa
+→ project Villa
+→ hint progetti più specifici
+
+alfie mario rossi
+→ ambiguità reale entity
 
 Limiti:
 
-matching non unificato
-ambiguità frequente
-nessuna gerarchia entity
-nessun priority match
-incoerenza possibile tra preview, select e ranking
+match engine avanzato separato non implementato
+nessun fuzzy matching
+nessun alias system
+nessuna gerarchia entity/project
+nessuna deduplicazione
+nessuna creazione guidata project/entity
+nessun ranking avanzato
 
 7 — PREVIEW / VIEW LAYER
 
@@ -522,6 +607,10 @@ label runtime
 project/entity
 hint
 tipo evento base
+match state project/entity
+hint ambiguità matching
+hint match più specifici
+highlight project/entity
 
 Caratteristiche:
 
@@ -537,6 +626,9 @@ Limiti:
 ⚠ contiene hint logic
 ⚠ contiene highlight
 ⚠ usa fonti multiple
+✔ hint matching project/entity alimentati da project_state/entity_state
+✔ highlight project/entity alimentato da matches
+✔ detection locale preview non più fonte decisionale matching
 ✔ formattazione italiana amount allineata
 ✔ durata normalizzata mostrata in forma umana
 ⚠ preview non ancora view pura
@@ -558,6 +650,16 @@ Nota:
 la preview usa anche select1.value per mostrare il tipo,
 ma non salva direttamente il type.
 La persistenza avviene tramite button_input_confirm.
+
+Nota matching:
+
+la preview legge project_state/entity_state per hint e highlight,
+ma non salva project/entity.
+
+La persistenza avviene tramite:
+
+select_project.value → project_id
+select_entity.value → entity_id
 
 8 — UI STATE LAYER
 
@@ -599,6 +701,15 @@ Fonte type:
 
 select1.value
 
+Fonte matching:
+
+project_state / entity_state
+
+Fonte project/entity salvabile:
+
+select_project.value
+select_entity.value
+
 Usato da:
 
 preview
@@ -610,6 +721,9 @@ Nota:
 
 ui_state.parsed alimenta amount/unit/event_date.
 select1.value alimenta type.
+
+project_state/entity_state alimentano il matching project/entity.
+select_project/select_entity alimentano project_id/entity_id.
 
 Regola:
 
@@ -648,6 +762,18 @@ Payload:
   entity_id: select_entity.value || null
 }
 
+Fonti controllate payload:
+
+- raw_input → input_raw.value
+- amount / unit / event_date → ui_state.parsed
+- type → select1.value
+- project_id → select_project.value
+- entity_id → select_entity.value
+
+button_input_confirm non ricalcola parsing.
+button_input_confirm non ricalcola matching.
+button_input_confirm non legge la preview come fonte dati.
+
 Insert:
 
 crea evento NEW
@@ -655,6 +781,7 @@ salva raw_input
 salva type
 salva amount/unit/event_date
 salva project/entity se selezionati
+blocca conferma solo se ambiguità project/entity non risolta
 
 Update:
 
@@ -662,6 +789,8 @@ modifica evento NEW
 mantiene status NEW
 aggiorna type
 aggiorna amount/unit/event_date
+aggiorna project_id/entity_id se modificati
+aggiorna type
 aggiorna updated_at
 aggiorna lista dopo save completato
 
@@ -760,6 +889,18 @@ select1.value
 
 ↓
 
+MATCH STATE:
+
+project_state / entity_state
+
+↓
+
+SELECT:
+
+select_project / select_entity
+
+↓
+
 STATE:
 
 ui_state.parsed
@@ -786,7 +927,8 @@ insert_event
 
 DATABASE:
 
-evento salvato con status NEW e type valorizzato
+evento salvato con status NEW, type valorizzato,
+project_id/entity_id valorizzati se selezionati
 
 ↓
 
@@ -821,9 +963,21 @@ parse_input_controlled
 
 ↓
 
+MATCH STATE:
+
+project_state / entity_state
+
+↓
+
 STATE:
 
 ui_state.parsed
+
+↓
+
+SELECT:
+
+select_project / select_entity
 
 ↓
 
@@ -853,7 +1007,7 @@ update_event
 
 DATABASE:
 
-evento aggiornato, status NEW, type aggiornato
+evento aggiornato, status NEW, type/project_id/entity_id aggiornati se modificati
 
 ↓
 
@@ -911,6 +1065,14 @@ STATO ARCHITETTURALE
 ✔ normalization base attiva
 ✔ duration normalization base attiva
 ✔ type classification base attiva
+✔ Match Engine Unification First Controlled Level attivo
+✔ project_state/entity_state fonte minima matching
+✔ select_project/select_entity alimentati da singleMatch
+✔ priority match minimo implementato
+✔ hint ambiguità matching allineati a isAmbiguous
+✔ confirm guard basata su ambiguità non risolta
+✔ match state live in create flow
+✔ match state live in edit flow
 ✔ save flow allineato a ui_state.parsed e select1.value
 ✔ DB coerente con payload
 ✔ events.type valorizzato in insert/update
@@ -918,9 +1080,10 @@ STATO ARCHITETTURALE
 
 ⚠ sistema incompleto nei layer evolutivi:
 
-match engine unification
-hint state-driven
+match engine avanzato separato
+alias / fuzzy / ranking avanzato
 data structure avanzata
+project/entity create suggestion
 economic direction advanced
 output
 
@@ -928,7 +1091,7 @@ Layer esistenti ma parziali:
 
 engine base
 preview
-matching
+matching avanzato
 lifecycle
 
 Layer non attivi:
@@ -940,8 +1103,9 @@ KPI
 LIMITI STRUTTURALI
 
 preview non ancora view pura
-matching non unificato
-hint non completamente state-driven
+matching project/entity unificato solo a primo livello controllato
+match engine avanzato separato non implementato
+hint duration/type ancora embedded nella preview
 type classification base implementata ma non avanzata
 spesa/incasso implementati solo a livello base
 amount firmato non implementato
@@ -952,6 +1116,8 @@ dati storici non retro-normalizzati
 lifecycle senza versioning
 output non attivo
 linting Retool residuo non bloccante
+creazione guidata project/entity non implementata
+alias / gerarchie / deduplicazione non implementati
 
 DIREZIONE EVOLUTIVA
 
@@ -964,11 +1130,25 @@ normalization layer base ✔
 preview alignment base ✔
 duration normalization ✔
 type classification base ✔
-match engine unification
-hint state-driven
+match engine unification first controlled level ✔
+micro-nodi UX/helper
+project/entity create suggestion
 data structure avanzata
 economic direction advanced
 output / dashboard
+
+Candidati micro-nodo:
+
+- LINTING / STATE HELPER CLEANUP
+- EDIT MODE CANCEL / RETURN TO EVENTS LIST
+- EVENTS LIST SEARCH / FILTER BAR
+- EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+
+Candidati non immediati:
+
+- PREVIEW MODEL / HINT STATE CONSOLIDATION
+- ALIAS / SYNONYMS CONTROLLED MATCHING
+- MATCH CONFIDENCE / RANKING ADVANCED
 
 Nota:
 
@@ -1039,3 +1219,22 @@ documentato che amount resta positivo
 documentato che output/KPI non sono attivi
 documentato matching non unificato come prossimo nodo architetturale
 aggiornati limiti strutturali e direzione evolutiva
+
+v05 — 2026-05-02
+
+aggiornamento architettura dopo Match Engine Unification First Controlled Level
+documentato project_state/entity_state come fonte minima matching
+documentato singleMatch / isAmbiguous / moreSpecificMatches
+documentato select_project/select_entity alimentati da match state
+documentato confirm guard su ambiguità non risolta
+documentato match state live in create/edit flow
+documentato priority match minimo
+documentato hint match più specifici
+documentato che preview legge matches/isAmbiguous ma non salva project/entity
+documentato che DB resta passivo e non riceve match state
+documentato che project_id/entity_id derivano da select_project/select_entity
+documentato bug €500 preview risolto nei documenti tecnici collegati
+aggiornati flow create/edit
+aggiornati limiti strutturali
+aggiornata direzione evolutiva
+confermato output/KPI non attivi
