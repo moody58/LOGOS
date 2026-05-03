@@ -1,6 +1,6 @@
-# 04_LOGOS_Retool_Architecture_v11
+# 04_LOGOS_Retool_Architecture_v12
 
-DATA: 2026-05-02
+DATA: 2026-05-03
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -27,6 +27,10 @@ C (Completezza): 10/10
 - no-op edit guard documentato
 - label creato/modificato lista eventi documentata
 - fix UI state nuovo input da lista documentato
+- - Linting / State Helper Cleanup documentato
+- edit_mode / editing_event ripuliti da additionalScope { value }
+- helper state tecnici documentati
+- create/edit/annulla/no-op edit rivalidati dopo cleanup helper
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
@@ -38,6 +42,8 @@ Q (Qualità): 9.5/10
 - type persistito in events.type  
 - controllo manuale utente preservato  
 - debiti residui esplicitati  
+- rumore tecnico Retool su edit_mode / editing_event eliminato
+- helper edit mode più ricostruibili e meno ambigui
 - non introduce modello ideale non implementato  
 
 D (Deployabilità): 10/10  
@@ -50,6 +56,9 @@ D (Deployabilità): 10/10
 - nodo Match Engine Unification First Controlled Level validato runtime  
 - nodo UX / Cleanup Micro-Batch Post Match Engine validato runtime
 - create/edit/lista/annulla/ricerca/WRITTEN/ERROR validati
+- nodo Linting / State Helper Cleanup validato runtime
+- linting edit_mode / editing_event risolti
+- create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -82,6 +91,9 @@ Il documento descrive:
 - label creato/modificato lista eventi
 - no-op edit guard
 - fix UI state nuovo input da lista eventi
+- Linting / State Helper Cleanup
+- helper edit_mode / editing_event senza additionalScope { value }
+- passaggio tecnico controllato tramite window.__logos_edit_mode_value / window.__logos_editing_event_value
 
 ------------------------------------------------
 STRUTTURA GENERALE
@@ -207,6 +219,65 @@ ui_state.parsed deve restare sempre strutturato:
 
 e non deve tornare null.
 
+------------------------------------------------
+HELPER STATE TECNICI
+------------------------------------------------
+
+Oltre a ui_state, il flow edit usa due helper Retool:
+
+- edit_mode
+- editing_event
+
+Questi helper NON sono fonte business.
+
+Servono solo per controllare:
+
+- modalità inserimento / modifica
+- evento NEW attualmente in modifica
+- no-op edit guard
+- annulla modifica
+- reset del flow edit
+
+---
+
+EDIT_MODE
+
+Ruolo:
+
+indicare se il sistema è in modalità modifica evento.
+
+Valori attesi:
+
+- true
+- false
+
+Dopo Linting / State Helper Cleanup,
+edit_mode non usa più:
+
+additionalScope: { value: ... }
+
+Nuovo pattern runtime:
+
+- il chiamante scrive window.__logos_edit_mode_value
+- edit_mode legge window.__logos_edit_mode_value
+- edit_mode cancella la chiave window dopo la lettura
+- edit_mode ritorna Boolean(nextValue)
+
+Codice runtime:
+
+```js
+const key = "__logos_edit_mode_value";
+
+if (!Object.prototype.hasOwnProperty.call(window, key)) {
+  return false;
+}
+
+const nextValue = window[key];
+
+delete window[key];
+
+return Boolean(nextValue);
+
 CONTAINER HOME
 
 Componenti:
@@ -251,6 +322,8 @@ button_input_confirm
 btn_cancel_edit
 project_state
 entity_state
+edit_mode
+editing_event
 
 Funzione:
 
@@ -390,6 +463,7 @@ Match Engine Unification First Controlled Level:
 ✔ match state live in create flow  
 ✔ match state live in edit flow  
 ✔ bug €500 label preview risolto  
+✔ linting edit_mode / editing_event risolti nel nodo successivo Linting / State Helper Cleanup
 
 INPUT FLOW
 
@@ -1581,7 +1655,7 @@ determina wasEditMode
 esegue insert_event o update_event
 attende savePromise
 aggiorna events_new
-resetta edit_mode se necessario
+resetta edit_mode / editing_event se necessario
 
 EDIT MODE:
 
@@ -1721,9 +1795,11 @@ await savePromise;
 await events_new.trigger();
 
 if (wasEditMode) {
-  edit_mode.trigger({
-    additionalScope: { value: false }
-  });
+  window.__logos_edit_mode_value = false;
+  await edit_mode.trigger();
+
+  window.__logos_editing_event_value = null;
+  await editing_event.trigger();
 }
 
 Risultati:
@@ -1737,6 +1813,9 @@ Risultati:
 ✔ edit senza modifiche reali non esegue update_event
 ✔ updated_at non cambia su conferma senza modifiche
 ✔ label creato/modificato resta coerente
+✔ edit_mode azzerato senza additionalScope { value }
+✔ editing_event azzerato anche dopo update reale completato
+✔ linting edit_mode / editing_event risolti
 
 INSERT_EVENT
 
@@ -1906,18 +1985,31 @@ Il pulsante edit rilancia anche il match state.
 
 Sequenza:
 
-1. editing_event.trigger({ value: item })
-2. edit_mode.trigger({ value: true })
-3. mostra container input
-3A. forza container_events_list nascosto
-3B. forza container_feedback nascosto
-4. pulisce select_project / select_entity
-5. carica item.raw_input in input_home e input_raw
-6. rilancia:
+1. window.__logos_editing_event_value = item
+2. editing_event.trigger()
+3. window.__logos_edit_mode_value = true
+4. edit_mode.trigger()
+5. mostra container input
+5A. forza container_events_list nascosto
+5B. forza container_feedback nascosto
+6. pulisce select_project / select_entity
+7. carica item.raw_input in input_home e input_raw
+8. rilancia:
    - parse_input_controlled
    - project_state
    - entity_state
-7. ripristina project_id/entity_id salvati se presenti
+9. ripristina project_id/entity_id salvati se presenti
+
+Codice helper aggiornato:
+
+```js
+// salva evento in editing
+window.__logos_editing_event_value = item;
+await editing_event.trigger();
+
+// attiva edit mode
+window.__logos_edit_mode_value = true;
+await edit_mode.trigger();
 
 Risultato:
 
@@ -1965,19 +2057,21 @@ con priorità mobile.
 Comportamento:
 
 1. cancella eventuale debounce pendente
-2. esce da edit_mode
-3. svuota editing_event
-4. resetta input_home
-5. resetta input_raw
-6. pulisce select_project
-7. pulisce select_entity
-8. pulisce select1
-9. resetta ui_state.parsed
-10. imposta ui_state.view = "events"
-11. nasconde container_input
-12. nasconde container_home
-13. nasconde container_feedback
-14. mostra container_events_list
+2. scrive window.__logos_edit_mode_value = false
+3. rilancia edit_mode
+4. scrive window.__logos_editing_event_value = null
+5. rilancia editing_event
+6. resetta input_home
+7. resetta input_raw
+8. pulisce select_project
+9. pulisce select_entity
+10. pulisce select1
+11. resetta ui_state.parsed
+12. imposta ui_state.view = "events"
+13. nasconde container_input
+14. nasconde container_home
+15. nasconde container_feedback
+16. mostra container_events_list
 
 Risultato:
 
@@ -1988,6 +2082,15 @@ Risultato:
 ✔ edit_mode.data = false
 ✔ editing_event.data = null
 ✔ create/edit non regressi
+
+Codice helper aggiornato:
+
+```js
+window.__logos_edit_mode_value = false;
+await edit_mode.trigger();
+
+window.__logos_editing_event_value = null;
+await editing_event.trigger();
 
 EVENTS_NEW
 
@@ -2171,6 +2274,9 @@ focus_input_home
 handle_event_success
 editing_event
 
+window.__logos_edit_mode_value
+window.__logos_editing_event_value
+
 PAGE1 — COMPONENTI UI RILEVANTI:
 
 select1
@@ -2248,6 +2354,8 @@ PATTERN ARCHITETTURALI
 ✔ Client-side List Filter
 ✔ Controlled Edit Cancel Flow
 ✔ Created/Updated Display Guard 
+✔ Window-backed Helper State per edit_mode / editing_event
+✔ Linting-safe Edit Helper Pattern
 
 PROBLEMI NOTI
 
@@ -2299,6 +2407,9 @@ RISOLTI:
 ✔ eventi appena inseriti mostrati come modificati → RISOLTO
 ✔ edit senza modifiche aggiornava updated_at → RISOLTO
 ✔ nuovo input da lista eventi lasciava visibili input e lista insieme → RISOLTO
+✔ linting edit_mode: 'value' is not defined → RISOLTO
+✔ linting editing_event: 'value' is not defined → RISOLTO
+✔ additionalScope { value } su helper edit_mode / editing_event → RIMOSSO
 
 UI:
 
@@ -2374,6 +2485,10 @@ STATO ARCHITETTURA
 ✔ label creato/modificato lista eventi corretta
 ✔ nuovo input da lista eventi gestito correttamente
 ✔ create/edit/lista/WRITTEN/ERROR validati dopo cleanup
+✔ Linting / State Helper Cleanup completato
+✔ edit_mode / editing_event non usano più additionalScope { value }
+✔ linting edit_mode / editing_event risolti
+✔ create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
 
 ⚠ non completamente stabile nei layer evolutivi
 ⚠ preview ancora ibrida
@@ -2386,40 +2501,31 @@ STATO ARCHITETTURA
 NEXT STEP ARCHITETTURALE CONSIGLIATO
 ------------------------------------------------
 
-NEXT NODE DA DEFINIRE DOPO CHIUSURA AGGIORNAMENTO DOCUMENTALE MINIMO
+NEXT NODE POST LINTING CLEANUP DA DEFINIRE
 
 Candidati principali residui:
 
-1. LINTING / STATE HELPER CLEANUP
-
-- risolvere linting residui Retool:
-  - edit_mode: 'value' is not defined
-  - editing_event: 'value' is not defined
-- preservare edit flow
-- non usare Temporary State se instabile nel setup reale
-- non modificare parser / matching / DB
-
-2. PROJECT / ENTITY CREATE SUGGESTION
+1. PROJECT / ENTITY CREATE SUGGESTION
 
 - proporre creazione guidata project/entity quando nessun match viene trovato
 - utile per input vocali / Siri
 - nessuna creazione automatica silenziosa
 - creazione solo previa conferma utente
 
-3. ECONOMIC DIRECTION ADVANCED
+2. ECONOMIC DIRECTION ADVANCED
 
 - valutare amount firmato
 - valutare direction field
 - valutare regole contabili avanzate Spesa/Incasso
 
-4. DATA STRUCTURE / ENTITY HIERARCHY
+3. DATA STRUCTURE / ENTITY HIERARCHY
 
 - valutare gerarchie
 - alias
 - deduplicazione
 - relazioni entity-project
 
-5. DURATION ADVANCED — GIORNI / SETTIMANE
+4. DURATION ADVANCED — GIORNI / SETTIMANE
 
 - decidere conversione giorni/settimane
 - valutare giornata lavorativa
@@ -2622,3 +2728,36 @@ Type Classification invariata
 Duration Normalization invariata
 linting edit_mode/editing_event ancora residui non bloccanti
 aggiornamento prossimo nodo consigliato a NEXT NODE da definire dopo chiusura aggiornamento documentale minimo
+
+v12 — 2026-05-03
+
+completamento LINTING / STATE HELPER CLEANUP
+documentata risoluzione linting edit_mode: 'value' is not defined
+documentata risoluzione linting editing_event: 'value' is not defined
+rimossa dipendenza da additionalScope { value } per edit_mode / editing_event
+introdotto passaggio controllato tramite window.__logos_edit_mode_value
+introdotto passaggio controllato tramite window.__logos_editing_event_value
+documentato edit_mode come helper tecnico window-backed
+documentato editing_event come helper tecnico window-backed
+documentato reset chiavi window dopo lettura helper
+aggiornato btn_edit
+aggiornato btn_cancel_edit
+aggiornato button_input_confirm nel ramo no-op edit guard
+aggiornato button_input_confirm nel reset finale dopo salvataggio reale
+editing_event azzerato anche dopo update reale completato
+create flow validato
+edit flow validato
+annulla modifica validato
+edit senza modifiche reali validato
+edit con modifica reale validato
+updated_at / label creato-modificato validati
+WRITTEN / ERROR validati
+DB invariato
+parser invariato
+Match Engine invariato
+Type Classification invariata
+Duration Normalization invariata
+preview invariata
+lista eventi invariata
+nessun output/KPI anticipato
+aggiornamento prossimo nodo consigliato a NEXT NODE POST LINTING CLEANUP DA DEFINIRE

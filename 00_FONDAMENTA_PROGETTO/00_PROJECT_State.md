@@ -1,12 +1,12 @@
-# 00_PROJECT_State_v15
+# 00_PROJECT_State_v16
 
-DATA: 2026-05-02
+DATA: 2026-05-03
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-UX / CLEANUP MICRO-BATCH POST MATCH ENGINE — COMPLETATO
+LINTING / STATE HELPER CLEANUP — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -27,6 +27,8 @@ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
 STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL (COMPLETATO)
 
 UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)
+
+LINTING / STATE HELPER CLEANUP (COMPLETATO)
 
 TRANSIZIONE → NEXT NODE DA DEFINIRE IN ROADMAP DOPO AGGIORNAMENTO DOCUMENTALE
 
@@ -50,7 +52,10 @@ C (Completezza): 10/10
 - search/filter lista eventi documentato
 - label creato/modificato lista eventi documentata
 - no-op edit guard documentato
-- fix UI state nuovo input da lista documentato    
+- fix UI state nuovo input da lista documentato 
+- Linting / State Helper Cleanup documentato
+- linting edit_mode / editing_event risolti
+- helper edit_mode / editing_event ripuliti da additionalScope { value }   
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
@@ -61,6 +66,7 @@ Q (Qualità): 9.5/10
 - nessuna anticipazione output/KPI  
 - preview ancora ibrida ma non più fonte decisionale matching  
 - debiti residui esplicitati  
+- rumore tecnico Retool residuo su edit_mode / editing_event eliminato
 
 D (Deployabilità): 10/10  
 - pronto per Regia  
@@ -72,7 +78,9 @@ D (Deployabilità): 10/10
 - DB invariato  
 - parser invariato  
 - type classification invariata  
-- duration normalization invariata            
+- duration normalization invariata   
+- linting edit_mode / editing_event risolti
+- create/edit/annulla/no-op edit/WRITTEN/ERROR rivalidati dopo cleanup helper         
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -136,6 +144,10 @@ INPUT
 ✔ eventi modificati marcati visivamente
 ✔ nuovo input da lista eventi ripristina correttamente la vista input
 ✔ WRITTEN / ERROR validati dopo cleanup UX 
+✔ Linting / State Helper Cleanup completato
+✔ linting edit_mode / editing_event risolti
+✔ helper edit_mode / editing_event ripuliti da additionalScope { value }
+✔ create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
 
 ⚠ accoppiamento input / processing / UI ancora presente  
 ⚠ matching unificato solo a primo livello controllato  
@@ -148,7 +160,7 @@ INPUT
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su nove layer fondamentali:
+Il sistema è stabilizzato su dieci layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
@@ -158,7 +170,8 @@ Il sistema è stabilizzato su nove layer fondamentali:
 6. ENGINE BASE — DURATION NORMALIZATION  
 7. ENGINE BASE — TYPE CLASSIFICATION BASE  
 8. MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL  
-9. UX / CLEANUP MICRO-BATCH POST MATCH ENGINE                   
+9. UX / CLEANUP MICRO-BATCH POST MATCH ENGINE  
+10. LINTING / STATE HELPER CLEANUP                 
 
 ---
 
@@ -335,6 +348,39 @@ RISULTATO:
 - Match Engine invariato
 - Type Classification invariata
 - Duration Normalization invariata
+- nessun output/KPI anticipato
+
+✔ completamento LINTING / STATE HELPER CLEANUP
+
+- risolti linting Retool residui:
+  - edit_mode: 'value' is not defined
+  - editing_event: 'value' is not defined
+- rimossa dipendenza da additionalScope { value } per edit_mode / editing_event
+- introdotto passaggio controllato tramite window.__logos_edit_mode_value
+- introdotto passaggio controllato tramite window.__logos_editing_event_value
+- edit_mode legge valore tecnico da window.__logos_edit_mode_value
+- editing_event legge valore tecnico da window.__logos_editing_event_value
+- dopo lettura gli helper cancellano la chiave window usata
+- aggiornato btn_edit
+- aggiornato btn_cancel_edit
+- aggiornato button_input_confirm:
+  - ramo no-op edit guard
+  - reset finale dopo salvataggio reale
+- reset editing_event aggiunto dopo update reale
+- create flow validato
+- edit flow validato
+- annulla modifica validato
+- edit senza modifiche reali validato
+- edit con modifica reale validato
+- updated_at / label creato-modificato validati
+- WRITTEN / ERROR validati
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
+- preview invariata
+- lista eventi invariata
 - nessun output/KPI anticipato
 
 ------------------------------------------------
@@ -917,28 +963,9 @@ AMBITO NON IMPLEMENTATO:
 
 ANOMALIE RESIDUE:
 
-1. Linting Retool non bloccante:
+1. Eventi storici senza type:
 
-- edit_mode: 'value' is not defined
-- editing_event: 'value' is not defined
-
-Stato:
-
-non bloccante, fuori scope.
-
-Azione futura:
-
-micro-nodo LINTING / STATE HELPER CLEANUP.
-
----
-
-2. Matching non unificato:
-
-restano logiche separate:
-
-- input_raw / ranking
-- select_project / select_entity deterministico
-- preview / detected locale
+eventi creati prima della patch possono avere type null.
 
 Stato:
 
@@ -946,11 +973,11 @@ fuori scope.
 
 Azione futura:
 
-STEP 6.4 — MATCH ENGINE UNIFICATION.
+eventuale bonifica solo con nodo dedicato.
 
 ---
 
-3. Eventi storici senza type:
+2. Eventi storici senza type:
 
 eventi creati prima della patch possono avere type null.
 
@@ -1068,6 +1095,7 @@ PROCESSING LAYER
 - search/filter client-side lista eventi
 - label creato/modificato su lista eventi
 - no-op edit guard per evitare update_event senza modifiche reali
+- helper edit_mode / editing_event ripuliti da linting Retool
 
 ---
 
@@ -1091,6 +1119,27 @@ ui_state:
 ✔ parsed sempre strutturato
 ✔ parsing condiviso tra layer
 ✔ UI completamente state-driven
+
+HELPER STATE TECNICI:
+
+edit_mode:
+
+- indica se il sistema è in modalità modifica evento
+- non usa più additionalScope { value }
+- legge valore tecnico da window.__logos_edit_mode_value
+- cancella la chiave window dopo la lettura
+
+editing_event:
+
+- conserva l’evento NEW in modifica
+- non usa più additionalScope { value }
+- legge valore tecnico da window.__logos_editing_event_value
+- cancella la chiave window dopo la lettura
+
+Nota:
+
+questi helper non sono fonte business.
+Servono solo per controllare il flow edit.
 
 ---
 
@@ -2025,24 +2074,27 @@ PROBLEMI RISOLTI
 ✔ eventi appena inseriti mostrati come modificati → RISOLTO
 ✔ edit senza modifiche aggiornava updated_at → RISOLTO
 ✔ nuovo input da lista eventi lasciava visibili input e lista insieme → RISOLTO 
+✔ linting edit_mode: 'value' is not defined → RISOLTO
+✔ linting editing_event: 'value' is not defined → RISOLTO
+✔ additionalScope { value } su helper edit mode → RIMOSSO
 
 ------------------------------------------------
 STATO LAYER SISTEMA
 ------------------------------------------------
 
-Layer 1 — Input: ~97%  
-Layer 2 — Matching: ~88%  
-Layer 3 — View / Preview: ~92%  
-Layer HINT SYSTEM: ~93%  
-Layer 4 — Data Structure: ~20%  
-Layer 5 — Engine: ~44%  
-Layer 6 — Output: 0%  
+Layer 1 — Input: ~98%
+Layer 2 — Matching: ~88%
+Layer 3 — View / Preview: ~92%
+Layer HINT SYSTEM: ~93%
+Layer 4 — Data Structure: ~20%
+Layer 5 — Engine: ~44%
+Layer 6 — Output: 0%
 
 ---
 
 STATO COMPLESSIVO:
 
-~83%
+~84%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -2059,6 +2111,7 @@ FASE ATTUALE
 ✔ ENGINE BASE — TYPE CLASSIFICATION BASE — COMPLETATO  
 ✔ MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL — COMPLETATO 
 ✔ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE — COMPLETATO 
+✔ LINTING / STATE HELPER CLEANUP — COMPLETATO
 
 ---
 
@@ -2109,7 +2162,6 @@ senza anticipare output/KPI.
 
 Nodi candidati principali residui:
 
-- LINTING / STATE HELPER CLEANUP
 - PROJECT / ENTITY CREATE SUGGESTION
 - ECONOMIC DIRECTION ADVANCED
 - DATA STRUCTURE / ENTITY HIERARCHY
@@ -2153,8 +2205,9 @@ Priorità aggiornata:
 6. type classification base ✔  
 7. match engine unification first controlled level ✔  
 8. UX / cleanup post match engine ✔  
-9. next operational node da definire  
-10. output                 
+9. linting / state helper cleanup ✔
+10. next operational node da definire  
+11. output                
 
 ---
 
@@ -2169,31 +2222,17 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. linting / state helper cleanup oppure UX micro-node  
-2. project/entity create suggestion  
-3. data structure / entity relations  
-4. economic direction advanced  
-5. semantic engine avanzato  
-6. dashboard / KPI      
+1. project/entity create suggestion  
+2. data structure / entity relations  
+3. economic direction advanced  
+4. semantic engine avanzato  
+5. dashboard / KPI   
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. LINTING / STATE HELPER CLEANUP
-
-Scopo:
-
-- risolvere linting residui Retool:
-  - edit_mode: 'value' is not defined
-  - editing_event: 'value' is not defined
-- verificare binding/helper state
-- evitare rumore tecnico futuro
-- preservare edit flow
-
----
-
-2. PROJECT / ENTITY CREATE SUGGESTION
+1. PROJECT / ENTITY CREATE SUGGESTION
 
 Scopo:
 
@@ -2206,7 +2245,7 @@ Scopo:
 
 ---
 
-3. ECONOMIC DIRECTION ADVANCED
+2. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -2217,7 +2256,7 @@ Scopo:
 
 ---
 
-4. DATA STRUCTURE / ENTITY HIERARCHY
+3. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -2229,7 +2268,7 @@ Scopo:
 
 ---
 
-5. DURATION ADVANCED — GIORNI / SETTIMANE
+4. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -2430,5 +2469,37 @@ parser invariato
 Match Engine invariato  
 Type Classification invariata  
 Duration Normalization invariata  
+nessun output/KPI anticipato  
+transizione verso NEXT NODE da definire in Roadmap
+
+v16 — 2026-05-03  
+completamento LINTING / STATE HELPER CLEANUP  
+risolto linting Retool edit_mode: 'value' is not defined  
+risolto linting Retool editing_event: 'value' is not defined  
+rimossa dipendenza da additionalScope { value } per edit_mode / editing_event  
+introdotto passaggio controllato tramite window.__logos_edit_mode_value  
+introdotto passaggio controllato tramite window.__logos_editing_event_value  
+edit_mode ora legge valore tecnico da window.__logos_edit_mode_value  
+editing_event ora legge valore tecnico da window.__logos_editing_event_value  
+gli helper cancellano la chiave window dopo la lettura  
+aggiornato btn_edit  
+aggiornato btn_cancel_edit  
+aggiornato button_input_confirm nel ramo no-op edit guard  
+aggiornato button_input_confirm nel reset finale dopo salvataggio reale  
+editing_event viene azzerato anche dopo update reale completato  
+create flow validato  
+edit flow validato  
+annulla modifica validato  
+edit senza modifiche reali validato  
+edit con modifica reale validato  
+updated_at / label creato-modificato validati  
+WRITTEN / ERROR validati  
+DB invariato  
+parser invariato  
+Match Engine invariato  
+Type Classification invariata  
+Duration Normalization invariata  
+preview invariata  
+lista eventi invariata  
 nessun output/KPI anticipato  
 transizione verso NEXT NODE da definire in Roadmap

@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v06
+# 00_PROJECT_Gap_Register_v07
 
-DATA: 2026-05-02
+DATA: 2026-05-03
 
 ------------------------------------------------
 SCOPO
@@ -184,7 +184,6 @@ Micro-nodi UX post Match Engine già completati:
 
 Nodi residui candidati:
 
-- Linting / State Helper Cleanup
 - Project / Entity Create Suggestion
 - Data Structure / Entity Hierarchy
 - Economic Direction Advanced
@@ -916,10 +915,14 @@ report futuri deboli
 
 AZIONE:
 
-Non prioritario immediato rispetto ai micro-nodi UX/helper.
+Micro-nodi UX/helper completati.
 
-Da valutare prima di output/KPI avanzati
-o prima di Project / Entity Create Suggestion strutturale.
+Da valutare come nodo strutturale futuro,
+prima di output/KPI avanzati
+e prima di evoluzioni profonde su Project / Entity Create Suggestion.
+
+Resta possibile aprire prima un nodo leggero di Project / Entity Create Suggestion,
+ma solo se non introduce schema DB, gerarchie o deduplicazione strutturale.
 
 PRINCIPIO OPERATIVO
 
@@ -1078,7 +1081,8 @@ Non prioritario ora.
 Da rivalutare dopo:
 
 - Match Engine Unification First Controlled Level completato
-- eventuali micro-nodi UX/helper
+- UX / Cleanup Micro-Batch completato
+- Linting / State Helper Cleanup completato
 - valutazione Data Structure / Entity Hierarchy
 - prima definizione output/report
 - valutazione dati economici reali
@@ -1096,70 +1100,96 @@ NOME:
 Linting / State Helper Cleanup
 
 FONTE:
-Match Engine Unification Session + Retool runtime
+Match Engine Unification Session + Retool runtime + Linting Cleanup Session
 
 STATO:
-IDENTIFICATO — MICRO-NODO CANDIDATO
+INTEGRATO
 
 DESCRIZIONE:
 
-Restano 2 linting Retool non bloccanti:
+Risoluzione dei linting Retool residui sugli helper state:
+
+- edit_mode
+- editing_event
+
+Prima del nodo, restavano 2 linting non bloccanti:
 
 - edit_mode: 'value' is not defined
 - editing_event: 'value' is not defined
 
-Stato runtime:
+CAUSA:
 
-- edit_mode funziona
-- editing_event funziona
-- edit flow validato
+Gli helper edit_mode / editing_event usavano:
+
+return value;
+
+con valore passato tramite:
+
+additionalScope: { value: ... }
+
+Il runtime era corretto,
+ma Retool segnalava value come variabile non definita.
+
+STATO REALE:
+
+Il nodo LINTING / STATE HELPER CLEANUP è stato completato.
+
+Implementato:
+
+- rimosso additionalScope { value } da edit_mode / editing_event
+- introdotto passaggio controllato tramite window.__logos_edit_mode_value
+- introdotto passaggio controllato tramite window.__logos_editing_event_value
+- edit_mode legge window.__logos_edit_mode_value
+- editing_event legge window.__logos_editing_event_value
+- gli helper cancellano la chiave window dopo la lettura
+- aggiornato btn_edit
+- aggiornato btn_cancel_edit
+- aggiornato button_input_confirm:
+  - ramo no-op edit guard
+  - reset finale dopo salvataggio reale
+- editing_event azzerato anche dopo update reale completato
+
+TEST VALIDATI:
+
+- linting edit_mode risolto
+- linting editing_event risolto
 - create flow validato
-- nessun errore runtime rilevato
-- probabile origine: additionalScope { value: ... }
+- edit flow validato
+- annulla modifica validato
+- edit senza modifiche reali validato
+- edit con modifica reale validato
+- updated_at / label creato-modificato validati
+- WRITTEN / ERROR validati
 
 NOTE:
 
-Durante Match Engine Unification sono stati risolti
-i linting project_state/entity_state.
+Il fix non ha modificato:
 
-Durante UX / Cleanup Micro-Batch Post Match Engine
-è stato verificato che:
+- parser
+- trigger_parse_debounced
+- project_state
+- entity_state
+- Match Engine
+- Type Classification
+- Duration Normalization
+- schema DB
+- insert_event
+- update_event
+- preview
+- lista eventi
 
-- edit_mode funziona correttamente
-- editing_event funziona correttamente
-- btn_cancel_edit funziona
-- no-op edit guard funziona
-- create/edit/lista non regrediscono
+RISCHIO RESIDUO:
 
-Temporary State non viene considerato soluzione prioritaria,
-perché storicamente instabile nel setup reale.
+Nessun rischio operativo rilevato dopo i test.
 
-RISCHIO:
-
-Rumore tecnico futuro.
-Possibile confusione durante debug Retool.
+Eventuali ulteriori warning Retool dovranno essere trattati solo se reali,
+riproducibili e collegati a regressioni runtime.
 
 AZIONE:
 
-Micro-nodo candidato.
+Gap integrato.
 
-Scope:
-
-- ripulire edit_mode / editing_event
-- eliminare riferimento ambiguo a value
-- preservare comportamento edit flow
-- nessuna modifica matching
-- nessuna modifica parser
-- nessuna modifica DB
-
-Priorità:
-
-Residuo non bloccante.
-
-Da affrontare solo se:
-- il rumore linting ostacola debug futuri
-- si individua una soluzione helper sicura
-- non si rischia regressione edit flow
+Non riaprire come micro-nodo base.
 
 ---
 
@@ -1373,22 +1403,18 @@ Vincoli:
 
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo UX / Cleanup Micro-Batch Post Match Engine:
-
-MICRO-NODI RESIDUI:
-
-1. G14 — Linting / State Helper Cleanup
+Ordine attuale consigliato dopo Linting / State Helper Cleanup:
 
 NODI STRUTTURALI FUTURI:
 
-2. G03 — Project / Entity Create Suggestion
-3. G11 — Data Structure / Entity Hierarchy
-4. G13 — Economic Direction Advanced
-5. G08A — Duration Advanced / Giorni-Settimane
-6. G17 — Preview Model / Hint State Consolidation
-7. G04 — Logging / Versioning
-8. G05 — Input Modes
-9. G06 — Multi-source Input
+1. G03 — Project / Entity Create Suggestion
+2. G11 — Data Structure / Entity Hierarchy
+3. G13 — Economic Direction Advanced
+4. G08A — Duration Advanced / Giorni-Settimane
+5. G17 — Preview Model / Hint State Consolidation
+6. G04 — Logging / Versioning
+7. G05 — Input Modes
+8. G06 — Multi-source Input
 
 Gap già integrati:
 
@@ -1397,6 +1423,7 @@ G08 — Duration Normalization Base
 G09 — Type Classification Base
 G10 — Match Engine Unification First Controlled Level
 G12 — Events List Label / Updated At Display
+G14 — Linting / State Helper Cleanup
 G15 — Edit Mode Cancel / Return to Events List
 G16 — Events List Search / Filter Bar
 
@@ -1499,3 +1526,39 @@ aggiornato G17 Preview Model / Hint State Consolidation con nota post UX cleanup
 aggiornato ordine consigliato gap/nodi
 confermato output/KPI non attivi
 allineamento con State v15 e Roadmap v09
+
+v07 — 2026-05-03
+
+aggiornato Gap Register dopo LINTING / STATE HELPER CLEANUP
+aggiornato G14 Linting / State Helper Cleanup a INTEGRATO
+documentata risoluzione linting edit_mode: 'value' is not defined
+documentata risoluzione linting editing_event: 'value' is not defined
+documentata rimozione additionalScope { value } da edit_mode / editing_event
+documentato passaggio controllato tramite window.__logos_edit_mode_value
+documentato passaggio controllato tramite window.__logos_editing_event_value
+documentato reset chiavi window dopo lettura helper
+documentato aggiornamento btn_edit
+documentato aggiornamento btn_cancel_edit
+documentato aggiornamento button_input_confirm nel ramo no-op edit guard
+documentato aggiornamento button_input_confirm nel reset finale dopo salvataggio reale
+documentato azzeramento editing_event dopo update reale completato
+create flow validato
+edit flow validato
+annulla modifica validato
+edit senza modifiche reali validato
+edit con modifica reale validato
+updated_at / label creato-modificato validati
+WRITTEN / ERROR validati
+DB invariato
+parser invariato
+Match Engine invariato
+Type Classification invariata
+Duration Normalization invariata
+preview invariata
+lista eventi invariata
+aggiornato G02 Processor / Engine Flow rimuovendo Linting Cleanup dai nodi residui
+aggiornato G11 Data Structure / Entity Hierarchy dopo chiusura micro-nodi helper
+aggiornato G13 Economic Direction Advanced con Linting Cleanup completato
+aggiornato ordine consigliato gap/nodi
+confermato output/KPI non attivi
+allineamento con State v16 e Roadmap v10

@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v09
+# 00_PROJECT_Roadmap_v10
 
-DATA: 2026-05-02
+DATA: 2026-05-03
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -69,26 +69,26 @@ FASE COMPLETATA:
 ✔ STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)  
 ✔ STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
 ✔ STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL (COMPLETATO)  
-✔ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)  
+✔ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO) 
+✔ LINTING / STATE HELPER CLEANUP (COMPLETATO) 
 
 ---
 
 FASE ATTIVA CONSIGLIATA:
 
-NEXT NODE DA DEFINIRE DOPO CHIUSURA AGGIORNAMENTO DOCUMENTALE MINIMO
+NEXT NODE POST LINTING CLEANUP DA DEFINIRE
 
 ---
 
 FASE SUCCESSIVA CANDIDATA:
 
-NEXT NODE POST UX CLEANUP DA DEFINIRE
+NEXT NODE POST LINTING CLEANUP DA DEFINIRE
 
 Candidati principali residui:
 
-- LINTING / STATE HELPER CLEANUP
 - PROJECT / ENTITY CREATE SUGGESTION
-- ECONOMIC DIRECTION ADVANCED
 - DATA STRUCTURE / ENTITY HIERARCHY
+- ECONOMIC DIRECTION ADVANCED
 - DURATION ADVANCED — GIORNI / SETTIMANE
 
 Candidato non immediato:
@@ -712,22 +712,6 @@ Limiti espliciti:
 ⚠ eventi storici non retro-normalizzati  
 ✔ Match Engine Unification First Controlled Level completato nello STEP 6.4  
 ⚠ match engine avanzato separato non implementato  
-⚠ linting Retool residuo non bloccante   
-
----
-
-Anomalie residue:
-
-- edit_mode: 'value' is not defined
-- editing_event: 'value' is not defined
-
-Stato:
-
-non bloccanti, fuori scope.
-
-Nodo candidato:
-
-LINTING / STATE HELPER CLEANUP 
 
 ------------------------------------------------
 
@@ -906,7 +890,7 @@ Limiti residui:
 ⚠ deduplicazione non implementata  
 ⚠ creazione guidata project/entity non implementata  
 ⚠ preview resta layer ibrido  
-⚠ 2 linting Retool residui su edit_mode / editing_event  
+✔ linting Retool residui su edit_mode / editing_event risolti nel nodo LINTING / STATE HELPER CLEANUP 
 
 ---
 
@@ -979,9 +963,8 @@ Output raggiunto:
 
 Limiti residui:
 
-⚠ linting edit_mode / editing_event ancora presenti  
-⚠ runtime corretto  
-⚠ anomalia non bloccante  
+✔ linting edit_mode / editing_event risolti nel nodo successivo LINTING / STATE HELPER CLEANUP  
+✔ runtime edit/create/annulla/no-op edit rivalidato dopo cleanup helper 
 
 ---
 
@@ -992,6 +975,85 @@ COMPLETATO.
 Non riaprire come UX Cleanup base.
 Eventuali evoluzioni grafiche future devono essere nodo dedicato,
 solo dopo sistema stabile.
+
+------------------------------------------------
+
+LINTING / STATE HELPER CLEANUP (COMPLETATO)
+
+Obiettivo:
+
+Eliminare i linting Retool residui sugli helper state edit_mode / editing_event,
+senza modificare parser, matching, DB, preview, lista eventi o architettura.
+
+---
+
+Problema reale affrontato:
+
+Gli helper edit_mode e editing_event usavano:
+
+return value;
+
+con valore passato tramite:
+
+additionalScope: { value: ... }
+
+Il runtime era corretto, ma Retool segnalava:
+
+- edit_mode: 'value' is not defined
+- editing_event: 'value' is not defined
+
+Conseguenza:
+
+- rumore tecnico nel debug
+- rischio di confusione futura durante manutenzione
+- residuo non bloccante ma documentale/operativo
+
+---
+
+Interventi eseguiti:
+
+✔ rimosso additionalScope { value } da edit_mode / editing_event  
+✔ introdotto passaggio controllato tramite window.__logos_edit_mode_value  
+✔ introdotto passaggio controllato tramite window.__logos_editing_event_value  
+✔ edit_mode legge window.__logos_edit_mode_value  
+✔ editing_event legge window.__logos_editing_event_value  
+✔ gli helper cancellano la chiave window dopo la lettura  
+✔ aggiornato btn_edit  
+✔ aggiornato btn_cancel_edit  
+✔ aggiornato button_input_confirm:
+  - ramo no-op edit guard
+  - reset finale dopo salvataggio reale  
+✔ editing_event azzerato anche dopo update reale completato  
+
+---
+
+Output raggiunto:
+
+✔ linting edit_mode risolto  
+✔ linting editing_event risolto  
+✔ create flow validato  
+✔ edit flow validato  
+✔ annulla modifica validato  
+✔ edit senza modifiche reali validato  
+✔ edit con modifica reale validato  
+✔ updated_at / label creato-modificato validati  
+✔ WRITTEN / ERROR validati  
+✔ nessuna regressione DB  
+✔ nessuna regressione parser  
+✔ nessuna regressione Match Engine  
+✔ nessuna regressione Type Classification  
+✔ nessuna regressione Duration Normalization  
+✔ nessuna regressione preview  
+✔ nessuna regressione lista eventi  
+
+---
+
+Stato:
+
+COMPLETATO.
+
+Non riaprire come linting cleanup base.
+Eventuali ulteriori warning Retool dovranno essere trattati solo se reali, riproducibili e collegati a regressioni runtime.
 
 ------------------------------------------------
 
@@ -1028,7 +1090,7 @@ Il sistema NON può avanzare allo STEP 7 finché:
 
 - type classification base è completata ma non ancora sufficiente per KPI avanzati
 - matching è stato stabilizzato a primo livello, ma non è ancora un engine avanzato
-- UX cleanup post matching è completato, ma resta un linting helper residuo non bloccante
+- UX cleanup post matching e linting helper cleanup sono completati, ma data structure / entity relations non sono ancora consolidate
 - data structure / entity relations non sono ancora consolidate
 - direzione economica avanzata non è stata ancora valutata
 - dati storici non sono retro-normalizzati
@@ -1061,27 +1123,13 @@ non saranno ulteriormente consolidati.
 NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
 
-NEXT NODE DA DEFINIRE DOPO CHIUSURA AGGIORNAMENTO DOCUMENTALE MINIMO
+NEXT NODE POST LINTING CLEANUP DA DEFINIRE
 
 ------------------------------------------------
 NODI CANDIDATI POST UX / CLEANUP MICRO-BATCH
 ------------------------------------------------
 
-1. LINTING / STATE HELPER CLEANUP
-
-Scopo:
-
-- risolvere linting residui Retool:
-  - edit_mode: 'value' is not defined
-  - editing_event: 'value' is not defined
-- preservare edit flow
-- evitare rumore tecnico futuro
-- non usare Temporary State se instabile nel setup reale
-- non modificare parser / matching / DB
-
----
-
-2. PROJECT / ENTITY CREATE SUGGESTION
+1. PROJECT / ENTITY CREATE SUGGESTION
 
 Scopo:
 
@@ -1094,7 +1142,7 @@ Scopo:
 
 ---
 
-3. ECONOMIC DIRECTION ADVANCED
+2. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -1105,7 +1153,7 @@ Scopo:
 
 ---
 
-4. DATA STRUCTURE / ENTITY HIERARCHY
+3. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -1117,7 +1165,7 @@ Scopo:
 
 ---
 
-5. DURATION ADVANCED — GIORNI / SETTIMANE
+4. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -1128,7 +1176,7 @@ Scopo:
 
 ---
 
-6. PREVIEW MODEL / HINT STATE CONSOLIDATION
+5. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
@@ -1257,12 +1305,11 @@ Il sistema è ora entrato nello STEP 6 in modo reale.
 Il sistema NON può avanzare allo STEP 7 (OUTPUT)
 finché non vengono completati o valutati almeno:
 
-1. valutazione Linting / State Helper Cleanup oppure accettazione formale come residuo non bloccante
+1. valutazione Project / Entity Create Suggestion
 2. valutazione Data Structure / Entity Hierarchy
-3. valutazione Project / Entity Create Suggestion
-4. valutazione Economic Direction Advanced
-5. eventuale decisione su amount firmato / direction field
-6. valutazione sufficienza dati reali per report iniziali
+3. valutazione Economic Direction Advanced
+4. eventuale decisione su amount firmato / direction field
+5. valutazione sufficienza dati reali per report iniziali
 
 Nota:
 
@@ -1280,6 +1327,9 @@ Il campo events.type viene ora valorizzato dal frontend.
 Match Engine Unification First Controlled Level è completato.
 project_id/entity_id sono ora più coerenti grazie al match state minimo.
 UX / Cleanup Micro-Batch Post Match Engine è completato.
+Linting / State Helper Cleanup è completato.
+edit_mode / editing_event non presentano più linting residui.
+create/edit/annulla/no-op edit/edit reale sono stati rivalidati dopo il cleanup helper.
 create/edit/lista/annulla/ricerca/WRITTEN/ERROR sono validati.
 
 Tuttavia type + matching base non abilitano ancora automaticamente KPI/reportistica.
@@ -1473,3 +1523,37 @@ v09 — 2026-05-02
 - linting edit_mode/editing_event ancora residui non bloccanti
 - aggiornamento fase attiva consigliata a NEXT NODE da definire dopo chiusura aggiornamento documentale minimo
 - mantenuto blocco verso OUTPUT fino a data structure / economic direction / report readiness
+
+v10 — 2026-05-03
+
+- completamento LINTING / STATE HELPER CLEANUP
+- risolto linting Retool edit_mode: 'value' is not defined
+- risolto linting Retool editing_event: 'value' is not defined
+- rimossa dipendenza da additionalScope { value } per edit_mode / editing_event
+- introdotto passaggio controllato tramite window.__logos_edit_mode_value
+- introdotto passaggio controllato tramite window.__logos_editing_event_value
+- edit_mode ora legge valore tecnico da window.__logos_edit_mode_value
+- editing_event ora legge valore tecnico da window.__logos_editing_event_value
+- gli helper cancellano la chiave window dopo la lettura
+- aggiornato btn_edit
+- aggiornato btn_cancel_edit
+- aggiornato button_input_confirm nel ramo no-op edit guard
+- aggiornato button_input_confirm nel reset finale dopo salvataggio reale
+- editing_event azzerato anche dopo update reale completato
+- create flow validato
+- edit flow validato
+- annulla modifica validato
+- edit senza modifiche reali validato
+- edit con modifica reale validato
+- updated_at / label creato-modificato validati
+- WRITTEN / ERROR validati
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
+- preview invariata
+- lista eventi invariata
+- nessun output/KPI anticipato
+- aggiornamento fase attiva consigliata a NEXT NODE POST LINTING CLEANUP DA DEFINIRE
+- mantenuto blocco verso OUTPUT fino a project/entity create suggestion / data structure / economic direction / report readiness

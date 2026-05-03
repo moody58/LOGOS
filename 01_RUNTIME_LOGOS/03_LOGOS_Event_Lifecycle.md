@@ -1,6 +1,6 @@
-# 03_LOGOS_Event_Lifecycle_v06
+# 03_LOGOS_Event_Lifecycle_v07
 
-DATA: 2026-05-02
+DATA: 2026-05-03
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -18,6 +18,10 @@ C (Completezza): 10/10
 - lista eventi search/filter e label creato/modificato documentate come processing UX
 - refresh lista dopo update documentato  
 - fonti runtime di salvataggio chiarite  
+- Linting / State Helper Cleanup documentato
+- edit_mode / editing_event documentati come helper tecnici ripuliti
+- rimozione additionalScope { value } da edit_mode / editing_event documentata
+- reset helper edit flow post-update documentato
 
 Q (Qualità): 9.5/10  
 - lifecycle coerente con sistema reale  
@@ -28,6 +32,8 @@ Q (Qualità): 9.5/10
 - chiarito che Annulla non modifica evento e non aggiorna updated_at
 - chiarito che edit senza modifiche reali non produce update_event
 - nessuna anticipazione output/KPI  
+- rumore tecnico Retool su edit_mode / editing_event eliminato
+- lifecycle edit più ricostruibile perché gli helper non dipendono più da value implicito
 
 D (Deployabilità): 10/10  
 - documento stabile  
@@ -40,6 +46,9 @@ D (Deployabilità): 10/10
 - search/filter lista eventi validato
 - WRITTEN / ERROR rivalidati dopo cleanup UX
 - DB invariato
+- linting edit_mode / editing_event risolti
+- create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
+- WRITTEN / ERROR rivalidati dopo cleanup helper
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -59,6 +68,8 @@ Il documento stabilisce:
 - distinzione tra modifica reale e conferma senza variazioni
 - rapporto tra input, normalization base, duration normalization, type classification, matching e processing
 - evoluzione futura
+- cleanup helper edit_mode / editing_event
+- rimozione linting Retool residui dal lifecycle edit
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -80,10 +91,11 @@ Gli eventi:
 - non vengono aggiornati se l’edit viene confermato senza cambiamenti reali
 - mantengono raw_input come memoria dell’input utente
 - non mantengono ancora storico revisioni
+- usano helper edit_mode / editing_event ripuliti da linting Retool
 
 ---
 
-3. EVOLUZIONE PER STATO + CORREZIONE PRE-VALIDAZIONE
+1. EVOLUZIONE PER STATO + CORREZIONE PRE-VALIDAZIONE
 
 Un evento:
 
@@ -144,6 +156,8 @@ NEW
 - può essere corretto tramite edit flow con match state live
 - può uscire dall’edit flow tramite Annulla senza update_event
 - può essere confermato in edit senza modifiche reali senza aggiornare updated_at
+- usa edit_mode / editing_event come helper tecnici del flow edit
+- edit_mode / editing_event non usano più additionalScope { value }
 - resta sotto controllo utente
 
 ---
@@ -222,6 +236,9 @@ EDIT:
 - può essere annullato senza update_event
 - può essere confermato senza modifiche reali come no-op
 - aggiorna lista eventi dopo save completato quando avviene update_event
+- azzera edit_mode dopo update reale completato
+- azzera editing_event dopo update reale completato
+- usa helper edit_mode / editing_event senza additionalScope { value }
 
 ---
 
@@ -244,8 +261,9 @@ ANNULLA MODIFICA:
 - usa btn_cancel_edit
 - non esegue update_event
 - non aggiorna updated_at
-- resetta edit_mode
-- resetta editing_event
+- resetta edit_mode tramite window.__logos_edit_mode_value
+- resetta editing_event tramite window.__logos_editing_event_value
+- non usa più additionalScope { value } per edit_mode / editing_event
 - resetta input_home / input_raw
 - resetta select_project / select_entity / select1
 - resetta ui_state.parsed
@@ -276,6 +294,12 @@ Motivo:
 amount / unit / event_date sono derivati dal parser.
 Una rielaborazione del parser non deve essere trattata come modifica utente.
 
+In caso di no-op edit:
+
+- edit_mode viene chiuso tramite window.__logos_edit_mode_value = false
+- editing_event viene azzerato tramite window.__logos_editing_event_value = null
+- non viene usato additionalScope { value } per edit_mode / editing_event
+
 ------------------------------------------------
 TRANSIZIONI CONSENTITE
 ------------------------------------------------
@@ -296,6 +320,9 @@ NEW → NEW (EDIT)
 - project_id/entity_id derivano da select_project/select_entity
 - select_project/select_entity sono alimentati da project_state/entity_state
 - aggiorna updated_at
+- al termine dell’update reale azzera edit_mode
+- al termine dell’update reale azzera editing_event
+- il reset degli helper edit avviene senza additionalScope { value }
 
 ---
 
@@ -315,6 +342,9 @@ NEW → NEW (ANNULLA EDIT)
 - entity_id invariato
 - updated_at invariato
 - ritorno alla lista eventi
+- edit_mode viene chiuso tramite window.__logos_edit_mode_value
+- editing_event viene svuotato tramite window.__logos_editing_event_value
+- btn_cancel_edit non usa più additionalScope { value } per edit_mode / editing_event
 
 ---
 
@@ -334,6 +364,9 @@ NEW → NEW (EDIT NO-OP)
 - entity_id invariato
 - updated_at invariato
 - ritorno alla lista eventi
+- edit_mode viene chiuso tramite window.__logos_edit_mode_value
+- editing_event viene svuotato tramite window.__logos_editing_event_value
+- button_input_confirm non usa più additionalScope { value } per resettare edit_mode / editing_event
 
 ---
 
@@ -552,8 +585,10 @@ input_home
 Edit flow:
 
 evento NEW selezionato  
+→ window.__logos_editing_event_value = item  
 → editing_event  
-→ edit_mode = true  
+→ window.__logos_edit_mode_value = true  
+→ edit_mode  
 → load raw_input  
 → input_home  
 → input_raw  
@@ -570,18 +605,21 @@ Percorsi possibili:
 button_input_confirm  
 → update_event  
 → events_new refresh  
+→ reset edit_mode / editing_event senza additionalScope { value }  
 → NEW
 
 2. Conferma senza modifiche reali:
 button_input_confirm  
 → no-op edit guard  
 → nessun update_event  
+→ reset edit_mode / editing_event senza additionalScope { value }  
 → NEW
 
 3. Annulla:
 btn_cancel_edit  
+→ reset edit_mode / editing_event senza additionalScope { value }  
 → nessun update_event  
-→ NEW  
+→ NEW
 
 Nota edit flow:
 
@@ -594,6 +632,76 @@ Nota no-op:
 Il sistema distingue edit reale da semplice apertura/conferma.
 Questo evita aggiornamenti impropri di updated_at
 e false label “modificato” nella lista eventi.
+
+------------------------------------------------
+HELPER EDIT FLOW
+------------------------------------------------
+
+Il lifecycle edit usa due helper tecnici Retool:
+
+- edit_mode
+- editing_event
+
+Ruolo:
+
+edit_mode:
+
+- distingue create flow da edit flow
+- abilita Annulla
+- permette a button_input_confirm di scegliere insert_event oppure update_event
+
+editing_event:
+
+- conserva l’evento NEW attualmente in modifica
+- permette il confronto no-op con i dati originali
+- viene azzerato quando l’edit termina
+
+Dopo Linting / State Helper Cleanup,
+questi helper non usano più:
+
+additionalScope: { value }
+
+Nuovo pattern:
+
+- il chiamante scrive una chiave tecnica temporanea su window
+- l’helper legge la chiave
+- l’helper cancella la chiave dopo la lettura
+- l’helper ritorna il valore controllato
+
+Chiavi tecniche:
+
+- window.__logos_edit_mode_value
+- window.__logos_editing_event_value
+
+Uso nel lifecycle:
+
+btn_edit:
+
+- valorizza window.__logos_editing_event_value con l’evento selezionato
+- rilancia editing_event
+- valorizza window.__logos_edit_mode_value = true
+- rilancia edit_mode
+
+btn_cancel_edit:
+
+- valorizza window.__logos_edit_mode_value = false
+- rilancia edit_mode
+- valorizza window.__logos_editing_event_value = null
+- rilancia editing_event
+
+button_input_confirm:
+
+- in caso di no-op edit, resetta edit_mode / editing_event tramite chiavi window
+- in caso di update reale, dopo save ed events_new refresh resetta edit_mode / editing_event tramite chiavi window
+
+Effetto:
+
+- linting edit_mode risolto
+- linting editing_event risolto
+- edit flow invariato nel comportamento
+- lifecycle invariato negli stati
+- DB invariato
+- nessuna modifica a parser, matching, preview, type o duration
 
 ------------------------------------------------
 INTEGRAZIONE CON MATCHING
@@ -871,6 +979,13 @@ Regole label:
 - edit annullato → resta creato/modificato come prima
 - edit senza modifiche reali → resta creato/modificato come prima
 
+Dopo Linting / State Helper Cleanup:
+
+- edit reale resetta edit_mode / editing_event dopo update_event completato
+- annulla edit resetta edit_mode / editing_event senza update_event
+- edit no-op resetta edit_mode / editing_event senza update_event
+- nessuno di questi reset modifica direttamente il lifecycle dell’evento
+
 ------------------------------------------------
 LIMITI ATTUALI
 ------------------------------------------------
@@ -1018,6 +1133,8 @@ INPUT SYSTEM
 → consente modifica eventi NEW
 → consente annulla modifica senza update_event
 → impedisce update_event su edit senza modifiche reali 
+→ usa helper edit_mode / editing_event senza additionalScope { value }
+→ azzera editing_event al termine del flow edit
 → produce ui_state.parsed  
 
 ---
@@ -1051,7 +1168,7 @@ PREVIEW
 DATABASE
 
 → memorizza eventi  
-→ viene aggiornato solo se l’edit produce una modifica reale
+→ non viene aggiornato dal reset degli helper edit_mode / editing_event
 → non interpreta  
 
 ---
@@ -1092,9 +1209,10 @@ Strategia:
 2. correggere in NEW
 2A. evitare aggiornamenti inutili se l’edit non cambia il dato
 2B. permettere uscita sicura dall’edit senza salvare
-3. normalizzare progressivamente
-4. validare manualmente
-5. usare per output solo quando sufficientemente affidabile
+2C. chiudere in modo pulito edit_mode / editing_event al termine del flow edit
+1. normalizzare progressivamente
+2. validare manualmente
+3. usare per output solo quando sufficientemente affidabile
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -1127,6 +1245,9 @@ Il lifecycle attuale è:
 ✔ edit mode ora supporta Annulla
 ✔ edit senza modifiche reali non aggiorna updated_at
 ✔ lista eventi distingue creato/modificato in modo più coerente
+✔ linting / state helper cleanup completato
+✔ edit_mode / editing_event non usano più additionalScope { value }
+✔ editing_event viene azzerato anche dopo update reale completato
 
 ---
 
@@ -1158,7 +1279,7 @@ solo dopo stabilizzazione:
 8. type classification ✔  
 9. match engine unification first controlled level ✔  
 10. UX / cleanup post match engine ✔  
-11. linting / state helper cleanup oppure accettazione residuo non bloccante  
+11. linting / state helper cleanup ✔  
 12. data structure / project-entity evolution  
 13. economic direction advanced  
 14. output
@@ -1236,4 +1357,35 @@ v06 — 2026-05-02
 - Match Engine invariato
 - Type Classification invariata
 - Duration Normalization invariata
+- nessun output/KPI anticipato
+
+v07 — 2026-05-03  
+
+- integrazione LINTING / STATE HELPER CLEANUP nel lifecycle
+- documentata risoluzione linting edit_mode: 'value' is not defined
+- documentata risoluzione linting editing_event: 'value' is not defined
+- rimossa dipendenza da additionalScope { value } per edit_mode / editing_event
+- documentato passaggio controllato tramite window.__logos_edit_mode_value
+- documentato passaggio controllato tramite window.__logos_editing_event_value
+- documentato btn_edit con valorizzazione window helper
+- documentato btn_cancel_edit senza additionalScope { value }
+- documentato button_input_confirm senza additionalScope { value } nel reset helper
+- documentato reset edit_mode / editing_event nel ramo no-op edit
+- documentato reset edit_mode / editing_event dopo update reale completato
+- chiarito che reset helper non modifica lifecycle evento
+- chiarito che reset helper non modifica DB
+- create flow validato
+- edit flow validato
+- annulla modifica validato
+- edit senza modifiche reali validato
+- edit con modifica reale validato
+- updated_at / label creato-modificato validati
+- WRITTEN / ERROR rivalidati
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
+- preview invariata
+- lista eventi invariata
 - nessun output/KPI anticipato

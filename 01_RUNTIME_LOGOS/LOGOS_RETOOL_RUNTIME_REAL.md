@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v09
+# LOGOS_RETOOL_RUNTIME_REAL_v10
 
-DATA: 2026-05-02
+DATA: 2026-05-03
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -21,6 +21,12 @@ C (Completezza): 10/10
 - duration normalization documentata  
 - type classification base documentata  
 - Match Engine Unification First Controlled Level documentato   
+- UX / Cleanup Micro-Batch Post Match Engine documentato
+- Linting / State Helper Cleanup documentato
+- btn_cancel_edit documentato
+- no-op edit guard documentato
+- edit_mode / editing_event senza additionalScope { value } documentati
+- window.__logos_edit_mode_value / window.__logos_editing_event_value documentati
 
 Q (Qualità): 9.5/10  
 - runtime reale aggiornato  
@@ -32,6 +38,8 @@ Q (Qualità): 9.5/10
 - type persistito in events.type  
 - controllo manuale utente preservato  
 - debiti residui esplicitati  
+- rumore tecnico Retool edit_mode / editing_event eliminato
+- runtime edit helper più ricostruibile
 - non descrive funzionalità non implementate come attive  
 
 D (Deployabilità): 10/10  
@@ -41,7 +49,11 @@ D (Deployabilità): 10/10
 - nodo Preview Alignment Base validato runtime  
 - nodo Duration Normalization validato runtime  
 - nodo Type Classification Base validato runtime  
-- nodo Match Engine Unification First Controlled Level validato runtime          
+- nodo Match Engine Unification First Controlled Level validato runtime       
+- nodo UX / Cleanup Micro-Batch Post Match Engine validato runtime
+- nodo Linting / State Helper Cleanup validato runtime
+- create/edit/annulla/no-op edit/edit reale validati
+- WRITTEN / ERROR rivalidati   
 
 ------------------------------------------------
 STATO
@@ -56,6 +68,8 @@ PREVIEW ALIGNMENT BASE
 ENGINE BASE — DURATION NORMALIZATION  
 ENGINE BASE — TYPE CLASSIFICATION BASE  
 MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL
+UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+LINTING / STATE HELPER CLEANUP
 
 ------------------------------------------------
 DESCRIZIONE OPERATIVA DEL SISTEMA
@@ -102,7 +116,16 @@ INPUT
 ✔ preview highlight alimentato da matches  
 ✔ match state live in create flow  
 ✔ match state live in edit flow  
-✔ bug €500 label preview risolto     
+✔ bug €500 label preview risolto 
+✔ UX / Cleanup Micro-Batch Post Match Engine completato
+✔ btn_cancel_edit implementato
+✔ no-op edit guard implementato
+✔ lista eventi filtrabile
+✔ label creato/modificato coerente
+✔ Linting / State Helper Cleanup completato
+✔ edit_mode / editing_event non usano più additionalScope { value }
+✔ linting edit_mode / editing_event risolti
+✔ create/edit/annulla/no-op edit/edit reale rivalidati    
 
 ------------------------------------------------
 1. INPUT UTENTE
@@ -268,6 +291,64 @@ parsed: {
   unit: null,
   event_date: null
 }
+
+------------------------------------------------
+HELPER EDIT STATE — RUNTIME
+------------------------------------------------
+
+Helper Retool:
+
+- edit_mode
+- editing_event
+
+Ruolo:
+
+edit_mode:
+
+- distingue create flow da edit flow
+- abilita btn_cancel_edit
+- permette a button_input_confirm di scegliere insert_event oppure update_event
+
+editing_event:
+
+- conserva l’evento NEW attualmente in modifica
+- permette il confronto no-op con i dati originali
+- viene azzerato quando il flow edit termina
+
+Dopo Linting / State Helper Cleanup,
+questi helper non usano più:
+
+additionalScope: { value }
+
+Pattern runtime attuale:
+
+- il chiamante scrive una chiave tecnica temporanea su window
+- l’helper legge la chiave
+- l’helper cancella la chiave dopo la lettura
+- l’helper ritorna il valore controllato
+
+Chiavi tecniche:
+
+- window.__logos_edit_mode_value
+- window.__logos_editing_event_value
+
+---
+
+EDIT_MODE — codice runtime:
+
+```js
+const key = "__logos_edit_mode_value";
+
+if (!Object.prototype.hasOwnProperty.call(window, key)) {
+  return false;
+}
+
+const nextValue = window[key];
+
+delete window[key];
+
+return Boolean(nextValue);
+
 PRE-PROCESSING
 
 Normalizzazione runtime interna al parser:
@@ -1566,12 +1647,10 @@ Il bottone non ricalcola matching.
 Legge solo lo stato già disponibile.
 
 11.1 BUTTON_INPUT_CONFIRM — CODICE LOGICO
+
+```js
 // --- INSERT / UPDATE SWITCH ---
-const parsed = ui_state.value?.parsed || {
-  amount: null,
-  unit: null,
-  event_date: null
-};
+const parsed = ui_state.value?.parsed || {};
 
 const payload = {
   raw_input: input_raw.value,
@@ -1583,10 +1662,99 @@ const payload = {
   entity_id: select_entity.value || null
 };
 
+// --- NO-OP EDIT GUARD ---
+// Se siamo in edit mode ma il payload non cambia nulla,
+// non eseguiamo update_event e non aggiorniamo updated_at.
+
+const wasEditMode = edit_mode.data;
+const originalEvent = editing_event.data;
+
+const normalizeComparable = (value) => {
+  if (value === undefined || value === "") return null;
+  return value;
+};
+
+const normalizeNumberComparable = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? value : n;
+};
+
+// Confronto no-op basato solo sui campi modificabili dall'utente.
+// amount / unit / event_date sono derivati dal parser:
+// se l'utente non cambia input, non devono generare update_event.
+
+const sameText =
+  String(normalizeComparable(payload.raw_input) || "") ===
+  String(normalizeComparable(originalEvent?.raw_input) || "");
+
+const sameType =
+  String(normalizeComparable(payload.type) || "Evento") ===
+  String(normalizeComparable(originalEvent?.type) || "Evento");
+
+const sameProject =
+  String(normalizeComparable(payload.project_id) || "") ===
+  String(normalizeComparable(originalEvent?.project_id) || "");
+
+const sameEntity =
+  String(normalizeComparable(payload.entity_id) || "") ===
+  String(normalizeComparable(originalEvent?.entity_id) || "");
+
+const isSamePayload =
+  wasEditMode &&
+  originalEvent &&
+  sameText &&
+  sameType &&
+  sameProject &&
+  sameEntity;
+
+if (isSamePayload) {
+  // reset edit mode senza salvare
+  if (window.__parseTimer) {
+    clearTimeout(window.__parseTimer);
+    window.__parseTimer = null;
+  }
+
+  trigger_parse_debounced.cancel?.();
+
+  window.__logos_edit_mode_value = false;
+  await edit_mode.trigger();
+
+  window.__logos_editing_event_value = null;
+  await editing_event.trigger();
+
+  await input_home.setValue("");
+  await input_raw.setValue("");
+
+  select_project.clearValue();
+  select_entity.clearValue();
+  select1.clearValue?.();
+
+  ui_state.setValue({
+    ...ui_state.value,
+    view: "events",
+    parsed: {
+      amount: null,
+      unit: null,
+      event_date: null
+    },
+    status: "idle",
+    feedback_text: null,
+    feedback_project: null
+  });
+
+  container_input.setHidden(true);
+  container_home.setHidden(true);
+  container_feedback.setHidden(true);
+  container_events_list.setHidden(false);
+
+  return;
+}
+
 const feedbackText = input_raw.value;
 const feedbackProject = select_project.selectedItem?.name;
 
-// RESET UI SUBITO
+// RESET UI SUBITO (UX istantanea)
 ui_state.setValue({
   ...ui_state.value,
   parsed: {
@@ -1608,8 +1776,7 @@ select_entity.clearValue();
 
 trigger_parse_debounced.cancel?.();
 
-const wasEditMode = edit_mode.data;
-
+// SALVATAGGIO (async non bloccante UI)
 const savePromise = wasEditMode
   ? update_event.trigger({ additionalScope: payload })
   : insert_event.trigger({ additionalScope: payload });
@@ -1618,10 +1785,13 @@ await savePromise;
 
 await events_new.trigger();
 
+// reset edit mode dopo il salvataggio
 if (wasEditMode) {
-  edit_mode.trigger({
-    additionalScope: { value: false }
-  });
+  window.__logos_edit_mode_value = false;
+  await edit_mode.trigger();
+
+  window.__logos_editing_event_value = null;
+  await editing_event.trigger();
 }
 
 Risultati:
@@ -1631,6 +1801,12 @@ Risultati:
 ✔ type salvato tramite select1.value
 ✔ feedback immediato
 ✔ update lista corretto
+✔ no-op edit guard attivo
+✔ edit senza modifiche reali non esegue update_event
+✔ updated_at non cambia su edit no-op
+✔ edit_mode reset senza additionalScope { value }
+✔ editing_event reset senza additionalScope { value }
+✔ editing_event azzerato anche dopo update reale completato
 ✔ nessuna divergenza save/DB osservata
 
 BUTTON_INPUT_CONFIRM — DISABLED LOGIC
@@ -1814,7 +1990,7 @@ cancel debounce pending
 insert/update async
 await savePromise
 await events_new.trigger()
-reset edit_mode se necessario
+reset edit_mode / editing_event se necessario tramite window.__logos_edit_mode_value / window.__logos_editing_event_value
 
 Caratteristiche:
 
@@ -1823,6 +1999,9 @@ Caratteristiche:
 ✔ lista aggiornata dopo save reale
 ✔ nessun refresh pagina necessario dopo update
 ✔ parsed reset stabile a oggetto
+✔ edit_mode reset senza additionalScope { value }
+✔ editing_event reset senza additionalScope { value }
+✔ editing_event azzerato anche dopo update reale
 
 PROCESSING EVENTI
 
@@ -1850,29 +2029,130 @@ disponibile solo per eventi NEW
 riuso pipeline input
 update_event
 
+Annulla modifica:
+
+- disponibile tramite btn_cancel_edit
+- non esegue update_event
+- non aggiorna updated_at
+- resetta edit_mode / editing_event
+- resetta input/select/ui_state.parsed
+- torna alla lista eventi
+
+No-op edit guard:
+
+- attivo in button_input_confirm
+- confronta raw_input / type / project_id / entity_id
+- esclude amount / unit / event_date perché derivati dal parser
+- se non ci sono modifiche reali, non esegue update_event
+- updated_at resta invariato
+
+Lista eventi:
+
+- input_events_search filtra client-side list_events
+- ricerca su raw_input / type / status / project / entity
+- label creato/modificato basata su created_at / updated_at normalizzati
+- eventi modificati hanno marcatore leggero
+
 BTN_EDIT — FLOW AGGIORNATO
 
 Il pulsante edit ora rilancia anche il match state.
 
 Sequenza:
 
-1. editing_event.trigger({ value: item })
-2. edit_mode.trigger({ value: true })
-3. mostra container input
-4. pulisce select_project / select_entity
-5. carica item.raw_input in input_home e input_raw
-6. rilancia:
+1. window.__logos_editing_event_value = item
+2. editing_event.trigger()
+3. window.__logos_edit_mode_value = true
+4. edit_mode.trigger()
+5. mostra container input
+6. forza container_events_list nascosto
+7. forza container_feedback nascosto
+8. pulisce select_project / select_entity
+9. carica item.raw_input in input_home e input_raw
+10. rilancia:
    - parse_input_controlled
    - project_state
    - entity_state
-7. ripristina project_id/entity_id salvati se presenti
+11. ripristina project_id/entity_id salvati se presenti
+
+Codice helper aggiornato:
+
+```js
+// salva evento in editing
+window.__logos_editing_event_value = item;
+await editing_event.trigger();
+
+// attiva edit mode
+window.__logos_edit_mode_value = true;
+await edit_mode.trigger();
 
 Risultato:
 
-✔ edit flow coerente con create flow  
-✔ suggerimenti funzionano in modalità modifica  
-✔ select/hint/confirm guard aggiornati anche in edit  
-✔ dati salvati precedenti preservati se presenti  
+✔ edit flow coerente con create flow
+✔ suggerimenti funzionano in modalità modifica
+✔ select/hint/confirm guard aggiornati anche in edit
+✔ dati salvati precedenti preservati se presenti
+✔ doppia visibilità input/lista evitata
+✔ linting edit_mode / editing_event risolti
+
+------------------------------------------------
+BTN_CANCEL_EDIT — FLOW
+------------------------------------------------
+
+Componente:
+
+btn_cancel_edit
+
+Ruolo:
+
+annullare una modifica evento NEW
+senza eseguire update_event.
+
+Visibilità:
+
+visibile solo in edit mode.
+
+Hidden:
+
+{{ !edit_mode.data }}
+
+Comportamento:
+
+1. cancella eventuale debounce pendente
+2. scrive window.__logos_edit_mode_value = false
+3. rilancia edit_mode
+4. scrive window.__logos_editing_event_value = null
+5. rilancia editing_event
+6. resetta input_home
+7. resetta input_raw
+8. pulisce select_project
+9. pulisce select_entity
+10. pulisce select1
+11. resetta ui_state.parsed
+12. imposta ui_state.view = "events"
+13. nasconde container_input
+14. nasconde container_home
+15. nasconde container_feedback
+16. mostra container_events_list
+
+Codice helper:
+
+```js
+window.__logos_edit_mode_value = false;
+await edit_mode.trigger();
+
+window.__logos_editing_event_value = null;
+await editing_event.trigger();
+
+Risultato:
+
+✔ annulla modifica senza salvare
+✔ nessun update_event eseguito
+✔ updated_at invariato
+✔ ritorno lista eventi
+✔ edit_mode.data = false
+✔ editing_event.data = null
+✔ create/edit non regressi
+✔ linting edit helper non reintrodotto
 
 QUERY
 
@@ -1901,11 +2181,19 @@ entity_state
 focus_input_home
 editing_event
 
+HELPER TECNICI WINDOW:
+
+window.__logos_edit_mode_value
+window.__logos_editing_event_value
+
 COMPONENTI UI RILEVANTI:
 
 select1
 select_project
 select_entity
+btn_cancel_edit
+input_events_search
+list_events
 
 Nota:
 
@@ -2037,6 +2325,11 @@ PRINCIPI RUNTIME
 ✔ salvataggio entity_id da select_entity.value  
 ✔ matching project/entity da project_state/entity_state  
 ✔ confirm guard da ambiguità non risolta  
+✔ no-op edit guard
+✔ controlled edit cancel flow
+✔ helper edit_mode / editing_event senza additionalScope { value }
+✔ window-backed edit helper state
+✔ lista eventi filtrabile client-side
 
 STATO RUNTIME
 
@@ -2068,6 +2361,15 @@ Runtime attuale:
 ✔ match state live in create flow  
 ✔ match state live in edit flow  
 ✔ bug €500 preview risolto  
+✔ UX / Cleanup Micro-Batch Post Match Engine completato
+✔ btn_cancel_edit implementato
+✔ no-op edit guard implementato
+✔ input_events_search implementato
+✔ label creato/modificato lista eventi corretta
+✔ Linting / State Helper Cleanup completato
+✔ edit_mode / editing_event non usano più additionalScope { value }
+✔ linting edit_mode / editing_event risolti
+✔ create/edit/annulla/no-op edit/edit reale validati
 
 Debiti:
 
@@ -2643,19 +2945,168 @@ Nessuna modifica necessaria al reset select1.
 
 ANOMALIE RESIDUE:
 
-Linting Retool non bloccante:
+Nessuna anomalia linting edit_mode / editing_event residua.
 
-- edit_mode: 'value' is not defined
-- editing_event: 'value' is not defined
+Restano debiti evolutivi già noti:
 
-Stato:
+- giorni/settimane durata non convertiti automaticamente
+- type classification avanzata da definire
+- economic direction advanced non implementata
+- match engine avanzato separato non implementato
+- alias / gerarchie / deduplicazione non implementati
+- creazione guidata project/entity non implementata
+- preview ancora non view pura
+- output non attivo
 
-non bloccante per insert/update/type classification/matching.
-Edit flow validato runtime dopo aggiornamento btn_edit.
+------------------------------------------------
+UX / CLEANUP MICRO-BATCH — TEST VALIDATI
+------------------------------------------------
 
-Azione futura:
+Create nuovo evento:
 
-micro-nodo LINTING / STATE HELPER CLEANUP.
+Esito: OK
+
+---
+
+Edit evento:
+
+Esito: OK
+
+---
+
+Annulla modifica:
+
+Risultato:
+
+- nessun update_event
+- updated_at invariato
+- ritorno lista eventi
+- edit_mode false
+- editing_event null
+
+Esito: OK
+
+---
+
+Edit senza modifiche reali:
+
+Risultato:
+
+- no-op edit guard attivo
+- nessun update_event
+- updated_at invariato
+- label creato/modificato invariata
+- ritorno lista eventi
+
+Esito: OK
+
+---
+
+Edit con modifica reale:
+
+Risultato:
+
+- update_event eseguito
+- updated_at aggiornato
+- events_new refresh dopo save
+- label modificato coerente
+- edit_mode reset
+- editing_event reset
+
+Esito: OK
+
+---
+
+Lista eventi search/filter:
+
+Risultato:
+
+- campo vuoto mostra lista completa
+- filtro su raw_input funzionante
+- filtro su type/status funzionante
+- filtro su project/entity funzionante
+- edit da lista filtrata funzionante
+- WRITTEN / ERROR invariati
+
+Esito: OK
+
+------------------------------------------------
+LINTING / STATE HELPER CLEANUP — TEST VALIDATI
+------------------------------------------------
+
+Linting edit_mode:
+
+Risultato:
+
+- edit_mode: 'value' is not defined non più presente
+
+Esito: OK
+
+---
+
+Linting editing_event:
+
+Risultato:
+
+- editing_event: 'value' is not defined non più presente
+
+Esito: OK
+
+---
+
+Create flow:
+
+Esito: OK
+
+---
+
+Edit flow:
+
+Esito: OK
+
+---
+
+Annulla modifica:
+
+Esito: OK
+
+---
+
+Edit senza modifiche reali:
+
+Esito: OK
+
+---
+
+Edit con modifica reale:
+
+Esito: OK
+
+---
+
+updated_at / label creato-modificato:
+
+Esito: OK
+
+---
+
+WRITTEN / ERROR:
+
+Esito: OK
+
+---
+
+Regressioni:
+
+- DB invariato
+- parser invariato
+- Match Engine invariato
+- Type Classification invariata
+- Duration Normalization invariata
+- preview invariata
+- lista eventi invariata
+
+Esito: OK
 
 CHANGELOG
 
@@ -2816,4 +3267,46 @@ nessuna modifica DB
 nessuna modifica parser
 nessuna modifica type classification
 nessuna modifica duration normalization
+nessun output/KPI anticipato
+
+v10 — 2026-05-03
+
+completamento UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+documentato btn_cancel_edit
+documentato annulla modifica senza update_event
+documentato no-op edit guard
+documentato edit senza modifiche reali senza update_event
+documentato input_events_search
+documentato filtro client-side lista eventi
+documentata label creato/modificato
+documentata normalizzazione robusta created_at / updated_at
+documentato fix doppia visibilità input/lista dopo Annulla
+completamento LINTING / STATE HELPER CLEANUP
+documentata risoluzione linting edit_mode: 'value' is not defined
+documentata risoluzione linting editing_event: 'value' is not defined
+rimossa dipendenza da additionalScope { value } per edit_mode / editing_event
+introdotto passaggio controllato tramite window.__logos_edit_mode_value
+introdotto passaggio controllato tramite window.__logos_editing_event_value
+documentato edit_mode come helper tecnico window-backed
+documentato editing_event come helper tecnico window-backed
+documentato reset chiavi window dopo lettura helper
+aggiornato btn_edit
+aggiornato btn_cancel_edit
+aggiornato button_input_confirm nel ramo no-op edit guard
+aggiornato button_input_confirm nel reset finale dopo salvataggio reale
+editing_event azzerato anche dopo update reale completato
+create flow validato
+edit flow validato
+annulla modifica validato
+edit senza modifiche reali validato
+edit con modifica reale validato
+updated_at / label creato-modificato validati
+WRITTEN / ERROR validati
+DB invariato
+parser invariato
+Match Engine invariato
+Type Classification invariata
+Duration Normalization invariata
+preview invariata
+lista eventi invariata
 nessun output/KPI anticipato
