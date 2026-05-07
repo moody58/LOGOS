@@ -384,6 +384,67 @@ Scelta intenzionale:
 - riduce rischio di stati incrociati
 
 ------------------------------------------------
+OSSERVAZIONE EMERSA — COMMAND INTENT FUTURO
+------------------------------------------------
+
+Durante la validazione finale è emersa una possibile evoluzione UX:
+
+consentire input testuali di tipo comando, ad esempio:
+
+- crea progetto Aspri
+- crea nuovo progetto Casa Ostuni
+- crea entità Patrizio
+- aggiungi nuova entità Mario Bianchi
+
+Decisione:
+
+NON introdurre questa logica nel nodo corrente.
+
+Motivo:
+
+Il nodo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+gestisce suggestion e creazione inline a partire da un input evento.
+
+Le frasi comando rappresentano invece un comportamento distinto:
+
+- non sono eventi operativi ordinari
+- non devono essere salvate automaticamente in events
+- devono essere interpretate come intenti di sistema
+- devono richiedere conferma esplicita prima di scrivere nel DB
+
+Regola da consolidare:
+
+Le frasi “crea progetto…” / “crea entità…” non sono eventi.
+Sono comandi di sistema e devono aprire una conferma guidata,
+non salvare automaticamente dati.
+
+Nodo futuro candidato:
+
+COMMAND INTENT — CREATE PROJECT / ENTITY
+
+Scope futuro previsto:
+
+- riconoscere frasi comando
+- distinguere evento operativo da comando di sistema
+- mostrare riepilogo/conferma guidata
+- riusare insert_project / insert_entity già esistenti
+- evitare duplicati
+- non salvare evento se l’input è un comando puro
+- mantenere raw_input come testo sorgente
+- preservare tracciabilità e controllo utente
+
+Nota UX:
+
+Il placeholder attuale “Scrivi cosa vuoi fare...” può generare aspettativa
+di comandi diretti. Per ora, senza introdurre command intent, è preferibile
+un placeholder più prudente, ad esempio:
+
+“Scrivi cosa vuoi registrare...”
+
+Il placeholder potrà essere rivalutato quando il nodo COMMAND INTENT sarà
+aperto.
+
+------------------------------------------------
 STATO FINALE
 ------------------------------------------------
 
