@@ -35,6 +35,76 @@ Il nodo consente all’utente di:
 - bloccare il salvataggio solo in caso di ambiguità attiva
 
 ------------------------------------------------
+ALLINEAMENTO STRATEGICO — LOGOS CORE MODULARE
+------------------------------------------------
+
+Durante la chiusura del nodo è stata riconfermata la direzione strutturale
+originaria del progetto LOGOS.
+
+LOGOS mantiene l’obiettivo di essere un sistema espandibile a blocchi,
+fondato su un cuore centrale stabile:
+
+INPUT
+→ interpretazione controllata
+→ project / entity / type / amount / date
+→ evento normalizzato
+→ ledger eventi
+→ viste / moduli / dashboard futuri
+
+Il nodo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+rafforza questa direzione perché consolida due strutture trasversali:
+
+- project
+- entity
+
+Queste strutture non appartengono a un singolo caso d’uso,
+ma possono supportare istanze future diverse, ad esempio:
+
+- ASPRI
+- ADEXIMA
+- MaurizioLab
+- uso personale
+- lavoro
+- ristrutturazioni
+- clienti / fornitori / attività
+
+Decisione consolidata:
+
+LOGOS resta focalizzato sul Core Event System.
+
+Le istanze ASPRI / ADEXIMA / MaurizioLab non devono essere anticipate
+come moduli separati in questa fase.
+
+Saranno derivate future del core, non sostituti del core.
+
+Regola anti-deriva:
+
+Non aprire nodi verticali specifici come:
+
+- dashboard ASPRI
+- CRM ADEXIMA
+- gestione MaurizioLab
+- moduli clienti avanzati
+- moduli animali / allevamento
+- moduli fatture / preventivi
+
+prima che il Core Event System sia sufficientemente stabile.
+
+Sequenza corretta futura:
+
+1. consolidare cuore eventi
+2. consolidare gestione project/entity
+3. introdurre command intent guidato
+4. rifinire UX mobile
+5. solo dopo aprire viste, istanze o moduli verticali
+
+Conclusione:
+
+Il lavoro svolto resta coerente con l’idea originale di LOGOS
+come sistema modulare a blocchi, ma lo sviluppo corrente resta vincolato
+al consolidamento del core.
+
+------------------------------------------------
 PRINCIPI CONSOLIDATI
 ------------------------------------------------
 

@@ -1,6 +1,6 @@
-# 04_LOGOS_Retool_Architecture_v12
+# 04_LOGOS_Retool_Architecture_v13
 
-DATA: 2026-05-03
+DATA: 2026-05-07
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -27,10 +27,19 @@ C (Completezza): 10/10
 - no-op edit guard documentato
 - label creato/modificato lista eventi documentata
 - fix UI state nuovo input da lista documentato
-- - Linting / State Helper Cleanup documentato
+- Linting / State Helper Cleanup documentato
 - edit_mode / editing_event ripuliti da additionalScope { value }
 - helper state tecnici documentati
 - create/edit/annulla/no-op edit rivalidati dopo cleanup helper
+- Project / Entity Create Suggestion First Controlled Level documentato
+- create_suggestion_state documentato
+- insert_project / insert_entity documentati
+- variabili inline project/entity documentate
+- container suggestion inline documentato
+- micro-editor project/entity documentati
+- ignore globale documentato
+- entity autofill controlled minimal documentato
+- flow combinato project + entity validato
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
@@ -44,7 +53,12 @@ Q (Qualità): 9.5/10
 - debiti residui esplicitati  
 - rumore tecnico Retool su edit_mode / editing_event eliminato
 - helper edit mode più ricostruibili e meno ambigui
-- non introduce modello ideale non implementato  
+- non introduce modello ideale non implementato
+- creazione project/entity guidata senza automatismi silenziosi
+- select_project / select_entity confermati come decisione utente finale
+- raw_input preservato anche dopo creazione inline
+- evento non salvato automaticamente dopo creazione project/entity
+- Core Event System rafforzato senza anticipare moduli verticali  
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -59,6 +73,12 @@ D (Deployabilità): 10/10
 - nodo Linting / State Helper Cleanup validato runtime
 - linting edit_mode / editing_event risolti
 - create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
+- nodo Project / Entity Create Suggestion validato runtime
+- insert_project validato su DB reale
+- insert_entity validato su DB reale
+- evento salvato con project_id/entity_id creati inline validato
+- no-match generico salvabile validato
+- edit/no-op non regressivo validato dopo create suggestion
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -94,6 +114,15 @@ Il documento descrive:
 - Linting / State Helper Cleanup
 - helper edit_mode / editing_event senza additionalScope { value }
 - passaggio tecnico controllato tramite window.__logos_edit_mode_value / window.__logos_editing_event_value
+- Project / Entity Create Suggestion First Controlled Level
+- create_suggestion_state
+- insert_project / insert_entity
+- container suggestion inline
+- micro-editor project/entity
+- ignore globale suggestion
+- entity autofill controlled minimal
+- regola select = decisione utente finale
+- vincolo: evento non salvato automaticamente dopo creazione project/entity
 
 ------------------------------------------------
 STRUTTURA GENERALE
@@ -322,8 +351,19 @@ button_input_confirm
 btn_cancel_edit
 project_state
 entity_state
+create_suggestion_state
 edit_mode
 editing_event
+container_association_suggestions
+input_new_project_name
+input_new_entity_name
+btn_open_project_create
+btn_open_entity_create
+btn_create_project_inline
+btn_create_entity_inline
+btn_ignore_global_suggestions / bottone Ignora globale
+btn_cancel_project_inline
+btn_cancel_entity_create
 
 Funzione:
 
@@ -333,6 +373,9 @@ validazione manuale
 selezione project/entity
 conferma inserimento o modifica
 annullamento modifica senza update_event
+creazione guidata project/entity inline
+gestione suggestion no-match project/entity
+ignore globale suggestion
 
 Preview:
 
@@ -465,19 +508,52 @@ Match Engine Unification First Controlled Level:
 ✔ bug €500 label preview risolto  
 ✔ linting edit_mode / editing_event risolti nel nodo successivo Linting / State Helper Cleanup
 
+Project / Entity Create Suggestion First Controlled Level:
+
+✔ completato
+✔ create_suggestion_state introdotto
+✔ insert_project implementato
+✔ insert_entity implementato
+✔ container suggestion inline implementato
+✔ micro-editor project implementato
+✔ micro-editor entity implementato
+✔ bottone Ignora globale implementato
+✔ bottoni Annulla contestuali implementati
+✔ project/entity mancanti non bloccano salvataggio
+✔ project/entity ambigui bloccano salvataggio finché non risolti manualmente
+✔ project/entity possono essere creati solo previa conferma utente
+✔ evento non viene salvato automaticamente dopo creazione project/entity
+✔ select_project valorizzata dopo creazione project
+✔ select_entity valorizzata dopo creazione entity
+✔ entity autofill controlled minimal implementato
+✔ una sola creazione guidata aperta alla volta
+✔ flow combinato project + entity validato
+
+Nota:
+
+create_suggestion_state non sostituisce project_state / entity_state.
+Li consuma per generare suggestion controllate.
+
+Regola critica:
+
+select_project / select_entity sono decisione utente finale.
+Valgono anche se il valore selezionato non è presente nel raw_input.
+
 INPUT FLOW
 
 Flow attuale:
 
+input_home
 input_home
 → input_raw
 → trigger_parse_debounced
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
+→ create_suggestion_state
 → select_project / select_entity
 → select1 / type classification base
-→ preview / hint / highlight
+→ preview / hint / highlight / suggestion container
 → confirm guard
 → save / edit
 
@@ -553,6 +629,7 @@ input_home = fonte UX
 ui_state.parsed = fonte dati strutturati amount/unit/event_date
 select1.value = fonte type
 project_state/entity_state = fonte minima matching
+create_suggestion_state = fonte suggestion project/entity
 select_project/select_entity = fonte project_id/entity_id
 
 Risultato:
@@ -570,6 +647,9 @@ Risultato:
 ✔ select_project/select_entity allineati a singleMatch  
 ✔ hint/highlight/confirm guard allineati a match state  
 ✔ priority match minimo implementato  
+✔ suggestion project/entity controllata implementata
+✔ creazione inline project/entity implementata
+✔ salvataggio evento separato dalla creazione project/entity
 
 TRIGGER_PARSE_DEBOUNCED
 
@@ -591,11 +671,21 @@ if (window.__parseTimer) {
 }
 
 window.__parseTimer = setTimeout(async () => {
+  project_create_inline_open.setValue(false);
+  project_create_suggestion_dismissed.setValue(false);
+  input_new_project_name.setValue("");
+
+  entity_create_inline_open.setValue(false);
+  entity_create_suggestion_dismissed.setValue(false);
+  input_new_entity_name.setValue("");
+
   await Promise.allSettled([
     parse_input_controlled.trigger(),
     project_state.trigger(),
     entity_state.trigger()
   ]);
+
+  await create_suggestion_state.trigger();
 }, 350);
 
 Nota:
@@ -603,11 +693,15 @@ Nota:
 Il debounce permette preview reattiva
 senza parsing continuo a ogni singolo carattere.
 
-Dopo Match Engine Unification First Controlled Level,
+Dopo Project / Entity Create Suggestion First Controlled Level,
 il debounce aggiorna anche:
 
 - project_state
 - entity_state
+- create_suggestion_state
+
+Inoltre resetta i micro-state di creazione inline quando cambia input principale,
+evitando stati stale tra input consecutivi.
 
 Risultato:
 
@@ -974,6 +1068,219 @@ Comportamento:
 - altrimenti → null
 
 select_entity.value resta fonte finale salvabile per entity_id.
+
+------------------------------------------------
+CREATE SUGGESTION FLOW — FIRST CONTROLLED LEVEL
+------------------------------------------------
+
+Eseguito tramite:
+
+create_suggestion_state
+
+Consumatori:
+
+- container_association_suggestions
+- create_suggestion_hint
+- btn_open_project_create
+- btn_open_entity_create
+- input_new_project_name
+- input_new_entity_name
+- btn_create_project_inline
+- btn_create_entity_inline
+- bottone Ignora globale
+
+Input usati:
+
+- input_raw.value
+- project_state.data
+- entity_state.data
+- projects_list.data
+- entities_list.data
+- select_project.value
+- select_entity.value
+
+Output logico:
+
+create_suggestion_state espone:
+
+- project.noMatch
+- project.shouldShowNoMatchHint
+- project.shouldSuggestCreate
+- project.candidateName
+- project.draftName
+- project.baseName
+- entity.noMatch
+- entity.shouldShowNoMatchHint
+- entity.shouldSuggestCreate
+- entity.candidateName
+- entity.draftName
+- entity.baseName
+
+Principi:
+
+- suggestion ≠ decisione
+- suggestion ≠ salvataggio
+- creazione solo previa conferma utente
+- evento non salvato automaticamente dopo creazione project/entity
+- project/entity mancanti non bloccano Conferma
+- project/entity ambigui bloccano Conferma se non risolti manualmente
+- project/entity ambigui non permettono nuova creazione
+- una sola creazione guidata aperta alla volta
+- raw_input resta invariato
+
+---
+
+PROJECT CREATE SUGGESTION
+
+Comportamento:
+
+- se input contiene un project base esistente più possibile estensione specifica
+- e non c’è ambiguità
+- e la candidate non esiste già
+- allora viene proposta creazione project inline
+
+Esempio:
+
+villa sierri 15 sopralluogo
+→ base project = Villa
+→ candidate project = Villa Sierri 15
+
+Flow:
+
+1. utente clicca Crea progetto
+2. input_new_project_name viene precompilato
+3. utente conferma Crea progetto
+4. insert_project crea record in projects
+5. projects_list viene aggiornata
+6. select_project viene valorizzata con nuovo id
+7. micro-editor si chiude
+8. evento NON viene salvato automaticamente
+
+---
+
+ENTITY CREATE SUGGESTION
+
+Comportamento:
+
+- se entity no-match reale
+- e non c’è ambiguità
+- e non esiste una entity selezionata
+- allora viene proposta creazione entity inline
+
+Flow:
+
+1. utente clicca Crea entità
+2. input_new_entity_name viene mostrato
+3. utente inserisce o conferma nome entità
+4. insert_entity crea record in entities
+5. entities_list viene aggiornata
+6. select_entity viene valorizzata con nuovo id
+7. micro-editor si chiude
+8. evento NON viene salvato automaticamente
+
+---
+
+ENTITY AUTOFILL CONTROLLED MINIMAL
+
+Per entity è disponibile un autofill minimale controllato.
+
+Regole:
+
+- non crea automaticamente entità
+- non seleziona automaticamente entità
+- non modifica DB
+- non modifica raw_input
+- precompila solo input_new_entity_name quando la candidate è sicura
+
+Candidate consentite solo se:
+
+- entity no-match reale
+- entity non ambigua
+- nessuna entity già selezionata
+- testo residuo pulito
+- presenza di prefisso entity forte
+
+Prefissi ammessi:
+
+- referente
+- tecnico
+- cliente
+- fornitore
+- operaio
+- collaboratore
+- contatto
+- responsabile
+- muratore
+- idraulico
+- elettricista
+- geometra
+- architetto
+
+Esempio positivo:
+
+villa sierri 15 sopralluogo referente kappa
+→ input_new_entity_name = Referente Kappa
+
+Esempio negativo:
+
+acquisto 50 euro materiale nuovo
+→ input_new_entity_name vuoto
+
+---
+
+IGNORE GLOBALE
+
+Un solo bottone Ignora globale è visibile nello stato chiuso del container.
+
+Comportamento:
+
+- chiude project_create_inline_open
+- chiude entity_create_inline_open
+- imposta project_create_suggestion_dismissed = true
+- imposta entity_create_suggestion_dismissed = true
+- svuota input_new_project_name
+- svuota input_new_entity_name
+- non modifica input_raw
+- non modifica select_project
+- non modifica select_entity
+- non blocca Conferma
+
+---
+
+ANNULLA MICRO-EDITOR
+
+Annulla project:
+
+- chiude micro-editor project
+- ignora solo la proposta project corrente
+- non cancella il match base già riconosciuto
+- non cancella select_project
+
+Annulla entity:
+
+- chiude micro-editor entity
+- ignora proposta entity corrente
+- svuota input_new_entity_name
+- non modifica raw_input
+- non modifica project
+
+---
+
+DUPLICATE GUARD
+
+Project:
+
+- se input_new_project_name esiste già in projects_list
+- btn_create_project_inline è disabilitato
+- warning duplicato visibile
+- insert_project non parte da UI
+
+Entity:
+
+- se input_new_entity_name esiste già in entities_list
+- btn_create_entity_inline è disabilitato
+- warning duplicato visibile
+- insert_entity non parte da UI
 
 ------------------------------------------------
 TYPE CLASSIFICATION BASE
@@ -1992,13 +2299,13 @@ Sequenza:
 5. mostra container input
 5A. forza container_events_list nascosto
 5B. forza container_feedback nascosto
-6. pulisce select_project / select_entity
-7. carica item.raw_input in input_home e input_raw
-8. rilancia:
+1. pulisce select_project / select_entity
+2. carica item.raw_input in input_home e input_raw
+3. rilancia:
    - parse_input_controlled
    - project_state
    - entity_state
-9. ripristina project_id/entity_id salvati se presenti
+4. ripristina project_id/entity_id salvati se presenti
 
 Codice helper aggiornato:
 
@@ -2253,10 +2560,11 @@ PAGE1 — INPUT / PARSING:
 trigger_parse_debounced
 parse_input_controlled
 
-PAGE1 — DATA / MATCHING:
+PAGE1 — DATA / MATCHING / SUGGESTION:
 
 project_state
 entity_state
+create_suggestion_state
 
 PAGE1 — EVENTI:
 
@@ -2265,6 +2573,8 @@ update_event
 events_new
 update_written
 update_error
+insert_project
+insert_entity
 
 PAGE1 — STATE / UI:
 
@@ -2273,6 +2583,10 @@ edit_mode
 focus_input_home
 handle_event_success
 editing_event
+project_create_inline_open
+project_create_suggestion_dismissed
+entity_create_inline_open
+entity_create_suggestion_dismissed
 
 window.__logos_edit_mode_value
 window.__logos_editing_event_value
@@ -2285,6 +2599,16 @@ select_entity
 btn_cancel_edit
 input_events_search
 list_events
+container_association_suggestions
+input_new_project_name
+input_new_entity_name
+btn_open_project_create
+btn_open_entity_create
+btn_create_project_inline
+btn_create_entity_inline
+bottone Ignora globale
+btn_cancel_project_inline
+btn_cancel_entity_create
 
 Nota:
 
@@ -2297,6 +2621,13 @@ Nota:
 
 select_project e select_entity non ricalcolano più matching.
 Leggono singleMatch da project_state/entity_state.
+
+Nota:
+
+create_suggestion_state non è fonte di salvataggio.
+Serve solo a mostrare suggestion controllate e alimentare i micro-flow di creazione inline.
+
+insert_project / insert_entity vengono eseguite solo da azione esplicita utente.
 
 LEGACY / DEBITO:
 
@@ -2313,6 +2644,8 @@ Uso:
 
 fetch projects
 fetch entities
+insert project controllato
+insert entity controllato
 insert eventi
 update eventi
 update status
@@ -2336,6 +2669,9 @@ normalizza amount/unit
 decide project/entity
 classifica autonomamente spesa/incasso
 decide autonomamente type
+crea automaticamente project/entity
+deduplica automaticamente project/entity
+interpreta command intent
 
 PATTERN ARCHITETTURALI
 
@@ -2356,6 +2692,12 @@ PATTERN ARCHITETTURALI
 ✔ Created/Updated Display Guard 
 ✔ Window-backed Helper State per edit_mode / editing_event
 ✔ Linting-safe Edit Helper Pattern
+✔ Create Suggestion State Pattern
+✔ Inline Resource Creation Pattern
+✔ User-confirmed Insert Pattern
+✔ Suggestion Dismiss Pattern
+✔ Manual Select Override Pattern
+✔ One Inline Creation At A Time Pattern
 
 PROBLEMI NOTI
 
@@ -2410,6 +2752,14 @@ RISOLTI:
 ✔ linting edit_mode: 'value' is not defined → RISOLTO
 ✔ linting editing_event: 'value' is not defined → RISOLTO
 ✔ additionalScope { value } su helper edit_mode / editing_event → RIMOSSO
+✔ creazione guidata project/entity non implementata → RISOLTA A PRIMO LIVELLO
+✔ no-match project/entity senza assistenza → RISOLTO A PRIMO LIVELLO
+✔ creazione project inline → IMPLEMENTATA
+✔ creazione entity inline → IMPLEMENTATA
+✔ salvataggio evento dopo creazione project/entity → VALIDATO
+✔ evento salvabile senza project/entity → VALIDATO
+✔ blocco solo su ambiguità attiva → VALIDATO
+✔ entity autofill controllato → IMPLEMENTATO
 
 UI:
 
@@ -2448,7 +2798,9 @@ ARCHITETTURA:
 ✔ hint matching project/entity state-driven  
 ⚠ match engine avanzato separato non implementato  
 ⚠ alias / gerarchie / deduplicazione non implementati  
-⚠ creazione guidata project/entity non implementata  
+✔ creazione guidata project/entity implementata a primo livello controllato
+⚠ command intent non implementato
+⚠ UI suggestion container ancora grezza 
 
 STATO ARCHITETTURA
 
@@ -2489,52 +2841,80 @@ STATO ARCHITETTURA
 ✔ edit_mode / editing_event non usano più additionalScope { value }
 ✔ linting edit_mode / editing_event risolti
 ✔ create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ create_suggestion_state implementato
+✔ insert_project implementato e validato
+✔ insert_entity implementato e validato
+✔ container suggestion inline implementato
+✔ micro-editor project/entity implementati
+✔ ignore globale suggestion implementato
+✔ entity autofill controlled minimal implementato
+✔ flow combinato project + entity validato
+✔ salvataggio evento con project_id/entity_id creati inline validato
 
 ⚠ non completamente stabile nei layer evolutivi
 ⚠ preview ancora ibrida
 ⚠ match engine avanzato separato non implementato
 ⚠ alias / gerarchie / deduplicazione non implementati
-⚠ creazione guidata project/entity non implementata
+✔ creazione guidata project/entity implementata a primo livello controllato
+⚠ command intent non implementato
+⚠ UI suggestion container ancora grezza
 ⚠ output non attivo
 
 ------------------------------------------------
 NEXT STEP ARCHITETTURALE CONSIGLIATO
 ------------------------------------------------
 
-NEXT NODE POST LINTING CLEANUP DA DEFINIRE
+NEXT NODE POST PROJECT / ENTITY CREATE SUGGESTION DA DEFINIRE
 
 Candidati principali residui:
 
-1. PROJECT / ENTITY CREATE SUGGESTION
+1. UX CLEANUP — SUGGESTION CONTAINER / MOBILE
 
-- proporre creazione guidata project/entity quando nessun match viene trovato
-- utile per input vocali / Siri
-- nessuna creazione automatica silenziosa
-- creazione solo previa conferma utente
+- rifinire layout container suggestion
+- migliorare spaziature
+- migliorare gerarchia visiva
+- ottimizzare uso mobile
+- non modificare logica
+- non modificare DB
+- non modificare matching
 
-2. ECONOMIC DIRECTION ADVANCED
+2. COMMAND INTENT — CREATE PROJECT / ENTITY
 
-- valutare amount firmato
-- valutare direction field
-- valutare regole contabili avanzate Spesa/Incasso
+- riconoscere frasi tipo “crea progetto Aspri”
+- riconoscere frasi tipo “crea entità Patrizio”
+- distinguere comando di sistema da evento operativo
+- mostrare conferma guidata
+- riusare insert_project / insert_entity
+- non salvare evento se l’input è comando puro
+- evitare creazioni automatiche silenziose
 
 3. DATA STRUCTURE / ENTITY HIERARCHY
 
 - valutare gerarchie
 - alias
-- deduplicazione
+- deduplicazione avanzata
 - relazioni entity-project
+- filtro select su match ambigui
 
-4. DURATION ADVANCED — GIORNI / SETTIMANE
+4. ECONOMIC DIRECTION ADVANCED
+
+- valutare amount firmato
+- valutare direction field
+- valutare regole contabili avanzate Spesa/Incasso
+
+5. DURATION ADVANCED — GIORNI / SETTIMANE
 
 - decidere conversione giorni/settimane
 - valutare giornata lavorativa
 - valutare mezza giornata
 - evitare conversioni automatiche ambigue
 
-Vincolo:
+Vincoli:
 
-output/KPI restano non attivi.
+- output/KPI restano non attivi
+- istanze verticali ASPRI / ADEXIMA / MaurizioLab non attive
+- LOGOS resta focalizzato sul Core Event System
 
 CHANGELOG
 
@@ -2761,3 +3141,35 @@ preview invariata
 lista eventi invariata
 nessun output/KPI anticipato
 aggiornamento prossimo nodo consigliato a NEXT NODE POST LINTING CLEANUP DA DEFINIRE
+
+v13 — 2026-05-07
+
+completamento PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+documentato create_suggestion_state
+documentate variabili project_create_inline_open / project_create_suggestion_dismissed
+documentate variabili entity_create_inline_open / entity_create_suggestion_dismissed
+documentato insert_project
+documentato insert_entity
+documentato container_association_suggestions
+documentati micro-editor project/entity
+documentato bottone Ignora globale
+documentati bottoni Annulla contestuali
+documentato Duplicate Guard project/entity
+documentato entity autofill controlled minimal
+documentato project create flow
+documentato entity create flow
+documentato ignore globale suggestion
+documentato che evento non viene salvato automaticamente dopo creazione project/entity
+documentato che select_project/select_entity sono decisione utente finale
+documentato flow combinato project + entity validato
+documentato no-match generico salvabile
+documentato blocco solo su ambiguità attiva
+documentate nuove query attive insert_project / insert_entity
+aggiornata integrazione Supabase con insert project/entity controllato
+aggiunti pattern Create Suggestion State / Inline Resource Creation / User-confirmed Insert
+DB schema invariato
+parser invariato
+type classification invariata
+duration normalization invariata
+nessun output/KPI anticipato
+aggiornamento prossimo nodo consigliato a NEXT NODE POST PROJECT / ENTITY CREATE SUGGESTION DA DEFINIRE

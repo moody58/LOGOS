@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v07
+# 00_PROJECT_Gap_Register_v08
 
-DATA: 2026-05-03
+DATA: 2026-05-07
 
 ------------------------------------------------
 SCOPO
@@ -111,7 +111,7 @@ Prossimi sotto-gap:
 Match Engine Evolution Advanced
 Economic Direction Advanced
 Duration Advanced — giorni/settimane
-Project / Entity Create Suggestion
+Project / Entity Create Suggestion — INTEGRATO BASE
 
 ID: G02
 
@@ -140,12 +140,13 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati quattro blocchi engine base:
+Sono stati avviati e completati cinque blocchi funzionali base:
 
 - Normalization Layer Base
 - Duration Normalization Base
 - Type Classification Base
 - Match Engine Unification First Controlled Level
+- Project / Entity Create Suggestion First Controlled Level
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
@@ -158,6 +159,9 @@ Spesa / Incasso / Tempo / Evento sono persistiti a livello base
 project_state / entity_state sono fonte minima matching project/entity
 select_project / select_entity leggono singleMatch
 matching project/entity è unificato a primo livello controllato
+project/entity possono essere creati inline tramite suggestion controllata
+insert_project / insert_entity sono operativi
+select_project / select_entity vengono valorizzati dopo creazione controllata
 preview contiene ancora logiche proprie
 processing resta manuale
 output non attivo
@@ -184,7 +188,8 @@ Micro-nodi UX post Match Engine già completati:
 
 Nodi residui candidati:
 
-- Project / Entity Create Suggestion
+- UX Cleanup — Suggestion Container / Mobile
+- Command Intent — Create Project / Entity
 - Data Structure / Entity Hierarchy
 - Economic Direction Advanced
 - Duration Advanced — giorni/settimane
@@ -195,77 +200,149 @@ NOME:
 Project / Entity Create Suggestion
 
 FONTE:
-Gap Analysis + Match Engine + Match Engine Unification First Controlled Level
+Gap Analysis + Match Engine + Match Engine Unification First Controlled Level + Project/Entity Create Suggestion Session
 
 STATO:
-VALIDATO — NODO FUTURO
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Creazione guidata di project/entity quando l’input cita un project/entity
+Creazione guidata e controllata di project/entity quando l’input utente
+non produce un match sufficiente oppure contiene una estensione specifica
 non ancora presente nel sistema.
 
-Il sistema dovrà poter proporre all’utente:
+Il sistema può ora proporre all’utente:
 
-- “Crea nuovo progetto?”
-- “Crea nuova entità?”
+- creazione nuovo progetto
+- creazione nuova entità
+- ignorare i suggerimenti
+- salvare comunque evento incompleto
+- bloccare solo in presenza di ambiguità attiva
 
-solo quando non viene trovato un match affidabile.
+STATO REALE:
 
-NOTE:
+Il nodo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+è stato completato e validato.
 
-Attualmente:
+Implementato:
 
-- matching project/entity unificato a primo livello controllato
-- project_state / entity_state calcolano matches / count / isAmbiguous / singleMatch
-- nessun match project/entity NON blocca il salvataggio
-- project_id/entity_id restano null se non selezionati
-- nessuna creazione automatica
-- nessun pending state
-- nessuna gerarchia entity/project
-- nessuna deduplicazione strutturale
+- create_suggestion_state
+- project_create_inline_open
+- project_create_suggestion_dismissed
+- entity_create_inline_open
+- entity_create_suggestion_dismissed
+- insert_project
+- insert_entity
+- container suggestion inline
+- micro-editor project
+- micro-editor entity
+- bottone Ignora globale
+- bottoni Annulla contestuali
+- controllo duplicati frontend project/entity
+- entity autofill controlled minimal
 
-Decisione consolidata:
-
-nessun match → salvataggio consentito con project_id/entity_id null
-
-Questo mantiene input non bloccante
-e prepara un futuro nodo di creazione guidata.
-
-RISCHIO:
-
-Creare project/entity automaticamente può generare duplicati
-e peggiorare la qualità del dato.
-
-Serve quindi:
-
-- conferma esplicita utente
-- controllo duplicati
-- eventuale pending state
-- valutazione Data Structure / Entity Hierarchy
-- eventuale gestione alias
-
-AZIONE:
-
-Non implementato nel nodo Match Engine Unification.
-
-Da sviluppare come nodo futuro dedicato:
-
-PROJECT / ENTITY CREATE SUGGESTION
-
-Utile per:
-
-- input vocali
-- Siri
-- inserimenti rapidi
-- project/entity non ancora presenti
-
-Vincoli futuri:
+Regole consolidate:
 
 - nessuna creazione automatica silenziosa
 - creazione solo previa conferma utente
-- evitare duplicati
-- non modificare schema DB senza nodo dedicato
+- evento non salvato automaticamente dopo creazione project/entity
+- select_project / select_entity restano decisione utente finale
+- raw_input resta testo sorgente
+- project/entity mancanti non bloccano il salvataggio
+- project/entity ambigui bloccano il salvataggio finché non risolti manualmente
+- una sola creazione guidata aperta alla volta
+- suggestion ignorata non blocca il salvataggio
+
+Project flow validato:
+
+- input con progetto base + estensione specifica
+- candidate project proposta
+- input_new_project_name precompilato
+- insert_project crea record in projects
+- projects_list viene aggiornata
+- select_project viene valorizzato
+- evento resta non salvato finché l’utente non conferma
+
+Esempi validati:
+
+- Villa Sierri 6
+- Villa Sierri 7
+- Villa Sierri 15
+
+Entity flow validato:
+
+- input con entity mancante
+- creazione entity inline manuale
+- insert_entity crea record in entities
+- entities_list viene aggiornata
+- select_entity viene valorizzata
+- evento resta non salvato finché l’utente non conferma
+
+Esempi validati:
+
+- Tecnico Sierri 4
+- Referente Kappa
+
+Entity Autofill Controlled Minimal:
+
+implementato solo per casi con prefisso forte e no-match entity reale.
+
+Prefissi ammessi:
+
+- referente
+- tecnico
+- cliente
+- fornitore
+- operaio
+- collaboratore
+- contatto
+- responsabile
+- muratore
+- idraulico
+- elettricista
+- geometra
+- architetto
+
+Esempio positivo validato:
+
+villa sierri 15 sopralluogo referente kappa
+→ Referente Kappa
+
+Esempio negativo validato:
+
+acquisto 50 euro materiale nuovo
+→ nessun autofill entity
+
+Caso ambiguo validato:
+
+alfie mario rossi
+→ Crea entità non visibile
+→ Conferma disabilitata finché l’utente sceglie manualmente entity
+
+RISCHIO RESIDUO:
+
+- UI container suggestion ancora grezza
+- filtro select su match ambigui non implementato
+- command intent non implementato
+- gerarchie project/entity non implementate
+- alias non implementati
+- deduplicazione avanzata non implementata
+- entities senza deduplicazione strutturale avanzata
+- nessun audit trail dedicato per creazione project/entity
+
+AZIONE:
+
+Gap integrato a livello base.
+
+Non riaprire come Project / Entity Create Suggestion base.
+
+Eventuali evoluzioni devono diventare gap/nodi dedicati:
+
+- UX Cleanup — Suggestion Container / Mobile
+- Command Intent — Create Project / Entity
+- Data Structure / Entity Hierarchy
+- Select Options Filtering — Ambiguity UX
+- Alias / Deduplication Advanced
 
 ID: G04
 
@@ -399,8 +476,9 @@ parsing base stabilizzato ma non completo
 duration normalization base completata
 type classification base completata
 matching project/entity unificato a primo livello controllato
-creazione guidata project/entity non implementata
+creazione guidata project/entity implementata a primo livello controllato
 input vocali/Siri non ancora pronti
+command intent non implementato
 
 RISCHIO:
 
@@ -413,7 +491,7 @@ Non lavorare ora.
 Da rivalutare solo dopo:
 
 input system maturo
-Project / Entity Create Suggestion implementato o valutato
+Command Intent implementato o valutato
 engine base più completo
 output/reportistica almeno definita
 sicurezza API valutata
@@ -830,7 +908,7 @@ Il nodo non ha introdotto:
 - alias
 - gerarchie
 - deduplicazione
-- creazione automatica project/entity
+- creazione automatica silenziosa project/entity
 - match engine separato come modulo autonomo
 - modifica schema DB
 - output/KPI
@@ -842,7 +920,9 @@ RISCHIO RESIDUO:
 - fuzzy matching non implementato
 - gerarchie project/entity non implementate
 - deduplicazione project/entity non implementata
-- creazione guidata project/entity non implementata
+- creazione guidata project/entity implementata a primo livello controllato
+- command intent non implementato
+- deduplicazione project/entity avanzata non implementata
 - preview resta layer ibrido
 - hint duration/type ancora embedded nella preview
 - output/KPI non attivi
@@ -855,7 +935,8 @@ Eventuali evoluzioni devono essere nodi dedicati:
 
 - ALIAS / SYNONYMS CONTROLLED MATCHING
 - DATA STRUCTURE / ENTITY HIERARCHY
-- PROJECT / ENTITY CREATE SUGGESTION
+- COMMAND INTENT — CREATE PROJECT / ENTITY
+- SELECT OPTIONS FILTERING — AMBIGUITY UX
 - MATCH CONFIDENCE / RANKING ADVANCED
 
 ID: G11
@@ -904,6 +985,19 @@ Restano aperti:
 - deduplicazione assente
 - relazioni entity-project assenti
 
+Project / Entity Create Suggestion First Controlled Level ha introdotto
+creazione inline controllata di project/entity,
+ma non ha risolto la struttura dati avanzata.
+
+La creazione inline migliora usabilità e completezza dati,
+ma non introduce:
+
+- gerarchie
+- alias
+- deduplicazione avanzata
+- relazioni entity-project
+- audit trail dedicato
+
 RISCHIO:
 
 Senza struttura:
@@ -918,11 +1012,12 @@ AZIONE:
 Micro-nodi UX/helper completati.
 
 Da valutare come nodo strutturale futuro,
-prima di output/KPI avanzati
-e prima di evoluzioni profonde su Project / Entity Create Suggestion.
+prima di output/KPI avanzati,
+prima di deduplicazione evoluta
+e prima di istanze verticali ASPRI / ADEXIMA / MaurizioLab.
 
-Resta possibile aprire prima un nodo leggero di Project / Entity Create Suggestion,
-ma solo se non introduce schema DB, gerarchie o deduplicazione strutturale.
+Il nodo Project / Entity Create Suggestion base è già completato.
+Le evoluzioni strutturali successive devono essere trattate qui o in nodi dedicati.
 
 PRINCIPIO OPERATIVO
 
@@ -1086,6 +1181,7 @@ Da rivalutare dopo:
 - valutazione Data Structure / Entity Hierarchy
 - prima definizione output/report
 - valutazione dati economici reali
+- Project / Entity Create Suggestion First Controlled Level completato
 
 Possibili decisioni future:
 
@@ -1401,23 +1497,259 @@ Vincoli:
 - preservare match hints
 - nessuna modifica DB
 
+ID: G18
+
+NOME:
+UX Cleanup — Suggestion Container / Mobile
+
+FONTE:
+Project / Entity Create Suggestion Session + test mobile/desktop
+
+STATO:
+VALIDATO — NODO FUTURO
+
+DESCRIZIONE:
+
+Rifinitura grafica e mobile del container suggestion introdotto nel nodo
+Project / Entity Create Suggestion First Controlled Level.
+
+STATO REALE:
+
+Il container suggestion funziona a livello logico:
+
+- mostra no-match project/entity
+- mostra suggestion project/entity
+- ospita Crea progetto
+- ospita Crea entità
+- ospita Ignora globale
+- ospita micro-editor project/entity
+- supporta una sola creazione guidata alla volta
+
+Tuttavia la UI è ancora grezza.
+
+Criticità osservate:
+
+- layout verticale poco elegante
+- bottoni non sempre gerarchizzati visivamente
+- container da alleggerire
+- spaziature migliorabili
+- mobile friendliness migliorabile
+- distinzione tra hint, azione e micro-editor migliorabile
+
+RISCHIO:
+
+Intervenire graficamente dentro nodi logici può generare regressioni.
+
+AZIONE:
+
+Da sviluppare come micro-nodo dedicato solo UX.
+
+Vincoli:
+
+- non modificare create_suggestion_state
+- non modificare insert_project / insert_entity
+- non modificare project_state / entity_state
+- non modificare parser
+- non modificare DB
+- non modificare save flow
+- non introdurre command intent
+
+Obiettivo:
+
+Migliorare chiarezza e usabilità senza cambiare comportamento.
+
+ID: G19
+
+NOME:
+Command Intent — Create Project / Entity
+
+FONTE:
+Osservazione utente su placeholder/input mobile + Project / Entity Create Suggestion Session
+
+STATO:
+VALIDATO — NODO FUTURO
+
+DESCRIZIONE:
+
+Riconoscimento controllato di frasi comando per creare project/entity.
+
+Esempi:
+
+- crea progetto Aspri
+- crea nuovo progetto Casa Ostuni
+- crea entità Patrizio
+- aggiungi nuova entità Mario Bianchi
+
+STATO REALE:
+
+Non implementato.
+
+Il nodo Project / Entity Create Suggestion gestisce suggestion e creazione inline
+a partire da input evento.
+
+Le frasi comando rappresentano invece un comportamento distinto:
+
+- non sono eventi operativi ordinari
+- non devono essere salvate automaticamente in events
+- devono essere interpretate come intenti di sistema
+- devono richiedere conferma esplicita prima di scrivere nel DB
+
+Decisione consolidata:
+
+Le frasi “crea progetto…” / “crea entità…” non sono eventi.
+Sono comandi di sistema e devono aprire una conferma guidata,
+non salvare automaticamente dati.
+
+RISCHIO:
+
+Implementare command intent troppo velocemente può causare:
+
+- creazioni errate
+- duplicati
+- confusione tra evento e comando
+- salvataggio eventi non desiderati
+- perdita tracciabilità
+
+AZIONE:
+
+Da sviluppare come nodo futuro dedicato.
+
+Scope futuro:
+
+- riconoscere frasi comando
+- distinguere evento operativo da comando di sistema
+- mostrare riepilogo/conferma guidata
+- riusare insert_project / insert_entity già esistenti
+- evitare duplicati
+- non salvare evento se l’input è comando puro
+- mantenere raw_input come testo sorgente
+- preservare tracciabilità e controllo utente
+
+Nota UX:
+
+Il placeholder “Scrivi cosa vuoi fare...” può generare aspettativa
+di comandi diretti.
+
+Senza Command Intent implementato, è preferibile un placeholder più prudente:
+
+“Scrivi cosa vuoi registrare...”
+
+ID: G20
+
+NOME:
+Core Event System / Modular Instances
+
+FONTE:
+Allineamento strategico utente + Roadmap + State
+
+STATO:
+VALIDATO — VINCOLO STRATEGICO
+
+DESCRIZIONE:
+
+LOGOS mantiene l’obiettivo originario di essere un sistema espandibile a blocchi
+fondato su un Core Event System stabile.
+
+Il core è:
+
+input libero
+→ interpretazione controllata
+→ project / entity / type / amount / date
+→ evento normalizzato
+→ ledger eventi
+→ viste / moduli / dashboard futuri
+
+Istanze future previste:
+
+- ASPRI
+- ADEXIMA
+- MaurizioLab
+- uso personale
+- lavoro
+- ristrutturazioni
+- clienti / fornitori / attività
+
+STATO REALE:
+
+Il Core Event System è in costruzione avanzata.
+
+Sono già consolidate:
+
+- input reliability
+- parser controllato
+- normalization base
+- duration normalization
+- type classification base
+- match engine unification first level
+- project/entity create suggestion first level
+- edit flow
+- processing NEW / WRITTEN / ERROR
+
+Non sono ancora attive:
+
+- istanze verticali
+- dashboard specifiche
+- moduli ASPRI
+- moduli ADEXIMA
+- moduli MaurizioLab
+- output/KPI
+
+RISCHIO:
+
+Anticipare istanze verticali prima della stabilità core può trasformare LOGOS
+in un gestionale monolitico o frammentato,
+perdendo l’obiettivo di sistema modulare.
+
+AZIONE:
+
+Mantenere come vincolo strategico anti-deriva.
+
+Regola:
+
+Le istanze ASPRI / ADEXIMA / MaurizioLab sono derivate future del core,
+non nodi da anticipare ora.
+
+Non aprire nodi verticali specifici come:
+
+- dashboard ASPRI
+- CRM ADEXIMA
+- gestione MaurizioLab
+- moduli animali / allevamento
+- moduli fatture / preventivi
+- moduli clienti avanzati
+
+prima che il Core Event System sia sufficientemente stabile.
+
+Sequenza corretta:
+
+1. consolidare cuore eventi
+2. consolidare gestione project/entity
+3. introdurre command intent guidato
+4. rifinire UX mobile
+5. solo dopo aprire viste, istanze o moduli verticali
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo Linting / State Helper Cleanup:
+Ordine attuale consigliato dopo Project / Entity Create Suggestion:
 
-NODI STRUTTURALI FUTURI:
+NODI STRUTTURALI / OPERATIVI FUTURI:
 
-1. G03 — Project / Entity Create Suggestion
-2. G11 — Data Structure / Entity Hierarchy
-3. G13 — Economic Direction Advanced
-4. G08A — Duration Advanced / Giorni-Settimane
-5. G17 — Preview Model / Hint State Consolidation
-6. G04 — Logging / Versioning
-7. G05 — Input Modes
-8. G06 — Multi-source Input
+1. G18 — UX Cleanup — Suggestion Container / Mobile
+2. G19 — Command Intent — Create Project / Entity
+3. G11 — Data Structure / Entity Hierarchy
+4. G13 — Economic Direction Advanced
+5. G08A — Duration Advanced / Giorni-Settimane
+6. G17 — Preview Model / Hint State Consolidation
+7. G04 — Logging / Versioning
+8. G05 — Input Modes
+9. G06 — Multi-source Input
+
+VINCOLI STRATEGICI:
+
+- G20 — Core Event System / Modular Instances
 
 Gap già integrati:
 
+G03 — Project / Entity Create Suggestion
 G07 — Preview Alignment
 G08 — Duration Normalization Base
 G09 — Type Classification Base
@@ -1562,3 +1894,38 @@ aggiornato G13 Economic Direction Advanced con Linting Cleanup completato
 aggiornato ordine consigliato gap/nodi
 confermato output/KPI non attivi
 allineamento con State v16 e Roadmap v10
+
+v08 — 2026-05-07
+
+aggiornato Gap Register dopo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+aggiornato G03 Project / Entity Create Suggestion a INTEGRATO BASE
+documentato create_suggestion_state
+documentate variabili project/entity inline open e dismissed
+documentate query insert_project / insert_entity
+documentato container suggestion inline
+documentati micro-editor project/entity
+documentato bottone Ignora globale
+documentati bottoni Annulla contestuali
+documentata creazione project inline validata su DB reale
+documentata creazione entity inline validata su DB reale
+documentato select_project valorizzato dopo creazione project
+documentato select_entity valorizzato dopo creazione entity
+documentato evento non salvato automaticamente dopo creazione project/entity
+documentato evento salvato manualmente con project_id/entity_id corretti
+documentato blocco solo su ambiguità project/entity attiva
+documentato salvataggio consentito senza project/entity
+documentato entity autofill controlled minimal
+documentato flow combinato project + entity
+aggiunto G18 UX Cleanup — Suggestion Container / Mobile
+aggiunto G19 Command Intent — Create Project / Entity
+aggiunto G20 Core Event System / Modular Instances
+aggiornato G02 Processor / Engine Flow
+aggiornato G06 Multi-source Input
+aggiornato G10 Match Engine Unification
+aggiornato G11 Data Structure / Entity Hierarchy
+aggiornato G13 Economic Direction Advanced
+aggiornato ordine consigliato gap/nodi
+confermato output/KPI non attivi
+confermata direzione LOGOS Core modulare
+confermate istanze ASPRI / ADEXIMA / MaurizioLab come derivate future del core
+allineamento con State v17 e Roadmap v11

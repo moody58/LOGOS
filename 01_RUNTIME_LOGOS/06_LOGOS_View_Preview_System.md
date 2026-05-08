@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v07
+# 06_LOGOS_View_Preview_System_v08
 
-DATA: 2026-05-02
+DATA: 2026-05-07
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -27,6 +27,11 @@ Il documento descrive:
 - come l’highlight project/entity deriva da matches
 - come vengono mostrati i match più specifici
 - come la preview resta non decisionale per project/entity
+- come la preview convive con create_suggestion_state
+- come distinguere hint informativi e suggestion create
+- come il container suggestion supporta la preview senza essere fonte di salvataggio
+- come la preview resta separata da insert_project / insert_entity
+- come entity autofill controlled minimal resta fuori dalla preview
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -46,9 +51,10 @@ input_raw
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
+→ create_suggestion_state
 → select_project / select_entity
 → select1 / type classification base
-→ preview (sintesi)
+→ preview (sintesi) / suggestion container
 → confirm (insert/update)
 
 ---
@@ -80,12 +86,39 @@ In particolare:
 - singleMatch
 - hasMoreSpecificMatches
 
+Per le suggestion project/entity, il container suggestion legge anche:
+
+create_suggestion_state.data
+
+Nota:
+
+create_suggestion_state non è preview pura.
+È un helper controllato che alimenta suggestion create.
+
+La preview/sintesi e il suggestion container devono restare concettualmente distinti:
+
+- preview = rappresentazione dell’input interpretato
+- hint informativi = stato del match / durata / type
+- suggestion create = proposta di azione guidata
+
 ---
 
 Nota:
 
 Il save flow non dipende più da parsing interno alla preview
 né da parsing duplicato nel bottone confirm.
+
+Il save flow non dipende da create_suggestion_state.
+
+create_suggestion_state può aiutare a creare project/entity,
+ma l’evento viene salvato solo tramite:
+
+select_project.value
+select_entity.value
+
+dentro button_input_confirm.
+
+insert_project / insert_entity non salvano eventi.
 
 Il save flow non dipende dalla preview per il type.
 
@@ -135,6 +168,8 @@ Mostra:
 ✔ hint match più specifici  
 ✔ highlight project/entity da matches  
 ✔ hint utente  
+✔ supporto visuale al container suggestion
+✔ distinzione tra hint informativo e suggestion create
 
 ---
 
@@ -154,6 +189,13 @@ Contiene:
 - highlight
 - formattazioni locali
 - logiche di supporto UX
+
+Nota post Project / Entity Create Suggestion:
+
+Il container suggestion NON trasforma la preview in fonte di salvataggio.
+
+La preview continua a mostrare lo stato interpretato dell’input.
+La suggestion create è un’azione separata, controllata e confermata dall’utente.
 
 ---
 
@@ -198,6 +240,9 @@ Fonti dati utilizzate:
 - project_state.data
 - entity_state.data
 - select1.value
+- create_suggestion_state.data
+- project_create_suggestion_dismissed.value
+- entity_create_suggestion_dismissed.value
 
 Nota:
 
@@ -220,6 +265,21 @@ project_state.data / entity_state.data forniscono:
 - moreSpecificMatches
 - hasMoreSpecificMatches
 
+Dopo Project / Entity Create Suggestion First Controlled Level:
+
+create_suggestion_state.data fornisce:
+
+- project.noMatch
+- project.shouldShowNoMatchHint
+- project.shouldSuggestCreate
+- project.candidateName
+- project.draftName
+- entity.noMatch
+- entity.shouldShowNoMatchHint
+- entity.shouldSuggestCreate
+- entity.candidateName
+- entity.draftName
+
 ---
 
 Fonte dati strutturata principale:
@@ -238,6 +298,8 @@ raw input
 match state project/entity
 select values
 select1.value
+create_suggestion_state
+dismissed state project/entity
 local label logic
 local hint logic
 
@@ -257,6 +319,20 @@ Stringa UI composta da:
 labelStyled
 typeBadge (opzionale)
 hint (opzionale)
+
+Container suggestion separato:
+
+create_suggestion_hint
+azioni Crea progetto / Crea entità / Ignora
+micro-editor project/entity
+
+Nota:
+
+questi elementi sono collegati alla preview UX,
+ma non fanno parte della stringa `labelStyled`.
+
+La suggestion create è UI di supporto,
+non dato preview persistito.
 
 Formato:
 
@@ -660,6 +736,49 @@ e select_project vuoto
 
 ---
 
+SUGGESTION CREATE:
+
+create_suggestion_state può produrre hint/azioni di creazione, ad esempio:
+
+- Nessun progetto associato
+- Nessuna entità associata
+- Crea progetto “Villa Sierri 15”
+- Crea entità “Referente Kappa”
+
+Questi non sono semplici hint informativi.
+
+Sono suggestion create, cioè azioni guidate.
+
+Differenza:
+
+HINT INFORMATIVO:
+
+- segnala uno stato
+- non apre insert
+- non modifica DB
+- non modifica select
+
+Esempi:
+
+- Esistono progetti più specifici
+- Esistono entità più specifiche
+- Normalizzato: 150 minuti
+
+SUGGESTION CREATE:
+
+- propone una possibile azione
+- può aprire micro-editor
+- può eseguire insert_project / insert_entity
+- richiede conferma utente
+- non salva evento automaticamente
+
+Esempi:
+
+- Crea progetto Villa Sierri 15
+- Crea entità Referente Kappa
+
+---
+
 MATCH PIÙ SPECIFICI:
 
 entity_state.hasMoreSpecificMatches = true
@@ -735,6 +854,15 @@ Limite:
 
 non esiste ancora un hint engine globale separato.
 
+Aggiornamento Project / Entity Create Suggestion First Controlled Level:
+
+- no-match project/entity può generare suggestion create
+- suggestion create non è salvataggio evento
+- suggestion ignorata non blocca conferma
+- project/entity ambigui non mostrano create suggestion per quel layer
+- project/entity mancanti non bloccano conferma
+- entity autofill controlled minimal precompila input_new_entity_name, ma non è preview
+
 COMPORTAMENTO MATCHING IN PREVIEW
 
 La preview NON è fonte primaria di matching.
@@ -765,8 +893,9 @@ count > 1
 → conferma disabilitata finché l’utente non sceglie
 
 count = 0
-→ nessuna evidenza obbligatoria
+→ nessuna ambiguità
 → conferma non bloccata
+→ possibile suggestion create tramite create_suggestion_state
 
 hasMoreSpecificMatches = true
 → hint informativo non bloccante
@@ -807,6 +936,134 @@ Il salvataggio avviene tramite:
 
 select_project.value
 select_entity.value
+
+Dopo Project / Entity Create Suggestion:
+
+se l’utente crea project/entity inline,
+la select relativa viene valorizzata.
+
+La preview continua comunque a non salvare direttamente project/entity.
+
+------------------------------------------------
+RELAZIONE CON CREATE SUGGESTION
+------------------------------------------------
+
+La preview/sintesi convive con un container suggestion separato.
+
+create_suggestion_state legge:
+
+- input_raw
+- project_state
+- entity_state
+- projects_list
+- entities_list
+- select_project
+- select_entity
+
+e produce suggestion controllate per project/entity.
+
+---
+
+PRINCIPIO:
+
+Preview ≠ suggestion create.
+
+La preview mostra ciò che il sistema ha interpretato.
+
+La suggestion create propone un’azione possibile.
+
+---
+
+ESEMPI:
+
+1. Match informativo più specifico
+
+input:
+
+villa
+
+preview/hint:
+
+Esistono progetti più specifici
+
+Comportamento:
+
+- hint informativo
+- nessun insert
+- Conferma abilitata
+
+2. Suggestion create project
+
+input:
+
+villa sierri 15 sopralluogo
+
+container suggestion:
+
+Crea progetto “Villa Sierri 15”
+
+Comportamento:
+
+- azione guidata
+- richiede click utente
+- insert_project solo dopo conferma
+- evento non salvato automaticamente
+
+3. Suggestion create entity
+
+input:
+
+villa sierri 15 sopralluogo referente kappa
+
+container suggestion:
+
+Crea entità “Referente Kappa”
+
+Comportamento:
+
+- input_new_entity_name può essere precompilato
+- insert_entity solo dopo conferma
+- evento non salvato automaticamente
+
+4. No-match generico ignorato
+
+input:
+
+acquisto 50 euro materiale nuovo
+
+container suggestion:
+
+Nessun progetto associato
+Nessuna entità associata
+
+utente clicca Ignora
+
+Comportamento:
+
+- container suggestion nascosto
+- preview resta valida
+- Conferma abilitata
+- evento salvabile con project_id/entity_id null
+
+---
+
+ENTITY AUTOFILL CONTROLLED MINIMAL
+
+L’autofill entity:
+
+- non è preview
+- non è matching
+- non è salvataggio
+- non crea entità
+- precompila solo input_new_entity_name
+
+Esempio:
+
+referente kappa
+→ input_new_entity_name = Referente Kappa
+
+Non viene usato per labelStyled
+e non modifica raw_input.
 
 RELAZIONE CON PARSING
 
@@ -903,7 +1160,7 @@ Quindi:
 ✔ la preview è più coerente nei dati principali
 ✘ ma non è ancora pura rappresentazione
 
-RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION / MATCH ENGINE
+RELAZIONE CON NORMALIZATION LAYER BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION / MATCH ENGINE / CREATE SUGGESTION
 
 Il Normalization Layer Base ha consolidato:
 
@@ -948,6 +1205,17 @@ Match Engine Unification First Controlled Level ha poi introdotto:
 - match state live in edit flow
 - bug €500 label preview risolto
 
+Project / Entity Create Suggestion First Controlled Level ha poi introdotto:
+
+- create_suggestion_state
+- suggestion create per project/entity
+- container suggestion inline
+- ignore globale suggestion
+- micro-editor project/entity
+- entity autofill controlled minimal
+- distinzione tra hint informativo e suggestion create
+- salvataggio evento separato dalla creazione project/entity
+
 Implementato:
 
 ✔ 1500.5 → 1.500,50 €  
@@ -978,7 +1246,12 @@ Implementato:
 ✔ alfie mario rossi → ambiguità reale entity  
 ✔ €500 → 500,00 € senza duplicazione in label  
 ✔ highlight project/entity alimentato da matches  
-✔ hint matching alimentati da project_state/entity_state   
+✔ hint matching alimentati da project_state/entity_state  
+✔ suggestion create alimentate da create_suggestion_state
+✔ container suggestion inline validato
+✔ ignore globale suggestion validato
+✔ entity autofill controlled minimal validato
+✔ preview non diventa fonte di salvataggio 
 
 Esempi validati:
 
@@ -1086,6 +1359,25 @@ villa
 €500 acconto alfie mario rossi
 → 500,00 € • acconto alfie mario rossi
 
+Project / Entity Create Suggestion — esempi validati:
+
+villa sierri 15 sopralluogo referente kappa
+→ suggestion project Villa Sierri 15
+→ suggestion entity Referente Kappa
+→ project/entity creati inline previa conferma
+→ evento salvato manualmente con project_id/entity_id corretti
+
+acquisto 50 euro materiale nuovo
+→ suggestion project/entity visibile
+→ Ignora
+→ Conferma abilitata
+→ evento salvato con project_id null / entity_id null
+
+alfie mario rossi
+→ entity ambigua
+→ Crea entità non visibile
+→ Conferma disabilitata finché non viene scelta entity
+
 RELAZIONE CON INSERT / UPDATE
 
 Dati salvati:
@@ -1122,6 +1414,10 @@ Relazione:
 ✔ project_id/entity_id persistiti solo tramite select_project/select_entity  
 ✔ preview non è fonte di salvataggio project/entity  
 ✔ match state influenza select/hint/confirm, non scrive direttamente DB  
+✔ create_suggestion_state non è fonte di salvataggio evento
+✔ insert_project / insert_entity non salvano eventi
+✔ dopo creazione inline, l’evento richiede comunque Conferma manuale
+✔ suggestion ignorata non blocca insert_event/update_event
 ✘ label NON persistita
 ✘ preview applica ancora trasformazioni visive aggiuntive
 
@@ -1167,6 +1463,10 @@ VINCOLI ATTUALI (REALI)
 ✔ preview mostra hint più specifici da hasMoreSpecificMatches  
 ✔ preview evidenzia project/entity da matches  
 ✔ preview non decide project/entity  
+✔ preview non decide create project/entity
+✔ preview non esegue insert_project / insert_entity
+✔ create_suggestion_state non salva eventi
+✔ suggestion create richiede conferma utente
 
 
 MA:
@@ -1188,6 +1488,9 @@ MA:
 ✔ hint matching project/entity state-driven  
 
 ⚠ non ancora separata come view pura
+⚠ container suggestion UI ancora da rifinire
+⚠ create_suggestion_state aggiunge una fonte UI ulteriore
+⚠ command intent non implementato
 
 LIMITI STRUTTURALI
 DUPLICAZIONE LOGICA
@@ -1215,11 +1518,14 @@ select_project/select_entity
 select1.value
 match state project/entity
 project_state/entity_state
+create_suggestion_state
+dismissed state project/entity
 liste project/entity
 type select
 duration hint locale
 
 → assenza di preview model unico
+→ assenza di suggestion model separato come layer documentale autonomo
 
 FORMATO AMOUNT ALLINEATO IN PREVIEW
 
@@ -1283,7 +1589,11 @@ PROPRIETÀ DEL SISTEMA
 ✔ usa project_state/entity_state come fonte matching project/entity  
 ✔ preview hint matching allineati a isAmbiguous  
 ✔ preview highlight alimentato da matches  
-✔ confirm guard coerente con ambiguità non risolta  
+✔ confirm guard coerente con ambiguità non risolta
+✔ suggestion create opzionale e non bloccante
+✔ project/entity mancanti non bloccano conferma
+✔ project/entity ambigui bloccano conferma
+✔ evento non salvato automaticamente dopo creazione project/entity
 
 MA:
 
@@ -1295,6 +1605,8 @@ MA:
 ⚠ ancora non completamente separato architetturalmente
 ⚠ non ancora pronto per output/KPI
 ⚠ type base non sufficiente da solo per report avanzati
+⚠ container suggestion ancora grezzo lato UI
+⚠ suggestion create non ancora separata in modello dedicato
 
 STATO ATTUALE
 
@@ -1323,6 +1635,14 @@ STATO ATTUALE
 ✔ highlight project/entity alimentato da matches  
 ✔ detection locale preview non più fonte decisionale matching  
 ✔ bug €500 label preview risolto  
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ create_suggestion_state collegato alla UX preview/suggestion
+✔ container suggestion inline implementato
+✔ hint/suggestion no-match project/entity implementati
+✔ ignore globale suggestion implementato
+✔ entity autofill controlled minimal implementato
+✔ flow combinato project + entity validato
+✔ preview resta non fonte di salvataggio evento
 
 ⚠ preview ancora ibrida
 ✔ hint matching project/entity state-driven  
@@ -1331,18 +1651,29 @@ STATO ATTUALE
 ⚠ match engine avanzato separato non implementato  
 ⚠ architettura non separata
 ⚠ preview non ancora view pura
+⚠ container suggestion UI ancora da rifinire
+⚠ command intent non implementato
 
 OBIETTIVO FUTURO IMMEDIATO
 
-Nessun ulteriore nodo preview attivo immediato.
+Nessun refactor preview attivo immediato.
 
+Preview Alignment Base è completato.
+Duration Normalization Base è completata.
+Type Classification Base è completata.
 Match Engine Unification First Controlled Level è completato.
+Project / Entity Create Suggestion First Controlled Level è completato.
 
 La parte critica di allineamento preview/hint/highlight per project/entity
 è stata risolta a primo livello.
 
-Restano futuri, ma non immediati:
+La parte suggestion create funziona,
+ma il container suggestion è ancora migliorabile graficamente.
 
+Nodi futuri candidati:
+
+- UX CLEANUP — SUGGESTION CONTAINER / MOBILE
+- COMMAND INTENT — CREATE PROJECT / ENTITY
 - PREVIEW MODEL / HINT STATE CONSOLIDATION
 - separazione preview come view pura
 - estrazione label cleaning in modulo dedicato
@@ -1350,13 +1681,13 @@ Restano futuri, ma non immediati:
 - preview model unico
 - type/economic direction advanced
 
-Preview Alignment Base è completato.
-Duration Normalization Base è completata.
-Type Classification Base è completata.
-Match Engine Unification First Controlled Level è completato.
+Priorità consigliata se si resta in ambito UX:
 
-Il prossimo nodo operativo deve essere definito in Roadmap,
-preferibilmente tra micro-nodi UX/helper o cleanup.
+UX CLEANUP — SUGGESTION CONTAINER / MOBILE
+
+Vincolo:
+
+non modificare logica, parser, matching, DB o save flow.
 
 OBIETTIVO FUTURO NON ATTIVO
 
@@ -1380,6 +1711,7 @@ type già determinato
 selected project/entity
 hint state già calcolato
 match state già calcolato
+suggestion state già calcolato
 
 Output target:
 
@@ -1399,6 +1731,9 @@ Nota:
 
 la preview target futura resta una funzione pura di rendering,
 ma questo non è stato implementato.
+
+Anche il suggestion container futuro potrebbe essere separato in un modello dedicato,
+ma non è attivo ora.
 
 Il matching project/entity è stato però allineato
 sufficientemente da non essere più un blocco preview immediato.
@@ -1499,3 +1834,23 @@ confermato che hint duration/type restano embedded nella preview
 confermato che non esiste ancora preview model unico
 confermato che nessun output/KPI è stato anticipato
 aggiornato prossimo nodo: da definire in Roadmap
+
+v08 — 2026-05-07
+
+aggiornamento post PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+documentata relazione preview / create_suggestion_state
+documentata distinzione preview / hint informativo / suggestion create
+documentato container suggestion inline
+documentato che create_suggestion_state non salva eventi
+documentato che preview non esegue insert_project / insert_entity
+documentato che suggestion create richiede conferma utente
+documentato che evento non viene salvato automaticamente dopo creazione project/entity
+documentato ignore globale suggestion
+documentato entity autofill controlled minimal come non-preview e non-matching
+documentato no-match generico ignorabile
+documentato flow combinato project + entity
+documentata ambiguità entity bloccante senza create suggestion
+aggiornati limiti: container suggestion UI grezza, command intent non implementato
+confermato che preview resta layer ibrido
+confermato che nessun output/KPI è stato anticipato
+aggiornato prossimo nodo candidato: UX Cleanup Suggestion Container / Mobile oppure Command Intent

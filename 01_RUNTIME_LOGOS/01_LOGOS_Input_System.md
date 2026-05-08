@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v10
+# 01_LOGOS_Input_System_v11
 
-DATA: 2026-05-03
+DATA: 2026-05-07
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -31,6 +31,13 @@ Il documento è utilizzato per:
 - Linting / State Helper Cleanup
 - edit_mode / editing_event senza additionalScope { value }
 - reset helper edit flow tramite window.__logos_edit_mode_value / window.__logos_editing_event_value
+- Project / Entity Create Suggestion First Controlled Level
+- gestione suggestion project/entity da input libero
+- creazione inline controllata project/entity
+- create_suggestion_state
+- insert_project / insert_entity
+- entity autofill controlled minimal
+- separazione tra input evento e futuro command intent
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -111,7 +118,53 @@ Regole:
 
 ---
 
-8. EDIT FLOW CONTROLLATO
+8. SUGGESTION ≠ SALVATAGGIO
+
+Le suggestion project/entity aiutano l’utente a completare il dato,
+ma non salvano automaticamente eventi.
+
+La catena corretta è:
+
+input libero
+→ match state
+→ create_suggestion_state
+→ suggestion visibile
+→ conferma utente
+→ insert_project / insert_entity
+→ select_project / select_entity valorizzata
+→ eventuale Conferma evento manuale
+
+Regole:
+
+- nessuna creazione project/entity automatica silenziosa
+- nessun evento salvato automaticamente dopo creazione project/entity
+- suggestion ignorata non blocca il salvataggio
+- project/entity mancanti non bloccano il salvataggio
+- project/entity ambigui bloccano il salvataggio finché non risolti manualmente
+
+---
+
+9. INPUT EVENTO ≠ COMMAND INTENT
+
+Frasi come:
+
+- crea progetto Aspri
+- crea entità Patrizio
+
+non sono ancora implementate come comando di sistema.
+
+Nel runtime attuale l’input libero serve principalmente a registrare eventi.
+Il futuro Command Intent dovrà essere un nodo dedicato.
+
+Fino ad allora:
+
+- non salvare automaticamente comandi puri come eventi
+- non creare project/entity direttamente dal testo senza conferma
+- non confondere suggestion da evento con comando esplicito di sistema
+
+---
+
+10. EDIT FLOW CONTROLLATO
 
 Il flow di modifica evento usa helper tecnici dedicati:
 
@@ -175,6 +228,13 @@ entity_state
 → fonte minima matching entity
 → calcola matches / count / isAmbiguous / singleMatch
 
+create_suggestion_state
+→ helper controllato per suggestion project/entity
+→ legge input_raw, project_state, entity_state, projects_list, entities_list
+→ non salva dati
+→ non decide al posto dell’utente
+→ alimenta container suggestion inline
+
 select_project
 → legge project_state.data.singleMatch
 → fonte salvabile per project_id
@@ -182,6 +242,18 @@ select_project
 select_entity
 → legge entity_state.data.singleMatch
 → fonte salvabile per entity_id
+
+input_new_project_name
+→ campo micro-editor per creazione project inline
+
+input_new_entity_name
+→ campo micro-editor per creazione entity inline
+
+insert_project
+→ crea project solo previa conferma utente
+
+insert_entity
+→ crea entity solo previa conferma utente
 
 edit_mode
 → helper tecnico per distinguere create flow / edit flow
@@ -218,14 +290,27 @@ input_home
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
+→ create_suggestion_state
 → select_project / select_entity
 → select1 / type classification base
-→ preview / hint / highlight
-→ conferma
+→ preview / hint / highlight / suggestion container
+→ eventuale creazione inline project/entity previa conferma utente
+→ conferma evento manuale
 → no-op edit guard se in edit mode
 → insert_event / update_event se necessario
 → events_new refresh
 → reset edit_mode / editing_event se necessario
+
+Nota:
+
+La creazione inline project/entity non sostituisce la conferma evento.
+
+Dopo insert_project / insert_entity:
+
+- viene aggiornata la lista projects/entities
+- viene valorizzata la select relativa
+- l’evento resta non salvato
+- l’utente deve ancora confermare manualmente l’evento
 
 ---
 
@@ -358,10 +443,12 @@ Ruolo:
 Comportamento:
 
 input_raw aggiornato
+→ reset micro-state suggestion inline
 → attesa debounce
 → parse_input_controlled.trigger()
 → project_state.trigger()
 → entity_state.trigger()
+→ create_suggestion_state.trigger()
 
 ---
 
@@ -373,11 +460,21 @@ if (window.__parseTimer) {
 }
 
 window.__parseTimer = setTimeout(async () => {
+  project_create_inline_open.setValue(false);
+  project_create_suggestion_dismissed.setValue(false);
+  input_new_project_name.setValue("");
+
+  entity_create_inline_open.setValue(false);
+  entity_create_suggestion_dismissed.setValue(false);
+  input_new_entity_name.setValue("");
+
   await Promise.allSettled([
     parse_input_controlled.trigger(),
     project_state.trigger(),
     entity_state.trigger()
   ]);
+
+  await create_suggestion_state.trigger();
 }, 350);
 
 Risultato:
@@ -388,6 +485,9 @@ Risultato:
 ✔ entity_state aggiornato
 ✔ select_project/select_entity coerenti
 ✔ preview/hint/confirm guard coerenti
+✔ create_suggestion_state aggiornato
+✔ suggestion stale resettate al cambio input
+✔ micro-editor project/entity chiusi quando cambia input principale
 
 UI_STATE.PARSED
 
@@ -469,6 +569,25 @@ La scelta finale salvabile resta:
 
 select_project.value
 select_entity.value
+
+Nota suggestion:
+
+ui_state.parsed NON contiene suggestion project/entity.
+
+Le suggestion sono gestite da:
+
+create_suggestion_state
+
+La creazione project/entity inline aggiorna:
+
+- projects_list / entities_list
+- select_project / select_entity
+
+Non modifica:
+
+- ui_state.parsed
+- raw_input
+- amount / unit / event_date
 
 ------------------------------------------------
 HELPER EDIT STATE
@@ -1732,7 +1851,8 @@ nessun match:
 REGOLE:
 
 ✔ mai forzare selezione ambigua
-✔ mai creare automaticamente project/entity
+✔ mai creare automaticamente project/entity dal matching
+✔ eventuale creazione project/entity passa da create_suggestion_state e conferma utente
 ✔ utente in controllo
 ✔ select_project.value è fonte salvabile per project_id
 ✔ select_entity.value è fonte salvabile per entity_id
@@ -1758,9 +1878,171 @@ NON IMPLEMENTATO:
 - entity hierarchy
 - project hierarchy
 - deduplicazione
-- creazione guidata project/entity
+- command intent “crea progetto...” / “crea entità...”
+- filtro select su match ambigui
 - ranking avanzato
 - match engine separato come modulo autonomo
+
+------------------------------------------------
+PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+------------------------------------------------
+
+La creazione guidata project/entity è stata implementata a primo livello controllato.
+
+Ruolo:
+
+aiutare l’utente a completare project/entity quando l’input libero
+non produce un match sufficiente oppure contiene una estensione specifica
+non ancora presente.
+
+Componenti principali:
+
+- create_suggestion_state
+- container suggestion inline
+- input_new_project_name
+- input_new_entity_name
+- btn_open_project_create
+- btn_open_entity_create
+- btn_create_project_inline
+- btn_create_entity_inline
+- bottone Ignora globale
+- bottoni Annulla contestuali
+
+Query:
+
+- insert_project
+- insert_entity
+
+Regole:
+
+- nessuna creazione automatica silenziosa
+- creazione solo previa conferma utente
+- evento non salvato automaticamente dopo creazione project/entity
+- project/entity mancanti non bloccano salvataggio
+- project/entity ambigui bloccano salvataggio
+- suggestion ignorata non blocca salvataggio
+- una sola creazione guidata aperta alla volta
+- select_project / select_entity restano decisione utente finale
+
+---
+
+PROJECT CREATE
+
+Caso tipico:
+
+villa sierri 15 sopralluogo
+
+Comportamento:
+
+- project_state riconosce Villa come match base
+- create_suggestion_state propone Villa Sierri 15 come possibile nuovo project
+- input_new_project_name viene precompilato
+- utente conferma Crea progetto
+- insert_project crea il record
+- projects_list viene aggiornata
+- select_project viene valorizzata
+- evento resta da confermare manualmente
+
+---
+
+ENTITY CREATE
+
+Caso tipico:
+
+villa sierri 15 sopralluogo referente kappa
+
+Comportamento:
+
+- entity_state non trova match
+- create_suggestion_state propone creazione entity
+- input_new_entity_name può essere precompilato se candidate sicura
+- utente conferma Crea entità
+- insert_entity crea il record
+- entities_list viene aggiornata
+- select_entity viene valorizzata
+- evento resta da confermare manualmente
+
+---
+
+ENTITY AUTOFILL CONTROLLED MINIMAL
+
+Autofill entity disponibile solo in casi controllati.
+
+Non è:
+
+- parsing
+- matching entity
+- salvataggio
+- creazione automatica
+
+È solo precompilazione del campo input_new_entity_name.
+
+Condizioni:
+
+- entity no-match reale
+- entity non ambigua
+- nessuna entity già selezionata
+- testo residuo pulito
+- presenza di prefisso entity forte
+
+Prefissi ammessi:
+
+- referente
+- tecnico
+- cliente
+- fornitore
+- operaio
+- collaboratore
+- contatto
+- responsabile
+- muratore
+- idraulico
+- elettricista
+- geometra
+- architetto
+
+Esempio positivo:
+
+villa sierri 15 sopralluogo referente kappa
+→ input_new_entity_name = Referente Kappa
+
+Esempio negativo:
+
+acquisto 50 euro materiale nuovo
+→ input_new_entity_name vuoto
+
+---
+
+IGNORA GLOBALE
+
+Il bottone Ignora globale:
+
+- nasconde suggestion project/entity
+- chiude micro-editor aperti
+- svuota input_new_project_name / input_new_entity_name
+- non modifica input_raw
+- non modifica select_project / select_entity
+- non blocca conferma
+
+Esempio validato:
+
+acquisto 50 euro materiale nuovo
+→ Ignora
+→ evento salvabile con project_id null / entity_id null
+
+---
+
+AMBITO NON COPERTO
+
+Non implementa:
+
+- command intent
+- frasi “crea progetto Aspri”
+- frasi “crea entità Patrizio”
+- gerarchie project/entity
+- alias
+- deduplicazione avanzata
+- filtro select su match ambigui
 
 CONFERMA EVENTO
 
@@ -1795,6 +2077,9 @@ REGOLE:
 
 ✔ input comunque sempre modificabile
 ✔ scelta manuale utente preservata
+✔ evento salvabile anche dopo creazione inline project/entity
+✔ evento salvabile anche senza project/entity
+✔ suggestion ignorata non blocca salvataggio
 
 ✔ gestione edit_mode:
 
@@ -1833,6 +2118,16 @@ const payload = {
   project_id: select_project.value || null,
   entity_id: select_entity.value || null
 };
+
+Nota:
+
+button_input_confirm non legge create_suggestion_state come fonte dati salvabile.
+
+create_suggestion_state può aiutare a creare project/entity,
+ma il payload evento legge sempre e solo:
+
+- select_project.value
+- select_entity.value
 
 Disabled logic:
 
@@ -2043,6 +2338,10 @@ Caratteristiche:
 ✔ unit coerente con ui_state.parsed
 ✔ raw_input preservato
 ✔ type salvato in events.type
+✔ project_id salvato da select_project.value
+✔ entity_id salvato da select_entity.value
+✔ project/entity creati inline salvabili solo dopo selezione confermata
+✔ evento salvabile con project_id/entity_id null se l’utente ignora suggestion
 
 Test validati:
 
@@ -2074,6 +2373,25 @@ villa 2 mario
 → type Evento
 → amount null
 → unit null
+→ status NEW
+
+Project / Entity Create Suggestion — insert evento validato:
+
+villa sierri 15 sopralluogo referente kappa
+→ project creato inline: Villa Sierri 15
+→ entity creata inline: Referente Kappa
+→ evento confermato manualmente
+→ project_id valorizzato
+→ entity_id valorizzato
+→ status NEW
+
+acquisto 50 euro materiale nuovo
+→ suggestion ignorata
+→ project_id null
+→ entity_id null
+→ type Spesa
+→ amount 50
+→ unit euro
 → status NEW
 
 UPDATE FLOW
@@ -2268,6 +2586,10 @@ match error
 input ambiguo
 save error
 update error
+insert_project error
+insert_entity error
+duplicato project/entity
+candidate suggestion non sicura
 
 COMPORTAMENTO:
 
@@ -2275,6 +2597,10 @@ COMPORTAMENTO:
 ✔ NON interrompere UX inutilmente
 ✔ mostrare feedback implicito o toaster Retool
 ✔ preservare possibilità di correzione
+✔ bloccare insert_project / insert_entity se nome mancante
+✔ bloccare insert_project / insert_entity se duplicato frontend rilevato
+✔ mostrare warning duplicato senza scrivere DB
+✔ lasciare evento non salvato finché l’utente non conferma
 
 TEST VALIDATI
 
@@ -2734,6 +3060,75 @@ Regressioni:
 Esito:
 OK
 
+PROJECT / ENTITY CREATE SUGGESTION — TEST VALIDATI:
+
+Project create:
+
+villa sierri 6 sopralluogo
+→ suggestion project Villa Sierri 6
+→ insert_project eseguito previa conferma
+→ select_project valorizzata
+→ evento non salvato automaticamente
+
+villa sierri 7 sopralluogo
+→ suggestion project Villa Sierri 7
+→ project creato
+→ select_project valorizzata
+→ evento salvato manualmente con project_id corretto
+
+Entity create:
+
+villa sierri 7 sopralluogo
+→ project Villa Sierri 7 riconosciuto
+→ nessuna entità associata
+→ Crea entità visibile
+→ Tecnico Sierri 4 creato inline
+→ select_entity valorizzata
+→ evento salvato manualmente con entity_id corretto
+
+Flow combinato:
+
+villa sierri 15 sopralluogo referente kappa
+→ project Villa Sierri 15 creato inline
+→ entity Referente Kappa creata inline
+→ evento confermato manualmente
+→ DB con project_id + entity_id corretti
+
+No-match generico:
+
+acquisto 50 euro materiale nuovo
+→ type Spesa
+→ amount 50
+→ unit euro
+→ suggestion project/entity visibile
+→ Ignora
+→ evento salvato con project_id null / entity_id null
+
+Ambiguità entity:
+
+alfie mario rossi
+→ più entità trovate
+→ Crea entità non visibile
+→ Conferma disabilitata
+→ dopo selezione manuale entity, Conferma abilitata
+
+Entity autofill:
+
+villa sierri 15 sopralluogo referente kappa
+→ Crea entità
+→ input_new_entity_name precompilato Referente Kappa
+
+acquisto 50 euro materiale nuovo
+→ Crea entità
+→ input_new_entity_name vuoto
+
+Edit/no-op regression:
+
+edit evento esistente senza modifiche
+→ no update_event
+→ updated_at invariato
+→ suggestion non regressiva
+
 LIMITI ATTUALI
 
 INPUT / PARSING:
@@ -2780,7 +3175,9 @@ no fuzzy matching
 no alias system
 no gerarchia entity/project
 no deduplicazione
-no creazione guidata project/entity
+creazione guidata project/entity implementata a primo livello controllato
+no command intent
+no filtro select su match ambigui
 no ranking avanzato
 
 PREVIEW:
@@ -2799,6 +3196,17 @@ alcuni layer ancora accoppiati
 matching project/entity allineato a primo livello
 preview ancora ibrida
 input system stabilizzato ma non completamente separato da tutti i layer
+container suggestion UI ancora da rifinire
+command intent non implementato
+create_suggestion_state ancora helper Retool, non modulo engine separato
+
+COMMAND INTENT:
+
+non implementato
+frasi “crea progetto...” non riconosciute come comando di sistema
+frasi “crea entità...” non riconosciute come comando di sistema
+input comando puro non ancora separato da input evento
+placeholder da valutare in nodo futuro
 
 OBIETTIVO INPUT SYSTEM
 
@@ -2810,6 +3218,7 @@ sufficientemente affidabile
 non bloccante
 coerente nel salvataggio
 progressivamente normalizzato
+capace di assistere la creazione project/entity senza automatismi nascosti
 
 NON:
 
@@ -2818,24 +3227,37 @@ completamente automatico
 semantico avanzato
 decisionale
 orientato a KPI prima della qualità dati
+interprete automatico di comandi di sistema non ancora validati
 
 NEXT STEP CONSIGLIATI
 
-PROJECT / ENTITY CREATE SUGGESTION
+UX CLEANUP — SUGGESTION CONTAINER / MOBILE
 
 Obiettivo futuro:
 
-proporre creazione guidata project/entity quando nessun match viene trovato.
-
-Utile per:
-
-- input vocali
-- Siri
-- inserimenti rapidi
+rifinire graficamente il container suggestion.
 
 Vincolo:
 
-nessuna creazione automatica silenziosa.
+non modificare logica, parser, matching, DB o save flow.
+
+---
+
+COMMAND INTENT — CREATE PROJECT / ENTITY
+
+Obiettivo futuro:
+
+riconoscere frasi tipo:
+
+- crea progetto Aspri
+- crea entità Patrizio
+
+Vincoli:
+
+- distinguere comando di sistema da evento operativo
+- mostrare conferma guidata
+- non salvare evento se l’input è comando puro
+- non creare automaticamente project/entity senza conferma
 
 ---
 
@@ -3065,3 +3487,33 @@ preview invariata
 lista eventi invariata
 nessun output/KPI anticipato
 aggiornamento next step consigliati post linting cleanup
+
+v11 — 2026-05-07
+
+completamento PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+documentato create_suggestion_state
+documentata creazione inline project/entity
+documentato insert_project
+documentato insert_entity
+documentato container suggestion inline
+documentati input_new_project_name / input_new_entity_name
+documentato bottone Ignora globale
+documentati bottoni Annulla contestuali
+documentato entity autofill controlled minimal
+documentato reset suggestion stale in trigger_parse_debounced
+documentato che suggestion ≠ salvataggio
+documentato che input evento ≠ command intent
+documentato che evento non viene salvato automaticamente dopo creazione project/entity
+documentato che project/entity mancanti non bloccano salvataggio
+documentato che project/entity ambigui bloccano salvataggio
+documentato flow combinato project + entity validato
+documentato no-match generico salvabile
+documentato ambiguità entity bloccante
+documentato entity autofill positivo e negativo
+documentato edit/no-op non regressivo dopo create suggestion
+DB schema invariato
+parser invariato
+type classification invariata
+duration normalization invariata
+nessun output/KPI anticipato
+aggiornati next step consigliati post create suggestion

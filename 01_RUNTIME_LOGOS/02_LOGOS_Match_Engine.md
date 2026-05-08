@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v05
+# 02_LOGOS_Match_Engine_v06
 
-DATA: 2026-05-02
+DATA: 2026-05-07
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -17,7 +17,14 @@ C (Completezza): 10/10
 - documentato create flow con match state live  
 - documentato edit flow con match state live  
 - documentato rapporto con preview / highlight / hint  
-- esplicitati limiti residui  
+- esplicitati limiti residui
+- documentato rapporto tra match state e create_suggestion_state
+- documentato Project / Entity Create Suggestion First Controlled Level
+- documentato che la suggestion consuma il matching ma non lo sostituisce
+- documentata creazione project/entity solo previa conferma utente
+- documentata regola select = decisione utente finale
+- documentato blocco solo su ambiguità attiva
+- documentato entity autofill controlled minimal come supporto suggestion, non matching  
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -27,6 +34,10 @@ Q (Qualità): 9.5/10
 - nessuna automazione decisionale aggressiva  
 - nessuna anticipazione data structure / KPI / output  
 - limiti futuri chiari  
+- chiarita separazione tra match, suggestion e salvataggio
+- mantenuto il match engine non decisionale
+- ridotto rischio di confondere no-match con errore bloccante
+- preservata coerenza con Core Event System incrementale
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -37,6 +48,10 @@ D (Deployabilità): 10/10
 - parser invariato  
 - type classification invariata  
 - duration normalization invariata 
+- Project / Entity Create Suggestion validato runtime
+- flow combinato project + entity validato
+- no-match generico salvabile validato
+- edit/no-op non regressivo validato dopo create suggestion
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -52,6 +67,8 @@ Il documento guida:
 - gestione ambiguità
 - comportamento runtime coerente
 - identificazione debiti strutturali del matching
+- rapporto tra matching e create suggestion
+- distinzione tra match, suggestion, select e insert
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -103,6 +120,34 @@ Il matching resta dedicato a:
 - ambiguità
 - suggerimenti
 
+---
+
+7. MATCHING ≠ CREAZIONE
+
+Il matching non crea project/entity.
+
+La creazione guidata è gestita dal layer successivo:
+
+create_suggestion_state
+→ container suggestion
+→ conferma utente
+→ insert_project / insert_entity
+
+Il matching alimenta la suggestion,
+ma non scrive dati nel DB.
+
+---
+
+8. SELECT = DECISIONE UTENTE
+
+La select resta la decisione finale salvabile.
+
+select_project.value → events.project_id
+select_entity.value → events.entity_id
+
+La selezione manuale è valida anche se il valore selezionato
+non è presente nel raw_input.
+
 ------------------------------------------------
 ENTITÀ COINVOLTE
 ------------------------------------------------
@@ -131,8 +176,9 @@ input_home
 → parse_input_controlled  
 → ui_state.parsed  
 → project_state / entity_state  
+→ create_suggestion_state  
 → select_project / select_entity  
-→ preview / hint / highlight  
+→ preview / hint / highlight / suggestion container  
 → button_input_confirm  
 
 ---
@@ -155,19 +201,29 @@ non sui valori numerici normalizzati.
 ui_state.parsed NON è stato esteso a project/entity.
 Il matching resta un layer separato.
 
+Dopo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL:
+
+- create_suggestion_state consuma project_state / entity_state
+- no-match project/entity può generare suggestion controllata
+- project/entity possono essere creati inline solo previa conferma utente
+- insert_project / insert_entity non sono parte del matching
+- evento non viene salvato automaticamente dopo creazione project/entity
+- select_project / select_entity restano fonte finale salvabile
+
 ------------------------------------------------
 PIPELINE MATCH
 ------------------------------------------------
 
-Pipeline attuale post STEP 6.4:
+Pipeline attuale post PROJECT / ENTITY CREATE SUGGESTION FIRST CONTROLLED LEVEL:
 
 input_raw  
 → project_state / entity_state  
 → matches / count / isAmbiguous / singleMatch  
+→ create_suggestion_state  
 → select_project / select_entity  
-→ preview hint / highlight  
+→ preview hint / highlight / suggestion container  
 → button_input_confirm guard  
-→ project_id / entity_id salvati solo se selezionati  
+→ project_id / entity_id salvati solo se selezionati    
 
 ---
 
@@ -193,6 +249,13 @@ Output standard di project_state / entity_state:
 Principio:
 
 project_state / entity_state calcolano il matching.
+
+create_suggestion_state legge il risultato del matching
+e genera eventuali suggestion controllate.
+
+create_suggestion_state NON calcola il match primario.
+create_suggestion_state NON salva dati.
+create_suggestion_state NON decide project/entity al posto dell’utente.
 
 select_project / select_entity NON ricalcolano più il matching.
 Leggono singleMatch.
@@ -374,7 +437,9 @@ count = 0
 NOTE:
 
 - project_id viene salvato solo da select_project.value
-- il sistema non crea project automaticamente
+- project_state non crea project automaticamente
+- eventuale creazione project è gestita da create_suggestion_state + insert_project
+- la creazione project richiede conferma esplicita utente
 - il sistema non decide project in caso di ambiguità non risolta
 - la scelta manuale utente prevale
 
@@ -481,10 +546,40 @@ count = 0
 NOTE:
 
 - entity_id viene salvato solo da select_entity.value
-- il sistema non crea entity automaticamente
+- entity_state non crea entity automaticamente
+- eventuale creazione entity è gestita da create_suggestion_state + insert_entity
+- la creazione entity richiede conferma esplicita utente
 - il sistema non decide entity in caso di ambiguità non risolta
 - la scelta manuale utente prevale
 - la presenza di duplicati o entità simili resta un limite strutturale
+
+---
+
+RELAZIONE CON CREATE SUGGESTION:
+
+Se project_state rileva un match base valido e create_suggestion_state
+individua una possibile estensione non ancora presente,
+il sistema può proporre la creazione di un nuovo project.
+
+Esempio:
+
+input:
+villa sierri 15 sopralluogo
+
+project_state:
+singleMatch = Villa
+
+create_suggestion_state:
+candidateName = Villa Sierri 15
+
+Azione utente:
+Crea progetto → insert_project → select_project = Villa Sierri 15
+
+Nota:
+
+questo non modifica la regola del matching.
+Villa resta match base reale.
+Villa Sierri 15 è una suggestion di creazione controllata.
 
 ------------------------------------------------
 AUTO-SELECT LOGIC
@@ -602,7 +697,16 @@ Comportamento:
 Motivo:
 
 LOGOS deve restare non bloccante.
-La creazione guidata project/entity sarà nodo futuro dedicato.
+
+Dopo Project / Entity Create Suggestion First Controlled Level,
+il nessun match può generare una suggestion controllata,
+ma non blocca il salvataggio.
+
+L’utente può:
+
+- creare project/entity inline
+- ignorare la suggestion
+- salvare evento con project_id/entity_id null
 
 ---
 
@@ -619,6 +723,17 @@ Conferma abilitata se:
 - match univoco
 - nessun match
 - ambiguità risolta manualmente
+
+---
+
+Regola post create suggestion:
+
+project/entity mancanti ≠ blocco.
+
+project/entity ambigui = blocco finché non risolti manualmente.
+
+La suggestion non cambia il confirm guard:
+lo arricchisce solo con un percorso guidato opzionale.
 
 ------------------------------------------------
 HINT SYSTEM
@@ -673,6 +788,31 @@ Restano embedded nella preview altri hint:
 - durata ambigua
 
 Questi non sono stati separati in un hint engine globale.
+
+---
+
+HINT / SUGGESTION DISTINCTION:
+
+Hint informativo:
+
+- segnala stato del match
+- non apre insert
+- non scrive DB
+
+Suggestion create:
+
+- propone azione guidata
+- richiede conferma utente
+- può eseguire insert_project / insert_entity
+- non salva evento automaticamente
+
+Esempio:
+
+“Esistono progetti più specifici”
+→ hint informativo
+
+“Possibile nuovo progetto: Villa Sierri 15”
+→ suggestion create
 
 ------------------------------------------------
 RELAZIONE CON PREVIEW
@@ -739,6 +879,105 @@ La preview resta layer ibrido:
 Ma non è più fonte autonoma decisionale per il matching.
 
 ------------------------------------------------
+RELAZIONE CON CREATE SUGGESTION
+------------------------------------------------
+
+create_suggestion_state è un layer successivo al matching.
+
+Consuma:
+
+- input_raw.value
+- project_state.data
+- entity_state.data
+- projects_list.data
+- entities_list.data
+- select_project.value
+- select_entity.value
+
+Produce:
+
+- project.noMatch
+- project.shouldShowNoMatchHint
+- project.shouldSuggestCreate
+- project.candidateName
+- project.draftName
+- entity.noMatch
+- entity.shouldShowNoMatchHint
+- entity.shouldSuggestCreate
+- entity.candidateName
+- entity.draftName
+
+Non produce:
+
+- project_id salvabile direttamente
+- entity_id salvabile direttamente
+- amount
+- unit
+- event_date
+- type
+
+Regole:
+
+- suggestion ≠ match
+- suggestion ≠ decisione
+- suggestion ≠ salvataggio evento
+- suggestion ignorata non blocca conferma
+- creazione project/entity richiede conferma utente
+- evento resta non salvato dopo creazione project/entity
+
+---
+
+PROJECT CREATE SUGGESTION
+
+Attiva quando:
+
+- esiste una candidate controllata
+- non c’è ambiguità project
+- la candidate non esiste già
+- l’utente conferma la creazione
+
+Esempio:
+
+villa sierri 15 sopralluogo
+→ candidate project: Villa Sierri 15
+
+---
+
+ENTITY CREATE SUGGESTION
+
+Attiva quando:
+
+- entity no-match reale
+- entity non ambigua
+- nessuna entity già selezionata
+- l’utente conferma la creazione
+
+Entity autofill controlled minimal:
+
+- solo su prefissi forti
+- non crea entity automaticamente
+- non seleziona entity automaticamente
+- precompila solo input_new_entity_name
+
+Esempio:
+
+referente kappa
+→ draft entity: Referente Kappa
+
+---
+
+AMBIGUITÀ E CREATE SUGGESTION
+
+Se project/entity è ambiguo:
+
+- create suggestion non viene mostrata per quel layer
+- Conferma resta disabilitata finché l’utente non sceglie manualmente
+
+Motivo:
+
+non proporre creazioni nuove quando il sistema ha già più match possibili.
+
+------------------------------------------------
 RELAZIONE CON NORMALIZATION LAYER BASE
 ------------------------------------------------
 
@@ -795,7 +1034,8 @@ CASI NON SUPPORTATI
 - ranking avanzato
 - disambiguazione automatica
 - alias controllati
-- creazione guidata project/entity
+- command intent “crea progetto...” / “crea entità...”
+- creazione automatica silenziosa project/entity
 
 ---
 
@@ -815,8 +1055,10 @@ LIMITI ATTUALI
 - nessuna deduplicazione entity/project
 - nessuna relazione entity-project
 - nessun match storico
-- nessuna creazione guidata project/entity
-- nessun pending state per nuovi project/entity
+- creazione guidata project/entity implementata solo a primo livello controllato
+- command intent non implementato
+- nessuna creazione automatica silenziosa project/entity
+- nessun audit trail dedicato per creazione project/entity
 - preview ancora layer ibrido
 - hint duration/type ancora embedded nella preview
 - match engine avanzato separato non implementato
@@ -831,6 +1073,10 @@ Risolto a primo livello:
 ✔ priority match minimo implementato  
 ✔ confirm guard coerente con ambiguità non risolta  
 ✔ create/edit flow allineati  
+✔ create_suggestion_state introdotto
+✔ creazione guidata project/entity implementata a primo livello controllato
+✔ no-match project/entity assistito da suggestion controllata
+✔ entity autofill controlled minimal implementato
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
@@ -894,7 +1140,21 @@ Non ancora risolto:
 - deduplicazione
 - gerarchie
 - relazioni entity-project
-- creazione guidata project/entity
+- command intent create project/entity
+- filtro select su match ambigui
+- deduplicazione avanzata project/entity
+
+---
+
+STATO DOPO PROJECT / ENTITY CREATE SUGGESTION:
+
+✔ no-match project/entity può produrre suggestion controllata
+✔ project/entity possono essere creati inline previa conferma
+✔ select_project/select_entity vengono valorizzati dopo creazione controllata
+✔ evento non viene salvato automaticamente dopo creazione project/entity
+✔ salvataggio resta manuale
+✔ project/entity mancanti non bloccano conferma
+✔ project/entity ambigui bloccano conferma
 
 ------------------------------------------------
 TARGET FUTURO — MATCH ENGINE EVOLUTION
@@ -924,13 +1184,14 @@ Evoluzioni future possibili solo come nodi dedicati:
 - relazioni entity-project
 - deduplicazione
 
-3. PROJECT / ENTITY CREATE SUGGESTION
+3. COMMAND INTENT — CREATE PROJECT / ENTITY
 
-- nessun match trovato
-- proposta di creazione guidata
-- creazione solo previa conferma utente
-- utile per input vocali / Siri
-- evitare duplicati
+- riconoscere frasi tipo “crea progetto Aspri”
+- riconoscere frasi tipo “crea entità Patrizio”
+- distinguere comando di sistema da evento operativo
+- mostrare conferma guidata
+- riusare insert_project / insert_entity
+- non salvare evento se l’input è comando puro
 
 4. MATCH CONFIDENCE / RANKING ADVANCED
 
@@ -948,6 +1209,12 @@ Vincoli futuri:
 - utente sempre in controllo
 - output/KPI non anticipati
 
+5. SELECT OPTIONS FILTERING — AMBIGUITY UX
+
+- filtrare opzioni select sui match ambigui
+- migliorare risoluzione ambiguità
+- non ridurre possibilità di selezione manuale libera senza nodo dedicato
+
 ------------------------------------------------
 EVOLUZIONE FUTURA NON ATTIVA
 ------------------------------------------------
@@ -960,8 +1227,10 @@ EVOLUZIONE FUTURA NON ATTIVA
 - project hierarchy
 - relazioni entity-project
 - deduplicazione
-- creazione guidata project/entity
-- pending state per nuovi project/entity
+- command intent per creare project/entity
+- creazione automatica silenziosa project/entity
+- filtro select su match ambigui
+- pending state avanzato per nuovi project/entity
 - confidence score
 - audit ambiguità
 
@@ -987,7 +1256,8 @@ NON deve:
 
 - automatizzare completamente
 - interpretare intenzione utente in modo nascosto
-- creare project/entity
+- creare project/entity direttamente dal matching
+- creare project/entity senza conferma utente
 - forzare selezioni ambigue
 - sostituire la validazione utente
 
@@ -997,6 +1267,10 @@ Stato attuale:
 
 Il primo livello controllato è stato implementato.
 Il Match Engine ora riduce le divergenze tra state, select, preview e confirm.
+
+Il successivo Project / Entity Create Suggestion First Controlled Level
+ha aggiunto un layer di suggestion controllata che consuma il matching,
+senza trasformare il match engine in un sistema decisionale o di scrittura DB.
 
 Il prossimo livello non è “rifare il Match Engine”,
 ma evolverlo tramite nodi dedicati.
@@ -1019,6 +1293,13 @@ STATO ATTUALE
 ✔ match state live in create flow  
 ✔ match state live in edit flow  
 ✔ utente mantiene controllo  
+✔ create_suggestion_state consuma il match state
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ creazione guidata project/entity implementata a primo livello controllato
+✔ no-match project/entity può generare suggestion controllata
+✔ project/entity mancanti non bloccano conferma
+✔ project/entity ambigui bloccano conferma
+✔ entity autofill controlled minimal implementato
 
 ---
 
@@ -1028,7 +1309,9 @@ STATO ATTUALE
 ⚠ nessuna gerarchia  
 ⚠ nessun alias system  
 ⚠ nessuna deduplicazione  
-⚠ nessuna creazione guidata project/entity  
+✔ creazione guidata project/entity implementata a primo livello controllato
+⚠ command intent non implementato
+⚠ filtro select su match ambigui non implementato
 ⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
 ------------------------------------------------
@@ -1089,4 +1372,28 @@ v05 — 2026-05-02
 - nessuna modifica parser  
 - nessuna modifica type classification  
 - nessuna modifica duration normalization  
+- nessun output/KPI anticipato
+
+v06 — 2026-05-07
+- aggiornamento post PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+- documentato rapporto tra project_state/entity_state e create_suggestion_state
+- chiarito che create_suggestion_state consuma il matching ma non lo sostituisce
+- chiarito che matching ≠ creazione
+- chiarito che suggestion ≠ decisione
+- chiarito che suggestion ≠ salvataggio evento
+- documentata creazione project/entity solo previa conferma utente
+- documentata regola select_project/select_entity come decisione utente finale
+- documentato no-match project/entity come non bloccante
+- documentato blocco solo su ambiguità attiva non risolta
+- documentata relatione tra hint informativi e suggestion create
+- documentata Project Create Suggestion su estensioni controllate
+- documentata Entity Create Suggestion
+- documentato entity autofill controlled minimal
+- documentato che entity autofill non è matching entity
+- aggiornati casi non supportati rimuovendo create suggestion base
+- aggiunti command intent e select filtering come evoluzioni future
+- confermato DB schema invariato
+- confermato parser invariato
+- confermato type classification invariata
+- confermato duration normalization invariata
 - nessun output/KPI anticipato

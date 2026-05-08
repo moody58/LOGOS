@@ -1,6 +1,6 @@
-# 05_LOGOS_Database_Schema_v07
+# 05_LOGOS_Database_Schema_v08
 
-DATA: 2026-05-02
+DATA: 2026-05-07
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -18,6 +18,11 @@ C (Completezza): 10/10
 - utilizzo reale di events.type documentato  
 - utilizzo più coerente di events.project_id / events.entity_id documentato  
 - schema invariato esplicitato  
+- Project / Entity Create Suggestion First Controlled Level integrato
+- insert_project / insert_entity documentati come scritture controllate lato Retool
+- popolamento projects/entities da UI documentato
+- confermato che la creazione inline non modifica schema DB
+- confermato che create_suggestion_state non viene persistito
 
 Q (Qualità): 9.5/10  
 - struttura corretta  
@@ -30,6 +35,10 @@ Q (Qualità): 9.5/10
 - chiarito che il DB non decide type  
 - chiarito che il DB non decide project/entity  
 - limiti versioning / relazioni / output esplicitati  
+- chiarito che projects/entities possono ora essere popolati da creazione inline controllata
+- chiarito che il DB non interpreta suggestion
+- chiarito che il DB non distingue evento operativo da command intent
+- chiarito che nessun audit trail dedicato è stato introdotto
 
 D (Deployabilità): 10/10  
 - documento utilizzabile come riferimento AS-IS  
@@ -38,6 +47,10 @@ D (Deployabilità): 10/10
 - conferma schema invariato dopo Duration Normalization  
 - conferma schema invariato dopo Type Classification Base  
 - conferma schema invariato dopo Match Engine Unification First Controlled Level  
+- conferma schema invariato dopo Project / Entity Create Suggestion First Controlled Level
+- insert_project validato su DB reale
+- insert_entity validato su DB reale
+- evento con project_id/entity_id creati inline validato
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -57,6 +70,9 @@ Il documento descrive:
 - stato dei dati dopo Duration Normalization Base
 - stato dei dati dopo Type Classification Base
 - stato dei dati dopo Match Engine Unification First Controlled Level
+- stato dei dati dopo Project / Entity Create Suggestion First Controlled Level
+- popolamento controllato di projects/entities tramite Retool
+- assenza di modifiche schema dopo creazione inline project/entity
 
 ------------------------------------------------
 PRINCIPIO ARCHITETTURALE
@@ -75,6 +91,9 @@ NON contiene:
 - classificazione autonoma tipo evento
 - matching autonomo project/entity
 - creazione automatica project/entity
+- logica di suggestion project/entity
+- command intent
+- audit trail automatico per creazione project/entity
 - disambiguazione autonoma
 
 ---
@@ -155,6 +174,50 @@ il frontend blocca la conferma.
 
 Se l’ambiguità viene risolta manualmente,
 il frontend consente il salvataggio.
+
+Nota Project / Entity Create Suggestion First Controlled Level:
+
+La creazione guidata project/entity avviene lato Retool.
+
+Il database NON propone project/entity.
+Il database NON decide se creare project/entity.
+Il database NON interpreta no-match.
+Il database NON interpreta command intent.
+Il database NON salva suggestion state.
+
+Retool può ora eseguire:
+
+insert_project
+insert_entity
+
+solo dopo conferma esplicita dell’utente.
+
+Dopo creazione project/entity:
+
+- projects / entities vengono aggiornate
+- select_project / select_entity vengono valorizzate lato frontend
+- l’evento NON viene salvato automaticamente
+- l’utente deve confermare manualmente l’evento
+
+Catena project:
+
+create_suggestion_state
+→ input_new_project_name
+→ insert_project
+→ projects
+→ projects_list refresh
+→ select_project.value
+→ events.project_id su conferma evento
+
+Catena entity:
+
+create_suggestion_state
+→ input_new_entity_name
+→ insert_entity
+→ entities
+→ entities_list refresh
+→ select_entity.value
+→ events.entity_id su conferma evento
 
 ------------------------------------------------
 MODELLO DATI
@@ -249,7 +312,11 @@ UTILIZZO REALE:
 ✔ entity_id derivato da select_entity.value lato Retool  
 ✔ project/entity matching calcolato lato Retool tramite project_state/entity_state  
 ✔ ambiguità project/entity non risolta bloccata lato frontend  
-✔ nessun match project/entity non blocca il salvataggio    
+✔ nessun match project/entity non blocca il salvataggio  
+✔ project_id può derivare da project creato inline e poi selezionato
+✔ entity_id può derivare da entity creata inline e poi selezionata
+✔ evento non salvato automaticamente dopo insert_project / insert_entity
+✔ suggestion ignorata consente salvataggio con project_id/entity_id null  
 ✔ status sempre NEW in insert  
 ✔ updated_at valorizzato in insert/update  
 ✔ eventi NEW modificabili tramite update_event  
@@ -257,7 +324,7 @@ UTILIZZO REALE:
 
 ---
 
-NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION — IMPATTO SU events:
+NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION + PROJECT / ENTITY CREATE SUGGESTION — IMPATTO SU events:
 
 La tabella non è stata modificata.
 
@@ -273,6 +340,9 @@ La qualità del dato è migliorata perché il frontend ora invia:
 - entity_id più coerente quando l’entità è selezionata
 - ambiguità project/entity non salvate silenziosamente
 - match univoci alimentati da singleMatch
+- project_id/entity_id creati inline quando l’utente conferma la creazione project/entity
+- project/entity mancanti ancora ammessi come null se l’utente ignora la suggestion
+- nessuna ambiguità project/entity salvata silenziosamente
 
 Esempi:
 
@@ -371,6 +441,25 @@ acquisto 50 euro materiale nuovo
 → entity_id: null
 → salvataggio consentito
 
+Esempi Project / Entity Create Suggestion:
+
+villa sierri 15 sopralluogo referente kappa
+→ project creato inline: Villa Sierri 15
+→ entity creata inline: Referente Kappa
+→ evento salvato manualmente
+→ project_id valorizzato
+→ entity_id valorizzato
+→ status NEW
+
+acquisto 50 euro materiale nuovo
+→ suggestion project/entity ignorata
+→ type: Spesa
+→ amount: 50
+→ unit: euro
+→ project_id: null
+→ entity_id: null
+→ status NEW
+
 CAMPI NON UTILIZZATI O NON CONSOLIDATI:
 
 reference_id
@@ -431,12 +520,36 @@ UTILIZZO REALE:
 ✔ project_id salvato su events quando selezionato  
 ✔ priority match minimo gestito lato Retool  
 ✔ nessuna gerarchia attiva  
+✔ popolabile tramite insert_project lato Retool
+✔ creazione inline project validata
+✔ utilizzata anche da Project Create Suggestion First Controlled Level
 
 NOTE:
 
 name univoco = base matching
 parent_project_id presente ma non operativo
 relazioni avanzate non implementate
+
+Project / Entity Create Suggestion First Controlled Level:
+
+projects può ora essere popolata da Retool tramite insert_project.
+
+Regole runtime:
+
+- creazione solo previa conferma utente
+- controllo duplicati base lato frontend
+- nessuna creazione automatica silenziosa
+- nessuna gerarchia assegnata automaticamente
+- parent_project_id resta null
+- type resta null salvo casi esistenti/manuali
+- status può essere valorizzato ACTIVE secondo query insert_project
+- evento non salvato automaticamente dopo creazione project
+
+Esempi validati:
+
+Villa Sierri 6
+Villa Sierri 7
+Villa Sierri 15
 
 Match Engine Unification First Controlled Level:
 
@@ -479,10 +592,14 @@ UTILIZZO REALE:
 ✔ entity_id salvato su events quando selezionato  
 ✔ priority match minimo gestito lato Retool  
 ✔ nessuna gerarchia attiva  
+✔ popolabile tramite insert_entity lato Retool
+✔ creazione inline entity validata
+✔ utilizzata anche da Entity Create Suggestion First Controlled Level
 
 LIMITI:
 
 nessun vincolo UNIQUE su name
+controllo duplicati base demandato al frontend
 possibili duplicati
 nessuna gerarchia attiva
 parent_entity_id non operativo
@@ -495,6 +612,31 @@ Match Engine Unification First Controlled Level:
 - Mario → Mario con hint entità più specifiche se esistono varianti
 - Alfie + Mario Rossi nello stesso input resta ambiguità reale
 - nessuna modifica schema entities
+
+Project / Entity Create Suggestion First Controlled Level:
+
+entities può ora essere popolata da Retool tramite insert_entity.
+
+Regole runtime:
+
+- creazione solo previa conferma utente
+- controllo duplicati base lato frontend
+- nessuna creazione automatica silenziosa
+- nessuna gerarchia assegnata automaticamente
+- parent_entity_id resta null
+- metadata resta {}
+- type/status non sono ancora usati in modo strutturale
+- evento non salvato automaticamente dopo creazione entity
+
+Esempi validati:
+
+Tecnico Sierri 4
+Referente Kappa
+
+Nota:
+
+entity autofill controlled minimal precompila input_new_entity_name,
+ma non crea entity e non scrive nel DB senza conferma utente.
 
 TABELLA: system_logs
 
@@ -532,9 +674,11 @@ input
 → duration normalization
 → type classification base
 → match state project/entity
+→ create_suggestion_state
+→ eventuale insert_project / insert_entity previa conferma utente
 → select_project / select_entity
-→ preview
-→ insert_event
+→ preview / suggestion container
+→ insert_event manuale
 → status NEW
 
 Flusso edit:
@@ -546,9 +690,11 @@ evento NEW
 → duration normalization
 → type classification base
 → match state project/entity
+→ create_suggestion_state
+→ eventuale insert_project / insert_entity previa conferma utente
 → select_project / select_entity
-→ preview
-→ update_event
+→ preview / suggestion container
+→ update_event manuale se modifica reale
 → status invariato NEW
 → type aggiornato
 → project_id/entity_id aggiornati se modificati
@@ -564,6 +710,9 @@ non decide type
 non decide project/entity
 non risolve ambiguità project/entity
 non crea project/entity automaticamente
+non salva suggestion state
+non interpreta command intent
+non collega automaticamente project/entity creati agli eventi
 non mantiene storico revisioni
 
 Il database riceve type già determinato lato frontend.
@@ -571,7 +720,11 @@ Il database riceve type già determinato lato frontend.
 Il database riceve project_id/entity_id già determinati lato frontend
 tramite select_project.value / select_entity.value.
 
-NORMALIZATION BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION / MATCH ENGINE E DATABASE
+Se project/entity vengono creati inline,
+il database riceve prima una nuova riga in projects/entities.
+Solo dopo eventuale conferma evento riceve project_id/entity_id dentro events.
+
+NORMALIZATION BASE / DURATION NORMALIZATION / TYPE CLASSIFICATION / MATCH ENGINE / CREATE SUGGESTION E DATABASE
 
 La normalizzazione base, la duration normalization e la type classification base NON hanno modificato lo schema.
 
@@ -687,6 +840,27 @@ Riceve solo:
 - entity_id
 
 oppure null.
+
+Project / Entity Create Suggestion First Controlled Level:
+
+create_suggestion_state calcola suggestion lato Retool.
+
+Non viene persistito:
+
+- noMatch
+- shouldSuggestCreate
+- candidateName
+- draftName
+- dismissed state
+- create_suggestion_state.data
+
+Il DB riceve solo:
+
+- nuova riga in projects, se l’utente conferma insert_project
+- nuova riga in entities, se l’utente conferma insert_entity
+- project_id/entity_id in events, solo se l’utente conferma l’evento
+
+Nessuna modifica schema è stata introdotta.
 
 ------------------------------------------------
 DURATION NORMALIZATION E DATABASE
@@ -871,6 +1045,93 @@ alfie mario rossi
 → nessun insert/update finché non viene scelta entità
 
 ------------------------------------------------
+PROJECT / ENTITY CREATE SUGGESTION E DATABASE
+------------------------------------------------
+
+Decisione:
+
+Project / Entity Create Suggestion First Controlled Level NON modifica lo schema DB.
+
+Sono rimasti invariati:
+
+- events
+- projects
+- entities
+- payload
+- system_logs
+
+Non sono stati aggiunti:
+
+- pending_project_name
+- pending_entity_name
+- project_suggestion_status
+- entity_suggestion_status
+- suggestion_payload
+- command_intent_type
+- command_intent_payload
+- audit trail dedicato
+- relation table
+- alias table
+
+Origine runtime:
+
+create_suggestion_state lato Retool
+
+Catena project:
+
+create_suggestion_state
+→ input_new_project_name
+→ insert_project
+→ projects
+→ projects_list refresh
+→ select_project.value
+→ payload.project_id
+→ insert_event / update_event
+→ events.project_id
+
+Catena entity:
+
+create_suggestion_state
+→ input_new_entity_name
+→ insert_entity
+→ entities
+→ entities_list refresh
+→ select_entity.value
+→ payload.entity_id
+→ insert_event / update_event
+→ events.entity_id
+
+Regole:
+
+- suggestion non viene persistita
+- dismissed state non viene persistito
+- project/entity creati inline sono record reali
+- evento non viene salvato automaticamente dopo creazione project/entity
+- insert_event/update_event restano azioni separate
+- project/entity mancanti non bloccano il salvataggio
+- project/entity ambigui bloccano il salvataggio lato frontend
+- nessuna creazione automatica lato DB
+
+Esempio validato:
+
+Input:
+villa sierri 15 sopralluogo referente kappa
+
+Step DB:
+
+1. insert_project
+→ projects.name = Villa Sierri 15
+
+2. insert_entity
+→ entities.name = Referente Kappa
+
+3. insert_event manuale
+→ events.project_id = Villa Sierri 15
+→ events.entity_id = Referente Kappa
+→ events.raw_input = villa sierri 15 sopralluogo referente kappa
+→ events.status = NEW
+
+------------------------------------------------
 INSERT
 ------------------------------------------------
 
@@ -912,6 +1173,24 @@ villa 2 mario
 → amount 18
 → unit minuti
 → project_id Ristrutturazione Bagno
+
+Project / Entity Create Suggestion — insert_event validato:
+
+villa sierri 15 sopralluogo referente kappa
+→ project_id = Villa Sierri 15
+→ entity_id = Referente Kappa
+→ type Evento
+→ amount null
+→ unit null
+→ status NEW
+
+acquisto 50 euro materiale nuovo
+→ project_id null
+→ entity_id null
+→ type Spesa
+→ amount 50
+→ unit euro
+→ status NEW
 
 ------------------------------------------------
 UPDATE
@@ -991,6 +1270,28 @@ Esempi validati:
 → DB type Incasso
 
 ------------------------------------------------
+CONTROLLO UTENTE SU PROJECT / ENTITY CREATE
+------------------------------------------------
+
+La creazione project/entity inline è controllata dall’utente.
+
+Regole:
+
+- Retool può proporre una creation suggestion
+- l’utente deve confermare Crea progetto / Crea entità
+- insert_project / insert_entity partono solo dopo azione esplicita
+- il DB non crea risorse automaticamente
+- dopo creazione project/entity, l’evento resta non salvato
+- l’utente deve confermare manualmente l’evento
+- l’utente può ignorare suggestion e salvare evento incompleto
+- l’utente deve risolvere ambiguità project/entity prima del salvataggio
+
+Questo mantiene separati:
+
+- creazione risorsa
+- salvataggio evento
+
+------------------------------------------------
 LIMITI
 ------------------------------------------------
 
@@ -1008,8 +1309,9 @@ Non implementato:
 - alias system
 - fuzzy matching
 - ranking avanzato
-- creazione guidata project/entity
-- pending state project/entity
+- command intent create project/entity
+- pending state avanzato project/entity
+- audit trail dedicato creazione project/entity
 
 Nota:
 
@@ -1029,6 +1331,10 @@ Match Engine Unification First Controlled Level implementato lato frontend
 project_id/entity_id più coerenti quando selezionati
 ambiguità project/entity non risolta bloccata lato frontend
 nessun match project/entity non blocca il salvataggio
+Project / Entity Create Suggestion First Controlled Level implementato lato frontend
+projects/entities popolabili tramite insert inline controllato
+evento salvabile con project_id/entity_id appena creati
+suggestion ignorata consente project_id/entity_id null
 
 RELAZIONI DEBOLI
 project/entity opzionali
@@ -1045,6 +1351,23 @@ duplicati possibili
 priority match minimo implementato lato Retool
 hint più specifici implementato lato Retool
 nessuna deduplicazione strutturale
+creazione entity inline implementata a primo livello controllato
+deduplicazione base solo lato frontend
+
+PROJECT / ENTITY CREATE SUGGESTION
+
+Implementata a primo livello lato Retool.
+
+Limiti:
+
+- nessun audit trail dedicato
+- nessun pending state persistito
+- nessun command intent
+- nessuna deduplicazione DB avanzata
+- nessun alias system
+- nessuna relazione project/entity
+- nessuna gerarchia automatica
+- nessun vincolo DB nuovo
 
 TYPE UTILIZZATO A LIVELLO BASE
 
@@ -1120,8 +1443,12 @@ non aggiungere constraint DB su type senza nodo schema dedicato
 non aggiungere alias table senza nodo dedicato
 non aggiungere project/entity relation table senza nodo dedicato
 non aggiungere pending project/entity fields senza nodo dedicato
+non aggiungere suggestion_payload senza nodo dedicato
+non aggiungere command_intent fields senza nodo dedicato
 non spostare matching logic in Supabase
+non spostare create_suggestion_state in Supabase
 non creare project/entity automaticamente lato DB
+non aggiungere audit trail project/entity senza nodo dedicato
 
 Motivazione:
 
@@ -1150,8 +1477,9 @@ relazioni
 entity-project link
 alias project/entity
 deduplicazione
-creazione guidata project/entity
-pending project/entity workflow
+command intent create project/entity
+pending project/entity workflow avanzato
+audit trail creazione project/entity
 
 DATA QUALITY:
 
@@ -1173,6 +1501,8 @@ eventuale payload.duration solo con nodo architetturale dedicato
 match engine avanzato
 fuzzy matching controllato
 ranking avanzato
+command intent
+suggestion model persistente solo se validato da nodo dedicato
 
 VERSIONING:
 
@@ -1219,6 +1549,9 @@ select1.value come fonte per type
 project_state/entity_state come fonte minima matching
 select_project.value come fonte per project_id
 select_entity.value come fonte per entity_id
+insert_project / insert_entity controllati lato Retool
+create_suggestion_state non persistito
+separazione tra creazione risorsa e salvataggio evento
 confirm guard su ambiguità non risolta
 normalization base lato Retool
 duration normalization lato Retool
@@ -1311,4 +1644,26 @@ documentati esempi villa 2 mario, ristrutturazione bagno, mario, alfie mario ros
 confermato schema invariato dopo Match Engine Unification
 confermato payload inutilizzato
 confermati limiti: no alias, no fuzzy, no ranking avanzato, no creazione guidata project/entity
+nessun output/KPI anticipato
+
+v08 — 2026-05-07
+
+nessuna modifica schema DB
+integrazione Project / Entity Create Suggestion First Controlled Level lato frontend
+documentato insert_project
+documentato insert_entity
+documentato popolamento projects/entities da UI controllata
+documentato che create_suggestion_state non viene persistito
+documentato che suggestion / candidate / dismissed state non vengono salvati nel DB
+documentato che evento non viene salvato automaticamente dopo creazione project/entity
+documentata separazione tra creazione risorsa e salvataggio evento
+documentato project_id/entity_id derivati da select dopo creazione inline
+documentati esempi Villa Sierri 15 e Referente Kappa
+documentato no-match generico salvabile con project_id/entity_id null
+confermato schema invariato
+confermato payload inutilizzato
+confermato DB passivo
+confermato nessun command intent implementato
+confermato nessun audit trail dedicato project/entity
+confermato nessuna deduplicazione avanzata DB
 nessun output/KPI anticipato
