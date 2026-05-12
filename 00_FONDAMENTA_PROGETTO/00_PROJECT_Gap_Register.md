@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v08
+# 00_PROJECT_Gap_Register_v09
 
-DATA: 2026-05-07
+DATA: 2026-05-09
 
 ------------------------------------------------
 SCOPO
@@ -140,13 +140,14 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati cinque blocchi funzionali base:
+Sono stati avviati e completati sei blocchi funzionali/base-operativi:
 
 - Normalization Layer Base
 - Duration Normalization Base
 - Type Classification Base
 - Match Engine Unification First Controlled Level
 - Project / Entity Create Suggestion First Controlled Level
+- UX Mobile Coherence Pass
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
@@ -160,6 +161,11 @@ project_state / entity_state sono fonte minima matching project/entity
 select_project / select_entity leggono singleMatch
 matching project/entity è unificato a primo livello controllato
 project/entity possono essere creati inline tramite suggestion controllata
+UX mobile base è stata rifinita e validata
+feedback post-save è centralizzato in button_input_confirm
+routing post-save è contestuale
+navigation dock Home / Eventi / Dashboard è predisposta
+font-size input/select 16px è baseline mobile Safari
 insert_project / insert_entity sono operativi
 select_project / select_entity vengono valorizzati dopo creazione controllata
 preview contiene ancora logiche proprie
@@ -188,11 +194,14 @@ Micro-nodi UX post Match Engine già completati:
 
 Nodi residui candidati:
 
-- UX Cleanup — Suggestion Container / Mobile
 - Command Intent — Create Project / Entity
 - Data Structure / Entity Hierarchy
 - Economic Direction Advanced
 - Duration Advanced — giorni/settimane
+- Suggestion Create vs Edit Consistency
+- Project Create Suggestion — Match Present / User Override
+- Azioni Rapide Operative
+- Dashboard Base
 
 ID: G03
 
@@ -321,7 +330,8 @@ alfie mario rossi
 
 RISCHIO RESIDUO:
 
-- UI container suggestion ancora grezza
+- UI suggestion container rifinita a livello mobile base durante UX Mobile Coherence Pass
+- resta da verificare consistenza suggestion create/edit
 - filtro select su match ambigui non implementato
 - command intent non implementato
 - gerarchie project/entity non implementate
@@ -338,11 +348,12 @@ Non riaprire come Project / Entity Create Suggestion base.
 
 Eventuali evoluzioni devono diventare gap/nodi dedicati:
 
-- UX Cleanup — Suggestion Container / Mobile
 - Command Intent — Create Project / Entity
 - Data Structure / Entity Hierarchy
 - Select Options Filtering — Ambiguity UX
 - Alias / Deduplication Advanced
+- Suggestion Create vs Edit Consistency
+- Project Create Suggestion — Match Present / User Override
 
 ID: G04
 
@@ -422,6 +433,9 @@ parsing stabilizzato
 preview disponibile
 editing NEW disponibile
 nessun form guidato
+Azioni rapide Home predisposte graficamente ma non operative.
+Navigation dock predisposta.
+Dashboard presente in nav ma disabilitata.
 
 RISCHIO:
 
@@ -434,9 +448,10 @@ Non prioritario ora.
 
 Da rivalutare dopo:
 
-Match Engine Unification
-Data Structure / Entity Hierarchy
-Economic Direction Advanced
+Command Intent implementato o valutato
+Data Structure / Entity Hierarchy valutata
+Azioni rapide operative definite come nodo dedicato
+Dashboard base eventualmente attivata
 
 Possibile uso futuro:
 
@@ -998,6 +1013,14 @@ ma non introduce:
 - relazioni entity-project
 - audit trail dedicato
 
+UX Mobile Coherence Pass ha migliorato la fruibilità dei campi project/entity
+e delle select su mobile, ma non ha modificato la struttura dati.
+
+Durante il test UX sono emersi due sotto-gap collegati:
+
+- suggestion create/edit consistency
+- project creation override in presenza di match generico
+
 RISCHIO:
 
 Senza struttura:
@@ -1312,6 +1335,12 @@ Il nodo EDIT MODE CANCEL / RETURN TO EVENTS LIST
 
 UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 
+ed è stato successivamente evoluto durante:
+
+UX MOBILE COHERENCE PASS
+
+in una logica cancel contestuale create/edit.
+
 Implementato:
 
 - nuovo pulsante btn_cancel_edit
@@ -1333,6 +1362,32 @@ Comportamento:
 - ritorno a container_events_list
 - nessuna chiamata update_event
 
+Comportamento aggiornato:
+
+Create/input mode:
+
+- label dinamica “Torna alla home”
+- svuota input_home / input_raw
+- resetta select_project / select_entity / select1
+- resetta ui_state.parsed
+- azzera feedback_text / feedback_project / feedback_summary
+- torna Home
+- nessun salvataggio
+
+Edit mode:
+
+- label dinamica “Annulla modifica”
+- esce da edit_mode
+- azzera editing_event
+- svuota input/select
+- resetta ui_state.parsed
+- torna Lista eventi
+- nessun update_event
+
+Timer feedback pendente:
+
+- viene cancellato se presente
+
 Fix collegato:
 
 btn_edit è stato rafforzato per evitare doppia visibilità tra:
@@ -1350,6 +1405,9 @@ TEST VALIDATI:
 - editing_event.data = null
 - edit evento A → annulla → edit evento B senza doppia lista
 - create/edit non regressi
+- create/input → Torna alla home validato
+- edit → Annulla modifica → Lista eventi validato
+- nav corretta dopo cancel create/edit validata
 
 RISCHIO RESIDUO:
 
@@ -1388,6 +1446,10 @@ Il nodo EVENTS LIST SEARCH / FILTER BAR
 
 UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 
+La lista eventi è stata successivamente rifinita durante:
+
+UX MOBILE COHERENCE PASS
+
 Implementato:
 
 - input_events_search
@@ -1406,6 +1468,17 @@ La ricerca filtra su:
 - nome progetto
 - nome entità
 
+Aggiornamenti UX Mobile Coherence Pass:
+
+- titolo lista eventi rifinito
+- sottotitolo aggiunto
+- search bar ridimensionata
+- icona search monotona tramite add-on Retool
+- card evento rese più leggibili
+- pulsanti OK / No / Modifica rifiniti con Icon add-ons
+- navigation dock visibile in alto nella vista Events
+- freccia indietro resa non necessaria dalla nav
+
 TEST VALIDATI:
 
 - campo vuoto mostra lista completa
@@ -1420,8 +1493,9 @@ TEST VALIDATI:
 
 RISCHIO RESIDUO:
 
-- layout UI provvisorio
-- revisione grafica rimandata a sistema stabile
+- layout mobile base ora rifinito
+- eventuali filtri avanzati restano fuori scope
+- polish finale font/spaziature rimandato
 - non sono stati introdotti filtri avanzati strutturali
 
 AZIONE:
@@ -1500,63 +1574,119 @@ Vincoli:
 ID: G18
 
 NOME:
-UX Cleanup — Suggestion Container / Mobile
+UX Mobile Coherence Pass
 
 FONTE:
-Project / Entity Create Suggestion Session + test mobile/desktop
+Project / Entity Create Suggestion Session + UX mobile testing + iPhone Safari real test
 
 STATO:
-VALIDATO — NODO FUTURO
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Rifinitura grafica e mobile del container suggestion introdotto nel nodo
-Project / Entity Create Suggestion First Controlled Level.
+Rifinitura grafica e funzionale della UX mobile di LOGOS,
+estendendo il lavoro sul suggestion container anche a:
+
+- Home
+- Input / Sintesi
+- Da verificare
+- Suggerimenti associazione
+- Dati evento
+- Events list
+- Feedback
+- Navigation dock
+- Cancel create/edit
+- Routing post-save
 
 STATO REALE:
 
-Il container suggestion funziona a livello logico:
+Il nodo UX MOBILE COHERENCE PASS è stato completato.
 
-- mostra no-match project/entity
-- mostra suggestion project/entity
-- ospita Crea progetto
-- ospita Crea entità
-- ospita Ignora globale
-- ospita micro-editor project/entity
-- supporta una sola creazione guidata alla volta
+Implementato:
 
-Tuttavia la UI è ancora grezza.
+- Home mobile rifinita
+- card Esempi resa coerente
+- Azioni rapide rifinite e predisposte
+- Suggestion container mobile rifinito
+- Dati evento compattati con label inline nelle select
+- Events list mobile rifinita
+- Feedback mobile stabilizzato
+- feedback_summary introdotto in ui_state
+- Navigation dock Home / Eventi / Dashboard introdotta
+- Dashboard presente ma disabilitata
+- Icon add-ons Retool introdotti nei pulsanti reali
+- cancel create/edit contestuale
+- routing post-save contestuale
+- font-size input/select portato a 16px per Safari iOS
 
-Criticità osservate:
+Routing consolidato:
 
-- layout verticale poco elegante
-- bottoni non sempre gerarchizzati visivamente
-- container da alleggerire
-- spaziature migliorabili
-- mobile friendliness migliorabile
-- distinzione tra hint, azione e micro-editor migliorabile
+Insert reale:
+→ feedback 1800 ms
+→ Home
 
-RISCHIO:
+Update reale:
+→ feedback 1800 ms
+→ Lista eventi
 
-Intervenire graficamente dentro nodi logici può generare regressioni.
+Edit senza modifiche:
+→ nessun update_event
+→ nessun feedback
+→ Lista eventi immediata
+
+Cancel create/input:
+→ Home
+
+Cancel edit:
+→ Lista eventi
+
+Mobile Safari fix:
+
+Durante test reale su iPhone 13 Safari sono stati rilevati:
+
+- zoom automatico dopo tap input
+- troncamento laterale dell’interfaccia
+- select non pienamente utilizzabili come dropdown
+
+Fix:
+
+- font-size 16px sui campi editabili/select principali
+
+Esito:
+
+- zoom iOS risolto
+- layout non troncato
+- select funzionanti sia in digitazione sia in dropdown
+
+Regola consolidata:
+
+input/select mobile Safari devono mantenere font-size minimo 16px.
+
+RISCHIO RESIDUO:
+
+- Cambia / Scegli nella Sintesi ancora non cliccabili
+- Azioni rapide non operative
+- Dashboard non implementata
+- suggestion create vs edit consistency da verificare
+- project creation override con match generico non implementato
+- Icon System non completamente standardizzato
+- mobile compact advanced / polish finale rimandato
 
 AZIONE:
 
-Da sviluppare come micro-nodo dedicato solo UX.
+Gap integrato a livello base.
 
-Vincoli:
+Non riaprire come UX Cleanup — Suggestion Container / Mobile.
 
-- non modificare create_suggestion_state
-- non modificare insert_project / insert_entity
-- non modificare project_state / entity_state
-- non modificare parser
-- non modificare DB
-- non modificare save flow
-- non introdurre command intent
+Eventuali evoluzioni devono diventare gap/nodi dedicati:
 
-Obiettivo:
-
-Migliorare chiarezza e usabilità senza cambiare comportamento.
+- Cambia / Scegli Actions
+- Hint / Ambiguità Advanced
+- Azioni Rapide Operative
+- Dashboard Base
+- Suggestion Create vs Edit Consistency
+- Project Create Suggestion — Match Present / User Override
+- Icon System / Mobile Polish Finale
 
 ID: G19
 
@@ -1630,9 +1760,14 @@ Nota UX:
 Il placeholder “Scrivi cosa vuoi fare...” può generare aspettativa
 di comandi diretti.
 
-Senza Command Intent implementato, è preferibile un placeholder più prudente:
+Dopo UX Mobile Coherence Pass, la Home usa una formulazione più ampia:
 
-“Scrivi cosa vuoi registrare...”
+“Cosa vuoi fare?”
+
+Questo rende ancora più naturale l’inserimento di comandi diretti.
+
+Senza Command Intent implementato, LOGOS può ancora salvare frasi comando come eventi ordinari se l’utente le conferma.
+Il nodo Command Intent resta quindi candidato forte.
 
 ID: G20
 
@@ -1684,6 +1819,10 @@ Sono già consolidate:
 - project/entity create suggestion first level
 - edit flow
 - processing NEW / WRITTEN / ERROR
+- UX mobile coherence pass
+- navigation dock Home / Eventi / Dashboard predisposta
+- feedback post-save contestuale
+- cancel create/edit contestuale
 
 Non sono ancora attive:
 
@@ -1693,6 +1832,8 @@ Non sono ancora attive:
 - moduli ADEXIMA
 - moduli MaurizioLab
 - output/KPI
+- Dashboard operativa, anche se predisposta in nav
+- Azioni rapide operative, anche se predisposte in Home
 
 RISCHIO:
 
@@ -1724,24 +1865,357 @@ Sequenza corretta:
 
 1. consolidare cuore eventi
 2. consolidare gestione project/entity
-3. introdurre command intent guidato
-4. rifinire UX mobile
-5. solo dopo aprire viste, istanze o moduli verticali
+3. rifinire UX mobile base
+4. introdurre command intent guidato
+5. consolidare data structure / qualità dati
+6. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
+
+ID: G21
+
+NOME:
+Suggestion Create vs Edit Consistency
+
+FONTE:
+UX Mobile Coherence Pass + test edit flow
+
+STATO:
+IDENTIFICATO
+
+DESCRIZIONE:
+
+Durante il test del flow edit è stata osservata una possibile divergenza
+tra suggestion mostrate in create flow e suggestion mostrate in edit flow.
+
+Caso osservato:
+
+- in create/input flow possono comparire suggestion project/entity
+- in alcuni edit flow compare solo suggestion entity
+- project suggestion può non comparire come atteso
+
+STATO REALE:
+
+Non corretto durante UX Mobile Coherence Pass.
+
+Motivo:
+
+La correzione potrebbe richiedere interventi su:
+
+- create_suggestion_state
+- condizioni di visibilità suggestion
+- interazione tra edit_mode, input_raw, project_state/entity_state
+- stato dismissed/open dei micro-editor
+
+RISCHIO:
+
+Intervenire dentro un nodo UX grafico avrebbe rischiato regressioni su:
+
+- matching
+- suggestion
+- edit flow
+- salvataggio
+- create_suggestion_state
+
+AZIONE:
+
+Da valutare in nodo dedicato.
+
+Vincoli:
+
+- non modificare DB
+- non modificare parser
+- non introdurre creazioni automatiche
+- preservare select_project / select_entity come decisione utente
+- verificare prima comportamento reale create vs edit con casi riproducibili
+
+ID: G22
+
+NOME:
+Project Create Suggestion — Match Present / User Override
+
+FONTE:
+UX Mobile Coherence Pass + osservazione input “villa”
+
+STATO:
+IDENTIFICATO
+
+DESCRIZIONE:
+
+Quando l’input produce un match generico esistente,
+il sistema può mostrare hint “esistono progetti più specifici”,
+ma non propone la creazione di un nuovo progetto.
+
+Caso osservato:
+
+input:
+villa
+
+Comportamento attuale:
+
+- project Villa selezionabile / riconosciuto
+- hint progetti più specifici disponibile
+- nessuna proposta di creazione nuovo progetto
+
+Problema potenziale:
+
+L’utente potrebbe voler creare un nuovo progetto correlato,
+anche se esiste un match generico.
+
+STATO REALE:
+
+Non implementato.
+
+Decisione attuale:
+
+Il sistema evita creazioni aggressive se esiste già un match,
+per ridurre rischio duplicati.
+
+RISCHIO:
+
+Permettere creazione progetto in presenza di match generico può causare:
+
+- duplicati
+- rumore nei progetti
+- peggioramento matching
+- confusione tra selezione progetto esistente e creazione nuovo progetto
+
+AZIONE:
+
+Da valutare in nodo dedicato.
+
+Possibile direzione:
+
+- mostrare una opzione esplicita “Crea comunque nuovo progetto”
+- richiedere conferma forte
+- mostrare progetti simili prima di creare
+- non attivare su ambiguità bloccante
+- non creare automaticamente
+
+ID: G23
+
+NOME:
+Azioni Rapide Operative
+
+FONTE:
+UX Mobile Coherence Pass + Home mobile
+
+STATO:
+VALIDATO — NODO FUTURO
+
+DESCRIZIONE:
+
+La Home contiene ora una sezione “Azioni rapide” con pulsanti:
+
+- Registra spesa
+- Registra incasso
+- Registra tempo
+- Registra evento
+
+STATO REALE:
+
+I pulsanti sono stati rifiniti graficamente e predisposti,
+ma non sono ancora operativi come flow guidato.
+
+Attualmente non devono bypassare:
+
+- input libero
+- select Tipo evento
+- project/entity decision
+- Conferma evento
+
+RISCHIO:
+
+Renderli operativi troppo presto può duplicare logiche già presenti
+in input libero, type classification e button_input_confirm.
+
+AZIONE:
+
+Da sviluppare come nodo futuro dedicato.
+
+Possibili comportamenti:
+
+- preimpostare select1
+- focalizzare input
+- mostrare placeholder contestuale
+- guidare l’utente senza creare eventi automaticamente
+- non salvare nulla senza conferma
+
+ID: G24
+
+NOME:
+Dashboard Base
+
+FONTE:
+UX Mobile Coherence Pass + Navigation Dock
+
+STATO:
+VALIDATO — NODO FUTURO NON IMMEDIATO
+
+DESCRIZIONE:
+
+La navigation dock ora prevede tre aree:
+
+- Home
+- Eventi
+- Dashboard
+
+La voce Dashboard è presente ma disabilitata.
+
+STATO REALE:
+
+Dashboard non implementata.
+Nessun KPI attivo.
+Nessuna reportistica attiva.
+
+Decisione:
+
+La voce Dashboard è stata predisposta per evitare di rifare la struttura UX,
+ma non abilita lo STEP 7 OUTPUT.
+
+RISCHIO:
+
+Attivare Dashboard troppo presto può produrre metriche fuorvianti perché:
+
+- data structure non consolidata
+- economic direction non avanzata
+- amount firmato non definito
+- type base non sufficiente per KPI avanzati
+- dati storici non retro-normalizzati
+
+AZIONE:
+
+Non immediato.
+
+Da valutare solo dopo:
+
+- Command Intent o Data Structure, se scelti
+- Economic Direction Advanced, se necessaria
+- sufficienza dati reali
+- decisione su KPI minimi non fuorvianti
+
+ID: G25
+
+NOME:
+Icon System / Mobile Polish Finale
+
+FONTE:
+UX Mobile Coherence Pass + Retool add-ons
+
+STATO:
+IN OSSERVAZIONE
+
+DESCRIZIONE:
+
+Durante UX Mobile Coherence Pass sono stati introdotti Icon add-ons Retool
+nei pulsanti reali:
+
+- Azioni rapide
+- Navigation dock
+- Conferma evento
+- Torna alla home / Annulla modifica
+- Events list OK / No / Modifica
+- Search events
+
+Nella Sintesi e nel Feedback restano icone/emoji HTML già funzionanti.
+
+STATO REALE:
+
+Sistema misto:
+
+- Icon add-ons Retool nei componenti reali
+- emoji/icon HTML nella Sintesi e Feedback
+
+Decisione attuale:
+
+Non modificare Sintesi/Feedback perché funzionano e sono sensibili a regressioni HTML.
+
+RISCHIO:
+
+Standardizzare tutto ora potrebbe riaprire codice già validato.
+
+AZIONE:
+
+Da rivalutare solo in polish finale.
+
+Vincoli:
+
+- non toccare parser
+- non toccare matching
+- non toccare salvataggio
+- non rompere Sintesi / Feedback
+- preservare leggibilità mobile
+
+ID: G26
+
+NOME:
+Mobile Safari Font Baseline
+
+FONTE:
+Test reale iPhone 13 Safari + UX Mobile Coherence Pass
+
+STATO:
+INTEGRATO COME REGOLA TECNICA
+
+DESCRIZIONE:
+
+Su iPhone 13 Safari è stato osservato zoom automatico sui campi editabili
+e comportamento anomalo delle select.
+
+Problemi osservati:
+
+- tap su input causava zoom automatico
+- app troncata lateralmente dopo zoom
+- select Tipo / Progetto / Entità non pienamente utilizzabili come dropdown
+
+Fix applicato:
+
+- font-size portato a 16px su input/select principali
+
+Esito:
+
+- zoom automatico risolto
+- layout non troncato
+- select funzionanti sia in digitazione sia in dropdown
+
+Regola:
+
+Input e select principali su mobile Safari devono mantenere font-size minimo 16px.
+
+AZIONE:
+
+Gap integrato come regola tecnica.
+Non riaprire salvo regressioni reali.
+
+Da ricordare nel polish finale:
+
+- eventuali riduzioni font non devono riattivare zoom iOS
+- testare sempre su iPhone reale / Safari o WebKit
+
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo Project / Entity Create Suggestion:
+Ordine attuale consigliato dopo UX Mobile Coherence Pass:
 
 NODI STRUTTURALI / OPERATIVI FUTURI:
 
-1. G18 — UX Cleanup — Suggestion Container / Mobile
-2. G19 — Command Intent — Create Project / Entity
-3. G11 — Data Structure / Entity Hierarchy
-4. G13 — Economic Direction Advanced
-5. G08A — Duration Advanced / Giorni-Settimane
-6. G17 — Preview Model / Hint State Consolidation
-7. G04 — Logging / Versioning
-8. G05 — Input Modes
-9. G06 — Multi-source Input
+1. G19 — Command Intent — Create Project / Entity
+2. G11 — Data Structure / Entity Hierarchy
+3. G21 — Suggestion Create vs Edit Consistency
+4. G22 — Project Create Suggestion — Match Present / User Override
+5. G13 — Economic Direction Advanced
+6. G08A — Duration Advanced / Giorni-Settimane
+7. G23 — Azioni Rapide Operative
+8. G24 — Dashboard Base
+9. G17 — Preview Model / Hint State Consolidation
+10. G04 — Logging / Versioning
+11. G05 — Input Modes
+12. G06 — Multi-source Input
+
+POLISH / UX FUTURO:
+
+- G25 — Icon System / Mobile Polish Finale
+
+VINCOLI TECNICI:
+
+- G26 — Mobile Safari Font Baseline
 
 VINCOLI STRATEGICI:
 
@@ -1758,6 +2232,8 @@ G12 — Events List Label / Updated At Display
 G14 — Linting / State Helper Cleanup
 G15 — Edit Mode Cancel / Return to Events List
 G16 — Events List Search / Filter Bar
+G18 — UX Mobile Coherence Pass
+G26 — Mobile Safari Font Baseline
 
 Nota:
 
@@ -1766,11 +2242,6 @@ l’ordine deve sempre essere verificato contro:
 00_PROJECT_State
 00_PROJECT_Roadmap
 checkpoint più recente
-
-Attualmente nessun gap è completamente scartato.
-
-G06 è classificato NON PRIORITARIO,
-ma non viene eliminato perché può tornare utile in futuro.
 
 CHANGELOG
 
@@ -1929,3 +2400,43 @@ confermato output/KPI non attivi
 confermata direzione LOGOS Core modulare
 confermate istanze ASPRI / ADEXIMA / MaurizioLab come derivate future del core
 allineamento con State v17 e Roadmap v11
+
+v09 — 2026-05-09
+
+aggiornato Gap Register dopo UX MOBILE COHERENCE PASS
+aggiornato G18 da UX Cleanup — Suggestion Container / Mobile a UX Mobile Coherence Pass
+aggiornato G18 a INTEGRATO BASE
+documentata Home mobile rifinita
+documentata Events list mobile rifinita
+documentato Feedback mobile stabilizzato
+documentato feedback_summary in ui_state
+documentato routing post-save contestuale
+documentato insert → feedback → Home
+documentato update → feedback → Lista eventi
+documentato no-op edit → Lista eventi senza update_event
+documentato cancel create/input → Home
+documentato cancel edit → Lista eventi
+documentata Navigation dock Home / Eventi / Dashboard
+documentata Dashboard predisposta ma disabilitata
+documentate Azioni rapide predisposte ma non operative
+documentato font-size 16px input/select come fix iOS Safari
+documentato zoom automatico Safari iOS risolto
+documentata select mobile funzionante in digitazione/dropdown
+aggiunto G21 Suggestion Create vs Edit Consistency
+aggiunto G22 Project Create Suggestion — Match Present / User Override
+aggiunto G23 Azioni Rapide Operative
+aggiunto G24 Dashboard Base
+aggiunto G25 Icon System / Mobile Polish Finale
+aggiunto G26 Mobile Safari Font Baseline
+aggiornato G02 Processor / Engine Flow
+aggiornato G03 Project / Entity Create Suggestion
+aggiornato G05 Input Modes
+aggiornato G11 Data Structure / Entity Hierarchy
+aggiornato G15 Edit Mode Cancel / Return to Events List
+aggiornato G16 Events List Search / Filter Bar
+aggiornato G19 Command Intent — Create Project / Entity
+aggiornato G20 Core Event System / Modular Instances
+aggiornato ordine consigliato gap/nodi
+confermato output/KPI non attivi
+confermata direzione LOGOS Core modulare
+allineamento con State v18 e Roadmap v12

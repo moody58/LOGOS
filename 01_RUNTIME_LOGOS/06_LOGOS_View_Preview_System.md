@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v08
+# 06_LOGOS_View_Preview_System_v09
 
-DATA: 2026-05-07
+DATA: 2026-05-09
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -32,6 +32,13 @@ Il documento descrive:
 - come il container suggestion supporta la preview senza essere fonte di salvataggio
 - come la preview resta separata da insert_project / insert_entity
 - come entity autofill controlled minimal resta fuori dalla preview
+- come la Sintesi è stata confermata dentro UX Mobile Coherence Pass
+- come la card “Da verificare” resta separata dalla Sintesi
+- come il notice associazioni mancanti resta collegato alla Sintesi
+- come Dati evento resta la zona decisionale separata dalla Sintesi
+- come “Cambia” / “Scegli” restano micro-azioni visive non cliccabili
+- come Feedback mobile e Navigation dock restano esterni alla preview
+- come la baseline 16px mobile Safari riguarda input/select, non la logica preview
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -54,8 +61,24 @@ input_raw
 → create_suggestion_state
 → select_project / select_entity
 → select1 / type classification base
-→ preview (sintesi) / suggestion container
+→ preview (sintesi) / card Da verificare / suggestion container
+→ Dati evento
 → confirm (insert/update)
+→ feedback temporaneo
+→ routing post-save
+
+Nota post UX Mobile Coherence Pass:
+
+Feedback temporaneo, routing post-save e Navigation dock NON fanno parte della preview.
+
+Sono layer UI separati:
+
+- preview / Sintesi = rappresentazione input interpretato
+- Da verificare = controllo/hint operativo
+- suggestion container = proposta azione project/entity
+- Dati evento = decisione salvabile
+- feedback = conferma temporanea post-save
+- navigation dock = navigazione UI
 
 ---
 
@@ -170,6 +193,11 @@ Mostra:
 ✔ hint utente  
 ✔ supporto visuale al container suggestion
 ✔ distinzione tra hint informativo e suggestion create
+✔ Sintesi strutturata mobile confermata
+✔ card “Da verificare” separata dalla Sintesi
+✔ notice associazioni mancanti nella Sintesi
+✔ micro-azioni visive “Cambia” / “Scegli”
+✔ coerenza visuale con Dati evento compatti
 
 ---
 
@@ -196,6 +224,20 @@ Il container suggestion NON trasforma la preview in fonte di salvataggio.
 
 La preview continua a mostrare lo stato interpretato dell’input.
 La suggestion create è un’azione separata, controllata e confermata dall’utente.
+
+Nota post UX Mobile Coherence Pass:
+
+La Sintesi è stata resa più leggibile e coerente su mobile,
+ma non è diventata una form.
+
+La Sintesi non sostituisce:
+
+- select1
+- select_project
+- select_entity
+- button_input_confirm
+
+La zona decisionale resta Dati evento.
 
 ---
 
@@ -224,6 +266,10 @@ Ma:
 ⚠ type mostrato/supportato dalla preview, ma salvato dal confirm flow  
 ⚠ hint duration/type restano embedded nella preview  
 ⚠ preview model unico non implementato   
+⚠ Cambia / Scegli sono ancora indicatori visivi, non azioni cliccabili
+⚠ Feedback mobile non è preview
+⚠ Navigation dock non è preview
+⚠ Dati evento resta separato dalla Sintesi
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -243,6 +289,21 @@ Fonti dati utilizzate:
 - create_suggestion_state.data
 - project_create_suggestion_dismissed.value
 - entity_create_suggestion_dismissed.value
+
+Nota UX Mobile Coherence Pass:
+
+La preview NON legge:
+
+- feedback_summary
+- container_app_nav
+- stato Dashboard
+- Navigation dock
+
+Motivo:
+
+feedback_summary appartiene al feedback post-save.
+container_app_nav appartiene alla navigazione UI.
+La preview resta limitata alla rappresentazione dell’input interpretato.
 
 Nota:
 
@@ -314,17 +375,48 @@ Conseguenza:
 
 OUTPUT DELLA PREVIEW
 
-Stringa UI composta da:
+Output UI composto da:
 
-labelStyled
-typeBadge (opzionale)
-hint (opzionale)
+- card Sintesi
+- labelStyled
+- stato OK / Verifica / Attenzione
+- righe dati:
+  - Tipo
+  - Data
+  - Importo
+  - Progetto
+  - Entità
+- micro-azioni visive:
+  - Cambia
+  - Scegli
+- card Da verificare, se necessaria
+- notice associazioni mancanti, se necessario
+
+Nota:
+
+Le micro-azioni “Cambia” / “Scegli” sono solo indicatori visivi.
+
+Non sono ancora cliccabili.
+
+Possibili comportamenti futuri:
+
+- focus campo relativo
+- scroll verso Dati evento
+- highlight temporaneo select
+- apertura dropdown solo se Retool lo consente stabilmente
 
 Container suggestion separato:
 
 create_suggestion_hint
 azioni Crea progetto / Crea entità / Ignora
 micro-editor project/entity
+
+Dopo UX Mobile Coherence Pass:
+
+Il container suggestion è stato rifinito graficamente,
+ma resta separato dalla Sintesi.
+
+La suggestion create continua a non essere dato preview persistito.
 
 Nota:
 
@@ -733,6 +825,144 @@ e select_entity vuoto
 project_state.isAmbiguous = true
 e select_project vuoto
 → "⚠️ Più progetti trovati"
+
+------------------------------------------------
+STRUTTURA UX MOBILE DELLA SINTESI
+------------------------------------------------
+
+Durante UX Mobile Coherence Pass, la Sintesi è stata confermata come card strutturata.
+
+Struttura:
+
+- intestazione Sintesi
+- indicatore stato:
+  - OK
+  - Verifica
+  - Attenzione
+- frase interpretata
+- righe dati:
+  - Tipo
+  - Data
+  - Importo
+  - Progetto
+  - Entità
+- micro-azioni visive:
+  - Cambia
+  - Scegli
+
+Regola:
+
+La Sintesi rappresenta ciò che LOGOS ha interpretato.
+
+Non decide cosa salvare.
+
+Le fonti salvabili restano:
+
+- select1.value
+- select_project.value
+- select_entity.value
+- ui_state.parsed
+
+La Sintesi non è una form.
+
+------------------------------------------------
+CARD “DA VERIFICARE”
+------------------------------------------------
+
+Durante UX Mobile Coherence Pass, gli hint operativi sono stati confermati
+come blocco separato dalla Sintesi.
+
+Ruolo:
+
+- mostrare controlli richiesti
+- evidenziare ambiguità
+- evidenziare warning non bloccanti
+- guidare l’utente verso Dati evento
+
+Esempi:
+
+- Più entità trovate
+- Più progetti trovati
+- Definisci spesa o incasso
+- Esistono progetti più specifici
+- Normalizzato: X minuti
+- Durata ambigua
+
+Regola:
+
+La Sintesi mostra cosa LOGOS ha interpretato.
+La card Da verificare mostra cosa l’utente deve controllare.
+
+Decisione:
+
+Non è stata creata una tab Ambiguità.
+La separazione resta una card visibile solo quando serve.
+
+------------------------------------------------
+CARD “DA VERIFICARE”
+------------------------------------------------
+
+Durante UX Mobile Coherence Pass, gli hint operativi sono stati confermati
+come blocco separato dalla Sintesi.
+
+Ruolo:
+
+- mostrare controlli richiesti
+- evidenziare ambiguità
+- evidenziare warning non bloccanti
+- guidare l’utente verso Dati evento
+
+Esempi:
+
+- Più entità trovate
+- Più progetti trovati
+- Definisci spesa o incasso
+- Esistono progetti più specifici
+- Normalizzato: X minuti
+- Durata ambigua
+
+Regola:
+
+La Sintesi mostra cosa LOGOS ha interpretato.
+La card Da verificare mostra cosa l’utente deve controllare.
+
+Decisione:
+
+Non è stata creata una tab Ambiguità.
+La separazione resta una card visibile solo quando serve.
+
+------------------------------------------------
+NOTICE ASSOCIAZIONI MANCANTI
+------------------------------------------------
+
+Durante UX Mobile Coherence Pass è stato confermato il notice informativo
+quando mancano progetto e/o entità ma non c’è ambiguità bloccante.
+
+Esempi:
+
+- Manca un progetto e un’entità
+- Manca un progetto
+- Manca un’entità
+
+Testo:
+
+“Puoi selezionare i dati nei campi sotto o usare i suggerimenti.”
+
+Regola:
+
+Il notice NON compare in presenza di ambiguità bloccante.
+
+Motivo:
+
+In presenza di ambiguità, la priorità comunicativa resta la card Da verificare.
+
+Decisione:
+
+Il notice resta nella Sintesi perché collega:
+
+- interpretazione
+- suggestion container
+- Dati evento
 
 ---
 
@@ -1467,6 +1697,13 @@ VINCOLI ATTUALI (REALI)
 ✔ preview non esegue insert_project / insert_entity
 ✔ create_suggestion_state non salva eventi
 ✔ suggestion create richiede conferma utente
+✔ Sintesi strutturata confermata dentro UX Mobile Coherence Pass
+✔ card Da verificare separata dalla Sintesi
+✔ notice associazioni mancanti confermato
+✔ Dati evento resta zona decisionale separata
+✔ feedback mobile resta esterno alla preview
+✔ navigation dock resta esterna alla preview
+
 
 
 MA:
@@ -1478,6 +1715,9 @@ MA:
 ✘ contiene highlight logic embedded
 ✘ non è ancora view pura
 ✘ type display e hint sono ancora accoppiati alla preview/select
+✘ Cambia / Scegli non sono ancora cliccabili
+✘ feedback_summary non è fonte preview
+✘ navigation dock non è fonte preview
 
 ⚠ dipende da aggiornamenti multipli
 ⚠ usa ancora fonti multiple
@@ -1488,9 +1728,153 @@ MA:
 ✔ hint matching project/entity state-driven  
 
 ⚠ non ancora separata come view pura
-⚠ container suggestion UI ancora da rifinire
+✔ container suggestion UI rifinito a livello mobile base
+⚠ suggestion create vs edit consistency da verificare
+⚠ project creation override con match generico non implementato
 ⚠ create_suggestion_state aggiunge una fonte UI ulteriore
 ⚠ command intent non implementato
+
+------------------------------------------------
+RELAZIONE CON DATI EVENTO
+------------------------------------------------
+
+Dati evento è la zona decisionale finale.
+
+Contiene:
+
+- Tipo evento
+- Progetto
+- Entità
+
+Durante UX Mobile Coherence Pass, Dati evento è stato compattato
+con label inline / affiancate alle select.
+
+Regola:
+
+La Sintesi rappresenta.
+Dati evento decide.
+button_input_confirm salva.
+
+La preview non sostituisce:
+
+- select1
+- select_project
+- select_entity
+
+Le micro-azioni “Cambia” / “Scegli” nella Sintesi indicano dove intervenire,
+ma non modificano ancora i campi.
+
+------------------------------------------------
+RELAZIONE CON FEEDBACK MOBILE
+------------------------------------------------
+
+Il feedback mobile introdotto durante UX Mobile Coherence Pass
+NON è parte della preview.
+
+feedback_summary appartiene al post-save.
+
+La preview opera prima della conferma evento.
+Il feedback opera dopo insert_event / update_event.
+
+Differenza:
+
+Preview / Sintesi:
+
+- rappresenta input interpretato
+- usa ui_state.parsed
+- usa select1 / select_project / select_entity
+- guida l’utente prima del salvataggio
+
+Feedback:
+
+- conferma salvataggio avvenuto
+- usa feedback_summary
+- è temporaneo
+- non modifica DB
+- non modifica preview
+- viene azzerato dopo auto-return
+
+Regola:
+
+Non usare feedback_summary come fonte preview.
+
+------------------------------------------------
+RELAZIONE CON NAVIGATION DOCK
+------------------------------------------------
+
+La Navigation dock introdotta durante UX Mobile Coherence Pass
+NON è parte della preview.
+
+Componente:
+
+container_app_nav
+
+Voci:
+
+- Home
+- Eventi
+- Dashboard
+
+La voce Dashboard è presente ma disabilitata.
+
+Regola:
+
+La navigation dock non modifica:
+
+- input_raw
+- ui_state.parsed
+- project_state
+- entity_state
+- create_suggestion_state
+- select1
+- select_project
+- select_entity
+- button_input_confirm
+
+La navigation dock è solo UI di navigazione contestuale.
+
+Non abilita output.
+Non abilita KPI.
+Non modifica il comportamento della Sintesi.
+
+------------------------------------------------
+RELAZIONE CON MOBILE SAFARI BASELINE
+------------------------------------------------
+
+Durante test reale su iPhone 13 Safari sono stati rilevati:
+
+- zoom automatico su tap input
+- troncamento laterale dell’interfaccia
+- select non pienamente utilizzabili come dropdown
+
+Fix applicato nel sistema UI:
+
+- font-size 16px sui campi editabili/select principali
+
+Campi coinvolti:
+
+- input_home
+- input_events_search
+- select1
+- select_project
+- select_entity
+- input_new_project_name
+- input_new_entity_name
+
+Impatto sulla preview:
+
+- nessuna modifica alla logica preview
+- nessuna modifica a label cleaning
+- nessuna modifica a hint logic
+- nessuna modifica a highlight
+- nessuna modifica a save flow
+
+Regola:
+
+Il vincolo 16px riguarda campi editabili e select,
+non il modello logico della preview.
+
+Eventuali polish futuri non devono riattivare lo zoom automatico iOS.
 
 LIMITI STRUTTURALI
 DUPLICAZIONE LOGICA
@@ -1522,10 +1906,16 @@ create_suggestion_state
 dismissed state project/entity
 liste project/entity
 type select
+Dati evento compatti
+card Da verificare
+notice associazioni mancanti
 duration hint locale
 
 → assenza di preview model unico
 → assenza di suggestion model separato come layer documentale autonomo
+→ Cambia / Scegli ancora non azionabili
+→ feedback mobile separato ma non parte del preview model
+→ navigation dock separata ma non parte del preview model
 
 FORMATO AMOUNT ALLINEATO IN PREVIEW
 
@@ -1594,6 +1984,12 @@ PROPRIETÀ DEL SISTEMA
 ✔ project/entity mancanti non bloccano conferma
 ✔ project/entity ambigui bloccano conferma
 ✔ evento non salvato automaticamente dopo creazione project/entity
+✔ Sintesi strutturata confermata su mobile
+✔ card Da verificare separata
+✔ notice associazioni mancanti confermato
+✔ Dati evento compatti separati dalla Sintesi
+✔ feedback mobile temporaneo separato dalla preview
+✔ navigation dock separata dalla preview
 
 MA:
 
@@ -1605,7 +2001,10 @@ MA:
 ⚠ ancora non completamente separato architetturalmente
 ⚠ non ancora pronto per output/KPI
 ⚠ type base non sufficiente da solo per report avanzati
-⚠ container suggestion ancora grezzo lato UI
+✔ container suggestion rifinito a livello mobile base
+⚠ Cambia / Scegli ancora non cliccabili
+⚠ suggestion create vs edit consistency da verificare
+⚠ project creation override con match generico non implementato
 ⚠ suggestion create non ancora separata in modello dedicato
 
 STATO ATTUALE
@@ -1643,6 +2042,14 @@ STATO ATTUALE
 ✔ entity autofill controlled minimal implementato
 ✔ flow combinato project + entity validato
 ✔ preview resta non fonte di salvataggio evento
+✔ UX Mobile Coherence Pass completato
+✔ Sintesi strutturata confermata
+✔ card Da verificare separata
+✔ notice associazioni mancanti confermato
+✔ Dati evento compatti separati dalla Sintesi
+✔ feedback mobile separato dalla preview
+✔ navigation dock separata dalla preview
+✔ font-size 16px mobile Safari validato per input/select
 
 ⚠ preview ancora ibrida
 ✔ hint matching project/entity state-driven  
@@ -1651,7 +2058,10 @@ STATO ATTUALE
 ⚠ match engine avanzato separato non implementato  
 ⚠ architettura non separata
 ⚠ preview non ancora view pura
-⚠ container suggestion UI ancora da rifinire
+✔ container suggestion UI rifinita a livello mobile base
+⚠ Cambia / Scegli ancora non cliccabili
+⚠ suggestion create vs edit consistency da verificare
+⚠ project creation override con match generico non implementato
 ⚠ command intent non implementato
 
 OBIETTIVO FUTURO IMMEDIATO
@@ -1663,31 +2073,41 @@ Duration Normalization Base è completata.
 Type Classification Base è completata.
 Match Engine Unification First Controlled Level è completato.
 Project / Entity Create Suggestion First Controlled Level è completato.
+UX Mobile Coherence Pass è completato.
 
 La parte critica di allineamento preview/hint/highlight per project/entity
 è stata risolta a primo livello.
 
-La parte suggestion create funziona,
-ma il container suggestion è ancora migliorabile graficamente.
+La parte suggestion create funziona
+e il container suggestion è stato rifinito a livello mobile base.
+
+La Sintesi è ora coerente con il sistema mobile,
+ma resta un layer ibrido e non una view pura.
 
 Nodi futuri candidati:
 
-- UX CLEANUP — SUGGESTION CONTAINER / MOBILE
 - COMMAND INTENT — CREATE PROJECT / ENTITY
 - PREVIEW MODEL / HINT STATE CONSOLIDATION
+- CAMBIA / SCEGLI ACTIONS
+- HINT / AMBIGUITÀ ADVANCED
+- SUGGESTION CREATE VS EDIT CONSISTENCY
+- PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
 - separazione preview come view pura
 - estrazione label cleaning in modulo dedicato
 - hint duration/type separati da preview
 - preview model unico
 - type/economic direction advanced
+- mobile polish finale / icon system
 
-Priorità consigliata se si resta in ambito UX:
+Priorità:
 
-UX CLEANUP — SUGGESTION CONTAINER / MOBILE
+non aprire ulteriori nodi preview generici
+se non emerge un problema reale.
 
 Vincolo:
 
-non modificare logica, parser, matching, DB o save flow.
+non modificare logica, parser, matching, DB o save flow
+senza nodo dedicato.
 
 OBIETTIVO FUTURO NON ATTIVO
 
@@ -1854,3 +2274,32 @@ aggiornati limiti: container suggestion UI grezza, command intent non implementa
 confermato che preview resta layer ibrido
 confermato che nessun output/KPI è stato anticipato
 aggiornato prossimo nodo candidato: UX Cleanup Suggestion Container / Mobile oppure Command Intent
+
+v09 — 2026-05-09
+
+aggiornamento post UX MOBILE COHERENCE PASS
+documentata Sintesi strutturata mobile confermata
+documentata card Da verificare separata dalla Sintesi
+documentato notice associazioni mancanti
+documentato Dati evento come zona decisionale separata
+documentato che Cambia / Scegli restano indicatori visivi non cliccabili
+documentato che feedback mobile non è preview
+documentato che feedback_summary non è fonte preview
+documentato che Navigation dock non è preview
+documentata Dashboard in nav come voce disabilitata non collegata alla preview
+documentato che container suggestion è rifinito a livello mobile base
+documentato vincolo mobile Safari font-size 16px su input/select
+documentato che il fix Safari non modifica la logica preview
+aggiornati limiti futuri:
+- Cambia / Scegli Actions
+- Hint / Ambiguità Advanced
+- Suggestion Create vs Edit Consistency
+- Project Create Suggestion — Match Present / User Override
+- Mobile Polish Finale / Icon System
+confermato che preview resta layer ibrido
+confermato che nessun output/KPI è stato anticipato
+confermato DB invariato
+confermato parser invariato
+confermato matching invariato
+confermato create_suggestion_state invariato
+confermato save flow invariato lato preview

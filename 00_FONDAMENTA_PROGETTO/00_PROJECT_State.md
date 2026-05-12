@@ -1,12 +1,12 @@
-# 00_PROJECT_State_v17
+# 00_PROJECT_State_v18
 
-DATA: 2026-05-07
+DATA: 2026-05-09
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL — COMPLETATO
+UX MOBILE COHERENCE PASS — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -31,6 +31,8 @@ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)
 LINTING / STATE HELPER CLEANUP (COMPLETATO)
 
 PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL (COMPLETATO)
+
+UX MOBILE COHERENCE PASS (COMPLETATO)
 
 TRANSIZIONE → NEXT NODE DA DEFINIRE IN ROADMAP DOPO AGGIORNAMENTO DOCUMENTALE
 
@@ -67,6 +69,16 @@ C (Completezza): 10/10
 - salvataggio evento incompleto validato
 - blocco solo su ambiguità attiva validato
 - direzione LOGOS Core modulare riconfermata
+- UX Mobile Coherence Pass documentato
+- Home mobile rifinita
+- Events list mobile rifinita
+- Feedback mobile stabilizzato
+- Navigation dock contestuale documentata
+- Dashboard predisposta in nav ma disabilitata
+- cancel contestuale create/edit documentato
+- routing post-save contestuale documentato
+- feedback_summary documentato
+- Mobile Safari font-size 16px documentato
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
@@ -83,6 +95,11 @@ Q (Qualità): 9.5/10
 - mantenuto controllo utente su select project/entity
 - confermata separazione tra evento operativo e futuro command intent
 - confermata direzione modulare a blocchi senza anticipare istanze verticali
+- UX mobile ora più coerente e vicina a una app reale
+- navigazione predisposta senza anticipare Dashboard/KPI
+- feedback breve e non bloccante consolidato
+- comportamento create/edit più coerente con contesto utente
+- validazione reale su iPhone 13 Safari integrata
 
 D (Deployabilità): 10/10  
 - pronto per Regia  
@@ -101,7 +118,12 @@ D (Deployabilità): 10/10
 - entity create suggestion validato su DB reale
 - evento salvato con project_id/entity_id creati inline validato
 - regressioni create/edit/no-op validate dopo nuovo nodo
-- DB schema invariato      
+- DB schema invariato   
+- UX mobile validata su preview Retool e iPhone 13 Safari reale
+- font-size 16px su input/select validato per evitare zoom iOS
+- select mobile validate sia in digitazione sia in dropdown
+- routing insert/update/no-op validato
+- cancel create/edit validato   
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -185,6 +207,24 @@ INPUT
 ✔ una sola creazione guidata aperta alla volta
 ✔ entity autofill controlled minimal implementato
 ✔ select manuale confermata come decisione utente anche se non presente nel raw_input
+✔ UX Mobile Coherence Pass completato
+✔ Home mobile rifinita
+✔ Events list mobile rifinita
+✔ Feedback mobile stabilizzato
+✔ feedback_summary introdotto come riepilogo UI temporaneo
+✔ routing post-save contestuale consolidato
+✔ insert reale → feedback → Home
+✔ update reale → feedback → Lista eventi
+✔ no-op edit → Lista eventi senza feedback e senza update_event
+✔ cancel create/input → Home
+✔ cancel edit → Lista eventi
+✔ navigation dock Home / Eventi / Dashboard introdotta
+✔ Dashboard presente in nav ma disabilitata
+✔ Dati evento compattati con label inline nelle select
+✔ Icon add-ons Retool introdotti nei pulsanti reali
+✔ font-size 16px su input/select validato su iPhone 13 Safari
+✔ zoom automatico iOS Safari risolto
+✔ select mobile funzionanti sia in digitazione sia in dropdown
 
 ⚠ accoppiamento input / processing / UI ancora presente  
 ⚠ matching unificato solo a primo livello controllato  
@@ -192,16 +232,20 @@ INPUT
 ⚠ hint più coerenti ma non ancora engine globale separato   
 ⚠ type classification base completata ma non ancora sufficiente per KPI avanzati    
 ⚠ giorni/settimane non convertiti automaticamente   
-⚠ UI container suggestion ancora da rifinire graficamente
+⚠ suggestion container rifinito a livello mobile base, ma restano evoluzioni future su consistenza create/edit e override progetto
 ⚠ command intent non implementato
 ⚠ select options non filtrate in caso di ambiguità
 ⚠ istanze verticali ASPRI / ADEXIMA / MaurizioLab non ancora attive  
+⚠ Dashboard predisposta in nav ma non implementata
+⚠ Azioni rapide presenti ma non ancora operative
+⚠ Cambia / Scegli nella Sintesi ancora solo indicazioni visive
+⚠ Font-size input/select mobile vincolato a 16px per stabilità Safari
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su undici layer fondamentali:
+Il sistema è stabilizzato su dodici layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
@@ -213,7 +257,8 @@ Il sistema è stabilizzato su undici layer fondamentali:
 8. MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL  
 9. UX / CLEANUP MICRO-BATCH POST MATCH ENGINE  
 10. LINTING / STATE HELPER CLEANUP    
-11. PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL             
+11. PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL   
+12. UX MOBILE COHERENCE PASS          
 
 ---
 
@@ -458,6 +503,42 @@ RISULTATO:
 - regressione edit/no-op validata
 - DB schema invariato
 - parser invariato
+- type classification invariata
+- duration normalization invariata
+- nessun output/KPI anticipato
+
+✔ completamento UX MOBILE COHERENCE PASS
+
+- Home mobile rifinita come schermata principale
+- card Esempi resa coerente con il resto della UI
+- Azioni rapide rifinite graficamente e predisposte
+- Events list mobile rifinita
+- Feedback mobile stabilizzato
+- feedback_summary introdotto in ui_state come riepilogo temporaneo
+- feedback trasformato in toast-card non bloccante
+- handle_event_success disabilitato come gestore UI post-save
+- success handler UI rimossi da insert_event / update_event
+- button_input_confirm ora gestisce centralmente feedback e routing post-save
+- insert reale → feedback 1800 ms → Home
+- update reale → feedback 1800 ms → Lista eventi
+- no-op edit → Lista eventi immediata senza update_event
+- cancel create/input → Home
+- cancel edit → Lista eventi
+- Navigation dock Home / Eventi / Dashboard introdotta
+- Dashboard presente ma disabilitata
+- nav visibile in Home vuota e Events list
+- nav nascosta durante input attivo e feedback
+- Dati evento compattati con label inline nelle select
+- Icon add-ons Retool usati nei pulsanti reali
+- Sintesi e Feedback mantengono icone/emoji HTML già stabili
+- font-size input/select portato a 16px per stabilità Safari iOS
+- zoom automatico iOS Safari risolto
+- select mobile validate come digitazione + dropdown
+- validazione reale su iPhone 13 Safari completata
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
 - type classification invariata
 - duration normalization invariata
 - nessun output/KPI anticipato
@@ -1229,7 +1310,28 @@ ui_state:
   },
   status,
   feedback_text,
-  feedback_project
+  feedback_project,
+  feedback_summary
+}
+
+feedback_summary:
+
+- oggetto UI temporaneo
+- creato prima del reset input/select
+- usato solo dal feedback mobile
+- non salvato nel DB
+- non parte del modello dati Supabase
+- azzerato dopo auto-return post feedback
+
+Contenuto atteso:
+
+{
+  type,
+  date,
+  amount,
+  project,
+  entity,
+  text
 }
 
 ✔ state centralizzato
@@ -1262,19 +1364,51 @@ Servono solo per controllare il flow edit.
 
 FEEDBACK SYSTEM
 
-✔ attivazione immediata
-✔ gestione view tramite ui_state
-✔ eliminato doppio trigger UI
-✔ nessun flash feedback rilevato
+✔ feedback stabilizzato
+✔ feedback_summary introdotto
+✔ gestione centralizzata in button_input_confirm
+✔ handle_event_success disabilitato come gestore UI
+✔ success handler UI rimossi da insert_event / update_event
+✔ feedback breve e non bloccante
+✔ auto-return consolidato a 1800 ms
+✔ routing post-save contestuale
 
-FLOW:
+FLOW INSERT:
 
-submit →
-ui_state.view = feedback →
-reset input →
-insert/update async →
-await save →
-events_new refresh
+button_input_confirm
+→ feedback_summary creato prima del reset
+→ ui_state.view = feedback
+→ insert_event
+→ events_new refresh
+→ feedback 1800 ms
+→ Home
+
+FLOW UPDATE REALE:
+
+button_input_confirm
+→ feedback_summary creato prima del reset
+→ ui_state.view = feedback
+→ update_event
+→ events_new refresh
+→ feedback 1800 ms
+→ Lista eventi
+
+FLOW NO-OP EDIT:
+
+button_input_confirm
+→ confronto payload utente
+→ nessun update_event
+→ nessun feedback
+→ ritorno immediato Lista eventi
+→ updated_at invariato
+
+Regola:
+
+Il feedback non è una pagina finale.
+È una toast-card temporanea e leggibile.
+
+Il ritorno automatico resta parte della UX rapida di LOGOS,
+ma ora è gestito in modo centralizzato e contestuale.
 
 ---
 
@@ -1899,6 +2033,7 @@ Container:
 - input
 - feedback
 - events_list
+- navigation dock / container_app_nav
 
 ---
 
@@ -1909,6 +2044,33 @@ Container:
 ✔ eliminati trigger multipli UI critici
 ✔ save flow ripulito
 ✔ bottone confirm non contiene più parsing duplicato
+
+NAVIGATION DOCK
+
+Voci:
+
+- Home
+- Eventi
+- Dashboard
+
+Comportamento:
+
+- Home vuota → nav visibile in basso
+- Input/Sintesi attiva → nav nascosta
+- Events list → nav visibile in alto
+- Feedback → nav nascosta
+
+Dashboard:
+
+- presente come voce prevista
+- disabilitata
+- nessuna dashboard implementata
+- nessun KPI anticipato
+
+Decisione:
+
+La navigation dock è contestuale e non fixed/sticky,
+per evitare instabilità mobile in Retool.
 
 ------------------------------------------------
 FUNZIONALITÀ IMPLEMENTATE
@@ -2006,6 +2168,25 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ una sola creazione guidata alla volta
 ✔ entity autofill controlled minimal implementato
 ✔ flow combinato project + entity validato   
+✔ UX Mobile Coherence Pass completato
+✔ Home mobile rifinita
+✔ Events list mobile rifinita
+✔ Feedback mobile stabilizzato
+✔ feedback_summary introdotto
+✔ routing post-save contestuale implementato
+✔ insert → feedback → Home
+✔ update → feedback → Lista eventi
+✔ no-op edit → Lista eventi senza update_event
+✔ cancel create/input → Home
+✔ cancel edit → Lista eventi
+✔ navigation dock Home / Eventi / Dashboard introdotta
+✔ Dashboard predisposta ma disabilitata
+✔ Dati evento compattati con label inline
+✔ Icon add-ons Retool introdotti nei pulsanti reali
+✔ font-size 16px su input/select mobile validato
+✔ zoom automatico Safari iOS risolto
+✔ select mobile funzionanti in digitazione e dropdown
+✔ validazione reale iPhone 13 Safari completata
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -2059,6 +2240,8 @@ MATCHING
 - deduplicazione avanzata project/entity
 - gerarchie project/entity
 - filtro select su match ambigui
+- suggestion create vs edit consistency
+- project creation override in presenza di match generico
 
 ---
 
@@ -2076,6 +2259,8 @@ HINT SYSTEM
 
 - integrazione completa con state unificato
 - hint totalmente derivati da engine
+- micro-azioni Cambia / Scegli realmente cliccabili
+- blocco Ambiguità / Hint avanzati
 
 ---
 
@@ -2093,6 +2278,18 @@ OUTPUT
 - analytics
 - KPI
 - reportistica
+- Dashboard nav presente ma disabilitata
+
+---
+
+UX / NAVIGATION
+
+- Dashboard reale
+- Azioni rapide operative
+- Cambia / Scegli cliccabili
+- standardizzazione completa Icon System
+- mobile compact advanced
+- eventuale revisione finale font/spaziature senza rompere baseline 16px mobile Safari
 
 ------------------------------------------------
 PROBLEMI REALI IDENTIFICATI
@@ -2211,6 +2408,30 @@ RISOLTO per input/parsing principale
 - decisione consolidata: non introdurre command intent nel nodo create suggestion
 - nodo futuro candidato: COMMAND INTENT — CREATE PROJECT / ENTITY
 
+---
+
+13. MOBILE SAFARI / FONT SIZE INPUT
+
+Problema rilevato su iPhone 13 Safari reale:
+
+- tap su input causava zoom automatico
+- dopo zoom l’app veniva troncata lateralmente
+- select Tipo / Progetto / Entità non mostravano correttamente il dropdown completo
+
+Fix applicato:
+
+- font-size portato a 16px sui campi editabili/select principali
+
+Esito:
+
+- zoom automatico risolto
+- layout non più troncato
+- select funzionanti sia in digitazione sia in dropdown
+
+Regola:
+
+I campi editabili e le select principali devono mantenere font-size minimo 16px su mobile Safari.
+
 ------------------------------------------------
 PROBLEMI RISOLTI
 ------------------------------------------------
@@ -2283,6 +2504,18 @@ PROBLEMI RISOLTI
 ✔ linting edit_mode: 'value' is not defined → RISOLTO
 ✔ linting editing_event: 'value' is not defined → RISOLTO
 ✔ additionalScope { value } su helper edit mode → RIMOSSO
+✔ home mobile grezza → RISOLTA
+✔ events list mobile poco rifinita → RISOLTA
+✔ feedback troppo rapido / conflittuale → RISOLTO
+✔ handle_event_success duplicava gestione UI post-save → RISOLTO
+✔ routing post-save non contestuale → RISOLTO
+✔ cancel create/edit non contestuale → RISOLTO
+✔ nav assente / non strutturata → RISOLTA A LIVELLO BASE
+✔ dati evento troppo alti → RIDOTTI con label inline
+✔ pulsanti non uniformi → RIDOTTI con Icon add-ons Retool
+✔ zoom automatico Safari iOS su input → RISOLTO
+✔ app troncata lateralmente dopo zoom iOS → RISOLTO
+✔ select mobile senza dropdown stabile → RISOLTO con font-size 16px
 
 ------------------------------------------------
 STATO LAYER SISTEMA
@@ -2290,8 +2523,9 @@ STATO LAYER SISTEMA
 
 Layer 1 — Input: ~98%
 Layer 2 — Matching / Suggestion: ~92%
-Layer 3 — View / Preview: ~92%
+Layer 3 — View / Preview: ~94%
 Layer HINT SYSTEM: ~93%
+Layer UX Mobile: ~94%
 Layer 4 — Data Structure: ~32%
 Layer 5 — Engine: ~46%
 Layer 6 — Output: 0%
@@ -2300,7 +2534,7 @@ Layer 6 — Output: 0%
 
 STATO COMPLESSIVO:
 
-~87%
+~89%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -2319,6 +2553,7 @@ FASE ATTUALE
 ✔ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE — COMPLETATO 
 ✔ LINTING / STATE HELPER CLEANUP — COMPLETATO
 ✔ PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL — COMPLETATO
+✔ UX MOBILE COHERENCE PASS — COMPLETATO
 
 ---
 
@@ -2330,9 +2565,8 @@ TRANSIZIONE:
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Dopo il completamento di Project / Entity Create Suggestion First Controlled Level,
-il sistema ha consolidato anche la creazione guidata delle strutture trasversali
-project/entity.
+Dopo il completamento di Project / Entity Create Suggestion First Controlled Level
+e UX Mobile Coherence Pass,
 
 Catene principali attuali:
 
@@ -2376,16 +2610,33 @@ btn_edit
 → input pipeline
 → conferma update oppure no-op guard oppure annulla
 
+UX mobile / navigation:
+container_home
+→ input / esempi / azioni rapide / eventi da verificare
+→ container_app_nav
+→ container_events_list
+→ container_feedback
+
+feedback:
+button_input_confirm
+→ feedback_summary
+→ ui_state.view = feedback
+→ auto-return 1800 ms
+→ Home o Events in base a insert/update
+
 La prossima priorità deve essere definita in Roadmap,
 senza anticipare output/KPI né istanze verticali.
 
 Nodi candidati principali residui:
 
-- UX CLEANUP — SUGGESTION CONTAINER / MOBILE
 - COMMAND INTENT — CREATE PROJECT / ENTITY
 - DATA STRUCTURE / ENTITY HIERARCHY
 - ECONOMIC DIRECTION ADVANCED
 - DURATION ADVANCED — GIORNI / SETTIMANE
+- SUGGESTION CREATE VS EDIT CONSISTENCY
+- PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+- AZIONI RAPIDE OPERATIVE
+- DASHBOARD BASE
 
 Vincolo:
 
@@ -2441,8 +2692,9 @@ Sequenza corretta futura:
 1. consolidare cuore eventi
 2. consolidare gestione project/entity
 3. introdurre command intent guidato
-4. rifinire UX mobile
-5. solo dopo aprire viste, istanze o moduli verticali
+4. UX mobile base rifinita e completata
+5. introdurre command intent / data structure / logiche avanzate
+6. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
 
 ---
 
@@ -2467,7 +2719,7 @@ Priorità aggiornata:
 8. UX / cleanup post match engine ✔  
 9. linting / state helper cleanup ✔
 10. project/entity create suggestion ✔
-11. UX cleanup suggestion container / mobile
+11. UX mobile coherence pass ✔
 12. command intent create project/entity
 13. data structure / entity relations
 14. economic direction advanced
@@ -2486,30 +2738,19 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. project/entity create suggestion  
-2. data structure / entity relations  
-3. economic direction advanced  
-4. semantic engine avanzato  
-5. dashboard / KPI   
+PRIORITÀ FUTURE:
+
+1. command intent create project/entity
+2. data structure / entity relations
+3. economic direction advanced
+4. duration advanced — giorni / settimane
+5. dashboard / KPI base 
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. UX CLEANUP — SUGGESTION CONTAINER / MOBILE
-
-Scopo:
-
-- rifinire layout container suggestion
-- migliorare spaziature e gerarchia visiva
-- ottimizzare mobile
-- non modificare logica
-- non modificare DB
-- non modificare matching
-
----
-
-2. COMMAND INTENT — CREATE PROJECT / ENTITY
+1. . COMMAND INTENT — CREATE PROJECT / ENTITY
 
 Scopo:
 
@@ -2523,7 +2764,7 @@ Scopo:
 
 ---
 
-3. ECONOMIC DIRECTION ADVANCED
+2. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -2534,7 +2775,7 @@ Scopo:
 
 ---
 
-4. DATA STRUCTURE / ENTITY HIERARCHY
+3. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -2546,7 +2787,7 @@ Scopo:
 
 ---
 
-5. DURATION ADVANCED — GIORNI / SETTIMANE
+4. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -2554,6 +2795,26 @@ Scopo:
 - valutare giornata lavorativa
 - valutare mezza giornata
 - evitare conversioni automatiche ambigue
+
+5. SUGGESTION CREATE VS EDIT CONSISTENCY
+
+Scopo:
+
+- verificare differenze suggestion tra create flow e edit flow
+- capire perché in alcuni edit flow compare solo suggestion entity
+- mantenere invariati matching e DB finché non serve
+- non introdurre override aggressivi
+
+---
+
+6. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+
+Scopo:
+
+- valutare creazione progetto anche quando esiste un match generico
+- esempio: input “villa” con match Villa e progetti più specifici
+- permettere eventuale scelta esplicita utente
+- evitare creazioni automatiche silenziose
 
 ------------------------------------------------
 CHANGELOG
@@ -2817,4 +3078,39 @@ command intent registrato come nodo futuro
 UX cleanup suggestion container registrato come nodo futuro
 direzione LOGOS Core modulare riconfermata
 istanze ASPRI / ADEXIMA / MaurizioLab confermate come derivate future del core
+transizione verso NEXT NODE da definire in Roadmap
+
+v18 — 2026-05-09
+completamento UX MOBILE COHERENCE PASS
+Home mobile rifinita
+card Esempi resa coerente
+Azioni rapide rifinite e predisposte
+Events list mobile rifinita
+Feedback mobile stabilizzato
+feedback_summary introdotto in ui_state
+handle_event_success disabilitato come gestore UI post-save
+success handler UI rimossi da insert_event / update_event
+button_input_confirm centralizza feedback e routing post-save
+insert reale → feedback 1800 ms → Home
+update reale → feedback 1800 ms → Lista eventi
+no-op edit → Lista eventi immediata senza update_event
+cancel create/input → Home
+cancel edit → Lista eventi
+Navigation dock Home / Eventi / Dashboard introdotta
+Dashboard presente ma disabilitata
+nav contestuale visibile in Home vuota e Events list
+nav nascosta durante input attivo e feedback
+Dati evento compattati con label inline nelle select
+Icon add-ons Retool introdotti nei pulsanti reali
+font-size input/select portato a 16px per Safari iOS
+zoom automatico iOS Safari risolto
+select mobile validate sia in digitazione sia in dropdown
+validazione reale su iPhone 13 Safari completata
+DB invariato
+parser invariato
+matching invariato
+create_suggestion_state invariato
+type classification invariata
+duration normalization invariata
+nessun output/KPI anticipato
 transizione verso NEXT NODE da definire in Roadmap

@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v10
+# LOGOS_RETOOL_RUNTIME_REAL_v11
 
-DATA: 2026-05-03
+DATA: 2026-05-09
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -27,6 +27,20 @@ C (Completezza): 10/10
 - no-op edit guard documentato
 - edit_mode / editing_event senza additionalScope { value } documentati
 - window.__logos_edit_mode_value / window.__logos_editing_event_value documentati
+- Project / Entity Create Suggestion First Controlled Level documentato
+- create_suggestion_state documentato
+- insert_project / insert_entity documentati
+- micro-editor project/entity documentati
+- ignore globale suggestion documentato
+- entity autofill controlled minimal documentato
+- UX Mobile Coherence Pass documentato
+- feedback_summary documentato
+- feedback mobile stabilizzato
+- routing post-save contestuale documentato
+- cancel create/edit contestuale documentato
+- navigation dock documentata
+- handle_event_success non più gestore UI post-save documentato
+- font-size 16px input/select mobile Safari documentato
 
 Q (Qualità): 9.5/10  
 - runtime reale aggiornato  
@@ -41,6 +55,11 @@ Q (Qualità): 9.5/10
 - rumore tecnico Retool edit_mode / editing_event eliminato
 - runtime edit helper più ricostruibile
 - non descrive funzionalità non implementate come attive  
+- runtime reale aggiornato dopo Project / Entity Create Suggestion
+- runtime reale aggiornato dopo UX Mobile Coherence Pass
+- feedback/routing centralizzati in button_input_confirm
+- comportamento insert/update/no-op più coerente
+- UX mobile validata anche su iPhone 13 Safari reale
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -53,7 +72,17 @@ D (Deployabilità): 10/10
 - nodo UX / Cleanup Micro-Batch Post Match Engine validato runtime
 - nodo Linting / State Helper Cleanup validato runtime
 - create/edit/annulla/no-op edit/edit reale validati
-- WRITTEN / ERROR rivalidati   
+- WRITTEN / ERROR rivalidati  
+- Project / Entity Create Suggestion validato runtime
+- insert_project validato su DB reale
+- insert_entity validato su DB reale
+- UX Mobile Coherence Pass validato runtime
+- insert → feedback → Home validato
+- update → feedback → Lista eventi validato
+- no-op edit → Lista eventi senza update_event validato
+- cancel create/edit validato
+- font-size 16px validato su iPhone 13 Safari
+- select mobile validate sia in digitazione sia in dropdown 
 
 ------------------------------------------------
 STATO
@@ -70,6 +99,8 @@ ENGINE BASE — TYPE CLASSIFICATION BASE
 MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL
 UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 LINTING / STATE HELPER CLEANUP
+PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+UX MOBILE COHERENCE PASS
 
 ------------------------------------------------
 DESCRIZIONE OPERATIVA DEL SISTEMA
@@ -88,11 +119,15 @@ INPUT
 → DURATION NORMALIZATION  
 → TYPE CLASSIFICATION BASE  
 → MATCH STATE  
+→ CREATE SUGGESTION STATE  
 → SELECT PROJECT / ENTITY  
-→ PREVIEW  
+→ PREVIEW / SINTESI  
+→ DATI EVENTO  
+→ FEEDBACK SUMMARY  
 → INSERT / UPDATE  
 → REFRESH LISTA  
-→ PROCESSING 
+→ ROUTING POST-SAVE  
+→ PROCESSING
 
 ✔ allineamento save → DB verificato  
 ✔ insert e update usano ui_state.parsed  
@@ -125,7 +160,32 @@ INPUT
 ✔ Linting / State Helper Cleanup completato
 ✔ edit_mode / editing_event non usano più additionalScope { value }
 ✔ linting edit_mode / editing_event risolti
-✔ create/edit/annulla/no-op edit/edit reale rivalidati    
+✔ create/edit/annulla/no-op edit/edit reale rivalidati
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ create_suggestion_state implementato
+✔ insert_project implementato e validato
+✔ insert_entity implementato e validato
+✔ project/entity creati inline solo previa conferma utente
+✔ evento non salvato automaticamente dopo creazione project/entity
+✔ select_project / select_entity restano decisione finale utente
+✔ UX Mobile Coherence Pass completato
+✔ Home mobile rifinita
+✔ Events list mobile rifinita
+✔ Feedback mobile stabilizzato
+✔ feedback_summary introdotto in ui_state
+✔ button_input_confirm centralizza feedback e routing post-save
+✔ insert reale → feedback 1800 ms → Home
+✔ update reale → feedback 1800 ms → Lista eventi
+✔ no-op edit → Lista eventi immediata senza update_event
+✔ cancel create/input → Home
+✔ cancel edit → Lista eventi
+✔ Navigation dock Home / Eventi / Dashboard introdotta
+✔ Dashboard presente ma disabilitata
+✔ Dati evento compattati con label inline nelle select
+✔ Icon add-ons Retool introdotti nei pulsanti reali
+✔ font-size input/select 16px validato su Safari iOS
+✔ zoom automatico Safari iOS risolto
+✔ select mobile funzionanti sia in digitazione sia in dropdown    
 
 ------------------------------------------------
 1. INPUT UTENTE
@@ -191,26 +251,37 @@ Ruolo:
 
 Codice runtime:
 
-```js
 if (window.__parseTimer) {
   clearTimeout(window.__parseTimer);
 }
 
 window.__parseTimer = setTimeout(async () => {
+  project_create_inline_open.setValue(false);
+  project_create_suggestion_dismissed.setValue(false);
+  input_new_project_name.setValue("");
+
+  entity_create_inline_open.setValue(false);
+  entity_create_suggestion_dismissed.setValue(false);
+  input_new_entity_name.setValue("");
+
   await Promise.allSettled([
     parse_input_controlled.trigger(),
     project_state.trigger(),
     entity_state.trigger()
   ]);
+
+  await create_suggestion_state.trigger();
 }, 350);
 
 Comportamento:
 
 input_raw aggiornato
 → debounce
+→ reset micro-state creazione inline
 → parse_input_controlled.trigger()
 → project_state.trigger()
 → entity_state.trigger()
+→ create_suggestion_state.trigger()
 
 Risultato:
 
@@ -221,6 +292,9 @@ Risultato:
 ✔ select_project/select_entity coerenti  
 ✔ preview hint/highlight coerenti  
 ✔ confirm guard coerente  
+✔ create_suggestion_state aggiornato
+✔ micro-editor project/entity resettati al cambio input
+✔ suggestion stale evitate tra input consecutivi
 
 UI_STATE
 
@@ -239,8 +313,32 @@ Struttura attuale:
   },
   status: null,
   feedback_text: null,
-  feedback_project: null
+  feedback_project: null,
+  feedback_summary: null
 }
+
+feedback_summary:
+
+oggetto UI temporaneo usato dal feedback mobile.
+
+Contiene:
+
+{
+  type,
+  date,
+  amount,
+  project,
+  entity,
+  text
+}
+
+Regole:
+
+- creato prima del reset input/select
+- usato solo per mostrare il riepilogo feedback
+- non salvato nel DB
+- non parte del modello dati Supabase
+- azzerato dopo auto-return feedback
 
 Ruolo:
 
@@ -274,7 +372,9 @@ Quindi:
 - ui_state.parsed = amount / unit / event_date
 - select1.value = type
 - project_state / entity_state = match state
+- create_suggestion_state = suggestion project/entity
 - select_project.value / select_entity.value = project_id / entity_id
+- ui_state.feedback_summary = riepilogo temporaneo feedback
 
 Regola critica:
 
@@ -936,6 +1036,145 @@ Risultato:
 select_entity non ricalcola più matching.
 
 ------------------------------------------------
+PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+------------------------------------------------
+
+Eseguito tramite:
+
+create_suggestion_state
+
+Consumatori:
+
+- container_association_suggestions
+- btn_open_project_create
+- btn_open_entity_create
+- input_new_project_name
+- input_new_entity_name
+- btn_create_project_inline
+- btn_create_entity_inline
+- bottone Ignora globale
+- btn_cancel_project_inline
+- btn_cancel_entity_create
+
+Input usati:
+
+- input_raw.value
+- project_state.data
+- entity_state.data
+- projects_list.data
+- entities_list.data
+- select_project.value
+- select_entity.value
+
+Output logico:
+
+create_suggestion_state espone:
+
+- project.noMatch
+- project.shouldShowNoMatchHint
+- project.shouldSuggestCreate
+- project.candidateName
+- project.draftName
+- project.baseName
+- entity.noMatch
+- entity.shouldShowNoMatchHint
+- entity.shouldSuggestCreate
+- entity.candidateName
+- entity.draftName
+- entity.baseName
+
+Principi:
+
+- suggestion ≠ decisione
+- suggestion ≠ salvataggio
+- creazione solo previa conferma utente
+- evento non salvato automaticamente dopo creazione project/entity
+- project/entity mancanti non bloccano Conferma
+- project/entity ambigui bloccano Conferma se non risolti manualmente
+- project/entity ambigui non permettono nuova creazione
+- una sola creazione guidata aperta alla volta
+- raw_input resta invariato
+
+PROJECT CREATE FLOW:
+
+1. utente clicca Crea progetto
+2. input_new_project_name viene precompilato se candidate sicura
+3. utente conferma Crea progetto
+4. insert_project crea record in projects
+5. projects_list viene aggiornata
+6. select_project viene valorizzata con nuovo id
+7. micro-editor si chiude
+8. evento NON viene salvato automaticamente
+
+ENTITY CREATE FLOW:
+
+1. utente clicca Crea entità
+2. input_new_entity_name viene mostrato / precompilato se candidate sicura
+3. utente conferma Crea entità
+4. insert_entity crea record in entities
+5. entities_list viene aggiornata
+6. select_entity viene valorizzata con nuovo id
+7. micro-editor si chiude
+8. evento NON viene salvato automaticamente
+
+ENTITY AUTOFILL CONTROLLED MINIMAL:
+
+Prefissi ammessi:
+
+- referente
+- tecnico
+- cliente
+- fornitore
+- operaio
+- collaboratore
+- contatto
+- responsabile
+- muratore
+- idraulico
+- elettricista
+- geometra
+- architetto
+
+Esempio positivo:
+
+villa sierri 15 sopralluogo referente kappa
+→ input_new_entity_name = Referente Kappa
+
+Esempio negativo:
+
+acquisto 50 euro materiale nuovo
+→ input_new_entity_name vuoto
+
+IGNORE GLOBALE:
+
+- chiude project_create_inline_open
+- chiude entity_create_inline_open
+- imposta project_create_suggestion_dismissed = true
+- imposta entity_create_suggestion_dismissed = true
+- svuota input_new_project_name
+- svuota input_new_entity_name
+- non modifica input_raw
+- non modifica select_project
+- non modifica select_entity
+- non blocca Conferma
+
+DUPLICATE GUARD:
+
+Project:
+
+- se input_new_project_name esiste già in projects_list
+- btn_create_project_inline è disabilitato
+- warning duplicato visibile
+- insert_project non parte da UI
+
+Entity:
+
+- se input_new_entity_name esiste già in entities_list
+- btn_create_entity_inline è disabilitato
+- warning duplicato visibile
+- insert_entity non parte da UI
+
+------------------------------------------------
 TYPE CLASSIFICATION BASE
 ------------------------------------------------
 
@@ -1595,10 +1834,13 @@ button_input_confirm
 Ruolo:
 
 costruisce payload
-mostra feedback immediato
+esegue no-op edit guard
+costruisce feedback_summary
+mostra feedback mobile
 resetta input/select
 lancia insert_event o update_event
 aggiorna events_new dopo save
+gestisce routing post-save contestuale
 
 Principio:
 
@@ -1648,7 +1890,6 @@ Legge solo lo stato già disponibile.
 
 11.1 BUTTON_INPUT_CONFIRM — CODICE LOGICO
 
-```js
 // --- INSERT / UPDATE SWITCH ---
 const parsed = ui_state.value?.parsed || {};
 
@@ -1663,9 +1904,6 @@ const payload = {
 };
 
 // --- NO-OP EDIT GUARD ---
-// Se siamo in edit mode ma il payload non cambia nulla,
-// non eseguiamo update_event e non aggiorniamo updated_at.
-
 const wasEditMode = edit_mode.data;
 const originalEvent = editing_event.data;
 
@@ -1673,16 +1911,6 @@ const normalizeComparable = (value) => {
   if (value === undefined || value === "") return null;
   return value;
 };
-
-const normalizeNumberComparable = (value) => {
-  if (value === undefined || value === null || value === "") return null;
-  const n = Number(value);
-  return Number.isNaN(n) ? value : n;
-};
-
-// Confronto no-op basato solo sui campi modificabili dall'utente.
-// amount / unit / event_date sono derivati dal parser:
-// se l'utente non cambia input, non devono generare update_event.
 
 const sameText =
   String(normalizeComparable(payload.raw_input) || "") ===
@@ -1709,7 +1937,6 @@ const isSamePayload =
   sameEntity;
 
 if (isSamePayload) {
-  // reset edit mode senza salvare
   if (window.__parseTimer) {
     clearTimeout(window.__parseTimer);
     window.__parseTimer = null;
@@ -1740,7 +1967,8 @@ if (isSamePayload) {
     },
     status: "idle",
     feedback_text: null,
-    feedback_project: null
+    feedback_project: null,
+    feedback_summary: null
   });
 
   container_input.setHidden(true);
@@ -1751,10 +1979,37 @@ if (isSamePayload) {
   return;
 }
 
+// --- FEEDBACK SUMMARY ---
 const feedbackText = input_raw.value;
-const feedbackProject = select_project.selectedItem?.name;
+const feedbackProject = select_project.selectedItem?.name || null;
+const feedbackEntity = select_entity.selectedItem?.name || null;
 
-// RESET UI SUBITO (UX istantanea)
+const feedbackSummary = {
+  type: payload.type || "Evento",
+  date: formatFeedbackDate(payload.event_date),
+  amount: formatFeedbackAmount(payload.amount, payload.unit),
+  project: feedbackProject || "—",
+  entity: feedbackEntity || "—",
+  text: feedbackText || "—"
+};
+
+// RESET INPUT / SELECT PRIMA DEL FEEDBACK
+// Il feedback viene impostato come ultimo stato UI visibile.
+
+if (window.__parseTimer) {
+  clearTimeout(window.__parseTimer);
+  window.__parseTimer = null;
+}
+
+trigger_parse_debounced.cancel?.();
+
+await input_home.setValue("");
+await input_raw.setValue("");
+
+select_project.clearValue();
+select_entity.clearValue();
+select1.clearValue?.();
+
 ui_state.setValue({
   ...ui_state.value,
   parsed: {
@@ -1762,30 +2017,26 @@ ui_state.setValue({
     unit: null,
     event_date: null
   },
-  status: "idle",
+  status: "success",
   view: "feedback",
   feedback_text: feedbackText,
-  feedback_project: feedbackProject
+  feedback_project: feedbackProject,
+  feedback_summary: feedbackSummary
 });
 
-input_home.setValue("");
-input_raw.setValue("");
+container_home.setHidden(true);
+container_input.setHidden(true);
+container_events_list.setHidden(true);
+container_feedback.setHidden(false);
 
-select_project.clearValue();
-select_entity.clearValue();
-
-trigger_parse_debounced.cancel?.();
-
-// SALVATAGGIO (async non bloccante UI)
+// SALVATAGGIO
 const savePromise = wasEditMode
   ? update_event.trigger({ additionalScope: payload })
   : insert_event.trigger({ additionalScope: payload });
 
 await savePromise;
-
 await events_new.trigger();
 
-// reset edit mode dopo il salvataggio
 if (wasEditMode) {
   window.__logos_edit_mode_value = false;
   await edit_mode.trigger();
@@ -1793,6 +2044,49 @@ if (wasEditMode) {
   window.__logos_editing_event_value = null;
   await editing_event.trigger();
 }
+
+// --- AUTO RETURN AFTER FEEDBACK ---
+const returnViewAfterFeedback = wasEditMode ? "events" : "home";
+
+if (window.__logos_feedback_timer) {
+  clearTimeout(window.__logos_feedback_timer);
+  window.__logos_feedback_timer = null;
+}
+
+window.__logos_feedback_timer = setTimeout(() => {
+  ui_state.setValue({
+    ...ui_state.value,
+    view: returnViewAfterFeedback,
+    parsed: {
+      amount: null,
+      unit: null,
+      event_date: null
+    },
+    status: "idle",
+    feedback_text: null,
+    feedback_project: null,
+    feedback_summary: null
+  });
+
+  container_feedback.setHidden(true);
+  container_input.setHidden(true);
+
+  if (returnViewAfterFeedback === "events") {
+    container_home.setHidden(true);
+    container_events_list.setHidden(false);
+  } else {
+    container_events_list.setHidden(true);
+    container_home.setHidden(false);
+  }
+
+  window.__logos_feedback_timer = null;
+}, 1800);
+
+Nota:
+
+formatFeedbackDate e formatFeedbackAmount sono helper locali usati per costruire feedback_summary.
+Il loro output è solo UI.
+Non viene salvato nel DB.
 
 Risultati:
 
@@ -1808,6 +2102,15 @@ Risultati:
 ✔ editing_event reset senza additionalScope { value }
 ✔ editing_event azzerato anche dopo update reale completato
 ✔ nessuna divergenza save/DB osservata
+✔ feedback_summary introdotto
+✔ feedback mobile stabilizzato
+✔ feedback mostrato come ultimo stato UI visibile
+✔ handle_event_success non più gestore UI post-save
+✔ insert_event/update_event non devono avere success handler UI duplicati
+✔ routing post-save contestuale
+✔ insert reale → feedback 1800 ms → Home
+✔ update reale → feedback 1800 ms → Lista eventi
+✔ no-op edit → Lista eventi immediata senza feedback
 
 BUTTON_INPUT_CONFIRM — DISABLED LOGIC
 
@@ -1974,35 +2277,6 @@ Esito: OK
 
 RESET & FEEDBACK
 
-Sequenza attuale:
-
-button_input_confirm costruisce payload
-ui_state.view = feedback
-ui_state.feedback_text valorizzato
-ui_state.feedback_project valorizzato
-reset input_home
-reset input_raw
-clear select_project
-clear select_entity
-select1 non richiede reset manuale dedicato:
-reset/stale value validato runtime
-cancel debounce pending
-insert/update async
-await savePromise
-await events_new.trigger()
-reset edit_mode / editing_event se necessario tramite window.__logos_edit_mode_value / window.__logos_editing_event_value
-
-Caratteristiche:
-
-✔ feedback immediato
-✔ salvataggio asincrono
-✔ lista aggiornata dopo save reale
-✔ nessun refresh pagina necessario dopo update
-✔ parsed reset stabile a oggetto
-✔ edit_mode reset senza additionalScope { value }
-✔ editing_event reset senza additionalScope { value }
-✔ editing_event azzerato anche dopo update reale
-
 PROCESSING EVENTI
 
 Lista:
@@ -2029,13 +2303,24 @@ disponibile solo per eventi NEW
 riuso pipeline input
 update_event
 
-Annulla modifica:
+Cancel contestuale:
 
-- disponibile tramite btn_cancel_edit
+Create/input mode:
+
+- label “Torna alla home”
+- non esegue insert_event
+- resetta input/select/ui_state.parsed
+- azzera feedback_summary
+- torna Home
+
+Edit mode:
+
+- label “Annulla modifica”
 - non esegue update_event
 - non aggiorna updated_at
 - resetta edit_mode / editing_event
 - resetta input/select/ui_state.parsed
+- azzera feedback_summary
 - torna alla lista eventi
 
 No-op edit guard:
@@ -2052,6 +2337,99 @@ Lista eventi:
 - ricerca su raw_input / type / status / project / entity
 - label creato/modificato basata su created_at / updated_at normalizzati
 - eventi modificati hanno marcatore leggero
+
+------------------------------------------------
+NAVIGATION DOCK
+------------------------------------------------
+
+Componente:
+
+container_app_nav
+
+Voci:
+
+- Home
+- Eventi
+- Dashboard
+
+Stato Dashboard:
+
+- presente come voce prevista
+- disabilitata
+- nessuna dashboard implementata
+- nessun KPI anticipato
+
+Comportamento:
+
+Home vuota:
+
+- nav visibile in basso
+
+Input/Sintesi attiva:
+
+- nav nascosta
+
+Events list:
+
+- nav visibile in alto
+
+Feedback:
+
+- nav nascosta
+
+Decisione:
+
+Navigation dock contestuale.
+Non fixed/sticky.
+
+Motivo:
+
+- evitare sovrapposizioni mobile
+- evitare instabilità Retool
+- rendere la nav utile in lista eventi lunga
+- non disturbare input/sintesi
+- predisporre Dashboard senza implementarla
+
+------------------------------------------------
+MOBILE SAFARI BASELINE
+------------------------------------------------
+
+Test reale:
+
+- iPhone 13
+- Safari
+- preview Retool non pubblicata
+
+Problemi rilevati:
+
+- tap su input causava zoom automatico iOS
+- dopo lo zoom l’app veniva troncata lateralmente
+- select Tipo / Progetto / Entità non mostravano correttamente il dropdown completo
+
+Fix applicato:
+
+- font-size portato a 16px sui campi editabili/select principali
+
+Campi coinvolti:
+
+- input_home
+- input_events_search
+- select1
+- select_project
+- select_entity
+- input_new_project_name
+- input_new_entity_name
+
+Esito:
+
+✔ zoom automatico Safari iOS risolto
+✔ layout non più troncato
+✔ select funzionanti sia in digitazione sia in dropdown
+✔ validazione reale su iPhone 13 Safari completata
+
+Regola runtime:
+
+Su mobile Safari, input e select principali devono mantenere font-size minimo 16px.
 
 BTN_EDIT — FLOW AGGIORNATO
 
@@ -2095,64 +2473,73 @@ Risultato:
 ✔ linting edit_mode / editing_event risolti
 
 ------------------------------------------------
-BTN_CANCEL_EDIT — FLOW
+CANCEL CONTESTUALE — CREATE / EDIT FLOW
 ------------------------------------------------
 
 Componente:
 
-btn_cancel_edit
+btn_cancel_edit / pulsante cancel contestuale
 
 Ruolo:
 
-annullare una modifica evento NEW
-senza eseguire update_event.
+annullare input corrente oppure modifica evento,
+senza salvare nulla.
 
-Visibilità:
+Label dinamica:
 
-visibile solo in edit mode.
+- create/input mode → Torna alla home
+- edit mode → Annulla modifica
 
-Hidden:
-
-{{ !edit_mode.data }}
-
-Comportamento:
+Comportamento create/input:
 
 1. cancella eventuale debounce pendente
-2. scrive window.__logos_edit_mode_value = false
-3. rilancia edit_mode
-4. scrive window.__logos_editing_event_value = null
-5. rilancia editing_event
-6. resetta input_home
-7. resetta input_raw
-8. pulisce select_project
-9. pulisce select_entity
-10. pulisce select1
-11. resetta ui_state.parsed
-12. imposta ui_state.view = "events"
-13. nasconde container_input
-14. nasconde container_home
+2. cancella eventuale timer feedback pendente
+3. esce da edit mode se necessario
+4. azzera editing_event
+5. resetta input_home
+6. resetta input_raw
+7. pulisce select_project
+8. pulisce select_entity
+9. pulisce select1
+10. resetta ui_state.parsed
+11. azzera feedback_text / feedback_project / feedback_summary
+12. imposta ui_state.view = "home"
+13. mostra container_home
+14. nasconde container_input
 15. nasconde container_feedback
-16. mostra container_events_list
+16. nasconde container_events_list
 
-Codice helper:
+Comportamento edit:
 
-```js
-window.__logos_edit_mode_value = false;
-await edit_mode.trigger();
-
-window.__logos_editing_event_value = null;
-await editing_event.trigger();
+1. cancella eventuale debounce pendente
+2. cancella eventuale timer feedback pendente
+3. scrive window.__logos_edit_mode_value = false
+4. rilancia edit_mode
+5. scrive window.__logos_editing_event_value = null
+6. rilancia editing_event
+7. resetta input_home
+8. resetta input_raw
+9. pulisce select_project
+10. pulisce select_entity
+11. pulisce select1
+12. resetta ui_state.parsed
+13. azzera feedback_text / feedback_project / feedback_summary
+14. imposta ui_state.view = "events"
+15. nasconde container_input
+16. nasconde container_home
+17. nasconde container_feedback
+18. mostra container_events_list
 
 Risultato:
 
-✔ annulla modifica senza salvare
-✔ nessun update_event eseguito
+✔ create/input cancel torna Home
+✔ edit cancel torna Lista eventi
+✔ nessun insert_event
+✔ nessun update_event
 ✔ updated_at invariato
-✔ ritorno lista eventi
+✔ nav corretta dopo cancel
 ✔ edit_mode.data = false
 ✔ editing_event.data = null
-✔ create/edit non regressi
-✔ linting edit helper non reintrodotto
 
 QUERY
 
@@ -2166,6 +2553,8 @@ POST / UPDATE:
 
 insert_event
 update_event
+insert_project
+insert_entity
 
 RPC / STATUS:
 
@@ -2180,20 +2569,40 @@ project_state
 entity_state
 focus_input_home
 editing_event
+create_suggestion_state
+project_create_inline_open
+project_create_suggestion_dismissed
+entity_create_inline_open
+entity_create_suggestion_dismissed
 
 HELPER TECNICI WINDOW:
 
 window.__logos_edit_mode_value
 window.__logos_editing_event_value
+window.__logos_feedback_timer
 
 COMPONENTI UI RILEVANTI:
 
 select1
 select_project
 select_entity
-btn_cancel_edit
+btn_cancel_edit / cancel contestuale
 input_events_search
 list_events
+container_association_suggestions
+input_new_project_name
+input_new_entity_name
+btn_open_project_create
+btn_open_entity_create
+btn_create_project_inline
+btn_create_entity_inline
+btn_ignore_global_suggestions / bottone Ignora globale
+btn_cancel_project_inline
+btn_cancel_entity_create
+container_app_nav
+btn_nav_home
+btn_nav_events
+btn_nav_dashboard
 
 Nota:
 
@@ -2218,6 +2627,7 @@ LEGACY / DEBITO:
 typing_state non è più fonte principale del parsing
 parse_input non è più fonte di verità se ancora presente
 button_input_confirm non deve contenere parsing duplicato
+
 SUPABASE
 
 Supabase è database passivo.
@@ -2229,6 +2639,8 @@ Ruolo:
 ✔ insert eventi
 ✔ update eventi
 ✔ update status
+✔ insert project controllato
+✔ insert entity controllato
 
 NON:
 
@@ -2239,11 +2651,16 @@ validazione business
 type classification autonoma
 deduplicazione
 KPI
+crea automaticamente project/entity
+interpreta command intent
+decide Dashboard/KPI
 
 Nota:
 
 Supabase riceve events.type già determinato lato Retool.
 Il DB non decide e non corregge il type.
+insert_project / insert_entity vengono eseguiti solo da azione esplicita utente.
+La creazione project/entity non salva automaticamente l’evento.
 
 LIMITI ATTUALI
 
@@ -2276,7 +2693,9 @@ nessuna gerarchia entity/project
 nessuna deduplicazione entity/project
 nessun alias system
 nessun fuzzy matching
-nessuna creazione guidata project/entity
+creazione guidata project/entity implementata a primo livello controllato
+nessuna suggestion create/edit consistency avanzata
+nessun project creation override con match generico
 nessun ranking avanzato
 
 TYPE:
@@ -2301,6 +2720,11 @@ formattazione italiana amount allineata nella sintesi
 label cleaning ancora embedded
 hint matching project/entity allineati a state
 hint duration/type ancora embedded
+UX mobile base completata
+Cambia / Scegli nella Sintesi ancora non cliccabili
+Azioni rapide presenti ma non operative
+Dashboard presente in nav ma disabilitata
+Icon System non completamente standardizzato
 
 ARCHITETTURA:
 
@@ -2308,6 +2732,9 @@ accoppiamento preview / label / hint
 matching project/entity allineato a primo livello
 hint matching project/entity state-driven
 preview ancora ibrida
+feedback/routing centralizzati in button_input_confirm
+navigation dock contestuale implementata
+Mobile Safari font-size 16px baseline consolidata
 
 PRINCIPI RUNTIME
 
@@ -2330,6 +2757,18 @@ PRINCIPI RUNTIME
 ✔ helper edit_mode / editing_event senza additionalScope { value }
 ✔ window-backed edit helper state
 ✔ lista eventi filtrabile client-side
+✔ create_suggestion_state = suggestion, non decisione
+✔ insert_project / insert_entity solo su conferma utente
+✔ evento non salvato automaticamente dopo creazione project/entity
+✔ feedback_summary = UI temporanea, non dato DB
+✔ feedback/routing post-save centralizzati in button_input_confirm
+✔ insert → feedback → Home
+✔ update → feedback → Lista eventi
+✔ no-op edit → Lista eventi senza update_event
+✔ cancel contestuale create/edit
+✔ navigation dock contestuale
+✔ Dashboard predisposta ma non attiva
+✔ input/select mobile Safari minimo 16px
 
 STATO RUNTIME
 
@@ -2370,6 +2809,26 @@ Runtime attuale:
 ✔ edit_mode / editing_event non usano più additionalScope { value }
 ✔ linting edit_mode / editing_event risolti
 ✔ create/edit/annulla/no-op edit/edit reale validati
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ create_suggestion_state implementato
+✔ insert_project implementato
+✔ insert_entity implementato
+✔ creazione project/entity inline validata
+✔ evento salvato con project_id/entity_id creati inline validato
+✔ UX Mobile Coherence Pass completato
+✔ Home mobile rifinita
+✔ Events list mobile rifinita
+✔ Feedback mobile stabilizzato
+✔ feedback_summary introdotto
+✔ routing post-save contestuale
+✔ cancel create/edit contestuale
+✔ Navigation dock Home / Eventi / Dashboard introdotta
+✔ Dashboard predisposta ma disabilitata
+✔ Dati evento compattati con label inline
+✔ Icon add-ons Retool introdotti nei pulsanti reali
+✔ font-size input/select 16px validato su Safari iOS
+✔ zoom automatico Safari iOS risolto
+✔ select mobile funzionanti in digitazione/dropdown
 
 Debiti:
 
@@ -2378,9 +2837,14 @@ Debiti:
 ⚠ economic direction advanced non implementata
 ⚠ match engine avanzato separato non implementato
 ⚠ alias / gerarchie / deduplicazione non implementati
-⚠ creazione guidata project/entity non implementata
+✔ creazione guidata project/entity implementata a primo livello controllato
+⚠ suggestion create vs edit consistency da verificare
+⚠ project creation override con match generico non implementato
 ⚠ preview ancora non view pura
 ⚠ output non attivo
+⚠ Azioni rapide non operative
+⚠ Dashboard non implementata
+⚠ Icon System non completamente standardizzato
 
 ------------------------------------------------
 PREVIEW ALIGNMENT BASE — TEST VALIDATI
@@ -3108,6 +3572,174 @@ Regressioni:
 
 Esito: OK
 
+------------------------------------------------
+PROJECT / ENTITY CREATE SUGGESTION — TEST VALIDATI
+------------------------------------------------
+
+Input:
+
+villa sierri 15 sopralluogo referente kappa
+
+Risultato:
+
+- Crea progetto disponibile
+- candidate project Villa Sierri 15
+- Crea entità disponibile
+- candidate entity Referente Kappa
+- insert_project eseguito su conferma utente
+- insert_entity eseguito su conferma utente
+- select_project valorizzata
+- select_entity valorizzata
+- evento non salvato automaticamente
+- evento salvato solo dopo Conferma evento
+
+Esito: OK
+
+---
+
+Input:
+
+acquisto 50 euro materiale nuovo
+
+Azione:
+
+Ignora suggerimenti
+
+Risultato:
+
+- suggestion container chiuso
+- evento salvabile con project_id null / entity_id null
+- type Spesa
+- amount 50
+- unit euro
+
+Esito: OK
+
+---
+
+Input:
+
+alfie mario rossi
+
+Risultato:
+
+- ambiguità entity
+- Crea entità non visibile
+- Conferma disabilitata finché non risolta manualmente
+
+Esito: OK
+
+------------------------------------------------
+UX MOBILE COHERENCE PASS — TEST VALIDATI
+------------------------------------------------
+
+Home vuota:
+
+Risultato:
+
+- Home visibile
+- input principale visibile
+- Esempi visibili
+- Azioni rapide visibili
+- Eventi da verificare visibile
+- nav visibile in basso
+
+Esito: OK
+
+---
+
+Nuovo evento → Conferma evento:
+
+Risultato:
+
+- insert_event eseguito
+- feedback visibile
+- feedback_summary mostrato
+- events_new aggiornato
+- dopo 1800 ms ritorno Home
+
+Esito: OK
+
+---
+
+Lista eventi → Modifica → modifica reale → Conferma evento:
+
+Risultato:
+
+- update_event eseguito
+- feedback visibile
+- events_new aggiornato
+- dopo 1800 ms ritorno Lista eventi
+
+Esito: OK
+
+---
+
+Lista eventi → Modifica → nessuna modifica → Conferma evento:
+
+Risultato:
+
+- update_event NON eseguito
+- nessun feedback
+- ritorno immediato Lista eventi
+- updated_at invariato
+
+Esito: OK
+
+---
+
+Home → scrivi input → Torna alla home:
+
+Risultato:
+
+- input_home svuotato
+- input_raw svuotato
+- select resettate
+- ui_state.parsed resettato
+- Home visibile
+- nav Home visibile
+- nessun salvataggio
+
+Esito: OK
+
+---
+
+Lista eventi → Modifica → Annulla modifica:
+
+Risultato:
+
+- edit_mode false
+- editing_event null
+- input svuotati
+- select resettate
+- ritorno Lista eventi
+- nav Events visibile
+- nessun update_event
+
+Esito: OK
+
+---
+
+iPhone 13 Safari reale:
+
+Problemi iniziali:
+
+- zoom automatico su tap input
+- troncamento laterale interfaccia
+- select non pienamente utilizzabili come dropdown
+
+Fix:
+
+- font-size 16px su input/select principali
+
+Risultato:
+
+- nessuno zoom automatico
+- layout mobile stabile
+- select Tipo / Progetto / Entità funzionanti sia in digitazione sia in dropdown
+
+Esito: OK
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -3309,4 +3941,53 @@ Type Classification invariata
 Duration Normalization invariata
 preview invariata
 lista eventi invariata
+nessun output/KPI anticipato
+
+v11 — 2026-05-09
+
+completamento PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
+documentato create_suggestion_state
+documentate variabili project/entity inline open e dismissed
+documentato insert_project
+documentato insert_entity
+documentato container_association_suggestions
+documentati micro-editor project/entity
+documentato bottone Ignora globale
+documentati bottoni Annulla contestuali
+documentato Duplicate Guard project/entity
+documentato entity autofill controlled minimal
+documentato project create flow
+documentato entity create flow
+documentato che evento non viene salvato automaticamente dopo creazione project/entity
+documentato che select_project/select_entity sono decisione utente finale
+documentato flow combinato project + entity validato
+documentato no-match generico salvabile
+documentato blocco solo su ambiguità attiva
+
+completamento UX MOBILE COHERENCE PASS
+documentata Home mobile rifinita
+documentata Events list mobile rifinita
+documentato Feedback mobile stabilizzato
+documentato feedback_summary in ui_state
+documentato handle_event_success non più gestore UI post-save
+documentato button_input_confirm come gestore centrale feedback/routing
+documentato insert reale → feedback 1800 ms → Home
+documentato update reale → feedback 1800 ms → Lista eventi
+documentato no-op edit → Lista eventi immediata senza update_event
+documentato cancel create/input → Home
+documentato cancel edit → Lista eventi
+documentata Navigation dock Home / Eventi / Dashboard
+documentata Dashboard presente ma disabilitata
+documentata nav contestuale Home/Events
+documentati Dati evento compatti con label inline nelle select
+documentati Icon add-ons Retool nei pulsanti reali
+documentato font-size input/select 16px per Safari iOS
+documentato zoom automatico iOS Safari risolto
+documentate select mobile funzionanti sia in digitazione sia in dropdown
+documentata validazione reale iPhone 13 Safari
+DB invariato
+parser invariato
+matching invariato
+type classification invariata
+duration normalization invariata
 nessun output/KPI anticipato

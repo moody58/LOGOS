@@ -1,6 +1,6 @@
-# 04_LOGOS_Retool_Architecture_v13
+# 04_LOGOS_Retool_Architecture_v14
 
-DATA: 2026-05-07
+DATA: 2026-05-09
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -40,6 +40,20 @@ C (Completezza): 10/10
 - ignore globale documentato
 - entity autofill controlled minimal documentato
 - flow combinato project + entity validato
+- UX Mobile Coherence Pass documentato
+- container_app_nav / navigation dock documentata
+- feedback_summary documentato in ui_state
+- feedback mobile stabilizzato
+- routing post-save contestuale documentato
+- insert → feedback → Home documentato
+- update → feedback → Lista eventi documentato
+- no-op edit → Lista eventi senza feedback documentato
+- cancel create/edit contestuale documentato
+- handle_event_success disabilitato come gestore UI documentato
+- success handler UI duplicati rimossi da insert_event/update_event
+- Dati evento compatti con label inline documentati
+- Icon add-ons Retool documentati sui pulsanti reali
+- font-size 16px input/select mobile Safari documentato
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
@@ -59,6 +73,11 @@ Q (Qualità): 9.5/10
 - raw_input preservato anche dopo creazione inline
 - evento non salvato automaticamente dopo creazione project/entity
 - Core Event System rafforzato senza anticipare moduli verticali  
+- UX mobile ora coerente tra Home, Input, Events list e Feedback
+- feedback non bloccante e contestuale
+- navigation dock predisposta senza anticipare Dashboard/KPI
+- comportamento create/edit più coerente con contesto utente
+- validazione reale iPhone 13 Safari integrata
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -79,6 +98,12 @@ D (Deployabilità): 10/10
 - evento salvato con project_id/entity_id creati inline validato
 - no-match generico salvabile validato
 - edit/no-op non regressivo validato dopo create suggestion
+- UX Mobile Coherence Pass validato runtime
+- iPhone 13 Safari reale validato
+- zoom automatico iOS risolto tramite font-size 16px
+- select mobile validate in digitazione e dropdown
+- routing insert/update/no-op validato
+- cancel create/edit validato
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -123,6 +148,17 @@ Il documento descrive:
 - entity autofill controlled minimal
 - regola select = decisione utente finale
 - vincolo: evento non salvato automaticamente dopo creazione project/entity
+- UX Mobile Coherence Pass
+- Home mobile rifinita
+- Events list mobile rifinita
+- Feedback mobile stabilizzato
+- feedback_summary
+- routing post-save contestuale
+- Navigation dock Home / Eventi / Dashboard
+- cancel create/edit contestuale
+- Dati evento compatti con label inline
+- Icon add-ons Retool nei pulsanti reali
+- font-size 16px come baseline mobile Safari per input/select
 
 ------------------------------------------------
 STRUTTURA GENERALE
@@ -146,7 +182,22 @@ page1
         ├── container_home  
         ├── container_input  
         ├── container_feedback  
-        └── container_events_list  
+        ├── container_events_list  
+        └── container_app_nav / navigation dock
+
+Nota:
+
+container_app_nav è usato come navigation dock contestuale.
+
+Comportamento:
+
+- Home vuota → nav visibile in basso
+- Input/Sintesi attiva → nav nascosta
+- Events list → nav visibile in alto
+- Feedback → nav nascosta
+
+La nav non è fixed/sticky.
+La posizione resta controllata dal layout Retool per evitare instabilità mobile.
 
 ------------------------------------------------
 GESTIONE STATO UI
@@ -170,7 +221,8 @@ Struttura attuale:
   },
   status: null,
   feedback_text: null,
-  feedback_project: null
+  feedback_project: null,
+  feedback_summary: null
 }
 
 Ruolo:
@@ -181,16 +233,46 @@ mantenere feedback post-save
 supportare create/edit
 fornire fonte controllata per amount/unit/event_date in insert/update
 
+feedback_summary:
+
+oggetto UI temporaneo usato solo dal feedback mobile.
+
+Contiene:
+
+{
+  type,
+  date,
+  amount,
+  project,
+  entity,
+  text
+}
+
+Regole:
+
+- creato prima del reset input/select
+- usato solo per mostrare il riepilogo feedback
+- non salvato nel DB
+- non parte del modello dati Supabase
+- azzerato dopo auto-return feedback
+
 Binding principali:
 
 container_home:
-Hidden = view === "feedback"
+visibile quando view = "home"
 
 container_feedback:
 Hidden = view !== "feedback"
 
+container_events_list:
+visibile quando view = "events"
+
 container_input:
-Hidden = !input_home.value
+visibile quando input_home / input_raw contiene testo operativo
+
+container_app_nav:
+visibile in Home vuota oppure Events list
+nascosto durante input attivo e feedback
 
 Principio:
 
@@ -226,13 +308,15 @@ select_project.value alimenta project_id.
 
 select_entity.value alimenta entity_id.
 
-Fonti controllate attuali:
+Fonti controllate aggiornate:
 
 - amount / unit / event_date → ui_state.parsed
 - type → select1.value
 - matching project/entity → project_state / entity_state
 - project_id → select_project.value
 - entity_id → select_entity.value
+- feedback temporaneo → ui_state.feedback_summary
+- view corrente → ui_state.view
 
 ui_state.parsed NON contiene project/entity.
 
@@ -313,30 +397,48 @@ Componenti:
 
 input_home
 container_esempi
-container_suggerimenti
-container_attivita
+container_azioni_rapide
+container_eventi_da_verificare
+container_app_nav
 
 Funzione:
 
 punto ingresso sistema
 input principale
-esperienza utente non bloccante
+accesso rapido alla creazione evento
+accesso alla lista eventi da verificare
+predisposizione UX a future azioni rapide
 
 INPUT:
 
 campo libero
 
-SUGGERIMENTI:
+AZIONI RAPIDE:
 
-registra spesa
-registra incasso
-registra tempo
-registra evento
+- Registra spesa
+- Registra incasso
+- Registra tempo
+- Registra evento
 
-Nota:
+Stato:
 
-i suggerimenti restano UX helper,
-non modificano il modello dati.
+- presenti come scorciatoie UX
+- graficamente rifinite
+- Icon add-ons Retool introdotti
+- non ancora operative come flow guidato
+- non modificano modello dati
+- non salvano eventi
+- non bypassano input libero / select / conferma
+
+EVENTI DA VERIFICARE:
+
+card di accesso alla lista eventi NEW / da verificare.
+
+Ruolo:
+
+- rendere visibile il secondo asse operativo del sistema
+- collegare Home e Events list
+- ridurre ambiguità sul workflow WRITTEN / ERROR / Modifica
 
 CONTAINER INPUT
 
@@ -349,6 +451,7 @@ select_project
 select_entity
 button_input_confirm
 btn_cancel_edit
+button_cancel_input_home / cancel contestuale
 project_state
 entity_state
 create_suggestion_state
@@ -376,6 +479,7 @@ annullamento modifica senza update_event
 creazione guidata project/entity inline
 gestione suggestion no-match project/entity
 ignore globale suggestion
+annullamento contestuale create/edit
 
 Preview:
 
@@ -539,6 +643,20 @@ Regola critica:
 select_project / select_entity sono decisione utente finale.
 Valgono anche se il valore selezionato non è presente nel raw_input.
 
+UX Mobile Coherence Pass:
+
+✔ Sintesi strutturata mantenuta
+✔ card “Da verificare” confermata
+✔ notice associazioni mancanti confermato
+✔ suggestion container rifinito graficamente
+✔ Dati evento compattati con label inline nelle select
+✔ pulsante Conferma evento rifinito
+✔ pulsante cancel reso contestuale:
+  - create/input → Torna alla home
+  - edit → Annulla modifica
+✔ nav nascosta durante input attivo
+✔ font-size 16px applicato a input/select principali per stabilità Safari iOS
+
 INPUT FLOW
 
 Flow attuale:
@@ -554,8 +672,11 @@ input_home
 → select_project / select_entity
 → select1 / type classification base
 → preview / hint / highlight / suggestion container
+→ Dati evento compatti
 → confirm guard
+→ feedback_summary
 → save / edit
+→ feedback / routing post-save
 
 input_home:
 
@@ -650,6 +771,12 @@ Risultato:
 ✔ suggestion project/entity controllata implementata
 ✔ creazione inline project/entity implementata
 ✔ salvataggio evento separato dalla creazione project/entity
+✔ Dati evento compattati con label inline
+✔ feedback_summary creato prima del reset input/select
+✔ feedback post-save centralizzato
+✔ routing post-save contestuale
+✔ nav nascosta durante input attivo
+✔ input/select mobile Safari stabilizzati con font-size 16px
 
 TRIGGER_PARSE_DEBOUNCED
 
@@ -846,6 +973,43 @@ LIMITI:
 ⚠ parsing non semantico
 ✔ type classification base consolidata nello STEP 6.3
 ⚠ type classification avanzata non implementata
+
+------------------------------------------------
+MOBILE SAFARI BASELINE
+------------------------------------------------
+
+Durante test reale su iPhone 13 Safari sono stati rilevati due problemi:
+
+1. tap su input causava zoom automatico iOS
+2. dopo lo zoom l’app veniva troncata lateralmente
+3. le select Tipo / Progetto / Entità non mostravano correttamente il dropdown completo
+
+Fix applicato:
+
+- font-size portato a 16px sui campi editabili/select principali
+
+Campi coinvolti:
+
+- input_home
+- input_events_search
+- select1
+- select_project
+- select_entity
+- input_new_project_name
+- input_new_entity_name
+
+Esito:
+
+✔ zoom automatico Safari iOS risolto
+✔ layout non più troncato
+✔ select funzionanti sia in digitazione sia in dropdown
+✔ validazione reale su iPhone 13 Safari completata
+
+Regola architetturale:
+
+Su mobile Safari, input e select principali devono mantenere font-size minimo 16px.
+
+Eventuali rifiniture visive future non devono scendere sotto una soglia che riattivi lo zoom automatico iOS.
 
 MATCHING FLOW — FIRST CONTROLLED LEVEL
 
@@ -1948,21 +2112,25 @@ confermare inserimento
 confermare modifica evento NEW
 costruire payload da ui_state.parsed e select1.value
 lanciare insert_event o update_event
-aggiornare feedback e lista
+aggiornare feedback, lista e routing post-save
 
 Sequenza attuale:
 
 legge ui_state.parsed
 costruisce payload
-salva feedbackText / feedbackProject
-mostra feedback subito
-resetta input/select
-cancella debounce pending
 determina wasEditMode
+esegue no-op edit guard se in edit mode
+costruisce feedbackText / feedbackProject / feedbackEntity
+costruisce feedbackSummary prima del reset input/select
+cancella debounce pending
+resetta input/select
+mostra feedback come ultimo stato UI visibile
 esegue insert_event o update_event
 attende savePromise
 aggiorna events_new
 resetta edit_mode / editing_event se necessario
+avvia timer feedback 1800 ms
+ritorna a Home o Events list in base a insert/update
 
 EDIT MODE:
 
@@ -2074,22 +2242,36 @@ Decisione:
 - ambiguità risolta manualmente → conferma consentita
 - nessun match → conferma consentita
 
-Reset UI:
+Reset UI / Feedback:
 
-ui_state.setValue({
-  ...ui_state.value,
+button_input_confirm crea feedbackSummary prima del reset input/select.
+
+ui_state viene aggiornato con:
+
+{
   parsed: {
     amount: null,
     unit: null,
     event_date: null
   },
-  status: "idle",
+  status: "success",
   view: "feedback",
   feedback_text: feedbackText,
-  feedback_project: feedbackProject
-});
+  feedback_project: feedbackProject,
+  feedback_summary: feedbackSummary
+}
 
-Save / refresh:
+container_home.setHidden(true)
+container_input.setHidden(true)
+container_events_list.setHidden(true)
+container_feedback.setHidden(false)
+
+Regola:
+
+Il feedback viene mostrato come ultimo stato UI visibile,
+per evitare che input_home.setValue("") o altri handler di change sovrascrivano la vista.
+
+Save / refresh / routing:
 
 const wasEditMode = edit_mode.data;
 
@@ -2109,6 +2291,21 @@ if (wasEditMode) {
   await editing_event.trigger();
 }
 
+Routing post-save:
+
+- insert reale → feedback 1800 ms → Home
+- update reale → feedback 1800 ms → Lista eventi
+- no-op edit → Lista eventi immediata, senza feedback, senza update_event
+
+handle_event_success:
+
+non è più responsabile della gestione UI post-save.
+
+Decisione:
+
+button_input_confirm centralizza feedback e routing post-save.
+insert_event / update_event non devono avere success handler UI duplicati che cambiano view.
+
 Risultati:
 
 ✔ parsing duplicato eliminato
@@ -2123,6 +2320,13 @@ Risultati:
 ✔ edit_mode azzerato senza additionalScope { value }
 ✔ editing_event azzerato anche dopo update reale completato
 ✔ linting edit_mode / editing_event risolti
+✔ feedback_summary introdotto
+✔ feedback mobile stabilizzato
+✔ handle_event_success disabilitato come gestore UI post-save
+✔ routing post-save contestuale
+✔ insert → feedback → Home
+✔ update → feedback → Lista eventi
+✔ no-op edit → Lista eventi senza feedback
 
 INSERT_EVENT
 
@@ -2327,68 +2531,73 @@ Risultato:
 ✔ doppia visibilità input/lista dopo Annulla evitata
 
 ------------------------------------------------
-BTN_CANCEL_EDIT — FLOW
+CANCEL CONTESTUALE — CREATE / EDIT FLOW
 ------------------------------------------------
 
 Componente:
 
-btn_cancel_edit
-
-Tipo:
-
-Button
+pulsante cancel contestuale
 
 Ruolo:
 
-annullare una modifica evento NEW
-senza eseguire update_event.
+annullare input corrente oppure modifica evento,
+senza salvare nulla.
 
-Visibilità:
+Label dinamica:
 
-visibile solo in edit mode.
+- create/input mode → Torna alla home
+- edit mode → Annulla modifica
 
-Hidden:
-
-{{ !edit_mode.data }}
-
-Label:
-
-Annulla
-
-Posizione:
-
-dentro container_input,
-sotto button_input_confirm,
-con priorità mobile.
-
-Comportamento:
+Comportamento create/input:
 
 1. cancella eventuale debounce pendente
-2. scrive window.__logos_edit_mode_value = false
-3. rilancia edit_mode
-4. scrive window.__logos_editing_event_value = null
-5. rilancia editing_event
-6. resetta input_home
-7. resetta input_raw
-8. pulisce select_project
-9. pulisce select_entity
-10. pulisce select1
-11. resetta ui_state.parsed
-12. imposta ui_state.view = "events"
-13. nasconde container_input
-14. nasconde container_home
+2. cancella eventuale timer feedback pendente
+3. esce da edit mode se necessario
+4. azzera editing_event
+5. resetta input_home
+6. resetta input_raw
+7. pulisce select_project
+8. pulisce select_entity
+9. pulisce select1
+10. resetta ui_state.parsed
+11. azzera feedback_text / feedback_project / feedback_summary
+12. imposta ui_state.view = "home"
+13. mostra container_home
+14. nasconde container_input
 15. nasconde container_feedback
-16. mostra container_events_list
+16. nasconde container_events_list
+
+Comportamento edit:
+
+1. cancella eventuale debounce pendente
+2. cancella eventuale timer feedback pendente
+3. scrive window.__logos_edit_mode_value = false
+4. rilancia edit_mode
+5. scrive window.__logos_editing_event_value = null
+6. rilancia editing_event
+7. resetta input_home
+8. resetta input_raw
+9. pulisce select_project
+10. pulisce select_entity
+11. pulisce select1
+12. resetta ui_state.parsed
+13. azzera feedback_text / feedback_project / feedback_summary
+14. imposta ui_state.view = "events"
+15. nasconde container_input
+16. nasconde container_home
+17. nasconde container_feedback
+18. mostra container_events_list
 
 Risultato:
 
-✔ annulla modifica senza salvare
-✔ nessun update_event eseguito
+✔ create/input cancel torna Home
+✔ edit cancel torna Lista eventi
+✔ nessun insert_event
+✔ nessun update_event
 ✔ updated_at invariato
-✔ ritorno lista eventi
+✔ nav corretta dopo cancel
 ✔ edit_mode.data = false
 ✔ editing_event.data = null
-✔ create/edit non regressi
 
 Codice helper aggiornato:
 
@@ -2498,6 +2707,74 @@ Vincoli:
 ✔ nessuna modifica matching
 ✔ nessuna modifica type/duration
 
+UX Mobile Coherence Pass:
+
+- search bar ridimensionata
+- icona search monotona tramite add-on Retool
+- font-size 16px per stabilità Safari iOS
+
+------------------------------------------------
+NAVIGATION DOCK
+------------------------------------------------
+
+Componente:
+
+container_app_nav
+
+Voci:
+
+- Home
+- Eventi
+- Dashboard
+
+Stato Dashboard:
+
+- presente come voce prevista
+- disabilitata
+- nessuna dashboard implementata
+- nessun KPI anticipato
+
+Comportamento:
+
+Home vuota:
+
+- nav visibile in basso
+
+Input/Sintesi attiva:
+
+- nav nascosta
+
+Events list:
+
+- nav visibile in alto
+
+Feedback:
+
+- nav nascosta
+
+Hidden logic concettuale:
+
+la nav è visibile solo quando serve come navigazione principale,
+non durante inserimento attivo o feedback temporaneo.
+
+Decisione:
+
+Navigation dock contestuale.
+Non fixed/sticky.
+
+Motivo:
+
+- evitare sovrapposizioni mobile
+- evitare instabilità Retool
+- rendere la nav utile in lista eventi lunga
+- non disturbare input/sintesi
+- predisporre Dashboard senza implementarla
+
+Pattern:
+
+Navigation Dock Pattern
+Future Section Placeholder Pattern
+
 ---
 
 LIST_EVENTS
@@ -2515,6 +2792,14 @@ Azioni disponibili:
 - edit
 - WRITTEN
 - ERROR
+
+UX Mobile Coherence Pass:
+
+- card evento rese più leggibili
+- pulsanti OK / No / Modifica rifiniti
+- Icon add-ons Retool introdotti nei pulsanti
+- navigation dock visibile in alto nella vista Events
+- freccia indietro non più necessaria
 
 ---
 
@@ -2591,6 +2876,12 @@ entity_create_suggestion_dismissed
 window.__logos_edit_mode_value
 window.__logos_editing_event_value
 
+handle_event_success:
+
+presente come query legacy/di supporto,
+ma non deve più gestire la UI post-save.
+La gestione feedback/routing è centralizzata in button_input_confirm.
+
 PAGE1 — COMPONENTI UI RILEVANTI:
 
 select1
@@ -2609,6 +2900,11 @@ btn_create_entity_inline
 bottone Ignora globale
 btn_cancel_project_inline
 btn_cancel_entity_create
+container_app_nav
+btn_nav_home
+btn_nav_events
+btn_nav_dashboard
+btn_cancel_edit / pulsante cancel contestuale
 
 Nota:
 
@@ -2698,6 +2994,14 @@ PATTERN ARCHITETTURALI
 ✔ Suggestion Dismiss Pattern
 ✔ Manual Select Override Pattern
 ✔ One Inline Creation At A Time Pattern
+✔ Feedback Summary Pattern
+✔ Centralized Post-save Routing Pattern
+✔ Contextual Cancel Pattern
+✔ Navigation Dock Pattern
+✔ Future Section Placeholder Pattern
+✔ Mobile Safari 16px Input Baseline Pattern
+✔ Retool Icon Add-on Pattern
+✔ Compact Select Label Pattern
 
 PROBLEMI NOTI
 
@@ -2760,6 +3064,19 @@ RISOLTI:
 ✔ evento salvabile senza project/entity → VALIDATO
 ✔ blocco solo su ambiguità attiva → VALIDATO
 ✔ entity autofill controllato → IMPLEMENTATO
+✔ UI suggestion container grezza → RISOLTA A LIVELLO MOBILE BASE
+✔ Home mobile grezza → RISOLTA
+✔ Events list mobile poco rifinita → RISOLTA
+✔ Feedback rapido/conflittuale → RISOLTO
+✔ handle_event_success duplicava gestione UI post-save → RISOLTO
+✔ routing post-save non contestuale → RISOLTO
+✔ cancel create/edit non contestuale → RISOLTO
+✔ assenza navigation dock → RISOLTA A LIVELLO BASE
+✔ Dati evento troppo alti → RIDOTTI con label inline
+✔ pulsanti non uniformi → RIDOTTI con Icon add-ons Retool
+✔ zoom automatico Safari iOS su input → RISOLTO
+✔ app troncata lateralmente dopo zoom iOS → RISOLTO
+✔ select mobile senza dropdown stabile → RISOLTO con font-size 16px
 
 UI:
 
@@ -2800,7 +3117,11 @@ ARCHITETTURA:
 ⚠ alias / gerarchie / deduplicazione non implementati  
 ✔ creazione guidata project/entity implementata a primo livello controllato
 ⚠ command intent non implementato
-⚠ UI suggestion container ancora grezza 
+✔ UI suggestion container rifinita a livello mobile base
+⚠ Cambia / Scegli nella Sintesi ancora non cliccabili
+⚠ Azioni rapide non operative
+⚠ Dashboard predisposta ma non implementata
+⚠ mobile polish finale font/spaziature rimandato 
 
 STATO ARCHITETTURA
 
@@ -2851,6 +3172,23 @@ STATO ARCHITETTURA
 ✔ entity autofill controlled minimal implementato
 ✔ flow combinato project + entity validato
 ✔ salvataggio evento con project_id/entity_id creati inline validato
+✔ UX Mobile Coherence Pass completato
+✔ Home mobile rifinita
+✔ Events list mobile rifinita
+✔ Feedback mobile stabilizzato
+✔ feedback_summary introdotto
+✔ routing post-save contestuale
+✔ insert → feedback → Home
+✔ update → feedback → Lista eventi
+✔ no-op edit → Lista eventi senza update_event
+✔ cancel create/input → Home
+✔ cancel edit → Lista eventi
+✔ Navigation dock Home / Eventi / Dashboard introdotta
+✔ Dashboard predisposta ma disabilitata
+✔ Dati evento compattati con label inline
+✔ Icon add-ons Retool introdotti nei pulsanti reali
+✔ font-size 16px input/select validato su Safari iOS
+✔ validazione reale iPhone 13 Safari completata
 
 ⚠ non completamente stabile nei layer evolutivi
 ⚠ preview ancora ibrida
@@ -2858,28 +3196,22 @@ STATO ARCHITETTURA
 ⚠ alias / gerarchie / deduplicazione non implementati
 ✔ creazione guidata project/entity implementata a primo livello controllato
 ⚠ command intent non implementato
-⚠ UI suggestion container ancora grezza
+⚠ suggestion create vs edit consistency da verificare
+⚠ project creation override con match generico non implementato
+⚠ Azioni rapide non operative
+⚠ Dashboard non implementata
+⚠ Icon System non completamente standardizzato
 ⚠ output non attivo
 
 ------------------------------------------------
 NEXT STEP ARCHITETTURALE CONSIGLIATO
 ------------------------------------------------
 
-NEXT NODE POST PROJECT / ENTITY CREATE SUGGESTION DA DEFINIRE
+NEXT NODE POST UX MOBILE COHERENCE PASS DA DEFINIRE
 
 Candidati principali residui:
 
-1. UX CLEANUP — SUGGESTION CONTAINER / MOBILE
-
-- rifinire layout container suggestion
-- migliorare spaziature
-- migliorare gerarchia visiva
-- ottimizzare uso mobile
-- non modificare logica
-- non modificare DB
-- non modificare matching
-
-2. COMMAND INTENT — CREATE PROJECT / ENTITY
+1. COMMAND INTENT — CREATE PROJECT / ENTITY
 
 - riconoscere frasi tipo “crea progetto Aspri”
 - riconoscere frasi tipo “crea entità Patrizio”
@@ -2889,7 +3221,7 @@ Candidati principali residui:
 - non salvare evento se l’input è comando puro
 - evitare creazioni automatiche silenziose
 
-3. DATA STRUCTURE / ENTITY HIERARCHY
+2. DATA STRUCTURE / ENTITY HIERARCHY
 
 - valutare gerarchie
 - alias
@@ -2897,24 +3229,45 @@ Candidati principali residui:
 - relazioni entity-project
 - filtro select su match ambigui
 
-4. ECONOMIC DIRECTION ADVANCED
+3. SUGGESTION CREATE VS EDIT CONSISTENCY
+
+- verificare differenze suggestion tra create flow e edit flow
+- capire perché in alcuni edit flow compare solo suggestion entity
+- non modificare create_suggestion_state senza casi riproducibili
+
+4. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+
+- valutare creazione progetto anche con match generico
+- esempio input “villa”
+- evitare duplicati e creazioni aggressive
+
+5. ECONOMIC DIRECTION ADVANCED
 
 - valutare amount firmato
 - valutare direction field
 - valutare regole contabili avanzate Spesa/Incasso
 
-5. DURATION ADVANCED — GIORNI / SETTIMANE
+6. DURATION ADVANCED — GIORNI / SETTIMANE
 
 - decidere conversione giorni/settimane
 - valutare giornata lavorativa
 - valutare mezza giornata
 - evitare conversioni automatiche ambigue
 
-Vincoli:
+7. AZIONI RAPIDE OPERATIVE
 
-- output/KPI restano non attivi
-- istanze verticali ASPRI / ADEXIMA / MaurizioLab non attive
-- LOGOS resta focalizzato sul Core Event System
+- rendere operative le scorciatoie Home
+- non bypassare Conferma evento
+- non salvare automaticamente
+
+8. DASHBOARD BASE
+
+- attivare la voce Dashboard solo quando i dati sono sufficienti
+- evitare KPI fuorvianti
+
+- UX mobile base completata
+- Dashboard predisposta in nav ma non attiva
+- font-size input/select mobile Safari minimo 16px da preservare
 
 CHANGELOG
 
@@ -3173,3 +3526,39 @@ type classification invariata
 duration normalization invariata
 nessun output/KPI anticipato
 aggiornamento prossimo nodo consigliato a NEXT NODE POST PROJECT / ENTITY CREATE SUGGESTION DA DEFINIRE
+
+v14 — 2026-05-09
+
+completamento UX MOBILE COHERENCE PASS
+documentata Home mobile rifinita
+documentata card Esempi coerente
+documentate Azioni rapide rifinite e predisposte
+documentata Events list mobile rifinita
+documentato Feedback mobile stabilizzato
+documentato feedback_summary in ui_state
+documentato handle_event_success non più gestore UI post-save
+documentata rimozione success handler UI duplicati da insert_event / update_event
+documentato button_input_confirm come gestore centrale feedback/routing
+documentato insert reale → feedback 1800 ms → Home
+documentato update reale → feedback 1800 ms → Lista eventi
+documentato no-op edit → Lista eventi immediata senza update_event
+documentato cancel create/input → Home
+documentato cancel edit → Lista eventi
+documentata Navigation dock Home / Eventi / Dashboard
+documentata Dashboard presente ma disabilitata
+documentata nav contestuale Home/Events
+documentata nav nascosta durante input attivo e feedback
+documentati Dati evento compatti con label inline nelle select
+documentati Icon add-ons Retool nei pulsanti reali
+documentato font-size input/select 16px per Safari iOS
+documentato zoom automatico iOS Safari risolto
+documentate select mobile funzionanti sia in digitazione sia in dropdown
+documentata validazione reale iPhone 13 Safari
+DB invariato
+parser invariato
+matching invariato
+create_suggestion_state invariato
+type classification invariata
+duration normalization invariata
+nessun output/KPI anticipato
+aggiornamento prossimo nodo consigliato a NEXT NODE POST UX MOBILE COHERENCE PASS DA DEFINIRE

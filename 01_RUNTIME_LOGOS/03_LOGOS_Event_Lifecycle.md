@@ -1,6 +1,6 @@
-# 03_LOGOS_Event_Lifecycle_v07
+# 03_LOGOS_Event_Lifecycle_v08
 
-DATA: 2026-05-03
+DATA: 2026-05-09
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -22,6 +22,20 @@ C (Completezza): 10/10
 - edit_mode / editing_event documentati come helper tecnici ripuliti
 - rimozione additionalScope { value } da edit_mode / editing_event documentata
 - reset helper edit flow post-update documentato
+- Project / Entity Create Suggestion First Controlled Level documentato nel lifecycle
+- creazione project/entity inline documentata come supporto al NEW event flow
+- evento non salvato automaticamente dopo creazione project/entity documentato
+- UX Mobile Coherence Pass documentato
+- feedback_summary documentato come stato UI temporaneo
+- feedback post-save temporaneo documentato
+- routing post-save contestuale documentato
+- insert → feedback → Home documentato
+- update reale → feedback → Lista eventi documentato
+- no-op edit → Lista eventi senza feedback documentato
+- cancel create/input → Home documentato
+- cancel edit → Lista eventi documentato
+- navigation dock documentata come UI, non stato evento
+- font-size 16px input/select mobile Safari documentato come vincolo UX/runtime
 
 Q (Qualità): 9.5/10  
 - lifecycle coerente con sistema reale  
@@ -34,6 +48,11 @@ Q (Qualità): 9.5/10
 - nessuna anticipazione output/KPI  
 - rumore tecnico Retool su edit_mode / editing_event eliminato
 - lifecycle edit più ricostruibile perché gli helper non dipendono più da value implicito
+- lifecycle invariato negli stati evento NEW / WRITTEN / ERROR
+- migliorata distinzione tra lifecycle dati e routing UI post-save
+- chiarito che feedback e navigation dock non cambiano stato evento
+- chiarito che project/entity creation migliora la qualità dati ma non valida l’evento
+- validazione reale iPhone 13 Safari integrata come requisito UX mobile
 
 D (Deployabilità): 10/10  
 - documento stabile  
@@ -49,6 +68,15 @@ D (Deployabilità): 10/10
 - linting edit_mode / editing_event risolti
 - create/edit/annulla/no-op edit/edit reale rivalidati dopo cleanup helper
 - WRITTEN / ERROR rivalidati dopo cleanup helper
+- Project / Entity Create Suggestion validato runtime
+- insert_project / insert_entity validati come supporto al lifecycle NEW
+- UX Mobile Coherence Pass validato runtime
+- insert → feedback → Home validato
+- update → feedback → Lista eventi validato
+- no-op edit → Lista eventi senza update_event validato
+- cancel create/edit validato
+- iPhone 13 Safari reale validato
+- zoom automatico iOS risolto tramite font-size 16px
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -70,6 +98,13 @@ Il documento stabilisce:
 - evoluzione futura
 - cleanup helper edit_mode / editing_event
 - rimozione linting Retool residui dal lifecycle edit
+- creazione guidata project/entity come supporto al lifecycle NEW
+- distinzione tra creazione project/entity e salvataggio evento
+- feedback post-save temporaneo
+- routing post-save contestuale
+- cancel create/input e cancel edit contestuali
+- UX mobile coherence pass
+- vincolo font-size 16px per input/select mobile Safari
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -92,6 +127,9 @@ Gli eventi:
 - mantengono raw_input come memoria dell’input utente
 - non mantengono ancora storico revisioni
 - usano helper edit_mode / editing_event ripuliti da linting Retool
+- possono essere arricchiti con project_id/entity_id creati inline prima della conferma evento
+- la creazione project/entity non salva automaticamente l’evento
+- feedback e routing post-save non modificano il dato salvato
 
 ---
 
@@ -119,11 +157,14 @@ Il sistema:
 - classifica type a livello base
 - propone matching project/entity
 - blocca ambiguità project/entity non risolte
+- propone creazione project/entity quando controllata
+- richiede conferma esplicita per creare project/entity
+- richiede conferma esplicita separata per salvare l’evento
 - non decide definitivamente
 
 ---
 
-5. INPUT NON BLOCCANTE
+1. INPUT NON BLOCCANTE
 
 Eventi imperfetti possono essere salvati.
 
@@ -137,6 +178,9 @@ La qualità viene migliorata progressivamente tramite:
 - type classification base
 - match state project/entity
 - processing manuale
+- suggestion project/entity controllata
+- feedback post-save temporaneo
+- routing UI coerente con insert/update
 
 ------------------------------------------------
 STATI EVENTO ATTUALI
@@ -153,9 +197,17 @@ NEW
 - può contenere durate certe normalizzate in minuti
 - può contenere type base valorizzato
 - può contenere project_id/entity_id derivati da select_project/select_entity
+- può usare project/entity creati inline prima del salvataggio evento
+- project/entity creati inline vengono salvati solo su conferma utente
+- evento resta NEW solo dopo Conferma evento / insert_event
+- la creazione project/entity non genera automaticamente un evento
 - può essere corretto tramite edit flow con match state live
 - può uscire dall’edit flow tramite Annulla senza update_event
 - può essere confermato in edit senza modifiche reali senza aggiornare updated_at
+- dopo insert reale mostra feedback temporaneo e ritorna Home
+- dopo update reale mostra feedback temporaneo e ritorna Lista eventi
+- dopo no-op edit torna Lista eventi senza feedback
+- usa feedback_summary solo come riepilogo UI temporaneo
 - usa edit_mode / editing_event come helper tecnici del flow edit
 - edit_mode / editing_event non usano più additionalScope { value }
 - resta sotto controllo utente
@@ -195,17 +247,31 @@ TYPE CLASSIFICATION BASE
 ↓  
 MATCH STATE PROJECT/ENTITY  
 ↓  
+CREATE SUGGESTION STATE  
+↓  
 SELECT PROJECT / ENTITY  
 ↓  
-PREVIEW  
+PREVIEW / SINTESI  
+↓  
+DATI EVENTO  
+↓  
+CONFERMA EVENTO  
 ↓  
 INSERT  
+↓  
+FEEDBACK TEMPORANEO  
+↓  
+HOME  
 ↓  
 NEW  
 ↓  
 EDIT opzionale  
 ↓  
 UPDATE se modifica reale  
+↓  
+FEEDBACK TEMPORANEO  
+↓  
+LISTA EVENTI  
 oppure  
 ANNULLA senza update_event  
 oppure  
@@ -216,7 +282,18 @@ NEW
 DECISIONE UTENTE  
 
 → WRITTEN  
-→ ERROR  
+→ ERROR
+
+Nota:
+
+Feedback, Home, Lista eventi e Navigation dock sono stati UI.
+Non sono stati evento.
+
+Gli stati evento restano:
+
+- NEW
+- WRITTEN
+- ERROR
 
 ---
 
@@ -236,6 +313,9 @@ EDIT:
 - può essere annullato senza update_event
 - può essere confermato senza modifiche reali come no-op
 - aggiorna lista eventi dopo save completato quando avviene update_event
+- dopo update reale mostra feedback temporaneo
+- dopo update reale ritorna alla lista eventi
+- dopo no-op edit torna alla lista eventi senza feedback
 - azzera edit_mode dopo update reale completato
 - azzera editing_event dopo update reale completato
 - usa helper edit_mode / editing_event senza additionalScope { value }
@@ -253,21 +333,84 @@ ma NON validano l’evento.
 
 La validazione resta manuale.
 
+------------------------------------------------
+PROJECT / ENTITY CREATE SUGGESTION NEL LIFECYCLE
+------------------------------------------------
+
+Project / Entity Create Suggestion First Controlled Level supporta il lifecycle
+prima del salvataggio evento.
+
+Il sistema può proporre:
+
+- creazione nuovo progetto
+- creazione nuova entità
+- ignorare suggerimenti
+- salvare comunque evento incompleto
+- bloccare solo ambiguità project/entity attive non risolte
+
+Regole lifecycle:
+
+- la creazione project/entity NON crea un evento
+- la creazione project/entity NON salva automaticamente l’evento corrente
+- insert_project / insert_entity scrivono solo nelle rispettive tabelle
+- select_project / select_entity vengono valorizzate dopo creazione controllata
+- l’evento viene salvato solo quando l’utente clicca Conferma evento
+- project/entity mancanti non bloccano il salvataggio evento
+- project/entity ambigui bloccano il salvataggio finché non risolti manualmente
+
+Flow project/entity:
+
+input evento
+→ suggestion project/entity
+→ eventuale Crea progetto / Crea entità
+→ insert_project / insert_entity
+→ select_project / select_entity valorizzate
+→ evento ancora non salvato
+→ Conferma evento
+→ insert_event
+→ NEW
+
+Decisione:
+
+Project/entity creation migliora la qualità dati del NEW event,
+ma non modifica il lifecycle stati.
+
 ---
 
-ANNULLA MODIFICA:
+CANCEL CONTESTUALE:
 
-- disponibile solo in edit mode
-- usa btn_cancel_edit
+Il pulsante cancel ha comportamento diverso in base al contesto.
+
+CREATE / INPUT MODE:
+
+- label: “Torna alla home”
+- non esegue insert_event
+- non crea evento
+- resetta input_home / input_raw
+- resetta select_project / select_entity / select1
+- resetta ui_state.parsed
+- azzera feedback_text / feedback_project / feedback_summary
+- torna Home
+- nessuna modifica DB
+
+EDIT MODE:
+
+- label: “Annulla modifica”
 - non esegue update_event
 - non aggiorna updated_at
 - resetta edit_mode tramite window.__logos_edit_mode_value
 - resetta editing_event tramite window.__logos_editing_event_value
-- non usa più additionalScope { value } per edit_mode / editing_event
+- non usa additionalScope { value } per edit_mode / editing_event
 - resetta input_home / input_raw
 - resetta select_project / select_entity / select1
 - resetta ui_state.parsed
+- azzera feedback_text / feedback_project / feedback_summary
 - torna alla lista eventi NEW
+
+Nota:
+
+Cancel create/input e cancel edit sono routing UI.
+Non modificano lo stato evento.
 
 ---
 
@@ -299,6 +442,9 @@ In caso di no-op edit:
 - edit_mode viene chiuso tramite window.__logos_edit_mode_value = false
 - editing_event viene azzerato tramite window.__logos_editing_event_value = null
 - non viene usato additionalScope { value } per edit_mode / editing_event
+- non viene mostrato feedback
+- ritorna immediatamente alla lista eventi
+- feedback_summary viene azzerato
 
 ------------------------------------------------
 TRANSIZIONI CONSENTITE
@@ -323,6 +469,8 @@ NEW → NEW (EDIT)
 - al termine dell’update reale azzera edit_mode
 - al termine dell’update reale azzera editing_event
 - il reset degli helper edit avviene senza additionalScope { value }
+- dopo update_event mostra feedback temporaneo
+- dopo feedback torna alla lista eventi
 
 ---
 
@@ -345,6 +493,9 @@ NEW → NEW (ANNULLA EDIT)
 - edit_mode viene chiuso tramite window.__logos_edit_mode_value
 - editing_event viene svuotato tramite window.__logos_editing_event_value
 - btn_cancel_edit non usa più additionalScope { value } per edit_mode / editing_event
+- feedback_summary azzerato
+- ritorno alla lista eventi
+- nessun feedback mostrato
 
 ---
 
@@ -367,6 +518,26 @@ NEW → NEW (EDIT NO-OP)
 - edit_mode viene chiuso tramite window.__logos_edit_mode_value
 - editing_event viene svuotato tramite window.__logos_editing_event_value
 - button_input_confirm non usa più additionalScope { value } per resettare edit_mode / editing_event
+- nessun feedback mostrato
+- feedback_summary azzerato
+- ritorno immediato alla lista eventi
+
+---
+
+CREATE INPUT → HOME (CANCEL CREATE)
+
+Nota:
+
+questa NON è una transizione evento perché nessun evento è ancora stato creato.
+
+- azione: Torna alla home
+- eseguita da utente
+- runtime: cancel contestuale
+- nessun insert_event
+- nessun evento NEW creato
+- input/select/ui_state.parsed resettati
+- feedback_summary azzerato
+- ritorno Home
 
 ---
 
@@ -395,6 +566,14 @@ Transizioni NON consentite:
 - WRITTEN → EDIT
 - ERROR → EDIT
 
+Routing UI post-save:
+
+- insert reale → feedback temporaneo → Home
+- update reale → feedback temporaneo → Lista eventi
+- no-op edit → Lista eventi senza feedback
+
+Questo routing non introduce nuovi stati evento.
+
 ------------------------------------------------
 RESPONSABILITÀ UTENTE
 ------------------------------------------------
@@ -409,6 +588,10 @@ L’utente deve:
 - correggere manualmente type se la classificazione base non è sufficiente
 - scartare errori
 - confermare solo eventi ritenuti utilizzabili
+- confermare esplicitamente la creazione project/entity quando proposta
+- confermare separatamente il salvataggio evento dopo eventuale creazione project/entity
+- distinguere tra Torna alla home e Annulla modifica
+- verificare il riepilogo feedback solo come conferma UI temporanea
 
 ---
 
@@ -420,6 +603,10 @@ Il sistema NON:
 - decide definitivamente spesa/incasso
 - decide definitivamente project/entity in caso di ambiguità
 - decide qualità finale del dato
+- crea project/entity automaticamente
+- salva automaticamente eventi dopo creazione project/entity
+- usa feedback_summary come dato persistente
+- considera la navigation dock parte del lifecycle evento
 
 ------------------------------------------------
 QUALITÀ DEL DATO
@@ -436,6 +623,9 @@ Dato in NEW dopo Normalization / Duration / Type / Match Base:
 - project/entity più coerenti se match univoco o scelti manualmente
 - ambiguità project/entity non risolta bloccata lato frontend
 - nessun match project/entity consente salvataggio con project_id/entity_id null
+- project/entity possono essere creati inline prima del salvataggio evento
+- project/entity creati inline migliorano il collegamento dell’evento
+- l’evento resta non validato fino a WRITTEN
 - non è ancora validato dall’utente
 
 ---
@@ -563,6 +753,11 @@ INPUT SYSTEM:
 - usa select1.value come fonte type
 - usa project_state/entity_state come fonte minima matching
 - usa select_project/select_entity come fonte project_id/entity_id
+- usa create_suggestion_state per suggestion project/entity
+- usa insert_project / insert_entity solo su conferma utente
+- usa feedback_summary per riepilogo feedback temporaneo
+- usa routing post-save contestuale
+- usa cancel contestuale create/edit
 
 ---
 
@@ -574,11 +769,16 @@ input_home
 → parse_input_controlled  
 → ui_state.parsed  
 → project_state / entity_state  
+→ create_suggestion_state  
+→ eventuale insert_project / insert_entity su conferma utente  
 → select_project / select_entity  
 → select1  
+→ feedback_summary  
 → button_input_confirm  
 → insert_event  
-→ NEW   
+→ feedback temporaneo  
+→ Home  
+→ NEW 
 
 ---
 
@@ -603,23 +803,36 @@ Percorsi possibili:
 
 1. Conferma con modifica reale:
 button_input_confirm  
+→ feedback_summary  
 → update_event  
 → events_new refresh  
 → reset edit_mode / editing_event senza additionalScope { value }  
+→ feedback temporaneo  
+→ Lista eventi  
 → NEW
 
-2. Conferma senza modifiche reali:
+1. Conferma senza modifiche reali:
 button_input_confirm  
 → no-op edit guard  
 → nessun update_event  
 → reset edit_mode / editing_event senza additionalScope { value }  
 → NEW
 
-3. Annulla:
+1. Annulla:
 btn_cancel_edit  
 → reset edit_mode / editing_event senza additionalScope { value }  
 → nessun update_event  
 → NEW
+→ nessun feedback  
+→ Lista eventi
+
+4. Cancel create/input:
+
+input in creazione  
+→ Torna alla home  
+→ reset input/select/ui_state.parsed  
+→ nessun insert_event  
+→ Home
 
 Nota edit flow:
 
@@ -693,6 +906,18 @@ button_input_confirm:
 
 - in caso di no-op edit, resetta edit_mode / editing_event tramite chiavi window
 - in caso di update reale, dopo save ed events_new refresh resetta edit_mode / editing_event tramite chiavi window
+
+button_input_confirm:
+
+- in caso di update reale crea feedback_summary
+- dopo update reale mostra feedback temporaneo
+- dopo feedback torna alla lista eventi
+- in caso di no-op edit non mostra feedback
+
+cancel contestuale:
+
+- in create/input mode torna Home senza creare eventi
+- in edit mode torna Lista eventi senza update_event
 
 Effetto:
 
@@ -772,7 +997,18 @@ Il matching NON:
 - decide type
 - decide spesa/incasso
 - crea project/entity automaticamente
+- salva automaticamente l’evento dopo creazione project/entity
 - risolve ambiguità in modo silenzioso
+
+---
+
+Project / Entity Create Suggestion:
+
+- consuma project_state / entity_state
+- può proporre creazione project/entity
+- non decide project/entity al posto dell’utente
+- non cambia lifecycle
+- non valida evento
 
 ---
 
@@ -783,7 +1019,9 @@ Limiti:
 - alias system non implementato
 - entity/project hierarchy assente
 - deduplicazione assente
-- creazione guidata project/entity non implementata
+- creazione guidata project/entity implementata a primo livello controllato
+- suggestion create vs edit consistency da verificare
+- project creation override con match generico non implementato
 
 ------------------------------------------------
 INTEGRAZIONE CON PREVIEW
@@ -874,6 +1112,8 @@ Il database NON:
 - decide project/entity
 - risolve ambiguità
 - crea project/entity automaticamente
+- salva evento automaticamente dopo insert_project / insert_entity
+- salva feedback_summary
 
 ---
 
@@ -900,6 +1140,13 @@ Fonti runtime dei campi:
 - entity_id → select_entity.value
 - raw_input → input_raw.value
 
+Project/entity creation:
+
+- insert_project scrive nella tabella projects
+- insert_entity scrive nella tabella entities
+- entrambe le azioni avvengono solo su conferma utente
+- nessuna delle due azioni crea automaticamente un evento
+
 ------------------------------------------------
 INTEGRAZIONE CON PROCESSING
 ------------------------------------------------
@@ -923,6 +1170,7 @@ NEW → ERROR
 NEW → NEW (EDIT con modifica reale)  
 NEW → NEW (ANNULLA EDIT)  
 NEW → NEW (EDIT NO-OP)  
+CREATE INPUT → HOME (nessun evento creato) 
 
 ---
 
@@ -930,6 +1178,21 @@ Dopo insert/update:
 
 button_input_confirm attende il completamento del salvataggio
 e poi aggiorna events_new.
+
+Dopo insert reale:
+
+- feedback temporaneo 1800 ms
+- ritorno Home
+
+Dopo update reale:
+
+- feedback temporaneo 1800 ms
+- ritorno Lista eventi
+
+Dopo no-op edit:
+
+- nessun feedback
+- ritorno immediato Lista eventi
 
 Ordine corretto:
 
@@ -986,6 +1249,13 @@ Dopo Linting / State Helper Cleanup:
 - edit no-op resetta edit_mode / editing_event senza update_event
 - nessuno di questi reset modifica direttamente il lifecycle dell’evento
 
+Dopo UX Mobile Coherence Pass:
+
+- lista eventi rifinita graficamente
+- navigation dock visibile in alto
+- search bar mobile rifinita
+- pulsanti OK / No / Modifica rifiniti
+
 ------------------------------------------------
 LIMITI ATTUALI
 ------------------------------------------------
@@ -1008,9 +1278,16 @@ LIMITI ATTUALI
 - fuzzy matching non implementato
 - project/entity hierarchy non implementata
 - deduplicazione project/entity non implementata
-- creazione guidata project/entity non implementata
+- creazione guidata project/entity implementata a primo livello controllato
+- suggestion create vs edit consistency da verificare
+- project creation override con match generico non implementato
 - preview ancora layer ibrido
 - output/KPI non attivi
+- Dashboard non implementata
+- Azioni rapide non operative
+- Cambia / Scegli nella Sintesi non cliccabili
+- feedback_summary non persistente
+- navigation dock non rappresenta stato evento
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE
@@ -1136,6 +1413,11 @@ INPUT SYSTEM
 → usa helper edit_mode / editing_event senza additionalScope { value }
 → azzera editing_event al termine del flow edit
 → produce ui_state.parsed  
+→ propone creazione project/entity controllata
+→ non salva evento automaticamente dopo creazione project/entity
+→ gestisce feedback_summary temporaneo
+→ gestisce routing post-save contestuale
+→ gestisce cancel create/edit contestuale
 
 ---
 
@@ -1170,6 +1452,9 @@ DATABASE
 → memorizza eventi  
 → non viene aggiornato dal reset degli helper edit_mode / editing_event
 → non interpreta  
+→ non salva feedback_summary
+→ non conosce navigation dock
+→ non conosce routing UI post-save
 
 ---
 
@@ -1187,6 +1472,18 @@ OUTPUT FUTURO
 
 → utilizza dati affidabili  
 → richiede normalizzazione sufficiente  
+
+---
+
+UX MOBILE COHERENCE PASS
+
+→ migliora Home, Input, Events list e Feedback
+→ migliora navigazione senza modificare lifecycle eventi
+→ introduce navigation dock contestuale
+→ introduce feedback temporaneo con routing post-save
+→ consolida font-size 16px input/select mobile Safari
+→ non modifica stati evento
+→ non modifica DB
 
 ------------------------------------------------
 OBIETTIVO LIFECYCLE
@@ -1206,10 +1503,13 @@ Senza bloccare l’utente.
 Strategia:
 
 1. salvare velocemente
+1A. proporre creazione project/entity solo quando utile e controllata
+1B. non salvare automaticamente eventi dopo creazione project/entity
 2. correggere in NEW
 2A. evitare aggiornamenti inutili se l’edit non cambia il dato
 2B. permettere uscita sicura dall’edit senza salvare
 2C. chiudere in modo pulito edit_mode / editing_event al termine del flow edit
+2D. usare feedback breve e routing contestuale per non bloccare il flusso utente
 1. normalizzare progressivamente
 2. validare manualmente
 3. usare per output solo quando sufficientemente affidabile
@@ -1248,6 +1548,19 @@ Il lifecycle attuale è:
 ✔ linting / state helper cleanup completato
 ✔ edit_mode / editing_event non usano più additionalScope { value }
 ✔ editing_event viene azzerato anche dopo update reale completato
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ creazione project/entity inline controllata
+✔ evento non salvato automaticamente dopo creazione project/entity
+✔ UX Mobile Coherence Pass completato
+✔ feedback temporaneo stabilizzato
+✔ routing post-save contestuale
+✔ insert → feedback → Home
+✔ update → feedback → Lista eventi
+✔ no-op edit → Lista eventi senza feedback
+✔ cancel create/input → Home
+✔ cancel edit → Lista eventi
+✔ navigation dock introdotta come UI contestuale
+✔ font-size 16px input/select mobile Safari validato
 
 ---
 
@@ -1262,6 +1575,10 @@ Ma:
 ✔ normalizza durate certe ore/minuti  
 ⚠ non gestisce direzione economica avanzata  
 ⚠ non normalizza giorni/settimane  
+⚠ suggestion create vs edit consistency da verificare
+⚠ project creation override con match generico non implementato
+⚠ Azioni rapide non operative
+⚠ Dashboard non implementata
 
 ---
 
@@ -1280,9 +1597,11 @@ solo dopo stabilizzazione:
 9. match engine unification first controlled level ✔  
 10. UX / cleanup post match engine ✔  
 11. linting / state helper cleanup ✔  
-12. data structure / project-entity evolution  
-13. economic direction advanced  
-14. output
+12. Project / Entity Create Suggestion First Controlled Level ✔
+13. UX Mobile Coherence Pass ✔
+14. command intent / data structure / project-entity evolution
+15. economic direction advanced
+16. output / dashboard base
 
 ------------------------------------------------
 CHANGELOG
@@ -1388,4 +1707,34 @@ v07 — 2026-05-03
 - Duration Normalization invariata
 - preview invariata
 - lista eventi invariata
+- nessun output/KPI anticipato
+
+v08 — 2026-05-09
+
+- integrazione PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL nel lifecycle
+- documentata creazione guidata project/entity come supporto al NEW event flow
+- documentato che insert_project / insert_entity non salvano automaticamente eventi
+- documentato che select_project / select_entity restano decisione utente finale
+- documentato che project/entity mancanti non bloccano salvataggio evento
+- documentato che ambiguità project/entity non risolte bloccano conferma
+- integrazione UX MOBILE COHERENCE PASS nel lifecycle
+- documentato feedback_summary come UI temporanea non persistente
+- documentato feedback post-save temporaneo
+- documentato routing post-save contestuale
+- documentato insert reale → feedback 1800 ms → Home
+- documentato update reale → feedback 1800 ms → Lista eventi
+- documentato no-op edit → Lista eventi senza feedback
+- documentato cancel create/input → Home
+- documentato cancel edit → Lista eventi
+- chiarito che feedback, Home, Lista eventi e navigation dock non sono stati evento
+- documentata navigation dock come UI contestuale
+- documentato font-size 16px input/select mobile Safari
+- documentato fix zoom automatico iOS Safari
+- documentate select mobile funzionanti sia in digitazione sia in dropdown
+- confermati stati evento NEW / WRITTEN / ERROR invariati
+- DB invariato
+- parser invariato
+- matching invariato
+- type classification invariata
+- duration normalization invariata
 - nessun output/KPI anticipato

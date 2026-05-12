@@ -675,6 +675,46 @@ Decisione finale:
 - standardizzazione completa icone rimandata a nodo futuro se necessario
 
 ------------------------------------------------
+
+17. MOBILE SAFARI — FONT SIZE INPUT / SELECT
+
+Durante il test reale su iPhone 13 tramite Safari è stato rilevato un comportamento anomalo non emerso nella preview desktop/mobile Retool.
+
+Problemi osservati:
+
+- tap su input principale causava zoom automatico Safari
+- dopo lo zoom l’app veniva troncata lateralmente
+- le select Tipo evento / Progetto / Entità non mostravano correttamente il dropdown completo
+- da desktop le select funzionavano correttamente, sia in digitazione sia in dropdown
+
+Fix applicato:
+
+- font-size portato a 16px sui campi editabili/select principali
+
+Campi coinvolti:
+
+- input_home
+- input_events_search
+- select1 / Tipo evento
+- select_project
+- select_entity
+- input_new_project_name
+- input_new_entity_name
+
+Esito validato su iPhone 13 Safari:
+
+- zoom automatico eliminato
+- app non più troncata lateralmente
+- select funzionanti sia in digitazione sia come dropdown
+- comportamento mobile reale accettabile
+
+Decisione consolidata:
+
+Per i campi editabili e select su mobile Safari, 16px diventa baseline minima tecnica.
+
+Eventuali riduzioni visive, compattazioni o rifiniture font saranno valutate solo in un nodo/polish futuro, senza scendere sotto una soglia che riattivi lo zoom automatico iOS.
+
+------------------------------------------------
 TEST VALIDATI
 ------------------------------------------------
 
@@ -929,6 +969,18 @@ Dashboard appare in nav come futura sezione, ma resta disabilitata.
 
 Icon add-ons Retool sono preferiti nei pulsanti.
 Sintesi/Feedback restano invariati per non toccare HTML funzionante.
+
+11. Font-size mobile Safari
+
+I campi editabili e le select principali devono mantenere font-size minimo 16px su mobile Safari.
+
+Motivo:
+
+- evitare zoom automatico iOS
+- preservare layout orizzontale
+- garantire funzionamento stabile dei dropdown select
+
+La rifinitura visiva dei font resta rimandata al polish finale.
 
 ------------------------------------------------
 DEBITI / NODI FUTURI

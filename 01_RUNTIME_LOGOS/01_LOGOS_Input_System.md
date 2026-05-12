@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v11
+# 01_LOGOS_Input_System_v12
 
-DATA: 2026-05-07
+DATA: 2026-05-09
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -38,6 +38,20 @@ Il documento è utilizzato per:
 - insert_project / insert_entity
 - entity autofill controlled minimal
 - separazione tra input evento e futuro command intent
+- UX Mobile Coherence Pass
+- Home mobile rifinita
+- Dati evento compatti con label inline
+- Feedback mobile stabilizzato
+- feedback_summary come riepilogo UI temporaneo
+- routing post-save contestuale
+- insert → feedback → Home
+- update → feedback → Lista eventi
+- no-op edit → Lista eventi senza feedback
+- cancel create/input → Home
+- cancel edit → Lista eventi
+- Navigation dock Home / Eventi / Dashboard
+- Dashboard predisposta ma disabilitata
+- font-size 16px input/select come baseline mobile Safari
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -180,6 +194,8 @@ Servono solo per:
 - permettere Annulla
 - permettere no-op edit guard
 - chiudere correttamente il flow edit
+- supportare il routing post-save contestuale
+- permettere a button_input_confirm di decidere se tornare Home o Lista eventi dopo feedback
 
 Dopo Linting / State Helper Cleanup,
 edit_mode / editing_event non usano più:
@@ -194,6 +210,64 @@ Il passaggio tecnico avviene tramite:
 Gli helper leggono la chiave window,
 la cancellano dopo la lettura
 e ritornano il valore controllato.
+
+Nota UX Mobile Coherence Pass:
+
+edit_mode viene usato anche per distinguere:
+
+- insert reale → feedback → Home
+- update reale → feedback → Lista eventi
+- cancel create/input → Home
+- cancel edit → Lista eventi
+
+1.  FEEDBACK TEMPORANEO ≠ STATO EVENTO
+
+Il feedback post-salvataggio è una conferma UI temporanea.
+
+Non è:
+
+- stato evento
+- dato persistente
+- validazione WRITTEN
+- output analitico
+- dato salvato nel DB
+
+Il feedback usa:
+
+- feedback_text
+- feedback_project
+- feedback_summary
+
+Regole:
+
+- feedback_summary viene creato prima del reset input/select
+- feedback_summary viene usato solo dalla UI feedback
+- feedback_summary viene azzerato dopo auto-return
+- feedback_summary non viene salvato nel DB
+
+Routing consolidato:
+
+- insert reale → feedback 1800 ms → Home
+- update reale → feedback 1800 ms → Lista eventi
+- no-op edit → Lista eventi immediata senza feedback
+
+12. MOBILE SAFARI BASELINE
+
+Su iPhone 13 Safari reale è stato rilevato che input/select con font troppo piccolo causavano:
+
+- zoom automatico iOS
+- troncamento laterale dell’app
+- comportamento anomalo dropdown sulle select
+
+Fix consolidato:
+
+- font-size 16px su input/select principali
+
+Regola:
+
+I campi editabili e select principali devono mantenere font-size minimo 16px su mobile Safari.
+
+Eventuali rifiniture future di font/spaziature non devono riattivare lo zoom automatico iOS.
 
 ------------------------------------------------
 ARCHITETTURA INPUT
@@ -265,11 +339,22 @@ editing_event
 → non usa più additionalScope { value }
 → legge window.__logos_editing_event_value
 
-btn_cancel_edit
-→ annulla modifica evento NEW senza update_event
+btn_cancel_edit / cancel contestuale
+→ in create/input mode torna Home senza insert_event
+→ in edit mode annulla modifica evento NEW senza update_event
 
 input_events_search
 → filtro client-side lista eventi NEW
+
+container_app_nav
+→ navigation dock contestuale Home / Eventi / Dashboard
+→ visibile in Home vuota e Events list
+→ nascosta durante input attivo e feedback
+
+feedback_summary
+→ oggetto UI temporaneo per riepilogo feedback
+→ non persistito nel DB
+→ azzerato dopo auto-return feedback
 
 label / sintesi (preview)
 → derivato UI (non persistito)
@@ -297,9 +382,29 @@ input_home
 → eventuale creazione inline project/entity previa conferma utente
 → conferma evento manuale
 → no-op edit guard se in edit mode
+→ feedback_summary costruito prima del reset input/select
 → insert_event / update_event se necessario
 → events_new refresh
 → reset edit_mode / editing_event se necessario
+→ feedback temporaneo
+→ routing post-save contestuale
+
+Routing post-save:
+
+Nuovo evento:
+→ insert_event
+→ feedback 1800 ms
+→ Home
+
+Modifica reale:
+→ update_event
+→ feedback 1800 ms
+→ Lista eventi
+
+Edit senza modifiche:
+→ nessun update_event
+→ nessun feedback
+→ Lista eventi immediata
 
 Nota:
 
@@ -336,23 +441,37 @@ Percorsi possibili:
 
 1. Modifica reale:
 → button_input_confirm
+→ feedback_summary
 → update_event
 → events_new refresh
 → reset edit_mode / editing_event
-→ ritorno lista eventi
+→ feedback temporaneo 1800 ms
+→ ritorno Lista eventi
 
 2. Conferma senza modifiche reali:
 → button_input_confirm
 → no-op edit guard
 → nessun update_event
+→ nessun feedback
 → reset edit_mode / editing_event
-→ ritorno lista eventi
+→ ritorno Lista eventi immediata
 
 3. Annulla:
-→ btn_cancel_edit
+→ btn_cancel_edit / cancel contestuale
 → nessun update_event
 → reset edit_mode / editing_event
-→ ritorno lista eventi
+→ reset input/select/ui_state.parsed
+→ azzera feedback_summary
+→ ritorno Lista eventi
+
+4. Cancel create/input:
+
+input in creazione
+→ Torna alla home
+→ nessun insert_event
+→ reset input/select/ui_state.parsed
+→ azzera feedback_text / feedback_project / feedback_summary
+→ ritorno Home
 
 Nota:
 
@@ -425,6 +544,96 @@ Il precedente rischio di loop reattivo è stato ridotto tramite:
 - trigger_parse_debounced
 - parse_input_controlled
 - ui_state.parsed come fonte unica
+
+------------------------------------------------
+MOBILE SAFARI BASELINE
+------------------------------------------------
+
+Durante il test reale su iPhone 13 Safari sono stati rilevati problemi non emersi nella sola preview mobile Retool.
+
+Problemi:
+
+- tap su input causava zoom automatico iOS
+- dopo lo zoom l’app veniva troncata lateralmente
+- select Tipo / Progetto / Entità non mostravano correttamente il dropdown completo
+
+Fix applicato:
+
+- font-size portato a 16px sui campi editabili/select principali
+
+Campi coinvolti:
+
+- input_home
+- input_events_search
+- select1
+- select_project
+- select_entity
+- input_new_project_name
+- input_new_entity_name
+
+Esito:
+
+- zoom automatico Safari iOS risolto
+- layout non più troncato
+- select funzionanti sia in digitazione sia in dropdown
+- validazione reale su iPhone 13 Safari completata
+
+Regola:
+
+input e select principali su mobile Safari devono mantenere font-size minimo 16px.
+
+Il polish finale può rivedere spaziature e gerarchia visiva,
+ma non deve riattivare lo zoom automatico iOS.
+
+------------------------------------------------
+NAVIGATION DOCK
+------------------------------------------------
+
+Componente:
+
+container_app_nav
+
+Voci:
+
+- Home
+- Eventi
+- Dashboard
+
+Stato Dashboard:
+
+- presente come voce prevista
+- disabilitata
+- nessuna dashboard implementata
+- nessun KPI anticipato
+
+Comportamento:
+
+Home vuota:
+
+- nav visibile in basso
+
+Input/Sintesi attiva:
+
+- nav nascosta
+
+Events list:
+
+- nav visibile in alto
+
+Feedback:
+
+- nav nascosta
+
+Regola:
+
+La navigation dock è UI di navigazione.
+Non è parte del dato evento.
+Non modifica parser, matching, salvataggio o lifecycle DB.
+
+Decisione:
+
+La nav è contestuale e non fixed/sticky,
+per evitare sovrapposizioni e instabilità mobile in Retool.
 
 ------------------------------------------------
 TRIGGER_PARSE_DEBOUNCED
@@ -517,7 +726,8 @@ ui_state completo:
   },
   status: null,
   feedback_text: null,
-  feedback_project: null
+  feedback_project: null,
+  feedback_summary: null
 }
 
 Regole:
@@ -588,6 +798,32 @@ Non modifica:
 - ui_state.parsed
 - raw_input
 - amount / unit / event_date
+
+Nota feedback:
+
+ui_state.feedback_summary NON contiene dati persistenti.
+
+È un oggetto temporaneo usato solo per mostrare il riepilogo nel feedback mobile.
+
+Contenuto atteso:
+
+{
+  type,
+  date,
+  amount,
+  project,
+  entity,
+  text
+}
+
+Regole:
+
+- creato prima del reset input/select
+- letto solo dal container_feedback
+- non modifica ui_state.parsed
+- non modifica payload evento
+- non viene salvato in Supabase
+- viene azzerato dopo auto-return feedback
 
 ------------------------------------------------
 HELPER EDIT STATE
@@ -687,6 +923,74 @@ sono temporanee.
 
 Devono essere scritte solo dal chiamante immediato
 e cancellate dagli helper dopo la lettura.
+
+------------------------------------------------
+CANCEL CONTESTUALE — CREATE / EDIT
+------------------------------------------------
+
+Componente:
+
+btn_cancel_edit / pulsante cancel contestuale
+
+Label dinamica:
+
+- create/input mode → Torna alla home
+- edit mode → Annulla modifica
+
+CREATE / INPUT MODE:
+
+Comportamento:
+
+- cancella eventuale debounce pendente
+- cancella eventuale timer feedback pendente
+- non esegue insert_event
+- resetta input_home
+- resetta input_raw
+- pulisce select_project
+- pulisce select_entity
+- pulisce select1
+- resetta ui_state.parsed
+- azzera feedback_text
+- azzera feedback_project
+- azzera feedback_summary
+- imposta ui_state.view = "home"
+- mostra Home
+- nasconde Input / Feedback / Events list
+
+Risultato:
+
+- nessun evento creato
+- nessuna modifica DB
+- Home pulita
+
+EDIT MODE:
+
+Comportamento:
+
+- cancella eventuale debounce pendente
+- cancella eventuale timer feedback pendente
+- scrive window.__logos_edit_mode_value = false
+- rilancia edit_mode
+- scrive window.__logos_editing_event_value = null
+- rilancia editing_event
+- non esegue update_event
+- resetta input_home
+- resetta input_raw
+- pulisce select_project
+- pulisce select_entity
+- pulisce select1
+- resetta ui_state.parsed
+- azzera feedback_text
+- azzera feedback_project
+- azzera feedback_summary
+- imposta ui_state.view = "events"
+- mostra Lista eventi
+
+Risultato:
+
+- nessun update_event
+- updated_at invariato
+- ritorno Lista eventi
 
 PARSING SYSTEM
 
@@ -2043,6 +2347,55 @@ Non implementa:
 - alias
 - deduplicazione avanzata
 - filtro select su match ambigui
+- Cambia / Scegli nella Sintesi realmente cliccabili
+- Azioni rapide operative
+- Dashboard reale
+- suggestion create vs edit consistency
+- project creation override con match generico
+- Icon System completamente standardizzato
+- polish finale font/spaziature
+
+Nota UX Mobile Coherence Pass:
+
+La Dashboard è presente nella navigation dock solo come voce futura disabilitata.
+Le Azioni rapide sono presenti solo come predisposizione UX.
+Nessuna delle due abilita output, KPI o logiche guidate avanzate.
+
+------------------------------------------------
+DATI EVENTO — UX MOBILE COHERENCE PASS
+------------------------------------------------
+
+Durante UX Mobile Coherence Pass, la sezione Dati evento è stata compattata.
+
+Prima:
+
+- label sopra ogni select
+- maggiore altezza verticale
+
+Dopo:
+
+- label inline / affiancate alle select
+- layout più compatto
+- maggiore leggibilità mobile
+
+Campi:
+
+- Tipo evento
+- Progetto
+- Entità
+
+Regola:
+
+Dati evento resta la zona di decisione finale utente.
+
+La Sintesi rappresenta ciò che LOGOS ha interpretato.
+Dati evento contiene le fonti salvabili:
+
+- select1.value
+- select_project.value
+- select_entity.value
+
+Le select non vengono spostate nella Sintesi.
 
 CONFERMA EVENTO
 
@@ -2052,14 +2405,44 @@ utente conferma inserimento o modifica.
 
 SEQUENZA ATTUALE:
 
+SEQUENZA ATTUALE AGGIORNATA:
+
 lettura ui_state.parsed
 costruzione payload
-feedback immediato
+determinazione wasEditMode
+no-op edit guard se in edit mode
+costruzione feedbackText / feedbackProject / feedbackEntity
+costruzione feedbackSummary prima del reset input/select
 reset input/select
+ui_state.view = feedback
+container_feedback visibile
 insert_event / update_event
 await savePromise
 await events_new.trigger()
 reset edit_mode / editing_event se necessario tramite window helper
+timer feedback 1800 ms
+routing post-save contestuale
+
+ROUTING POST-SAVE CONSOLIDATO:
+
+Nuovo evento:
+
+- insert_event
+- feedback 1800 ms
+- ritorno Home
+
+Modifica reale:
+
+- update_event
+- feedback 1800 ms
+- ritorno Lista eventi
+
+Edit senza modifiche:
+
+- nessun update_event
+- nessun feedback
+- ritorno immediato Lista eventi
+- updated_at invariato
 
 REGOLE:
 
@@ -2093,9 +2476,25 @@ e raw_input / type / project_id / entity_id non cambiano:
 
 → update_event NON viene eseguito
 → updated_at NON cambia
+→ feedback NON viene mostrato
 → edit_mode viene chiuso
 → editing_event viene azzerato
-→ ritorno lista eventi
+→ feedback_summary viene azzerato
+→ ritorno immediato Lista eventi
+
+Regola anti-conflitto post-save:
+
+handle_event_success non deve più gestire feedback o cambio view post-save.
+
+insert_event / update_event non devono avere success handler UI duplicati che modificano:
+
+- ui_state.view
+- container_home
+- container_feedback
+- container_events_list
+- container_input
+
+La gestione UI post-save è centralizzata in button_input_confirm.
 
 Il bottone NON ricalcola più parsing.
 
@@ -2281,6 +2680,24 @@ if (wasEditMode) {
   await editing_event.trigger();
 }
 
+Aggiornamento UX Mobile Coherence Pass:
+
+Il codice runtime effettivo di button_input_confirm è stato aggiornato per:
+
+- creare feedbackSummary prima del reset input/select
+- mostrare il feedback come ultimo stato UI visibile
+- centralizzare feedback e routing post-save
+- evitare conflitti con handle_event_success
+- gestire insert reale → feedback → Home
+- gestire update reale → feedback → Lista eventi
+- gestire no-op edit → Lista eventi senza feedback
+- azzerare feedback_summary dopo auto-return
+
+Regola:
+
+Questo blocco è fonte runtime del salvataggio evento.
+Il feedback_summary è solo UI temporanea e non viene salvato nel DB.
+
 Risultato:
 
 ✔ parsing duplicato rimosso
@@ -2309,6 +2726,69 @@ Il bottone conferma continua a costruire il payload da fonti controllate:
 Non ricalcola parsing.
 Non ricalcola matching.
 Non legge la preview come fonte dati.
+
+------------------------------------------------
+FEEDBACK SYSTEM — UX MOBILE COHERENCE PASS
+------------------------------------------------
+
+Il feedback post-salvataggio è stato stabilizzato.
+
+Struttura:
+
+- container_feedback
+- feedback_text
+- feedback_project
+- feedback_summary
+
+feedback_summary contiene:
+
+- type
+- date
+- amount
+- project
+- entity
+- text
+
+Regole:
+
+- creato prima del reset input/select
+- visibile solo nel feedback mobile
+- non salvato nel DB
+- non modifica payload
+- azzerato dopo auto-return
+
+Comportamento:
+
+INSERT reale:
+
+button_input_confirm
+→ feedback_summary
+→ insert_event
+→ events_new refresh
+→ feedback 1800 ms
+→ Home
+
+UPDATE reale:
+
+button_input_confirm
+→ feedback_summary
+→ update_event
+→ events_new refresh
+→ feedback 1800 ms
+→ Lista eventi
+
+NO-OP EDIT:
+
+button_input_confirm
+→ no-op edit guard
+→ nessun update_event
+→ nessun feedback
+→ Lista eventi immediata
+
+Decisione:
+
+Il feedback è una toast-card temporanea,
+non una pagina finale bloccante.
 
 INSERT FLOW
 
@@ -2603,6 +3083,107 @@ COMPORTAMENTO:
 ✔ lasciare evento non salvato finché l’utente non conferma
 
 TEST VALIDATI
+
+UX MOBILE COHERENCE PASS:
+
+1. Nuovo evento → Conferma evento
+
+Esito:
+
+- insert_event eseguito
+- feedback visibile
+- feedback_summary mostrato
+- events_new aggiornato
+- dopo 1800 ms ritorno Home
+
+RISULTATO:
+OK
+
+---
+
+2. Lista eventi → Modifica → modifica reale → Conferma evento
+
+Esito:
+
+- update_event eseguito
+- feedback visibile
+- events_new aggiornato
+- dopo 1800 ms ritorno Lista eventi
+
+RISULTATO:
+OK
+
+---
+
+3. Lista eventi → Modifica → nessuna modifica → Conferma evento
+
+Esito:
+
+- update_event non eseguito
+- feedback non mostrato
+- ritorno immediato Lista eventi
+- updated_at invariato
+
+RISULTATO:
+OK
+
+---
+
+4. Home → scrivi input → Torna alla home
+
+Esito:
+
+- nessun insert_event
+- input_home svuotato
+- input_raw svuotato
+- select resettate
+- ui_state.parsed resettato
+- feedback_summary azzerato
+- ritorno Home
+
+RISULTATO:
+OK
+
+---
+
+5. Lista eventi → Modifica → Annulla modifica
+
+Esito:
+
+- nessun update_event
+- edit_mode false
+- editing_event null
+- input/select resettati
+- feedback_summary azzerato
+- ritorno Lista eventi
+
+RISULTATO:
+OK
+
+---
+
+6. iPhone 13 Safari reale
+
+Problemi iniziali:
+
+- zoom automatico su tap input
+- troncamento laterale interfaccia
+- select non pienamente utilizzabili come dropdown
+
+Fix:
+
+- font-size 16px su input/select principali
+
+Esito:
+
+- nessuno zoom automatico
+- layout mobile stabile
+- select Tipo / Progetto / Entità funzionanti sia in digitazione sia in dropdown
+
+RISULTATO:
+OK
+
+------------------------------------------------
 
 PARSER / PREVIEW:
 
@@ -3517,3 +4098,36 @@ type classification invariata
 duration normalization invariata
 nessun output/KPI anticipato
 aggiornati next step consigliati post create suggestion
+
+v12 — 2026-05-09
+
+- integrazione UX MOBILE COHERENCE PASS
+- documentata Home mobile rifinita
+- documentati Dati evento compatti con label inline
+- documentato feedback_summary in ui_state
+- documentato Feedback System mobile
+- documentato feedback temporaneo non persistente
+- documentato routing post-save contestuale
+- documentato insert reale → feedback 1800 ms → Home
+- documentato update reale → feedback 1800 ms → Lista eventi
+- documentato no-op edit → Lista eventi immediata senza update_event
+- documentato cancel create/input → Home
+- documentato cancel edit → Lista eventi
+- documentato cancel contestuale create/edit
+- documentata Navigation dock Home / Eventi / Dashboard
+- documentata Dashboard predisposta ma disabilitata
+- documentata nav nascosta durante input attivo e feedback
+- documentato handle_event_success non più gestore UI post-save
+- documentata centralizzazione feedback/routing in button_input_confirm
+- documentati Icon add-ons Retool nei componenti reali
+- documentato font-size 16px input/select per Safari iOS
+- documentato fix zoom automatico iOS Safari
+- documentate select mobile funzionanti sia in digitazione sia in dropdown
+- documentata validazione reale iPhone 13 Safari
+- confermato DB invariato
+- confermato parser invariato
+- confermato matching invariato
+- confermato create_suggestion_state invariato
+- confermata type classification invariata
+- confermata duration normalization invariata
+- nessun output/KPI anticipato
