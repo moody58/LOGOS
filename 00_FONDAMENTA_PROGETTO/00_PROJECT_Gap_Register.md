@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v09
+# 00_PROJECT_Gap_Register_v10
 
-DATA: 2026-05-09
+DATA: 2026-05-13
 
 ------------------------------------------------
 SCOPO
@@ -140,7 +140,7 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati sei blocchi funzionali/base-operativi:
+Sono stati avviati e completati sette blocchi funzionali/base-operativi:
 
 - Normalization Layer Base
 - Duration Normalization Base
@@ -148,6 +148,7 @@ Sono stati avviati e completati sei blocchi funzionali/base-operativi:
 - Match Engine Unification First Controlled Level
 - Project / Entity Create Suggestion First Controlled Level
 - UX Mobile Coherence Pass
+- Command Intent — Create Project / Entity
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
@@ -168,6 +169,11 @@ navigation dock Home / Eventi / Dashboard è predisposta
 font-size input/select 16px è baseline mobile Safari
 insert_project / insert_entity sono operativi
 select_project / select_entity vengono valorizzati dopo creazione controllata
+command_intent_state riconosce comandi puri create project/entity
+i comandi puri non vengono salvati come eventi
+project/entity da command vengono creati solo previa conferma utente
+btn_command_create_project / btn_command_create_entity riusano insert_project / insert_entity
+modifica evento da input libero viene gestita come guida non operativa
 preview contiene ancora logiche proprie
 processing resta manuale
 output non attivo
@@ -194,7 +200,9 @@ Micro-nodi UX post Match Engine già completati:
 
 Nodi residui candidati:
 
-- Command Intent — Create Project / Entity
+- Input Rendering Stability / Container Structure
+- Preview Model / Hint State Consolidation
+- Input Analysis Model / Single Interpretation Layer
 - Data Structure / Entity Hierarchy
 - Economic Direction Advanced
 - Duration Advanced — giorni/settimane
@@ -333,7 +341,8 @@ RISCHIO RESIDUO:
 - UI suggestion container rifinita a livello mobile base durante UX Mobile Coherence Pass
 - resta da verificare consistenza suggestion create/edit
 - filtro select su match ambigui non implementato
-- command intent non implementato
+- command intent create project/entity implementato a primo livello controllato
+- resta da coordinare eventuale evoluzione futura con Input Analysis Model / Single Interpretation Layer
 - gerarchie project/entity non implementate
 - alias non implementati
 - deduplicazione avanzata non implementata
@@ -348,7 +357,7 @@ Non riaprire come Project / Entity Create Suggestion base.
 
 Eventuali evoluzioni devono diventare gap/nodi dedicati:
 
-- Command Intent — Create Project / Entity
+- Input Analysis Model / Single Interpretation Layer
 - Data Structure / Entity Hierarchy
 - Select Options Filtering — Ambiguity UX
 - Alias / Deduplication Advanced
@@ -436,6 +445,8 @@ nessun form guidato
 Azioni rapide Home predisposte graficamente ma non operative.
 Navigation dock predisposta.
 Dashboard presente in nav ma disabilitata.
+Command Intent — Create Project / Entity implementato a primo livello controllato.
+Il command intent non è un form guidato completo, ma introduce una prima distinzione tra input evento e comando strutturale puro.
 
 RISCHIO:
 
@@ -448,7 +459,8 @@ Non prioritario ora.
 
 Da rivalutare dopo:
 
-Command Intent implementato o valutato
+Command Intent implementato a primo livello controllato
+Preview / Input Analysis eventualmente consolidati
 Data Structure / Entity Hierarchy valutata
 Azioni rapide operative definite come nodo dedicato
 Dashboard base eventualmente attivata
@@ -493,7 +505,7 @@ type classification base completata
 matching project/entity unificato a primo livello controllato
 creazione guidata project/entity implementata a primo livello controllato
 input vocali/Siri non ancora pronti
-command intent non implementato
+command intent create project/entity implementato a primo livello controllato
 
 RISCHIO:
 
@@ -506,7 +518,7 @@ Non lavorare ora.
 Da rivalutare solo dopo:
 
 input system maturo
-Command Intent implementato o valutato
+Command Intent stabilizzato oltre il primo livello controllato
 engine base più completo
 output/reportistica almeno definita
 sicurezza API valutata
@@ -576,6 +588,8 @@ RISCHIO RESIDUO:
 - preview non ancora view pura
 - hint duration/type ancora embedded nella preview
 - preview model unico non implementato
+- “Da verificare” resta dentro Sintesi perché non è blocco autonomo
+- separazione tra hint bloccanti, warning informativi e suggestion non ancora consolidata
 - matching project/entity allineato a primo livello nello STEP 6.4
 
 AZIONE:
@@ -591,11 +605,19 @@ la parte critica di hint/highlight matching project/entity
 è stata allineata a project_state/entity_state.
 
 Non aprire “Hint / Preview State Alignment” come nodo immediato generico.
+
 Eventuale nodo futuro:
 
 PREVIEW MODEL / HINT STATE CONSOLIDATION
 
-solo se emerge un problema reale o se si decide un refactor preview dedicato.
+Motivi ora rafforzati dopo Command Intent:
+
+- “Da verificare” non è spostabile perché interno alla Sintesi
+- preview resta layer ibrido
+- hint/warning/suggestion non sono ancora separati in blocchi autonomi
+- evitare che l’utente legga una cosa diversa da ciò che verrà salvato
+
+Da aprire solo se il problema diventa prioritario o se si decide un refactor preview dedicato.
 
 ID: G08
 
@@ -936,7 +958,8 @@ RISCHIO RESIDUO:
 - gerarchie project/entity non implementate
 - deduplicazione project/entity non implementata
 - creazione guidata project/entity implementata a primo livello controllato
-- command intent non implementato
+- command intent create project/entity implementato a primo livello controllato
+- resta assente input analysis model unico
 - deduplicazione project/entity avanzata non implementata
 - preview resta layer ibrido
 - hint duration/type ancora embedded nella preview
@@ -950,7 +973,7 @@ Eventuali evoluzioni devono essere nodi dedicati:
 
 - ALIAS / SYNONYMS CONTROLLED MATCHING
 - DATA STRUCTURE / ENTITY HIERARCHY
-- COMMAND INTENT — CREATE PROJECT / ENTITY
+- INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 - SELECT OPTIONS FILTERING — AMBIGUITY UX
 - MATCH CONFIDENCE / RANKING ADVANCED
 
@@ -1015,6 +1038,18 @@ ma non introduce:
 
 UX Mobile Coherence Pass ha migliorato la fruibilità dei campi project/entity
 e delle select su mobile, ma non ha modificato la struttura dati.
+
+Command Intent — Create Project / Entity ha introdotto la creazione project/entity da comando puro,
+ma non ha modificato la struttura dati.
+
+Il nodo Command Intent:
+
+- non introduce gerarchie
+- non introduce alias
+- non introduce deduplicazione avanzata
+- non introduce relazioni entity-project
+- non introduce vincoli DB
+- blocca duplicati solo a livello UI quando riconosce un elemento già esistente
 
 Durante il test UX sono emersi due sotto-gap collegati:
 
@@ -1124,6 +1159,8 @@ RISCHIO RESIDUO:
 - non esiste audit trail storico delle modifiche
 - updated_at traccia solo ultima modifica
 - distinzione storica completa richiederebbe logging/versioning dedicato
+- deduplicazione strutturale dopo command intent
+- eventuale normalizzazione project/entity creati da command
 
 AZIONE:
 
@@ -1205,6 +1242,7 @@ Da rivalutare dopo:
 - prima definizione output/report
 - valutazione dati economici reali
 - Project / Entity Create Suggestion First Controlled Level completato
+- Command Intent — Create Project / Entity completato a primo livello controllato
 
 Possibili decisioni future:
 
@@ -1517,7 +1555,7 @@ FONTE:
 Preview System + Roadmap + Match Engine Unification
 
 STATO:
-IN OSSERVAZIONE — NON IMMEDIATO
+IN OSSERVAZIONE — CANDIDATO PRINCIPALE POST COMMAND INTENT
 
 DESCRIZIONE:
 
@@ -1546,6 +1584,21 @@ ma non modifica il modello preview.
 Resta un intervento di lista/processing UX,
 non un refactor preview.
 
+Nota post Command Intent:
+
+Durante il nodo COMMAND INTENT — CREATE PROJECT / ENTITY è emerso che il blocco “Da verificare” non è spostabile sotto la CTA perché fa parte della Sintesi.
+
+Questo conferma che la preview resta un layer ibrido che contiene:
+
+- contenuto principale
+- hint
+- warning informativi
+- suggestion visive
+- logiche di rendering
+
+Il problema non ha generato regressioni dati,
+ma rende più forte il candidato PREVIEW MODEL / HINT STATE CONSOLIDATION.
+
 RISCHIO:
 
 Un refactor preview globale può introdurre regressioni
@@ -1553,7 +1606,7 @@ in un layer UX già stabilizzato.
 
 AZIONE:
 
-Non immediato.
+Candidato principale post Command Intent, ma da aprire solo se scelto consapevolmente come nodo dedicato.
 
 Non aprire come “Hint / Preview State Alignment” generico.
 
@@ -1671,6 +1724,8 @@ RISCHIO RESIDUO:
 - project creation override con match generico non implementato
 - Icon System non completamente standardizzato
 - mobile compact advanced / polish finale rimandato
+- rendering progressivo input evento normale osservato dopo Command Intent
+- “Da verificare” resta dentro Sintesi e non è spostabile senza refactor preview
 
 AZIONE:
 
@@ -1687,6 +1742,8 @@ Eventuali evoluzioni devono diventare gap/nodi dedicati:
 - Suggestion Create vs Edit Consistency
 - Project Create Suggestion — Match Present / User Override
 - Icon System / Mobile Polish Finale
+- Input Rendering Stability / Container Structure
+- Preview Model / Hint State Consolidation
 
 ID: G19
 
@@ -1694,80 +1751,135 @@ NOME:
 Command Intent — Create Project / Entity
 
 FONTE:
-Osservazione utente su placeholder/input mobile + Project / Entity Create Suggestion Session
+Osservazione utente su placeholder/input mobile + Project / Entity Create Suggestion Session + Command Intent Session
 
 STATO:
-VALIDATO — NODO FUTURO
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Riconoscimento controllato di frasi comando per creare project/entity.
+Riconoscimento controllato di frasi comando per creare project/entity
+distinguendole da eventi ordinari.
 
 Esempi:
 
+- crea
+- crea progetto
 - crea progetto Aspri
-- crea nuovo progetto Casa Ostuni
+- aggiungi progetto Villa Nuova
+- inserisci progetto Villa Nuova
+- nuovo progetto Villa Nuova
 - crea entità Patrizio
-- aggiungi nuova entità Mario Bianchi
+- aggiungi entità Referente Kappa
+- inserisci entità Marco Parisi
+- nuova entità Marco Parisi
+- modifica evento
 
 STATO REALE:
 
-Non implementato.
+Il nodo COMMAND INTENT — CREATE PROJECT / ENTITY è stato completato e validato.
 
-Il nodo Project / Entity Create Suggestion gestisce suggestion e creazione inline
-a partire da input evento.
+Implementato:
 
-Le frasi comando rappresentano invece un comportamento distinto:
+- command_intent_state come query Retool page-level
+- riconoscimento comando generico “crea”
+- riconoscimento create project incompleto
+- riconoscimento create project completo
+- riconoscimento create entity incompleto
+- riconoscimento create entity completo
+- sinonimi base: crea, aggiungi, inserisci, nuovo, nuova
+- riconoscimento elemento già presente
+- blocco duplicazione project/entity già esistenti
+- guida non operativa per “modifica evento”
+- container_command_intent dentro container_input
+- UI mobile Command Intent rifinita
+- btn_command_create_project collegato a insert_project esistente
+- btn_command_create_entity collegato a insert_entity esistente
+- btn_command_go_events collegato alla lista eventi
+- feedback_mode introdotto in ui_state
+- feedback project_created implementato
+- feedback entity_created implementato
+- feedback evento ordinario preservato
 
-- non sono eventi operativi ordinari
-- non devono essere salvate automaticamente in events
-- devono essere interpretate come intenti di sistema
-- devono richiedere conferma esplicita prima di scrivere nel DB
+Regole consolidate:
 
-Decisione consolidata:
+- comando puro non salva eventi
+- project/entity da command vengono creati solo previa conferma utente
+- insert_project / insert_entity restano le query operative di creazione
+- command_intent_state non modifica DB
+- command_intent_state non modifica parser
+- command_intent_state non modifica matching
+- command_intent_state non sostituisce create_suggestion_state
+- select_project / select_entity restano decisione utente finale per gli eventi
+- “modifica evento” non apre edit flow alternativo
+- “modifica evento” non modifica record automaticamente
 
-Le frasi “crea progetto…” / “crea entità…” non sono eventi.
-Sono comandi di sistema e devono aprire una conferma guidata,
-non salvare automaticamente dati.
+Esempi validati:
 
-RISCHIO:
+crea
+→ guida con esempi
+→ nessun evento salvato
 
-Implementare command intent troppo velocemente può causare:
+crea progetto
+→ campo nome progetto
+→ conferma richiesta
+→ nessun evento salvato
 
-- creazioni errate
-- duplicati
-- confusione tra evento e comando
-- salvataggio eventi non desiderati
-- perdita tracciabilità
+crea progetto Command Final Project 2
+→ project creato
+→ feedback Progetto creato
+→ ritorno Home
+→ nessun evento salvato
+
+crea entità
+→ campo nome entità
+→ conferma richiesta
+→ nessun evento salvato
+
+crea entità Command Final Entity 2
+→ entity creata
+→ feedback Entità creata
+→ ritorno Home
+→ nessun evento salvato
+
+crea progetto villa
+→ elemento già presente
+→ nessuna duplicazione
+→ nessun evento salvato
+
+modifica evento
+→ guida con step
+→ Vai agli eventi
+→ nessuna modifica automatica
+
+30 euro spesa villa citrignano
+→ flow evento ordinario non regressivo
+
+RISCHIO RESIDUO:
+
+- Command Intent è solo un primo livello controllato
+- non è ancora engine intent globale
+- non gestisce dashboard/report
+- non gestisce modifica project/entity da command
+- non apre edit flow evento automatico
+- non sostituisce parser, matching o suggestion
+- non unifica ancora tutte le fonti di interpretazione
+- rendering progressivo input evento normale ancora migliorabile
+- “Da verificare” resta dentro Sintesi perché non è blocco autonomo
 
 AZIONE:
 
-Da sviluppare come nodo futuro dedicato.
+Gap integrato a livello base.
 
-Scope futuro:
+Non riaprire come Command Intent — Create Project / Entity base.
 
-- riconoscere frasi comando
-- distinguere evento operativo da comando di sistema
-- mostrare riepilogo/conferma guidata
-- riusare insert_project / insert_entity già esistenti
-- evitare duplicati
-- non salvare evento se l’input è comando puro
-- mantenere raw_input come testo sorgente
-- preservare tracciabilità e controllo utente
+Eventuali evoluzioni devono diventare gap/nodi dedicati:
 
-Nota UX:
-
-Il placeholder “Scrivi cosa vuoi fare...” può generare aspettativa
-di comandi diretti.
-
-Dopo UX Mobile Coherence Pass, la Home usa una formulazione più ampia:
-
-“Cosa vuoi fare?”
-
-Questo rende ancora più naturale l’inserimento di comandi diretti.
-
-Senza Command Intent implementato, LOGOS può ancora salvare frasi comando come eventi ordinari se l’utente le conferma.
-Il nodo Command Intent resta quindi candidato forte.
+- Input Analysis Model / Single Interpretation Layer
+- Advanced Command Intent
+- Dashboard Command / Report Intent
+- Project / Entity Edit Command
+- Azioni Rapide Operative
 
 ID: G20
 
@@ -1820,6 +1932,7 @@ Sono già consolidate:
 - edit flow
 - processing NEW / WRITTEN / ERROR
 - UX mobile coherence pass
+- command intent create project/entity first controlled level
 - navigation dock Home / Eventi / Dashboard predisposta
 - feedback post-save contestuale
 - cancel create/edit contestuale
@@ -1831,9 +1944,9 @@ Non sono ancora attive:
 - moduli ASPRI
 - moduli ADEXIMA
 - moduli MaurizioLab
-- output/KPI
-- Dashboard operativa, anche se predisposta in nav
+- output/KP- Dashboard operativa, anche se predisposta in nav
 - Azioni rapide operative, anche se predisposte in Home
+- Command Intent avanzato per report/dashboard/modifiche strutturali
 
 RISCHIO:
 
@@ -1867,8 +1980,9 @@ Sequenza corretta:
 2. consolidare gestione project/entity
 3. rifinire UX mobile base
 4. introdurre command intent guidato
-5. consolidare data structure / qualità dati
-6. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
+5. consolidare rendering / preview / input analysis
+6. consolidare data structure / qualità dati
+7. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
 
 ID: G21
 
@@ -2027,6 +2141,14 @@ RISCHIO:
 Renderli operativi troppo presto può duplicare logiche già presenti
 in input libero, type classification e button_input_confirm.
 
+Dopo Command Intent, il rischio include anche la duplicazione di logiche tra:
+
+- Azioni rapide
+- command_intent_state
+- type classification
+- input libero
+- button_input_confirm
+
 AZIONE:
 
 Da sviluppare come nodo futuro dedicato.
@@ -2038,6 +2160,7 @@ Possibili comportamenti:
 - mostrare placeholder contestuale
 - guidare l’utente senza creare eventi automaticamente
 - non salvare nulla senza conferma
+- coordinarsi con command_intent_state senza duplicare riconoscimenti
 
 ID: G24
 
@@ -2087,7 +2210,9 @@ Non immediato.
 
 Da valutare solo dopo:
 
-- Command Intent o Data Structure, se scelti
+- Command Intent base completato
+- Data Structure, se necessaria
+- eventuale Dashboard Command / Report Intent solo in nodo dedicato
 - Economic Direction Advanced, se necessaria
 - sufficienza dati reali
 - decisione su KPI minimi non fuorvianti
@@ -2190,24 +2315,151 @@ Da ricordare nel polish finale:
 - eventuali riduzioni font non devono riattivare zoom iOS
 - testare sempre su iPhone reale / Safari o WebKit
 
+ID: G27
+
+NOME:
+Input Rendering Stability / Container Structure
+
+FONTE:
+Command Intent Session + test runtime input evento normale
+
+STATO:
+IDENTIFICATO — CANDIDATO PRINCIPALE
+
+DESCRIZIONE:
+
+Durante il nodo Command Intent è stato osservato un residuo UX:
+
+input evento normale
+→ Sintesi / hint / suggestion possono comparire progressivamente
+
+Il comportamento non rompe:
+
+- parser
+- matching
+- salvataggio
+- DB
+- edit flow
+- feedback
+
+ma può disturbare la percezione di stabilità dell’interfaccia mobile.
+
+STATO REALE:
+
+Non corretto nel nodo Command Intent.
+
+Motivo:
+
+Intervenire avrebbe richiesto modifiche più ampie su:
+
+- struttura container_input
+- separazione preview / hint / dati evento
+- eventuale stato unico input_analysis_ready
+- timing tra parse_input_controlled, project_state, entity_state, create_suggestion_state e command_intent_state
+
+RISCHIO:
+
+Un fix locale non progettato potrebbe peggiorare:
+
+- input evento normale
+- command intent
+- suggestion container
+- edit flow
+- rendering mobile
+
+AZIONE:
+
+Da valutare come nodo dedicato.
+
+Possibili direzioni:
+
+- stato unico input_analysis_ready
+- skeleton / placeholder durante analisi
+- separazione container preview / hint / dati evento
+- riduzione rendering progressivo
+- mantenimento parser/matching/DB invariati
+
+ID: G28
+
+NOME:
+Input Analysis Model / Single Interpretation Layer
+
+FONTE:
+Command Intent Session + Match Engine Unification + osservazioni utente su fonti parallele
+
+STATO:
+IDENTIFICATO — STRUTTURALE FUTURO
+
+DESCRIZIONE:
+
+Direzione futura verso un solo layer di analisi interrogabile dalle UI.
+
+Oggi LOGOS usa più fonti controllate:
+
+- parse_input_controlled
+- ui_state.parsed
+- project_state
+- entity_state
+- create_suggestion_state
+- command_intent_state
+- preview logic
+- select_project / select_entity / select1
+
+Questa struttura è funzionante,
+ma resta distribuita.
+
+STATO REALE:
+
+Non implementato.
+
+Il nodo Command Intent ha aggiunto command_intent_state come helper controllato,
+senza sostituire parser, matching o suggestion.
+
+Questo è corretto per il nodo,
+ma conferma la necessità futura di valutare un modello unico di analisi.
+
+RISCHIO:
+
+Unificare troppo presto può rompere il sistema stabile.
+
+Non unificare mai può aumentare:
+
+- fonti parallele
+- difficoltà di debug
+- incoerenza tra ciò che l’utente legge e ciò che viene salvato
+- rischio di comportamenti divergenti tra preview, suggestion, command e save
+
+AZIONE:
+
+Da valutare solo in nodo dedicato.
+
+Vincoli:
+
+- non introdurre refactor globale senza checkpoint
+- non sostituire componenti stabili senza test
+- mantenere compatibilità con Retool
+- preservare parser, matching, suggestion e save flow finché non esiste alternativa validata
+- procedere per consolidamento progressivo
+
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo UX Mobile Coherence Pass:
+Ordine attuale consigliato dopo Command Intent:
 
 NODI STRUTTURALI / OPERATIVI FUTURI:
 
-1. G19 — Command Intent — Create Project / Entity
-2. G11 — Data Structure / Entity Hierarchy
-3. G21 — Suggestion Create vs Edit Consistency
-4. G22 — Project Create Suggestion — Match Present / User Override
-5. G13 — Economic Direction Advanced
-6. G08A — Duration Advanced / Giorni-Settimane
-7. G23 — Azioni Rapide Operative
-8. G24 — Dashboard Base
-9. G17 — Preview Model / Hint State Consolidation
-10. G04 — Logging / Versioning
-11. G05 — Input Modes
-12. G06 — Multi-source Input
+1. G27 — Input Rendering Stability / Container Structure
+2. G17 — Preview Model / Hint State Consolidation
+3. G28 — Input Analysis Model / Single Interpretation Layer
+4. G11 — Data Structure / Entity Hierarchy
+5. G21 — Suggestion Create vs Edit Consistency
+6. G22 — Project Create Suggestion — Match Present / User Override
+7. G13 — Economic Direction Advanced
+8. G08A — Duration Advanced / Giorni-Settimane
+9. G23 — Azioni Rapide Operative
+10. G24 — Dashboard Base
+11. G04 — Logging / Versioning
+12. G05 — Input Modes
+13. G06 — Multi-source Input
 
 POLISH / UX FUTURO:
 
@@ -2233,6 +2485,7 @@ G14 — Linting / State Helper Cleanup
 G15 — Edit Mode Cancel / Return to Events List
 G16 — Events List Search / Filter Bar
 G18 — UX Mobile Coherence Pass
+G19 — Command Intent — Create Project / Entity
 G26 — Mobile Safari Font Baseline
 
 Nota:
@@ -2440,3 +2693,47 @@ aggiornato ordine consigliato gap/nodi
 confermato output/KPI non attivi
 confermata direzione LOGOS Core modulare
 allineamento con State v18 e Roadmap v12
+
+v10 — 2026-05-13
+
+aggiornato Gap Register dopo COMMAND INTENT — CREATE PROJECT / ENTITY
+aggiornato G19 Command Intent — Create Project / Entity a INTEGRATO BASE
+documentato command_intent_state
+documentato riconoscimento comando generico “crea”
+documentato create project incompleto
+documentato create project completo
+documentato create entity incompleto
+documentato create entity completo
+documentati sinonimi base crea / aggiungi / inserisci / nuovo / nuova
+documentato blocco duplicati project/entity già esistenti
+documentato “crea progetto villa” come elemento già presente
+documentata guida non operativa “modifica evento”
+documentato container_command_intent
+documentati btn_command_create_project / btn_command_create_entity / btn_command_go_events
+documentato riuso insert_project / insert_entity
+documentato feedback_mode in ui_state
+documentato feedback project_created
+documentato feedback entity_created
+documentato feedback evento ordinario preservato
+documentato che comandi puri non salvano eventi
+documentato che project/entity da command richiedono conferma utente
+documentato che Command Intent non modifica DB/parser/matching/create_suggestion_state
+aggiornato G02 Processor / Engine Flow
+aggiornato G03 Project / Entity Create Suggestion
+aggiornato G05 Input Modes
+aggiornato G06 Multi-source Input
+aggiornato G07 Preview Alignment
+aggiornato G10 Match Engine Unification
+aggiornato G11 Data Structure / Entity Hierarchy
+aggiornato G13 Economic Direction Advanced
+aggiornato G17 Preview Model / Hint State Consolidation
+aggiornato G18 UX Mobile Coherence Pass
+aggiornato G20 Core Event System / Modular Instances
+aggiornato G23 Azioni Rapide Operative
+aggiornato G24 Dashboard Base
+aggiunto G27 Input Rendering Stability / Container Structure
+aggiunto G28 Input Analysis Model / Single Interpretation Layer
+aggiornato ordine consigliato gap/nodi post Command Intent
+confermato output/KPI non attivi
+confermata direzione LOGOS Core modulare
+allineamento con State v19 e Roadmap v13

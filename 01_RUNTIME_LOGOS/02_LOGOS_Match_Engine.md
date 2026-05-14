@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v06
+# 02_LOGOS_Match_Engine_v07
 
-DATA: 2026-05-07
+DATA: 2026-05-13
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -25,6 +25,13 @@ C (Completezza): 10/10
 - documentata regola select = decisione utente finale
 - documentato blocco solo su ambiguità attiva
 - documentato entity autofill controlled minimal come supporto suggestion, non matching  
+- documentato Command Intent — Create Project / Entity
+- chiarito che command_intent_state non è parte del Match Engine
+- chiarito che command_intent_state non sostituisce project_state / entity_state
+- chiarito che command_intent_state non sostituisce create_suggestion_state
+- documentato che i comandi puri non entrano nel save flow evento
+- documentato blocco duplicati project/entity esistenti da command
+- documentata separazione tra matching, suggestion e command intent
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -38,6 +45,10 @@ Q (Qualità): 9.5/10
 - mantenuto il match engine non decisionale
 - ridotto rischio di confondere no-match con errore bloccante
 - preservata coerenza con Core Event System incrementale
+- Command Intent integrato come layer separato e non concorrente al matching
+- evitata duplicazione tra match engine e command intent
+- chiarito che la rilevazione “elemento già presente” da command è una guardia UI, non deduplicazione strutturale
+- mantenuto il principio select = decisione finale per gli eventi ordinari
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -52,6 +63,11 @@ D (Deployabilità): 10/10
 - flow combinato project + entity validato
 - no-match generico salvabile validato
 - edit/no-op non regressivo validato dopo create suggestion
+- Command Intent — Create Project / Entity validato runtime
+- evento ordinario non regressivo dopo Command Intent validato
+- edit flow non regressivo dopo Command Intent validato
+- comandi puri create project/entity esclusi dal save flow evento
+- command_intent_state validato come helper separato dal matching
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -69,6 +85,9 @@ Il documento guida:
 - identificazione debiti strutturali del matching
 - rapporto tra matching e create suggestion
 - distinzione tra match, suggestion, select e insert
+- distinzione tra match engine, create suggestion e command intent
+- rapporto tra project_state/entity_state e command_intent_state
+- limiti del command intent rispetto al matching
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -148,6 +167,34 @@ select_entity.value → events.entity_id
 La selezione manuale è valida anche se il valore selezionato
 non è presente nel raw_input.
 
+---
+
+9. MATCHING ≠ COMMAND INTENT
+
+Il Match Engine riconosce project/entity dentro input evento ordinario.
+
+Il Command Intent riconosce comandi strutturali puri.
+
+Esempi command intent:
+
+- crea
+- crea progetto
+- crea progetto Villa Nuova
+- crea entità Patrizio
+- modifica evento
+
+Regole:
+
+- command_intent_state NON è il Match Engine
+- command_intent_state NON sostituisce project_state / entity_state
+- command_intent_state NON sostituisce create_suggestion_state
+- command_intent_state NON salva eventi
+- command_intent_state NON decide project_id/entity_id negli eventi ordinari
+- command_intent_state può verificare se un project/entity esiste già
+- la verifica “elemento già presente” è una guardia UI, non deduplicazione strutturale DB
+- i comandi puri vengono esclusi dal save flow evento
+- select_project / select_entity restano la decisione finale salvabile per eventi ordinari
+
 ------------------------------------------------
 ENTITÀ COINVOLTE
 ------------------------------------------------
@@ -173,13 +220,15 @@ Il matching opera dentro il seguente flow:
 input_home  
 → input_raw  
 → trigger_parse_debounced  
+→ command_intent_state  
 → parse_input_controlled  
 → ui_state.parsed  
 → project_state / entity_state  
 → create_suggestion_state  
 → select_project / select_entity  
 → preview / hint / highlight / suggestion container  
-→ button_input_confirm  
+→ oppure container_command_intent  
+→ button_input_confirm oppure command action  
 
 ---
 
@@ -210,11 +259,22 @@ Dopo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL:
 - evento non viene salvato automaticamente dopo creazione project/entity
 - select_project / select_entity restano fonte finale salvabile
 
+Dopo COMMAND INTENT — CREATE PROJECT / ENTITY:
+
+- command_intent_state riconosce comandi puri
+- command_intent_state resta separato dal Match Engine
+- command_intent_state non calcola il match primario project/entity per gli eventi
+- command_intent_state può rilevare project/entity già esistenti per evitare duplicazioni da command
+- container_command_intent sostituisce Sintesi evento / Dati evento quando l’input è comando puro
+- i comandi puri non vengono salvati come eventi
+- insert_project / insert_entity vengono usati solo dopo conferma utente
+- button_input_confirm resta dedicato agli eventi ordinari
+
 ------------------------------------------------
 PIPELINE MATCH
 ------------------------------------------------
 
-Pipeline attuale post PROJECT / ENTITY CREATE SUGGESTION FIRST CONTROLLED LEVEL:
+Pipeline match attuale post PROJECT / ENTITY CREATE SUGGESTION FIRST CONTROLLED LEVEL:
 
 input_raw  
 → project_state / entity_state  
@@ -223,7 +283,21 @@ input_raw
 → select_project / select_entity  
 → preview hint / highlight / suggestion container  
 → button_input_confirm guard  
-→ project_id / entity_id salvati solo se selezionati    
+→ project_id / entity_id salvati solo se selezionati   
+
+Pipeline command separata:
+
+input_raw  
+→ command_intent_state  
+→ container_command_intent  
+→ btn_command_create_project / btn_command_create_entity / btn_command_go_events  
+→ insert_project / insert_entity oppure Lista eventi  
+
+Nota:
+
+questa pipeline NON è Match Engine.
+
+Serve a intercettare comandi puri prima che vengano trattati come eventi.
 
 ---
 
@@ -265,6 +339,21 @@ Legge matches / count / isAmbiguous.
 
 button_input_confirm NON valuta più direttamente array matches in modo fragile.
 Legge ambiguità non risolta.
+
+command_intent_state NON modifica questa regola.
+
+Per gli eventi ordinari:
+
+- project_state resta fonte minima matching project
+- entity_state resta fonte minima matching entity
+- select_project / select_entity restano fonti salvabili
+- button_input_confirm resta il punto di conferma evento
+
+Per i comandi puri:
+
+- il flow evento viene escluso
+- container_command_intent usa azioni command dedicate
+- nessun project_id/entity_id viene salvato in events
 
 ------------------------------------------------
 NORMALIZZAZIONE MATCHING
@@ -439,6 +528,8 @@ NOTE:
 - project_id viene salvato solo da select_project.value
 - project_state non crea project automaticamente
 - eventuale creazione project è gestita da create_suggestion_state + insert_project
+- eventuale creazione project da comando puro è gestita da command_intent_state + btn_command_create_project + insert_project
+- il command intent non modifica il comportamento di project_state
 - la creazione project richiede conferma esplicita utente
 - il sistema non decide project in caso di ambiguità non risolta
 - la scelta manuale utente prevale
@@ -548,6 +639,8 @@ NOTE:
 - entity_id viene salvato solo da select_entity.value
 - entity_state non crea entity automaticamente
 - eventuale creazione entity è gestita da create_suggestion_state + insert_entity
+- eventuale creazione entity da comando puro è gestita da command_intent_state + btn_command_create_entity + insert_entity
+- il command intent non modifica il comportamento di entity_state
 - la creazione entity richiede conferma esplicita utente
 - il sistema non decide entity in caso di ambiguità non risolta
 - la scelta manuale utente prevale
@@ -735,6 +828,14 @@ project/entity ambigui = blocco finché non risolti manualmente.
 La suggestion non cambia il confirm guard:
 lo arricchisce solo con un percorso guidato opzionale.
 
+Il command intent non cambia il confirm guard degli eventi ordinari.
+
+Se l’input è comando puro:
+
+- il confirm guard evento non viene usato
+- button_input_confirm non deve essere mostrato
+- container_command_intent gestisce la guida o l’azione controllata
+
 ------------------------------------------------
 HINT SYSTEM
 ------------------------------------------------
@@ -814,6 +915,23 @@ Esempio:
 “Possibile nuovo progetto: Villa Sierri 15”
 → suggestion create
 
+Command intent:
+
+- riconosce comando strutturale puro
+- non è un hint matching
+- non è suggestion create dentro evento
+- non salva evento
+- può proporre creazione project/entity solo come azione command dedicata
+
+Esempio:
+
+“crea progetto Villa Nuova”
+→ command intent
+→ container_command_intent
+→ btn_command_create_project
+→ insert_project
+→ nessun evento salvato
+
 ------------------------------------------------
 RELAZIONE CON PREVIEW
 ------------------------------------------------
@@ -877,6 +995,27 @@ La preview resta layer ibrido:
 - formattazione visuale
 
 Ma non è più fonte autonoma decisionale per il matching.
+
+Dopo Command Intent:
+
+la preview non deve rappresentare comandi puri come eventi.
+
+Esempi:
+
+crea progetto Villa Nuova
+→ non deve mostrare Sintesi evento
+→ deve mostrare container_command_intent
+
+crea entità Patrizio
+→ non deve mostrare Sintesi evento
+→ deve mostrare container_command_intent
+
+modifica evento
+→ non deve mostrare Sintesi evento
+→ deve mostrare guida command
+
+Il command intent quindi riduce un caso di falsa preview evento,
+ma non rende la preview un layer puro.
 
 ------------------------------------------------
 RELAZIONE CON CREATE SUGGESTION
@@ -978,6 +1117,89 @@ Motivo:
 non proporre creazioni nuove quando il sistema ha già più match possibili.
 
 ------------------------------------------------
+RELAZIONE CON COMMAND INTENT
+------------------------------------------------
+
+command_intent_state è un layer separato dal Match Engine
+e da create_suggestion_state.
+
+Consuma:
+
+- input_raw.value / input_home.value
+- projects_list.data
+- entities_list.data
+
+Produce:
+
+- isCommand
+- isPureCommand
+- commandFamily
+- commandType
+- targetType
+- candidateName
+- existingId
+- needsCompletion
+- canExecute
+- guideMessage
+- rawInput
+
+Non produce:
+
+- matches
+- count
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- project_id salvabile per events
+- entity_id salvabile per events
+- amount
+- unit
+- event_date
+- type
+
+Regole:
+
+- command intent ≠ match
+- command intent ≠ suggestion create da evento
+- command intent ≠ salvataggio evento
+- command intent ≠ select decision
+- command intent ≠ deduplicazione strutturale
+- command intent intercetta comandi puri
+- command intent può bloccare creazioni duplicate da command se riconosce elemento già esistente
+
+Esempio evento ordinario con suggestion:
+
+30 euro spesa villa nuova
+→ project_state/entity_state
+→ create_suggestion_state
+→ suggestion create eventuale
+→ Conferma evento manuale
+
+Esempio comando puro:
+
+crea progetto Villa Nuova
+→ command_intent_state
+→ container_command_intent
+→ btn_command_create_project
+→ insert_project
+→ nessun evento salvato
+
+Esempio elemento già presente:
+
+crea progetto villa
+→ command_intent_state
+→ Elemento già presente
+→ nessun bottone crea
+→ nessuna duplicazione
+→ nessun evento salvato
+
+Nota:
+
+command_intent_state può controllare l’esistenza di un project/entity,
+ma questa verifica non sostituisce deduplicazione avanzata,
+alias, fuzzy matching o vincoli DB.
+
+------------------------------------------------
 RELAZIONE CON NORMALIZATION LAYER BASE
 ------------------------------------------------
 
@@ -1034,7 +1256,10 @@ CASI NON SUPPORTATI
 - ranking avanzato
 - disambiguazione automatica
 - alias controllati
-- command intent “crea progetto...” / “crea entità...”
+- command intent avanzato oltre create project/entity
+- modifica project/entity da command
+- dashboard/report intent
+- input analysis model unico
 - creazione automatica silenziosa project/entity
 
 ---
@@ -1056,9 +1281,12 @@ LIMITI ATTUALI
 - nessuna relazione entity-project
 - nessun match storico
 - creazione guidata project/entity implementata solo a primo livello controllato
-- command intent non implementato
+- command intent create project/entity implementato a primo livello controllato
+- command intent avanzato non implementato
+- input analysis model unico non implementato
 - nessuna creazione automatica silenziosa project/entity
 - nessun audit trail dedicato per creazione project/entity
+- nessuna deduplicazione strutturale avanzata per project/entity creati da command
 - preview ancora layer ibrido
 - hint duration/type ancora embedded nella preview
 - match engine avanzato separato non implementato
@@ -1077,6 +1305,10 @@ Risolto a primo livello:
 ✔ creazione guidata project/entity implementata a primo livello controllato
 ✔ no-match project/entity assistito da suggestion controllata
 ✔ entity autofill controlled minimal implementato
+✔ command intent create project/entity implementato a primo livello controllato
+✔ comandi puri esclusi dal save flow evento
+✔ “crea progetto villa” riconosciuto come elemento già presente
+✔ project/entity da command creati solo previa conferma utente
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
@@ -1140,7 +1372,8 @@ Non ancora risolto:
 - deduplicazione
 - gerarchie
 - relazioni entity-project
-- command intent create project/entity
+- input analysis model unico
+- command intent avanzato oltre create project/entity
 - filtro select su match ambigui
 - deduplicazione avanzata project/entity
 
@@ -1155,6 +1388,23 @@ STATO DOPO PROJECT / ENTITY CREATE SUGGESTION:
 ✔ salvataggio resta manuale
 ✔ project/entity mancanti non bloccano conferma
 ✔ project/entity ambigui bloccano conferma
+
+STATO DOPO COMMAND INTENT — CREATE PROJECT / ENTITY:
+
+✔ command_intent_state introdotto come helper separato
+✔ comandi puri create project/entity intercettati
+✔ comando generico “crea” guidato
+✔ “modifica evento” gestito come guida non operativa
+✔ comandi puri non salvano eventi
+✔ project/entity da command richiedono conferma utente
+✔ elemento già presente riconosciuto e non duplicato
+✔ evento ordinario non regressivo validato
+✔ edit flow non regressivo validato
+
+Nota:
+
+Command Intent non risolve il problema strutturale del match engine avanzato.
+Aggiunge un layer separato per comandi puri.
 
 ------------------------------------------------
 TARGET FUTURO — MATCH ENGINE EVOLUTION
@@ -1184,14 +1434,13 @@ Evoluzioni future possibili solo come nodi dedicati:
 - relazioni entity-project
 - deduplicazione
 
-3. COMMAND INTENT — CREATE PROJECT / ENTITY
+3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 
-- riconoscere frasi tipo “crea progetto Aspri”
-- riconoscere frasi tipo “crea entità Patrizio”
-- distinguere comando di sistema da evento operativo
-- mostrare conferma guidata
-- riusare insert_project / insert_entity
-- non salvare evento se l’input è comando puro
+- valutare un layer unico di analisi interrogabile
+- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state
+- ridurre rami ibridi e fonti parallele
+- evitare duplicazioni future tra matching, suggestion e command intent
+- non introdurre refactor globale senza nodo dedicato
 
 4. MATCH CONFIDENCE / RANKING ADVANCED
 
@@ -1215,6 +1464,14 @@ Vincoli futuri:
 - migliorare risoluzione ambiguità
 - non ridurre possibilità di selezione manuale libera senza nodo dedicato
 
+6. ADVANCED COMMAND INTENT
+
+- modifica project/entity da command
+- dashboard/report intent
+- eventuale routing avanzato
+- nessun edit automatico senza conferma
+- nessun output/KPI anticipato
+
 ------------------------------------------------
 EVOLUZIONE FUTURA NON ATTIVA
 ------------------------------------------------
@@ -1227,7 +1484,8 @@ EVOLUZIONE FUTURA NON ATTIVA
 - project hierarchy
 - relazioni entity-project
 - deduplicazione
-- command intent per creare project/entity
+- command intent avanzato oltre create project/entity
+- input analysis model unico
 - creazione automatica silenziosa project/entity
 - filtro select su match ambigui
 - pending state avanzato per nuovi project/entity
@@ -1272,6 +1530,12 @@ Il successivo Project / Entity Create Suggestion First Controlled Level
 ha aggiunto un layer di suggestion controllata che consuma il matching,
 senza trasformare il match engine in un sistema decisionale o di scrittura DB.
 
+Il successivo Command Intent — Create Project / Entity
+ha aggiunto un layer separato per intercettare comandi puri,
+senza trasformare il Match Engine in un sistema di command routing.
+
+Il Match Engine resta dedicato a project/entity dentro eventi ordinari.
+
 Il prossimo livello non è “rifare il Match Engine”,
 ma evolverlo tramite nodi dedicati.
 
@@ -1300,6 +1564,13 @@ STATO ATTUALE
 ✔ project/entity mancanti non bloccano conferma
 ✔ project/entity ambigui bloccano conferma
 ✔ entity autofill controlled minimal implementato
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state introdotto come helper separato
+✔ command intent non sostituisce project_state / entity_state
+✔ command intent non sostituisce create_suggestion_state
+✔ comandi puri non salvano eventi
+✔ project/entity da command creati solo previa conferma utente
+✔ elemento già presente da command riconosciuto e non duplicato
 
 ---
 
@@ -1310,7 +1581,8 @@ STATO ATTUALE
 ⚠ nessun alias system  
 ⚠ nessuna deduplicazione  
 ✔ creazione guidata project/entity implementata a primo livello controllato
-⚠ command intent non implementato
+⚠ command intent avanzato non implementato
+⚠ input analysis model unico non implementato
 ⚠ filtro select su match ambigui non implementato
 ⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
@@ -1396,4 +1668,39 @@ v06 — 2026-05-07
 - confermato parser invariato
 - confermato type classification invariata
 - confermato duration normalization invariata
+- nessun output/KPI anticipato
+
+v07 — 2026-05-13
+
+- aggiornamento post COMMAND INTENT — CREATE PROJECT / ENTITY
+- documentato command_intent_state come helper separato dal Match Engine
+- chiarito che command_intent_state non sostituisce project_state / entity_state
+- chiarito che command_intent_state non sostituisce create_suggestion_state
+- chiarito che matching ≠ command intent
+- chiarito che suggestion ≠ command intent
+- chiarito che command intent ≠ salvataggio evento
+- documentato comando generico “crea”
+- documentato create project incompleto
+- documentato create project completo
+- documentato create entity incompleto
+- documentato create entity completo
+- documentata guida non operativa “modifica evento”
+- documentato elemento già presente da command
+- documentato “crea progetto villa” come no-duplicate guard
+- documentato che comandi puri non salvano eventi
+- documentato che project/entity da command richiedono conferma utente
+- documentato riuso insert_project / insert_entity da command
+- documentato che command intent non modifica project_state/entity_state
+- documentato che command intent non modifica create_suggestion_state
+- documentato evento ordinario non regressivo dopo Command Intent
+- documentato edit flow non regressivo dopo Command Intent
+- aggiornati casi non supportati
+- aggiornati limiti attuali
+- aggiornato Target Futuro sostituendo Command Intent base con Input Analysis Model / Single Interpretation Layer
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- type classification invariata
+- duration normalization invariata
 - nessun output/KPI anticipato

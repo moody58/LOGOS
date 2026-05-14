@@ -1,6 +1,6 @@
-# 03_LOGOS_Event_Lifecycle_v08
+# 03_LOGOS_Event_Lifecycle_v09
 
-DATA: 2026-05-09
+DATA: 2026-05-13
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -36,6 +36,16 @@ C (Completezza): 10/10
 - cancel edit → Lista eventi documentato
 - navigation dock documentata come UI, non stato evento
 - font-size 16px input/select mobile Safari documentato come vincolo UX/runtime
+- Command Intent — Create Project / Entity documentato nel lifecycle
+- command_intent_state documentato come helper UI/runtime separato dal lifecycle evento
+- distinzione comando puro / evento ordinario documentata
+- comandi puri esclusi da insert_event / update_event
+- creazione project/entity da command documentata come azione strutturale, non evento
+- feedback project_created / entity_created documentato come feedback UI temporaneo
+- guida “modifica evento” documentata come routing UI, non transizione evento
+- btn_command_create_project / btn_command_create_entity / btn_command_go_events documentati
+- evento ordinario non regressivo dopo Command Intent documentato
+- edit flow non regressivo dopo Command Intent documentato
 
 Q (Qualità): 9.5/10  
 - lifecycle coerente con sistema reale  
@@ -53,6 +63,12 @@ Q (Qualità): 9.5/10
 - chiarito che feedback e navigation dock non cambiano stato evento
 - chiarito che project/entity creation migliora la qualità dati ma non valida l’evento
 - validazione reale iPhone 13 Safari integrata come requisito UX mobile
+- chiarito che Command Intent non introduce nuovi stati evento
+- chiarito che i comandi puri non generano eventi NEW
+- chiarito che project/entity creati da command non validano e non creano eventi
+- chiarito che “modifica evento” da command non apre edit flow automatico
+- mantenuta separazione tra lifecycle dati e routing UI command
+- feedback project/entity distinto dal feedback evento
 
 D (Deployabilità): 10/10  
 - documento stabile  
@@ -77,6 +93,12 @@ D (Deployabilità): 10/10
 - cancel create/edit validato
 - iPhone 13 Safari reale validato
 - zoom automatico iOS risolto tramite font-size 16px
+- chiarito che Command Intent non introduce nuovi stati evento
+- chiarito che i comandi puri non generano eventi NEW
+- chiarito che project/entity creati da command non validano e non creano eventi
+- chiarito che “modifica evento” da command non apre edit flow automatico
+- mantenuta separazione tra lifecycle dati e routing UI command
+- feedback project/entity distinto dal feedback evento
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -105,6 +127,12 @@ Il documento stabilisce:
 - cancel create/input e cancel edit contestuali
 - UX mobile coherence pass
 - vincolo font-size 16px per input/select mobile Safari
+- distinzione tra evento ordinario e comando puro
+- Command Intent — Create Project / Entity
+- esclusione dei comandi puri dal lifecycle evento
+- creazione project/entity da command come azione strutturale separata
+- feedback project_created / entity_created come feedback UI temporaneo
+- guida “modifica evento” come routing UI non operativo sul dato
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -112,7 +140,21 @@ PRINCIPI FONDANTI
 
 1. EVENTO = UNITÀ BASE
 
-Ogni informazione è registrata come evento.
+Ogni informazione operativa viene registrata come evento.
+
+Eccezione esplicita:
+
+i comandi strutturali puri non sono eventi.
+
+Esempi:
+
+- crea
+- crea progetto Villa Nuova
+- crea entità Patrizio
+- modifica evento
+
+Questi input vengono gestiti da Command Intent
+e non generano automaticamente eventi NEW.
 
 ---
 
@@ -130,10 +172,13 @@ Gli eventi:
 - possono essere arricchiti con project_id/entity_id creati inline prima della conferma evento
 - la creazione project/entity non salva automaticamente l’evento
 - feedback e routing post-save non modificano il dato salvato
+- non vengono creati se l’input è un comando puro riconosciuto da command_intent_state
+- restano separati da project/entity creati tramite command intent
+- non vengono modificati da “modifica evento” scritto come command intent
 
 ---
 
-1. EVOLUZIONE PER STATO + CORREZIONE PRE-VALIDAZIONE
+3. EVOLUZIONE PER STATO + CORREZIONE PRE-VALIDAZIONE
 
 Un evento:
 
@@ -160,11 +205,15 @@ Il sistema:
 - propone creazione project/entity quando controllata
 - richiede conferma esplicita per creare project/entity
 - richiede conferma esplicita separata per salvare l’evento
+- riconosce comandi puri a primo livello controllato
+- esclude i comandi puri dal salvataggio evento
+- richiede conferma esplicita per creare project/entity da command
+- guida l’utente alla lista eventi se scrive “modifica evento”
 - non decide definitivamente
 
 ---
 
-1. INPUT NON BLOCCANTE
+5. INPUT NON BLOCCANTE
 
 Eventi imperfetti possono essere salvati.
 
@@ -181,6 +230,10 @@ La qualità viene migliorata progressivamente tramite:
 - suggestion project/entity controllata
 - feedback post-save temporaneo
 - routing UI coerente con insert/update
+- riconosce comandi puri a primo livello controllato
+- esclude i comandi puri dal salvataggio evento
+- richiede conferma esplicita per creare project/entity da command
+- guida l’utente alla lista eventi se scrive “modifica evento”
 
 ------------------------------------------------
 STATI EVENTO ATTUALI
@@ -200,7 +253,12 @@ NEW
 - può usare project/entity creati inline prima del salvataggio evento
 - project/entity creati inline vengono salvati solo su conferma utente
 - evento resta NEW solo dopo Conferma evento / insert_event
+- non nasce se l’input è un comando puro riconosciuto
+- non nasce dopo “crea progetto...” o “crea entità...” da command intent
+- non nasce dopo “modifica evento” usato come guida command
 - la creazione project/entity non genera automaticamente un evento
+- la creazione project/entity da Command Intent non genera automaticamente un evento
+- feedback project_created / entity_created non rappresenta uno stato evento
 - può essere corretto tramite edit flow con match state live
 - può uscire dall’edit flow tramite Annulla senza update_event
 - può essere confermato in edit senza modifiche reali senza aggiornare updated_at
@@ -236,6 +294,17 @@ FLUSSO ATTUALE
 ------------------------------------------------
 
 INPUT  
+↓  
+COMMAND INTENT CHECK  
+↓  
+SE COMANDO PURO  
+→ container_command_intent  
+→ azione command controllata  
+→ eventuale insert_project / insert_entity oppure Vai agli eventi  
+→ feedback temporaneo project/entity oppure Lista eventi  
+→ NESSUN EVENTO NEW  
+
+SE EVENTO ORDINARIO  
 ↓  
 PARSE CONTROLLED  
 ↓  
@@ -288,6 +357,13 @@ Nota:
 
 Feedback, Home, Lista eventi e Navigation dock sono stati UI.
 Non sono stati evento.
+
+Anche container_command_intent, feedback project_created / entity_created
+e guida “modifica evento” sono stati/UI flow.
+
+Non sono stati evento.
+
+Command Intent non introduce nuovi stati lifecycle.
 
 Gli stati evento restano:
 
@@ -375,6 +451,134 @@ Decisione:
 Project/entity creation migliora la qualità dati del NEW event,
 ma non modifica il lifecycle stati.
 
+------------------------------------------------
+COMMAND INTENT NEL LIFECYCLE
+------------------------------------------------
+
+Command Intent — Create Project / Entity è un layer UI/runtime
+che intercetta comandi strutturali puri prima del save flow evento.
+
+Componenti principali:
+
+- command_intent_state
+- container_command_intent
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+- feedback_mode
+
+Regola principale:
+
+un comando puro NON genera un evento NEW.
+
+Esempi:
+
+crea
+→ guida con esempi
+→ nessun insert_event
+→ nessun evento NEW
+
+crea progetto
+→ input nome progetto
+→ nessun insert_event
+→ nessun evento NEW
+
+crea progetto Villa Nuova
+→ btn_command_create_project
+→ insert_project
+→ feedback project_created
+→ nessun evento NEW
+
+crea entità Patrizio
+→ btn_command_create_entity
+→ insert_entity
+→ feedback entity_created
+→ nessun evento NEW
+
+crea progetto villa
+→ elemento già presente
+→ nessun insert_project
+→ nessun insert_event
+→ nessun evento NEW
+
+modifica evento
+→ guida con step
+→ btn_command_go_events
+→ Lista eventi
+→ nessun update_event
+→ nessun evento modificato automaticamente
+
+---
+
+Regole lifecycle:
+
+- command_intent_state non crea eventi
+- container_command_intent non crea eventi
+- btn_command_create_project non crea eventi
+- btn_command_create_entity non crea eventi
+- btn_command_go_events non modifica eventi
+- insert_project scrive solo in projects
+- insert_entity scrive solo in entities
+- feedback project_created / entity_created è feedback UI temporaneo
+- feedback project_created / entity_created non è stato evento
+- “modifica evento” da command non equivale a edit mode
+- edit_mode viene attivato solo dalla lista eventi tramite pulsante Modifica
+
+---
+
+Flow command project:
+
+input command
+→ command_intent_state
+→ container_command_intent
+→ btn_command_create_project
+→ insert_project
+→ feedback project_created
+→ Home
+→ nessun evento creato
+
+---
+
+Flow command entity:
+
+input command
+→ command_intent_state
+→ container_command_intent
+→ btn_command_create_entity
+→ insert_entity
+→ feedback entity_created
+→ Home
+→ nessun evento creato
+
+---
+
+Flow command guida evento:
+
+input “modifica evento”
+→ command_intent_state
+→ container_command_intent
+→ btn_command_go_events
+→ Lista eventi
+→ nessuna modifica evento
+→ nessun update_event
+
+---
+
+Decisione:
+
+Command Intent migliora la leggibilità del sistema
+e impedisce che comandi puri vengano salvati come eventi.
+
+Non modifica:
+
+- stati evento
+- schema DB
+- lifecycle NEW / WRITTEN / ERROR
+- edit flow reale
+- processing WRITTEN / ERROR
+
 ---
 
 CANCEL CONTESTUALE:
@@ -389,7 +593,7 @@ CREATE / INPUT MODE:
 - resetta input_home / input_raw
 - resetta select_project / select_entity / select1
 - resetta ui_state.parsed
-- azzera feedback_text / feedback_project / feedback_summary
+- azzera feedback_mode / feedback_text / feedback_project / feedback_summary
 - torna Home
 - nessuna modifica DB
 
@@ -404,7 +608,7 @@ EDIT MODE:
 - resetta input_home / input_raw
 - resetta select_project / select_entity / select1
 - resetta ui_state.parsed
-- azzera feedback_text / feedback_project / feedback_summary
+- azzera feedback_mode / feedback_text / feedback_project / feedback_summary
 - torna alla lista eventi NEW
 
 Nota:
@@ -541,6 +745,36 @@ questa NON è una transizione evento perché nessun evento è ancora stato creat
 
 ---
 
+COMMAND INPUT → HOME / EVENTS LIST
+
+Nota:
+
+questa NON è una transizione evento perché nessun evento viene creato.
+
+Casi:
+
+- crea
+- crea progetto
+- crea progetto [nome]
+- crea entità
+- crea entità [nome]
+- crea progetto [nome esistente]
+- modifica evento
+
+Comportamento:
+
+- comando generico → guida → nessun evento
+- create project completo → insert_project → feedback → Home → nessun evento
+- create entity completo → insert_entity → feedback → Home → nessun evento
+- elemento già presente → nessun insert → nessun evento
+- modifica evento → Lista eventi → nessun update_event
+
+Stati evento coinvolti:
+
+nessuno.
+
+---
+
 NEW → WRITTEN
 
 - azione: conferma / scrittura
@@ -566,11 +800,14 @@ Transizioni NON consentite:
 - WRITTEN → EDIT
 - ERROR → EDIT
 
-Routing UI post-save:
+Routing UI post-save / post-command:
 
-- insert reale → feedback temporaneo → Home
-- update reale → feedback temporaneo → Lista eventi
+- insert evento reale → feedback temporaneo → Home
+- update evento reale → feedback temporaneo → Lista eventi
 - no-op edit → Lista eventi senza feedback
+- command create project → feedback project_created → Home
+- command create entity → feedback entity_created → Home
+- command guida modifica evento → Lista eventi
 
 Questo routing non introduce nuovi stati evento.
 
@@ -589,6 +826,8 @@ L’utente deve:
 - scartare errori
 - confermare solo eventi ritenuti utilizzabili
 - confermare esplicitamente la creazione project/entity quando proposta
+- confermare esplicitamente la creazione project/entity quando richiesta da command intent
+- usare la lista eventi per modificare un evento quando guidato dal comando “modifica evento”
 - confermare separatamente il salvataggio evento dopo eventuale creazione project/entity
 - distinguere tra Torna alla home e Annulla modifica
 - verificare il riepilogo feedback solo come conferma UI temporanea
@@ -605,6 +844,9 @@ Il sistema NON:
 - decide qualità finale del dato
 - crea project/entity automaticamente
 - salva automaticamente eventi dopo creazione project/entity
+- salva eventi da comandi puri
+- crea eventi da “crea progetto...” o “crea entità...”
+- modifica eventi automaticamente quando l’utente scrive “modifica evento”
 - usa feedback_summary come dato persistente
 - considera la navigation dock parte del lifecycle evento
 
@@ -627,6 +869,13 @@ Dato in NEW dopo Normalization / Duration / Type / Match Base:
 - project/entity creati inline migliorano il collegamento dell’evento
 - l’evento resta non validato fino a WRITTEN
 - non è ancora validato dall’utente
+
+Nota Command Intent:
+
+i comandi puri non producono dati NEW.
+
+La creazione project/entity da command può migliorare la struttura disponibile
+per eventi futuri, ma non produce un evento NEW.
 
 ---
 
@@ -754,23 +1003,29 @@ INPUT SYSTEM:
 - usa project_state/entity_state come fonte minima matching
 - usa select_project/select_entity come fonte project_id/entity_id
 - usa create_suggestion_state per suggestion project/entity
+- usa command_intent_state per distinguere comandi puri da eventi ordinari
 - usa insert_project / insert_entity solo su conferma utente
+- usa btn_command_create_project / btn_command_create_entity per project/entity da command
+- usa btn_command_go_events per guidare alla lista eventi da “modifica evento”
+- usa feedback_mode per distinguere feedback evento/progetto/entità
 - usa feedback_summary per riepilogo feedback temporaneo
 - usa routing post-save contestuale
 - usa cancel contestuale create/edit
 
 ---
 
-Create flow:
+Create flow evento ordinario:
 
 input_home  
 → input_raw  
 → trigger_parse_debounced  
+→ command_intent_state  
+→ se NON è comando puro  
 → parse_input_controlled  
 → ui_state.parsed  
 → project_state / entity_state  
 → create_suggestion_state  
-→ eventuale insert_project / insert_entity su conferma utente  
+→ eventuale insert_project / insert_entity inline su conferma utente  
 → select_project / select_entity  
 → select1  
 → feedback_summary  
@@ -779,6 +1034,19 @@ input_home
 → feedback temporaneo  
 → Home  
 → NEW 
+
+Command flow strutturale:
+
+input_home  
+→ input_raw  
+→ trigger_parse_debounced  
+→ command_intent_state  
+→ se è comando puro  
+→ container_command_intent  
+→ eventuale btn_command_create_project / btn_command_create_entity / btn_command_go_events  
+→ insert_project / insert_entity oppure Lista eventi  
+→ feedback temporaneo project/entity oppure Lista eventi  
+→ nessun evento NEW
 
 ---
 
@@ -798,6 +1066,15 @@ evento NEW selezionato
 → select_project / select_entity  
 → select1  
 → scelta utente  
+
+Nota Command Intent:
+
+scrivere “modifica evento” nell’input libero NON attiva edit_mode.
+
+Il comando mostra solo una guida e il pulsante Vai agli eventi.
+
+L’edit flow reale resta attivato solo da un evento NEW nella lista eventi
+tramite il pulsante Modifica.
 
 Percorsi possibili:
 
@@ -826,7 +1103,7 @@ btn_cancel_edit
 → nessun feedback  
 → Lista eventi
 
-4. Cancel create/input:
+1. Cancel create/input:
 
 input in creazione  
 → Torna alla home  
@@ -919,6 +1196,13 @@ cancel contestuale:
 - in create/input mode torna Home senza creare eventi
 - in edit mode torna Lista eventi senza update_event
 
+Command Intent:
+
+- non usa edit_mode
+- non usa editing_event
+- non attiva update_event
+- btn_command_go_events fa solo routing alla lista eventi
+
 Effetto:
 
 - linting edit_mode risolto
@@ -998,6 +1282,8 @@ Il matching NON:
 - decide spesa/incasso
 - crea project/entity automaticamente
 - salva automaticamente l’evento dopo creazione project/entity
+- gestisce command intent
+- decide se un input è comando puro
 - risolve ambiguità in modo silenzioso
 
 ---
@@ -1008,6 +1294,18 @@ Project / Entity Create Suggestion:
 - può proporre creazione project/entity
 - non decide project/entity al posto dell’utente
 - non cambia lifecycle
+- non valida evento
+
+---
+
+Command Intent:
+
+- è separato dal matching
+- intercetta comandi puri
+- può creare project/entity solo tramite conferma utente
+- non modifica project_state / entity_state
+- non modifica create_suggestion_state
+- non cambia lifecycle evento
 - non valida evento
 
 ---
@@ -1044,6 +1342,7 @@ La preview NON:
 - valida evento
 - cambia stato
 - è fonte del salvataggio
+- rappresenta comandi puri come eventi
 
 ---
 
@@ -1061,10 +1360,17 @@ Stato attuale:
 - preview legge project_state/entity_state per hint/highlight matching
 - preview non è fonte del salvataggio
 - preview resta layer ibrido
+- per i comandi puri la preview viene sostituita da container_command_intent
 
 Limite attuale:
 
 la preview non è ancora una view pura.
+
+Dopo Command Intent:
+
+i comandi puri sono esclusi dalla preview evento,
+ma “Da verificare” e altri hint restano ancora embedded nella Sintesi
+per gli eventi ordinari.
 
 Restano embedded:
 
@@ -1114,6 +1420,9 @@ Il database NON:
 - crea project/entity automaticamente
 - salva evento automaticamente dopo insert_project / insert_entity
 - salva feedback_summary
+- salva feedback_mode
+- interpreta command intent
+- crea eventi da comandi puri
 
 ---
 
@@ -1145,7 +1454,9 @@ Project/entity creation:
 - insert_project scrive nella tabella projects
 - insert_entity scrive nella tabella entities
 - entrambe le azioni avvengono solo su conferma utente
+- possono essere invocate da suggestion inline oppure da command intent
 - nessuna delle due azioni crea automaticamente un evento
+- nessun comando puro crea automaticamente un record in events
 
 ------------------------------------------------
 INTEGRAZIONE CON PROCESSING
@@ -1171,6 +1482,7 @@ NEW → NEW (EDIT con modifica reale)
 NEW → NEW (ANNULLA EDIT)  
 NEW → NEW (EDIT NO-OP)  
 CREATE INPUT → HOME (nessun evento creato) 
+COMMAND INPUT → HOME / EVENTS LIST (nessun evento creato)
 
 ---
 
@@ -1193,6 +1505,26 @@ Dopo no-op edit:
 
 - nessun feedback
 - ritorno immediato Lista eventi
+
+Dopo command create project:
+
+- insert_project
+- feedback project_created
+- ritorno Home
+- nessun evento NEW
+
+Dopo command create entity:
+
+- insert_entity
+- feedback entity_created
+- ritorno Home
+- nessun evento NEW
+
+Dopo command “modifica evento”:
+
+- routing Lista eventi
+- nessun update_event
+- nessun evento modificato
 
 Ordine corretto:
 
@@ -1287,6 +1619,10 @@ LIMITI ATTUALI
 - Azioni rapide non operative
 - Cambia / Scegli nella Sintesi non cliccabili
 - feedback_summary non persistente
+- feedback_mode non persistente
+- command intent implementato solo a primo livello controllato
+- command intent avanzato non implementato
+- input analysis model unico non implementato
 - navigation dock non rappresenta stato evento
 
 ------------------------------------------------
@@ -1418,6 +1754,10 @@ INPUT SYSTEM
 → gestisce feedback_summary temporaneo
 → gestisce routing post-save contestuale
 → gestisce cancel create/edit contestuale
+→ gestisce command_intent_state
+→ intercetta comandi puri prima del save flow evento
+→ gestisce feedback_mode per project/entity da command
+→ non crea eventi da comandi puri
 
 ---
 
@@ -1447,6 +1787,20 @@ PREVIEW
 
 ---
 
+COMMAND INTENT
+
+→ distingue comando puro da evento ordinario  
+→ non cambia stato evento  
+→ non valida evento  
+→ non crea eventi  
+→ può creare project/entity solo tramite conferma utente  
+→ può guidare alla lista eventi senza modificare dati  
+→ non sostituisce edit flow reale  
+→ non sostituisce matching  
+→ non sostituisce suggestion  
+
+---
+
 DATABASE
 
 → memorizza eventi  
@@ -1455,6 +1809,10 @@ DATABASE
 → non salva feedback_summary
 → non conosce navigation dock
 → non conosce routing UI post-save
+→ gestisce command_intent_state
+→ intercetta comandi puri prima del save flow evento
+→ gestisce feedback_mode per project/entity da command
+→ non crea eventi da comandi puri
 
 ---
 
@@ -1505,7 +1863,9 @@ Strategia:
 1. salvare velocemente
 1A. proporre creazione project/entity solo quando utile e controllata
 1B. non salvare automaticamente eventi dopo creazione project/entity
-2. correggere in NEW
+1C. non salvare comandi puri come eventi
+1D. guidare comandi strutturali verso azioni controllate separate
+1. correggere in NEW
 2A. evitare aggiornamenti inutili se l’edit non cambia il dato
 2B. permettere uscita sicura dall’edit senza salvare
 2C. chiudere in modo pulito edit_mode / editing_event al termine del flow edit
@@ -1525,6 +1885,10 @@ VINCOLI OPERATIVI
 - non introdurre versioning senza decisione architetturale
 - non usare dati non affidabili per KPI evoluti
 - non confondere normalization base con validazione
+- non confondere command intent con lifecycle evento
+- non creare eventi da comandi puri
+- non aprire edit flow automatico da “modifica evento”
+- non usare feedback project/entity come stato evento
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1561,6 +1925,15 @@ Il lifecycle attuale è:
 ✔ cancel edit → Lista eventi
 ✔ navigation dock introdotta come UI contestuale
 ✔ font-size 16px input/select mobile Safari validato
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state introdotto come helper separato
+✔ comandi puri esclusi dal lifecycle evento
+✔ crea progetto / crea entità non generano eventi NEW
+✔ project/entity da command creati solo previa conferma utente
+✔ feedback project_created / entity_created introdotto
+✔ “modifica evento” da command gestito come guida non operativa
+✔ evento ordinario non regressivo dopo Command Intent validato
+✔ edit flow non regressivo dopo Command Intent validato
 
 ---
 
@@ -1579,6 +1952,9 @@ Ma:
 ⚠ project creation override con match generico non implementato
 ⚠ Azioni rapide non operative
 ⚠ Dashboard non implementata
+⚠ Command Intent è solo primo livello controllato
+⚠ command intent avanzato non implementato
+⚠ input analysis model unico non implementato
 
 ---
 
@@ -1599,9 +1975,11 @@ solo dopo stabilizzazione:
 11. linting / state helper cleanup ✔  
 12. Project / Entity Create Suggestion First Controlled Level ✔
 13. UX Mobile Coherence Pass ✔
-14. command intent / data structure / project-entity evolution
-15. economic direction advanced
-16. output / dashboard base
+14. Command Intent — Create Project / Entity ✔
+15. input rendering stability / preview consolidation / input analysis
+16. data structure / project-entity evolution
+17. economic direction advanced
+18. output / dashboard base
 
 ------------------------------------------------
 CHANGELOG
@@ -1732,6 +2110,42 @@ v08 — 2026-05-09
 - documentato fix zoom automatico iOS Safari
 - documentate select mobile funzionanti sia in digitazione sia in dropdown
 - confermati stati evento NEW / WRITTEN / ERROR invariati
+- DB invariato
+- parser invariato
+- matching invariato
+- type classification invariata
+- duration normalization invariata
+- nessun output/KPI anticipato
+
+v09 — 2026-05-13
+
+- integrazione COMMAND INTENT — CREATE PROJECT / ENTITY nel lifecycle
+- documentato command_intent_state come helper separato dal lifecycle evento
+- chiarito che comandi puri non generano eventi NEW
+- chiarito che “crea progetto...” non salva eventi
+- chiarito che “crea entità...” non salva eventi
+- chiarito che “modifica evento” da command non apre edit flow automatico
+- documentato container_command_intent come UI command separata dalla preview evento
+- documentati btn_command_create_project / btn_command_create_entity / btn_command_go_events
+- documentato feedback_mode
+- documentato feedback project_created
+- documentato feedback entity_created
+- documentato che feedback project/entity non è stato evento
+- documentato command create project → insert_project → feedback → Home → nessun evento
+- documentato command create entity → insert_entity → feedback → Home → nessun evento
+- documentato command guida modifica evento → Lista eventi → nessun update_event
+- aggiornato flow attuale con COMMAND INTENT CHECK
+- aggiunta sezione COMMAND INTENT NEL LIFECYCLE
+- aggiunta pseudo-transizione COMMAND INPUT → HOME / EVENTS LIST come non-transizione evento
+- aggiornata integrazione con Input System
+- aggiornata integrazione con Matching
+- aggiornata integrazione con Preview
+- aggiornata integrazione con Database
+- aggiornata integrazione con Processing
+- aggiornati limiti attuali
+- confermati stati evento invariati: NEW / WRITTEN / ERROR
+- evento ordinario non regressivo validato
+- edit flow non regressivo validato
 - DB invariato
 - parser invariato
 - matching invariato

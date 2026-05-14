@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v11
+# LOGOS_RETOOL_RUNTIME_REAL_v12
 
-DATA: 2026-05-09
+DATA: 2026-05-13
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -41,6 +41,18 @@ C (Completezza): 10/10
 - navigation dock documentata
 - handle_event_success non più gestore UI post-save documentato
 - font-size 16px input/select mobile Safari documentato
+- Command Intent — Create Project / Entity documentato
+- command_intent_state documentato
+- container_command_intent documentato
+- input_command_project_name / input_command_entity_name documentati
+- btn_command_create_project / btn_command_create_entity documentati
+- btn_command_go_events documentato
+- feedback_mode documentato
+- feedback project_created / entity_created documentato
+- comandi puri esclusi dal save flow evento documentati
+- guida “modifica evento” documentata come command non operativo sui dati
+- evento ordinario non regressivo dopo Command Intent documentato
+- edit flow non regressivo dopo Command Intent documentato
 
 Q (Qualità): 9.5/10  
 - runtime reale aggiornato  
@@ -60,6 +72,13 @@ Q (Qualità): 9.5/10
 - feedback/routing centralizzati in button_input_confirm
 - comportamento insert/update/no-op più coerente
 - UX mobile validata anche su iPhone 13 Safari reale
+- Command Intent introdotto senza duplicare parser, matching o create_suggestion_state
+- command_intent_state separato dal save flow evento
+- comandi puri create project/entity non vengono trattati come eventi ordinari
+- project/entity da command creati solo previa conferma utente
+- insert_project / insert_entity riusati come query operative controllate
+- “modifica evento” gestito come guida, senza edit flow parallelo
+- feedback project/entity distinto dal feedback evento
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -83,6 +102,15 @@ D (Deployabilità): 10/10
 - cancel create/edit validato
 - font-size 16px validato su iPhone 13 Safari
 - select mobile validate sia in digitazione sia in dropdown 
+- Command Intent — Create Project / Entity validato runtime
+- command_intent_state validato runtime
+- btn_command_create_project validato runtime
+- btn_command_create_entity validato runtime
+- btn_command_go_events validato runtime
+- feedback project_created / entity_created validato runtime
+- comandi puri non salvano eventi validato runtime
+- evento ordinario non regressivo dopo Command Intent validato runtime
+- edit flow non regressivo dopo Command Intent validato runtime
 
 ------------------------------------------------
 STATO
@@ -101,6 +129,7 @@ UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
 LINTING / STATE HELPER CLEANUP
 PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
 UX MOBILE COHERENCE PASS
+COMMAND INTENT — CREATE PROJECT / ENTITY
 
 ------------------------------------------------
 DESCRIZIONE OPERATIVA DEL SISTEMA
@@ -112,6 +141,14 @@ in cui tutta la logica applicativa è gestita in Retool tramite JavaScript.
 Supabase funge da storage layer passivo.
 
 Flusso attuale:
+
+INPUT  
+→ COMMAND INTENT CHECK  
+→ se comando puro: CONTAINER COMMAND INTENT  
+→ COMMAND ACTION / FEEDBACK / ROUTING  
+→ nessun evento creato
+
+oppure
 
 INPUT  
 → PARSING CONTROLLED  
@@ -185,7 +222,34 @@ INPUT
 ✔ Icon add-ons Retool introdotti nei pulsanti reali
 ✔ font-size input/select 16px validato su Safari iOS
 ✔ zoom automatico Safari iOS risolto
-✔ select mobile funzionanti sia in digitazione sia in dropdown    
+✔ select mobile funzionanti sia in digitazione sia in dropdown   
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state implementato
+✔ comando generico “crea” riconosciuto
+✔ create project incompleto gestito
+✔ create project completo gestito
+✔ create entity incompleto gestito
+✔ create entity completo gestito
+✔ sinonimi base create supportati: crea, aggiungi, inserisci, nuovo, nuova
+✔ container_command_intent implementato
+✔ input_command_project_name implementato
+✔ input_command_entity_name implementato
+✔ btn_command_create_project implementato e validato
+✔ btn_command_create_entity implementato e validato
+✔ btn_command_go_events implementato e validato
+✔ comandi puri non mostrano Sintesi evento / Dati evento
+✔ comandi puri non salvano eventi
+✔ project/entity da command creati solo previa conferma utente
+✔ insert_project / insert_entity riusati da command intent
+✔ elemento già presente riconosciuto e non duplicato
+✔ “crea progetto villa” validato come elemento già presente
+✔ “modifica evento” gestito come guida non operativa
+✔ feedback_mode introdotto in ui_state
+✔ feedback project_created implementato
+✔ feedback entity_created implementato
+✔ feedback evento ordinario preservato
+✔ evento normale non regressivo dopo Command Intent validato
+✔ edit flow non regressivo dopo Command Intent validato 
 
 ------------------------------------------------
 1. INPUT UTENTE
@@ -251,20 +315,23 @@ Ruolo:
 
 Codice runtime:
 
+// Reset micro-editor project/entity quando cambia input principale.
+// Evita stati stale tra input consecutivi.
+project_create_inline_open.setValue(false);
+project_create_suggestion_dismissed.setValue(false);
+input_new_project_name.setValue("");
+
+entity_create_inline_open.setValue(false);
+entity_create_suggestion_dismissed.setValue(false);
+input_new_entity_name.setValue("");
+
 if (window.__parseTimer) {
   clearTimeout(window.__parseTimer);
 }
 
 window.__parseTimer = setTimeout(async () => {
-  project_create_inline_open.setValue(false);
-  project_create_suggestion_dismissed.setValue(false);
-  input_new_project_name.setValue("");
-
-  entity_create_inline_open.setValue(false);
-  entity_create_suggestion_dismissed.setValue(false);
-  input_new_entity_name.setValue("");
-
   await Promise.allSettled([
+    command_intent_state.trigger(),
     parse_input_controlled.trigger(),
     project_state.trigger(),
     entity_state.trigger()
@@ -276,8 +343,9 @@ window.__parseTimer = setTimeout(async () => {
 Comportamento:
 
 input_raw aggiornato
-→ debounce
 → reset micro-state creazione inline
+→ debounce
+→ command_intent_state.trigger()
 → parse_input_controlled.trigger()
 → project_state.trigger()
 → entity_state.trigger()
@@ -295,6 +363,9 @@ Risultato:
 ✔ create_suggestion_state aggiornato
 ✔ micro-editor project/entity resettati al cambio input
 ✔ suggestion stale evitate tra input consecutivi
+✔ command_intent_state aggiornato
+✔ comandi puri riconosciuti prima del save flow evento
+✔ container_command_intent può sostituire Sintesi evento / Dati evento
 
 UI_STATE
 
@@ -312,6 +383,7 @@ Struttura attuale:
     event_date: null
   },
   status: null,
+  feedback_mode: null,
   feedback_text: null,
   feedback_project: null,
   feedback_summary: null
@@ -348,6 +420,23 @@ alimenta preview
 alimenta insert/update
 conserva feedback post-save
 
+feedback_mode:
+
+valore UI temporaneo usato dal feedback mobile.
+
+Valori usati:
+
+- project_created
+- entity_created
+- null / event_created
+
+Regole:
+
+- non viene salvato nel DB
+- non fa parte del modello dati Supabase
+- distingue il tipo di feedback mostrato
+- viene azzerato dopo auto-return feedback
+
 Nota:
 
 ui_state.parsed alimenta amount/unit/event_date.
@@ -373,7 +462,9 @@ Quindi:
 - select1.value = type
 - project_state / entity_state = match state
 - create_suggestion_state = suggestion project/entity
+- command_intent_state = command intent controllato
 - select_project.value / select_entity.value = project_id / entity_id
+- ui_state.feedback_mode = modalità feedback temporanea
 - ui_state.feedback_summary = riepilogo temporaneo feedback
 
 Regola critica:
@@ -1175,6 +1266,224 @@ Entity:
 - insert_entity non parte da UI
 
 ------------------------------------------------
+COMMAND INTENT — CREATE PROJECT / ENTITY
+------------------------------------------------
+
+Eseguito tramite:
+
+command_intent_state
+
+Consumatori:
+
+- container_command_intent
+- txt_command_intent_loading
+- txt_command_intent_title
+- txt_command_intent_description
+- txt_command_edit_steps
+- divider_command_intent_main
+- txt_command_intent_summary
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+- txt_command_intent_notice
+- txt_command_intent_guide_notice
+
+Input usati:
+
+- input_home.value
+- input_raw.value
+- projects_list.data
+- entities_list.data
+
+Output logico:
+
+command_intent_state espone:
+
+- isCommand
+- isPureCommand
+- commandFamily
+- commandType
+- targetType
+- candidateName
+- existingId
+- needsCompletion
+- canExecute
+- guideMessage
+- rawInput
+
+Principi:
+
+- command intent ≠ evento ordinario
+- command intent ≠ salvataggio automatico
+- command intent ≠ parser amount/unit/date
+- command intent ≠ matching engine
+- command intent ≠ create_suggestion_state
+- command intent ≠ edit flow automatico
+- project/entity da command vengono creati solo previa conferma utente
+- comandi puri non salvano eventi
+- insert_project / insert_entity restano le query operative
+- select_project / select_entity restano decisione finale per eventi ordinari
+
+---
+
+COMANDO GENERICO
+
+Input:
+
+crea
+aggiungi
+inserisci
+nuovo
+nuova
+
+Comportamento:
+
+- mostra guida con esempi
+- non mostra Sintesi evento
+- non mostra Dati evento
+- non salva eventi
+
+---
+
+CREATE PROJECT INCOMPLETO
+
+Input:
+
+crea progetto
+
+Comportamento:
+
+- mostra input_command_project_name
+- bottone Crea progetto disabilitato finché il nome è vuoto
+- non salva eventi
+
+---
+
+CREATE PROJECT COMPLETO
+
+Input:
+
+crea progetto Villa Nuova
+aggiungi progetto Villa Nuova
+inserisci progetto Villa Nuova
+nuovo progetto Villa Nuova
+
+Comportamento:
+
+- mostra riepilogo progetto
+- mostra btn_command_create_project
+- crea project solo dopo click utente
+- riusa insert_project esistente
+- non salva eventi
+
+---
+
+CREATE ENTITY INCOMPLETO
+
+Input:
+
+crea entità
+
+Comportamento:
+
+- mostra input_command_entity_name
+- bottone Crea entità disabilitato finché il nome è vuoto
+- non salva eventi
+
+---
+
+CREATE ENTITY COMPLETO
+
+Input:
+
+crea entità Patrizio
+aggiungi entità Referente Kappa
+inserisci entità Marco Parisi
+nuova entità Marco Parisi
+
+Comportamento:
+
+- mostra riepilogo entità
+- mostra btn_command_create_entity
+- crea entity solo dopo click utente
+- riusa insert_entity esistente
+- non salva eventi
+
+---
+
+ELEMENTO GIÀ PRESENTE
+
+Input:
+
+crea progetto villa
+
+se Villa esiste già.
+
+Comportamento:
+
+- mostra Elemento già presente
+- nessun bottone crea
+- nessuna duplicazione
+- nessun evento salvato
+- guida l’utente a usare il dato esistente o un nome più specifico
+
+---
+
+GUIDA MODIFICA EVENTO
+
+Input:
+
+modifica evento
+correggi evento
+cambia evento
+come modifico evento
+devo modificare evento
+
+Comportamento:
+
+- mostra guida con step
+- mostra btn_command_go_events
+- non modifica record
+- non apre edit flow automatico
+- non salva eventi
+
+---
+
+AZIONI COMMAND
+
+btn_command_create_project:
+
+- legge candidateName o input_command_project_name
+- valorizza input_new_project_name
+- trigger insert_project
+- refresh projects_list
+- imposta feedback_mode = project_created
+- mostra feedback progetto
+- ritorna Home automaticamente
+- non crea eventi
+
+btn_command_create_entity:
+
+- legge candidateName o input_command_entity_name
+- valorizza input_new_entity_name
+- trigger insert_entity
+- refresh entities_list
+- imposta feedback_mode = entity_created
+- mostra feedback entità
+- ritorna Home automaticamente
+- non crea eventi
+
+btn_command_go_events:
+
+- resetta input command
+- refresh events_new
+- apre container_events_list
+- non modifica eventi
+- non crea eventi
+
+------------------------------------------------
 TYPE CLASSIFICATION BASE
 ------------------------------------------------
 
@@ -1521,6 +1830,20 @@ entity_state
 select1
 liste projects/entities
 
+Nota Command Intent:
+
+La preview non rappresenta comandi puri come eventi.
+
+Per input come:
+
+- crea
+- crea progetto Villa Nuova
+- crea entità Patrizio
+- modifica evento
+
+la Sintesi evento deve essere nascosta
+e deve essere mostrato container_command_intent.
+
 Nota:
 
 select1 alimenta il type visuale e il payload di salvataggio.
@@ -1568,9 +1891,10 @@ Limiti:
 ✔ hint ambiguità matching alimentati da isAmbiguous
 ✔ highlight alimentato da matches
 ✔ detection locale preview non più fonte decisionale matching
-
 ⚠ preview resta layer ibrido
 ⚠ hint duration/type ancora embedded nella preview
+⚠ “Da verificare” resta interno alla Sintesi
+⚠ rendering progressivo input evento normale ancora migliorabile
 
 VALUE BUILDER:
 
@@ -1841,6 +2165,8 @@ resetta input/select
 lancia insert_event o update_event
 aggiorna events_new dopo save
 gestisce routing post-save contestuale
+non gestisce command intent
+non salva comandi puri come eventi
 
 Principio:
 
@@ -1887,6 +2213,17 @@ Conferma abilitata se:
 
 Il bottone non ricalcola matching.
 Legge solo lo stato già disponibile.
+
+Regola Command Intent:
+
+button_input_confirm resta dedicato agli eventi ordinari.
+
+Se command_intent_state riconosce un comando puro:
+
+- button_input_confirm non deve essere mostrato
+- insert_event / update_event non devono essere eseguiti
+- container_command_intent gestisce la UI command
+- btn_command_create_project / btn_command_create_entity / btn_command_go_events gestiscono l’azione command
 
 11.1 BUTTON_INPUT_CONFIRM — CODICE LOGICO
 
@@ -1957,19 +2294,20 @@ if (isSamePayload) {
   select_entity.clearValue();
   select1.clearValue?.();
 
-  ui_state.setValue({
-    ...ui_state.value,
-    view: "events",
-    parsed: {
-      amount: null,
-      unit: null,
-      event_date: null
-    },
-    status: "idle",
-    feedback_text: null,
-    feedback_project: null,
-    feedback_summary: null
-  });
+ui_state.setValue({
+  ...ui_state.value,
+  view: "events",
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "idle",
+  feedback_mode: null,
+  feedback_text: null,
+  feedback_project: null,
+  feedback_summary: null
+});
 
   container_input.setHidden(true);
   container_home.setHidden(true);
@@ -2019,6 +2357,7 @@ ui_state.setValue({
   },
   status: "success",
   view: "feedback",
+  feedback_mode: null,
   feedback_text: feedbackText,
   feedback_project: feedbackProject,
   feedback_summary: feedbackSummary
@@ -2055,18 +2394,19 @@ if (window.__logos_feedback_timer) {
 
 window.__logos_feedback_timer = setTimeout(() => {
   ui_state.setValue({
-    ...ui_state.value,
-    view: returnViewAfterFeedback,
-    parsed: {
-      amount: null,
-      unit: null,
-      event_date: null
-    },
-    status: "idle",
-    feedback_text: null,
-    feedback_project: null,
-    feedback_summary: null
-  });
+  ...ui_state.value,
+  view: returnViewAfterFeedback,
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "idle",
+  feedback_mode: null,
+  feedback_text: null,
+  feedback_project: null,
+  feedback_summary: null
+});
 
   container_feedback.setHidden(true);
   container_input.setHidden(true);
@@ -2139,6 +2479,23 @@ Decisione:
 - ambiguità non risolta → blocco
 - ambiguità risolta manualmente → conferma consentita
 - nessun match → conferma consentita
+
+COMMAND INTENT — HIDDEN / GUARD PRINCIPLE
+
+Per i comandi puri, la guardia principale non è button_input_confirm.disabled,
+ma la separazione UI:
+
+- Sintesi evento nascosta
+- Dati evento nascosti
+- button_input_confirm nascosto
+- container_command_intent visibile
+
+Il command intent non deve competere con il confirm event flow.
+
+Regola:
+
+evento ordinario → button_input_confirm  
+comando puro → btn_command_create_project / btn_command_create_entity / btn_command_go_events
 
 INSERT_EVENT
 
@@ -2277,6 +2634,36 @@ Esito: OK
 
 RESET & FEEDBACK
 
+Feedback mode:
+
+ui_state.feedback_mode distingue il tipo di feedback mostrato.
+
+Valori runtime:
+
+- null / event_created
+- project_created
+- entity_created
+
+Uso:
+
+Evento ordinario:
+→ feedback_mode null / event_created
+→ feedback evento
+
+Command create project:
+→ feedback_mode project_created
+→ feedback progetto
+
+Command create entity:
+→ feedback_mode entity_created
+→ feedback entità
+
+Regola:
+
+feedback_mode è UI temporaneo.
+Non viene salvato nel DB.
+Non è stato evento.
+
 PROCESSING EVENTI
 
 Lista:
@@ -2302,6 +2689,13 @@ Editing:
 disponibile solo per eventi NEW
 riuso pipeline input
 update_event
+
+Command Intent:
+
+- command create project non crea eventi
+- command create entity non crea eventi
+- command “modifica evento” non modifica eventi
+- btn_command_go_events fa solo routing alla lista eventi
 
 Cancel contestuale:
 
@@ -2419,6 +2813,8 @@ Campi coinvolti:
 - select_entity
 - input_new_project_name
 - input_new_entity_name
+- input_command_project_name
+- input_command_entity_name
 
 Esito:
 
@@ -2574,6 +2970,7 @@ project_create_inline_open
 project_create_suggestion_dismissed
 entity_create_inline_open
 entity_create_suggestion_dismissed
+command_intent_state
 
 HELPER TECNICI WINDOW:
 
@@ -2603,6 +3000,20 @@ container_app_nav
 btn_nav_home
 btn_nav_events
 btn_nav_dashboard
+container_command_intent
+txt_command_intent_loading
+txt_command_intent_title
+txt_command_intent_description
+txt_command_edit_steps
+divider_command_intent_main
+txt_command_intent_summary
+input_command_project_name
+input_command_entity_name
+btn_command_create_project
+btn_command_create_entity
+btn_command_go_events
+txt_command_intent_notice
+txt_command_intent_guide_notice
 
 Nota:
 
@@ -2653,6 +3064,8 @@ deduplicazione
 KPI
 crea automaticamente project/entity
 interpreta command intent
+crea eventi da comandi puri
+salva feedback_mode
 decide Dashboard/KPI
 
 Nota:
@@ -2661,6 +3074,17 @@ Supabase riceve events.type già determinato lato Retool.
 Il DB non decide e non corregge il type.
 insert_project / insert_entity vengono eseguiti solo da azione esplicita utente.
 La creazione project/entity non salva automaticamente l’evento.
+
+Nota Command Intent:
+
+Command Intent è gestito lato Retool.
+
+Supabase riceve scritture solo dopo conferma utente:
+
+- insert_project per progetto da command
+- insert_entity per entità da command
+
+Nessun comando puro crea record in events.
 
 LIMITI ATTUALI
 
@@ -2697,6 +3121,7 @@ creazione guidata project/entity implementata a primo livello controllato
 nessuna suggestion create/edit consistency avanzata
 nessun project creation override con match generico
 nessun ranking avanzato
+input analysis model unico non implementato
 
 TYPE:
 
@@ -2725,6 +3150,8 @@ Cambia / Scegli nella Sintesi ancora non cliccabili
 Azioni rapide presenti ma non operative
 Dashboard presente in nav ma disabilitata
 Icon System non completamente standardizzato
+rendering progressivo input evento normale ancora migliorabile
+“Da verificare” resta interno alla Sintesi
 
 ARCHITETTURA:
 
@@ -2735,6 +3162,9 @@ preview ancora ibrida
 feedback/routing centralizzati in button_input_confirm
 navigation dock contestuale implementata
 Mobile Safari font-size 16px baseline consolidata
+command intent implementato solo a primo livello controllato
+command_intent_state ancora helper Retool separato
+input analysis model unico non implementato
 
 PRINCIPI RUNTIME
 
@@ -2769,6 +3199,14 @@ PRINCIPI RUNTIME
 ✔ navigation dock contestuale
 ✔ Dashboard predisposta ma non attiva
 ✔ input/select mobile Safari minimo 16px
+✔ command_intent_state = command intent controllato, non save flow
+✔ comando puro ≠ evento ordinario
+✔ comandi puri non salvano eventi
+✔ container_command_intent sostituisce Sintesi/Dati evento nei comandi puri
+✔ project/entity da command creati solo previa conferma utente
+✔ insert_project / insert_entity riusati da command
+✔ “modifica evento” da command = guida, non edit flow automatico
+✔ feedback_mode = UI temporanea, non dato DB
 
 STATO RUNTIME
 
@@ -2829,6 +3267,20 @@ Runtime attuale:
 ✔ font-size input/select 16px validato su Safari iOS
 ✔ zoom automatico Safari iOS risolto
 ✔ select mobile funzionanti in digitazione/dropdown
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state implementato
+✔ container_command_intent implementato
+✔ input_command_project_name implementato
+✔ input_command_entity_name implementato
+✔ btn_command_create_project implementato e validato
+✔ btn_command_create_entity implementato e validato
+✔ btn_command_go_events implementato e validato
+✔ feedback_mode implementato
+✔ feedback project_created implementato
+✔ feedback entity_created implementato
+✔ comandi puri esclusi dal save flow evento
+✔ evento ordinario non regressivo dopo Command Intent validato
+✔ edit flow non regressivo dopo Command Intent validato
 
 Debiti:
 
@@ -2845,6 +3297,11 @@ Debiti:
 ⚠ Azioni rapide non operative
 ⚠ Dashboard non implementata
 ⚠ Icon System non completamente standardizzato
+⚠ Command Intent è solo primo livello controllato
+⚠ command intent avanzato non implementato
+⚠ input analysis model unico non implementato
+⚠ rendering progressivo input evento normale ancora migliorabile
+⚠ “Da verificare” resta interno alla Sintesi
 
 ------------------------------------------------
 PREVIEW ALIGNMENT BASE — TEST VALIDATI
@@ -3418,7 +3875,8 @@ Restano debiti evolutivi già noti:
 - economic direction advanced non implementata
 - match engine avanzato separato non implementato
 - alias / gerarchie / deduplicazione non implementati
-- creazione guidata project/entity non implementata
+- command intent avanzato non implementato
+- input analysis model unico non implementato
 - preview ancora non view pura
 - output non attivo
 
@@ -3740,6 +4198,166 @@ Risultato:
 
 Esito: OK
 
+------------------------------------------------
+COMMAND INTENT — TEST VALIDATI
+------------------------------------------------
+
+Input:
+
+crea
+
+Risultato:
+
+- container_command_intent visibile
+- guida con esempi
+- Sintesi evento nascosta
+- Dati evento nascosti
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+crea progetto
+
+Risultato:
+
+- card command project incompleto
+- input_command_project_name visibile
+- bottone Crea progetto disabilitato a campo vuoto
+- Sintesi evento nascosta
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+crea progetto Command Final Project 2
+
+Risultato:
+
+- riepilogo project visibile
+- btn_command_create_project visibile
+- insert_project eseguito su conferma utente
+- feedback Progetto creato
+- ritorno Home automatico
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+crea entità
+
+Risultato:
+
+- card command entity incompleto
+- input_command_entity_name visibile
+- bottone Crea entità disabilitato a campo vuoto
+- Sintesi evento nascosta
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+crea entità Command Final Entity 2
+
+Risultato:
+
+- riepilogo entity visibile
+- btn_command_create_entity visibile
+- insert_entity eseguito su conferma utente
+- feedback Entità creata
+- ritorno Home automatico
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+crea progetto villa
+
+Risultato:
+
+- Elemento già presente riconosciuto
+- nessun bottone crea
+- nessuna duplicazione
+- Sintesi evento nascosta
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+modifica evento
+
+Risultato:
+
+- guida command visibile
+- step leggibili
+- btn_command_go_events funzionante
+- lista eventi aperta
+- nessun update_event
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Input:
+
+30 euro spesa villa citrignano
+
+Risultato:
+
+- evento ordinario riconosciuto
+- container_command_intent non interferisce
+- Sintesi evento mostrata
+- Dati evento mostrati
+- Conferma evento funzionante
+- feedback evento corretto
+- ritorno Home automatico
+
+Esito: OK
+
+---
+
+Edit evento reale:
+
+Risultato:
+
+- update_event eseguito
+- feedback evento corretto
+- ritorno Lista eventi
+- evento marcato come modificato
+
+Esito: OK
+
+---
+
+Edit no-op / annulla modifica:
+
+Risultato:
+
+- nessun update_event se non ci sono modifiche reali
+- updated_at invariato
+- ritorno Lista eventi
+
+Esito: OK
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -3991,3 +4609,50 @@ matching invariato
 type classification invariata
 duration normalization invariata
 nessun output/KPI anticipato
+
+v12 — 2026-05-13
+
+completamento COMMAND INTENT — CREATE PROJECT / ENTITY
+documentato command_intent_state
+documentato container_command_intent
+documentati txt_command_intent_loading / title / description / summary / notice
+documentati input_command_project_name / input_command_entity_name
+documentati btn_command_create_project / btn_command_create_entity / btn_command_go_events
+documentato comando generico “crea”
+documentato create project incompleto
+documentato create project completo
+documentato create entity incompleto
+documentato create entity completo
+documentati sinonimi base crea / aggiungi / inserisci / nuovo / nuova
+documentato elemento già presente
+documentato “crea progetto villa” come elemento già presente
+documentata guida non operativa “modifica evento”
+documentato che comandi puri non salvano eventi
+documentato che project/entity da command richiedono conferma utente
+documentato riuso insert_project / insert_entity da command
+documentato feedback_mode in ui_state
+documentato feedback project_created
+documentato feedback entity_created
+documentato feedback evento ordinario preservato
+documentato trigger_parse_debounced con command_intent_state
+documentata separazione tra evento ordinario e comando puro
+documentato button_input_confirm come dedicato agli eventi ordinari
+documentati hidden/guard principle per command intent
+documentato Supabase passivo rispetto al command intent
+documentato che nessun comando puro crea record events
+aggiunti test Command Intent validati
+evento ordinario non regressivo validato
+edit flow non regressivo validato
+DB invariato
+parser invariato
+matching invariato
+create_suggestion_state invariato
+type classification invariata
+duration normalization invariata
+nessun output/KPI anticipato
+documentati residui:
+- command intent solo primo livello controllato
+- command intent avanzato non implementato
+- input analysis model unico non implementato
+- rendering progressivo input evento normale ancora migliorabile
+- “Da verificare” interno alla Sintesi

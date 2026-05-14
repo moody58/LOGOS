@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v12
+# 01_LOGOS_Input_System_v13
 
-DATA: 2026-05-09
+DATA: 2026-05-13
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -52,6 +52,15 @@ Il documento è utilizzato per:
 - Navigation dock Home / Eventi / Dashboard
 - Dashboard predisposta ma disabilitata
 - font-size 16px input/select come baseline mobile Safari
+- Command Intent — Create Project / Entity
+- distinzione tra input evento e comando strutturale puro
+- command_intent_state
+- container_command_intent
+- creazione project/entity da command solo previa conferma utente
+- esclusione dei comandi puri dal salvataggio evento
+- guida non operativa per “modifica evento”
+- feedback project_created / entity_created
+- feedback_mode come indicatore UI temporaneo
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -162,19 +171,41 @@ Regole:
 
 Frasi come:
 
+- crea
 - crea progetto Aspri
+- aggiungi progetto Villa Nuova
+- inserisci progetto Villa Nuova
 - crea entità Patrizio
+- aggiungi entità Referente Kappa
+- modifica evento
 
-non sono ancora implementate come comando di sistema.
+sono ora gestite a primo livello controllato dal Command Intent.
 
-Nel runtime attuale l’input libero serve principalmente a registrare eventi.
-Il futuro Command Intent dovrà essere un nodo dedicato.
+Il runtime distingue:
 
-Fino ad allora:
+- input evento ordinario
+- comando strutturale puro
+- guida non operativa
 
-- non salvare automaticamente comandi puri come eventi
-- non creare project/entity direttamente dal testo senza conferma
-- non confondere suggestion da evento con comando esplicito di sistema
+Regole:
+
+- un comando puro NON deve essere salvato come evento
+- un comando puro NON deve mostrare Sintesi evento / Dati evento
+- project/entity da command vengono creati solo previa conferma utente
+- command_intent_state non salva dati
+- command_intent_state non modifica DB
+- command_intent_state non modifica parser
+- command_intent_state non modifica matching
+- command_intent_state non sostituisce create_suggestion_state
+- insert_project / insert_entity restano le query operative di creazione
+- select_project / select_entity restano fonti salvabili finali per gli eventi
+- “modifica evento” non apre un edit flow parallelo
+- “modifica evento” guida l’utente alla lista eventi
+
+Nota:
+
+Command Intent è implementato solo a primo livello controllato.
+Non è ancora un intent engine globale.
 
 ---
 
@@ -220,7 +251,7 @@ edit_mode viene usato anche per distinguere:
 - cancel create/input → Home
 - cancel edit → Lista eventi
 
-1.  FEEDBACK TEMPORANEO ≠ STATO EVENTO
+11.  FEEDBACK TEMPORANEO ≠ STATO EVENTO
 
 Il feedback post-salvataggio è una conferma UI temporanea.
 
@@ -234,6 +265,7 @@ Non è:
 
 Il feedback usa:
 
+- feedback_mode
 - feedback_text
 - feedback_project
 - feedback_summary
@@ -245,13 +277,28 @@ Regole:
 - feedback_summary viene azzerato dopo auto-return
 - feedback_summary non viene salvato nel DB
 
+feedback_mode distingue il tipo di feedback mostrato.
+
+Valori usati:
+
+- project_created
+- entity_created
+- null / event_created
+
+Regole:
+
+- feedback_mode è UI temporaneo
+- non viene salvato nel DB
+- viene azzerato dopo auto-return
+- permette a feedback_title e feedback_resume di distinguere Evento / Progetto / Entità
+
 Routing consolidato:
 
 - insert reale → feedback 1800 ms → Home
 - update reale → feedback 1800 ms → Lista eventi
 - no-op edit → Lista eventi immediata senza feedback
 
-12. MOBILE SAFARI BASELINE
+12.  MOBILE SAFARI BASELINE
 
 Su iPhone 13 Safari reale è stato rilevato che input/select con font troppo piccolo causavano:
 
@@ -283,6 +330,12 @@ input_raw
 
 trigger_parse_debounced
 → debounce del parsing
+
+command_intent_state
+→ helper controllato per riconoscere comandi puri
+→ distingue comando strutturale da evento ordinario
+→ non salva dati
+→ non modifica parser/matching/DB
 
 parse_input_controlled
 → parser controllato + normalization base + duration normalization base
@@ -329,6 +382,29 @@ insert_project
 insert_entity
 → crea entity solo previa conferma utente
 
+container_command_intent
+→ UI dedicata ai comandi riconosciuti
+→ visibile solo per command intent coerente con input corrente
+→ nasconde Sintesi evento / Dati evento quando l’input è comando puro
+
+input_command_project_name
+→ campo command per completare il nome progetto quando l’utente scrive “crea progetto”
+
+input_command_entity_name
+→ campo command per completare il nome entità quando l’utente scrive “crea entità”
+
+btn_command_create_project
+→ crea project da command solo previa conferma
+→ riusa insert_project
+
+btn_command_create_entity
+→ crea entity da command solo previa conferma
+→ riusa insert_entity
+
+btn_command_go_events
+→ guida alla lista eventi dal command “modifica evento”
+→ non modifica record
+
 edit_mode
 → helper tecnico per distinguere create flow / edit flow
 → non usa più additionalScope { value }
@@ -356,6 +432,11 @@ feedback_summary
 → non persistito nel DB
 → azzerato dopo auto-return feedback
 
+feedback_mode
+→ valore UI temporaneo per distinguere feedback evento/progetto/entità
+→ non persistito nel DB
+→ azzerato dopo auto-return feedback
+
 label / sintesi (preview)
 → derivato UI (non persistito)
 → allineato visualmente a ui_state.parsed per amount/unit/date
@@ -372,19 +453,21 @@ input_home
 → sync
 → input_raw
 → trigger_parse_debounced
+→ command_intent_state
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
 → create_suggestion_state
 → select_project / select_entity
 → select1 / type classification base
-→ preview / hint / highlight / suggestion container
+→ preview / command intent / hint / highlight / suggestion container
 → eventuale creazione inline project/entity previa conferma utente
-→ conferma evento manuale
+→ eventuale creazione project/entity da command previa conferma utente
+→ conferma evento manuale se input evento ordinario
 → no-op edit guard se in edit mode
 → feedback_summary costruito prima del reset input/select
-→ insert_event / update_event se necessario
-→ events_new refresh
+→ insert_event / update_event / insert_project / insert_entity se necessario
+→ events_new / projects_list / entities_list refresh
 → reset edit_mode / editing_event se necessario
 → feedback temporaneo
 → routing post-save contestuale
@@ -405,6 +488,30 @@ Edit senza modifiche:
 → nessun update_event
 → nessun feedback
 → Lista eventi immediata
+
+Command create project:
+→ btn_command_create_project
+→ input_new_project_name valorizzato
+→ insert_project
+→ projects_list refresh
+→ feedback_mode = project_created
+→ feedback 1800 ms
+→ Home
+
+Command create entity:
+→ btn_command_create_entity
+→ input_new_entity_name valorizzato
+→ insert_entity
+→ entities_list refresh
+→ feedback_mode = entity_created
+→ feedback 1800 ms
+→ Home
+
+Command guida modifica evento:
+→ btn_command_go_events
+→ reset input command
+→ events_new refresh
+→ Lista eventi
 
 Nota:
 
@@ -485,6 +592,199 @@ Usa invece:
 
 - window.__logos_editing_event_value = item
 - window.__logos_edit_mode_value = true
+
+------------------------------------------------
+COMMAND INTENT FLOW
+------------------------------------------------
+
+Il Command Intent è un primo livello controllato per distinguere:
+
+- input evento ordinario
+- comando strutturale puro
+- guida non operativa
+
+Componenti principali:
+
+- command_intent_state
+- container_command_intent
+- txt_command_intent_loading
+- txt_command_intent_title
+- txt_command_intent_description
+- txt_command_edit_steps
+- divider_command_intent_main
+- txt_command_intent_summary
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+- txt_command_intent_notice
+- txt_command_intent_guide_notice
+
+Output logico command_intent_state:
+
+{
+  isCommand,
+  isPureCommand,
+  commandFamily,
+  commandType,
+  targetType,
+  candidateName,
+  existingId,
+  needsCompletion,
+  canExecute,
+  guideMessage,
+  rawInput
+}
+
+Regole:
+
+- isCommand = true se l’input è un comando riconosciuto
+- isPureCommand = true se l’input non deve essere salvato come evento
+- commandFamily può essere create / exists / guide
+- commandType può essere create_project / create_entity / create_target_missing / project_exists / entity_exists / edit_event_help
+- targetType può essere project / entity / event / null
+- candidateName contiene il nome candidato estratto
+- existingId contiene l’id di project/entity già esistente, se rilevato
+- needsCompletion = true se manca il nome
+- canExecute = true solo se la creazione è consentita
+- guideMessage contiene la guida non operativa
+- rawInput conserva l’input sorgente analizzato
+
+------------------------------------------------
+COMMAND INTENT — CASI GESTITI
+------------------------------------------------
+
+Comando generico:
+
+crea
+aggiungi
+inserisci
+nuovo
+nuova
+
+Comportamento:
+
+- mostra guida con esempi
+- non mostra Sintesi evento
+- non mostra Dati evento
+- non salva eventi
+
+---
+
+Create project incompleto:
+
+crea progetto
+
+Comportamento:
+
+- mostra campo input_command_project_name
+- bottone Crea progetto disabilitato finché il nome è vuoto
+- non salva eventi
+
+---
+
+Create project completo:
+
+crea progetto Villa Nuova
+aggiungi progetto Villa Nuova
+inserisci progetto Villa Nuova
+nuovo progetto Villa Nuova
+
+Comportamento:
+
+- mostra riepilogo progetto
+- mostra bottone Crea progetto
+- crea project solo dopo click utente
+- usa insert_project esistente
+- non salva eventi
+
+---
+
+Create entity incompleto:
+
+crea entità
+
+Comportamento:
+
+- mostra campo input_command_entity_name
+- bottone Crea entità disabilitato finché il nome è vuoto
+- non salva eventi
+
+---
+
+Create entity completo:
+
+crea entità Patrizio
+aggiungi entità Referente Kappa
+inserisci entità Marco Parisi
+nuova entità Marco Parisi
+
+Comportamento:
+
+- mostra riepilogo entità
+- mostra bottone Crea entità
+- crea entity solo dopo click utente
+- usa insert_entity esistente
+- non salva eventi
+
+---
+
+Elemento già presente:
+
+crea progetto villa
+
+se Villa esiste già.
+
+Comportamento:
+
+- mostra Elemento già presente
+- nessun bottone crea
+- nessuna duplicazione
+- nessun evento salvato
+- guida l’utente a usare il dato esistente o un nome più specifico
+
+---
+
+Guida modifica evento:
+
+modifica evento
+correggi evento
+cambia evento
+come modifico evento
+devo modificare evento
+
+Comportamento:
+
+- mostra guida con step
+- mostra CTA Vai agli eventi
+- non modifica record
+- non apre edit flow automatico
+- non salva eventi
+
+------------------------------------------------
+COMMAND INTENT — VINCOLI
+------------------------------------------------
+
+Command Intent NON è:
+
+- parser amount/unit/date
+- match engine
+- create_suggestion_state
+- save flow evento
+- edit flow automatico
+- dashboard command system
+- intent engine globale
+- form guidato completo
+
+Command Intent NON deve:
+
+- modificare DB schema
+- creare project/entity automaticamente
+- salvare eventi da comandi puri
+- bypassare select_project / select_entity negli eventi ordinari
+- aprire modifiche evento automatiche
+- anticipare dashboard/KPI
 
 ------------------------------------------------
 INPUT_HOME
@@ -570,6 +870,8 @@ Campi coinvolti:
 - select_entity
 - input_new_project_name
 - input_new_entity_name
+- input_command_project_name
+- input_command_entity_name
 
 Esito:
 
@@ -654,6 +956,7 @@ Comportamento:
 input_raw aggiornato
 → reset micro-state suggestion inline
 → attesa debounce
+→ command_intent_state.trigger()
 → parse_input_controlled.trigger()
 → project_state.trigger()
 → entity_state.trigger()
@@ -663,21 +966,23 @@ input_raw aggiornato
 
 Esempio runtime:
 
-```js
+// Reset micro-editor project/entity quando cambia input principale.
+// Evita stati stale tra input consecutivi.
+project_create_inline_open.setValue(false);
+project_create_suggestion_dismissed.setValue(false);
+input_new_project_name.setValue("");
+
+entity_create_inline_open.setValue(false);
+entity_create_suggestion_dismissed.setValue(false);
+input_new_entity_name.setValue("");
+
 if (window.__parseTimer) {
   clearTimeout(window.__parseTimer);
 }
 
 window.__parseTimer = setTimeout(async () => {
-  project_create_inline_open.setValue(false);
-  project_create_suggestion_dismissed.setValue(false);
-  input_new_project_name.setValue("");
-
-  entity_create_inline_open.setValue(false);
-  entity_create_suggestion_dismissed.setValue(false);
-  input_new_entity_name.setValue("");
-
   await Promise.allSettled([
+    command_intent_state.trigger(),
     parse_input_controlled.trigger(),
     project_state.trigger(),
     entity_state.trigger()
@@ -725,6 +1030,7 @@ ui_state completo:
     event_date: null
   },
   status: null,
+  feedback_mode: null,
   feedback_text: null,
   feedback_project: null,
   feedback_summary: null
@@ -824,6 +1130,29 @@ Regole:
 - non modifica payload evento
 - non viene salvato in Supabase
 - viene azzerato dopo auto-return feedback
+
+Nota feedback_mode:
+
+ui_state.feedback_mode NON contiene dati persistenti.
+
+È un valore temporaneo usato solo dalla UI feedback per distinguere:
+
+- Evento salvato
+- Progetto creato
+- Entità creata
+
+Valori usati:
+
+- project_created
+- entity_created
+- null / event_created
+
+Non modifica:
+
+- ui_state.parsed
+- payload evento
+- Supabase
+- lifecycle evento
 
 ------------------------------------------------
 HELPER EDIT STATE
@@ -1566,6 +1895,8 @@ IMPORTANTE:
 ⚠ logica accoppiata alla preview
 ⚠ non isolata come layer indipendente
 ⚠ preview non ancora view pura
+⚠ “Da verificare” resta interno alla Sintesi e non è blocco autonomo
+⚠ hint bloccanti / warning informativi / suggestion visuali non sono ancora separati in container indipendenti
 
 AGGIORNAMENTO MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL:
 
@@ -2005,6 +2336,14 @@ Non modifica:
 ⚠ hint duration/type ancora embedded nella preview
 ⚠ preview non ancora view pura
 
+Nota post Command Intent:
+
+Durante il nodo Command Intent è stato confermato che “Da verificare” è ancora parte della Sintesi e non può essere spostato sotto la CTA senza intervenire sul modello preview.
+
+Questo rafforza il possibile nodo futuro:
+
+PREVIEW MODEL / HINT STATE CONSOLIDATION
+
 Preview Alignment Base:
 
 ✔ COMPLETATO
@@ -2182,7 +2521,8 @@ NON IMPLEMENTATO:
 - entity hierarchy
 - project hierarchy
 - deduplicazione
-- command intent “crea progetto...” / “crea entità...”
+- input analysis model unico
+- command intent avanzato oltre create project/entity
 - filtro select su match ambigui
 - ranking avanzato
 - match engine separato come modulo autonomo
@@ -2340,9 +2680,10 @@ AMBITO NON COPERTO
 
 Non implementa:
 
-- command intent
-- frasi “crea progetto Aspri”
-- frasi “crea entità Patrizio”
+- command intent avanzato oltre create project/entity
+- input analysis model unico
+- modifica project/entity da command
+- dashboard/report intent da command
 - gerarchie project/entity
 - alias
 - deduplicazione avanzata
@@ -2360,6 +2701,84 @@ Nota UX Mobile Coherence Pass:
 La Dashboard è presente nella navigation dock solo come voce futura disabilitata.
 Le Azioni rapide sono presenti solo come predisposizione UX.
 Nessuna delle due abilita output, KPI o logiche guidate avanzate.
+
+------------------------------------------------
+COMMAND INTENT — CREATE PROJECT / ENTITY
+------------------------------------------------
+
+Il Command Intent è stato implementato a primo livello controllato.
+
+Ruolo:
+
+distinguere input evento ordinario da comando strutturale puro.
+
+Componenti principali:
+
+- command_intent_state
+- container_command_intent
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+
+Regole:
+
+- nessun evento salvato da comando puro
+- nessuna creazione automatica silenziosa
+- project/entity creati solo previa conferma utente
+- insert_project / insert_entity restano le query operative
+- command_intent_state non modifica parser
+- command_intent_state non modifica matching
+- command_intent_state non modifica DB
+- command_intent_state non sostituisce create_suggestion_state
+- “modifica evento” è guida non operativa
+
+Flussi:
+
+crea
+→ guida con esempi
+→ nessun salvataggio
+
+crea progetto
+→ input_command_project_name
+→ Crea progetto disabilitato finché manca il nome
+
+crea progetto [nome]
+→ riepilogo progetto
+→ btn_command_create_project
+→ insert_project
+→ feedback project_created
+→ Home
+
+crea entità
+→ input_command_entity_name
+→ Crea entità disabilitato finché manca il nome
+
+crea entità [nome]
+→ riepilogo entità
+→ btn_command_create_entity
+→ insert_entity
+→ feedback entity_created
+→ Home
+
+crea progetto villa
+→ elemento già presente
+→ nessun bottone crea
+→ nessuna duplicazione
+
+modifica evento
+→ guida con step
+→ btn_command_go_events
+→ Lista eventi
+
+Limiti:
+
+- non è un intent engine globale
+- non gestisce dashboard/report
+- non gestisce modifica project/entity
+- non apre edit flow evento automatico
+- non unifica tutte le fonti di interpretazione
 
 ------------------------------------------------
 DATI EVENTO — UX MOBILE COHERENCE PASS
@@ -2463,6 +2882,8 @@ REGOLE:
 ✔ evento salvabile anche dopo creazione inline project/entity
 ✔ evento salvabile anche senza project/entity
 ✔ suggestion ignorata non blocca salvataggio
+✔ comando puro riconosciuto da command_intent_state non deve arrivare al save flow evento
+✔ container_command_intent sostituisce Sintesi/Dati evento per command puri
 
 ✔ gestione edit_mode:
 
@@ -2521,6 +2942,11 @@ const payload = {
 Nota:
 
 button_input_confirm non legge create_suggestion_state come fonte dati salvabile.
+button_input_confirm non legge command_intent_state come fonte dati salvabile.
+
+command_intent_state serve solo a distinguere e guidare il flow command.
+I comandi puri devono essere intercettati prima del salvataggio evento.
+
 
 create_suggestion_state può aiutare a creare project/entity,
 ma il payload evento legge sempre e solo:
@@ -2736,6 +3162,7 @@ Il feedback post-salvataggio è stato stabilizzato.
 Struttura:
 
 - container_feedback
+- feedback_mode
 - feedback_text
 - feedback_project
 - feedback_summary
@@ -2789,6 +3216,40 @@ Decisione:
 
 Il feedback è una toast-card temporanea,
 non una pagina finale bloccante.
+
+COMMAND CREATE PROJECT:
+
+btn_command_create_project
+→ insert_project
+→ projects_list refresh
+→ feedback_mode = project_created
+→ feedback_summary strutturale progetto
+→ feedback 1800 ms
+→ Home
+
+COMMAND CREATE ENTITY:
+
+btn_command_create_entity
+→ insert_entity
+→ entities_list refresh
+→ feedback_mode = entity_created
+→ feedback_summary strutturale entità
+→ feedback 1800 ms
+→ Home
+
+Feedback strutturale:
+
+Evento salvato:
+- titolo Evento salvato
+- riepilogo evento
+
+Progetto creato:
+- titolo Progetto creato
+- riepilogo progetto
+
+Entità creata:
+- titolo Entità creata
+- riepilogo entità
 
 INSERT FLOW
 
@@ -3069,6 +3530,9 @@ update error
 insert_project error
 insert_entity error
 duplicato project/entity
+duplicato project/entity da command intent
+comando generico incompleto
+command intent non eseguibile
 candidate suggestion non sicura
 
 COMPORTAMENTO:
@@ -3081,6 +3545,9 @@ COMPORTAMENTO:
 ✔ bloccare insert_project / insert_entity se duplicato frontend rilevato
 ✔ mostrare warning duplicato senza scrivere DB
 ✔ lasciare evento non salvato finché l’utente non conferma
+✔ non mostrare bottone crea se l’elemento esiste già
+✔ guidare l’utente se il comando è incompleto
+✔ non salvare eventi se l’input è comando puro
 
 TEST VALIDATI
 
@@ -3179,6 +3646,164 @@ Esito:
 - nessuno zoom automatico
 - layout mobile stabile
 - select Tipo / Progetto / Entità funzionanti sia in digitazione sia in dropdown
+
+RISULTATO:
+OK
+
+COMMAND INTENT — TEST VALIDATI:
+
+1. Comando generico
+
+crea
+
+Esito:
+
+- Comando rilevato
+- esempi leggibili
+- nessuna Sintesi evento
+- nessun Dati evento
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+2. Create project incompleto
+
+crea progetto
+
+Esito:
+
+- card command visibile
+- input nome progetto visibile
+- bottone Crea progetto disabilitato a campo vuoto
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+3. Create project completo
+
+crea progetto Command Final Project 2
+
+Esito:
+
+- project creato tramite insert_project
+- feedback Progetto creato
+- ritorno Home automatico
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+4. Create entity incompleto
+
+crea entità
+
+Esito:
+
+- card command visibile
+- input nome entità visibile
+- bottone Crea entità disabilitato a campo vuoto
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+5. Create entity completo
+
+crea entità Command Final Entity 2
+
+Esito:
+
+- entity creata tramite insert_entity
+- feedback Entità creata
+- ritorno Home automatico
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+6. Elemento già presente
+
+crea progetto villa
+
+Esito:
+
+- elemento già presente riconosciuto
+- nessun bottone crea
+- nessuna duplicazione
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+7. Guida modifica evento
+
+modifica evento
+
+Esito:
+
+- guida mostrata
+- CTA Vai agli eventi funzionante
+- lista eventi aperta
+- nessuna modifica automatica
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+8. Evento normale non regressivo
+
+30 euro spesa villa citrignano
+
+Esito:
+
+- command intent non interferisce
+- flow evento ordinario mostrato
+- Conferma evento salva evento NEW
+- feedback evento corretto
+- ritorno Home automatico
+
+RISULTATO:
+OK
+
+---
+
+9. Edit evento reale non regressivo
+
+Esito:
+
+- update_event eseguito
+- feedback evento corretto
+- ritorno Lista eventi
+- evento marcato come modificato
+
+RISULTATO:
+OK
+
+---
+
+10. Edit no-op / annulla modifica non regressivo
+
+Esito:
+
+- nessun update_event se non ci sono modifiche reali
+- updated_at non alterato
+- ritorno Lista eventi
 
 RISULTATO:
 OK
@@ -3770,6 +4395,8 @@ non è una view pura
 label cleaning ancora embedded
 hint matching project/entity allineati a state
 hint duration/type ancora embedded
+“Da verificare” ancora interno alla Sintesi
+warning informativi non separati in blocchi autonomi
 
 ARCHITETTURA:
 
@@ -3777,17 +4404,40 @@ alcuni layer ancora accoppiati
 matching project/entity allineato a primo livello
 preview ancora ibrida
 input system stabilizzato ma non completamente separato da tutti i layer
-container suggestion UI ancora da rifinire
-command intent non implementato
+command intent implementato a primo livello controllato
+container suggestion UI rifinito a livello mobile base
 create_suggestion_state ancora helper Retool, non modulo engine separato
+command_intent_state ancora helper Retool, non modulo engine separato
+input analysis model unico non implementato
+rendering progressivo input evento normale ancora migliorabile
 
 COMMAND INTENT:
 
-non implementato
-frasi “crea progetto...” non riconosciute come comando di sistema
-frasi “crea entità...” non riconosciute come comando di sistema
-input comando puro non ancora separato da input evento
-placeholder da valutare in nodo futuro
+implementato a primo livello controllato
+
+Gestito:
+
+- crea
+- crea progetto
+- crea progetto [nome]
+- aggiungi progetto [nome]
+- inserisci progetto [nome]
+- nuovo progetto [nome]
+- crea entità
+- crea entità [nome]
+- aggiungi entità [nome]
+- inserisci entità [nome]
+- nuova entità [nome]
+- modifica evento
+
+Non implementato:
+
+- intent engine globale
+- dashboard/report intent
+- modifica project/entity da command
+- edit flow evento automatico da command
+- input analysis model unico
+- alias / deduplicazione / gerarchie da command
 
 OBIETTIVO INPUT SYSTEM
 
@@ -3800,6 +4450,7 @@ non bloccante
 coerente nel salvataggio
 progressivamente normalizzato
 capace di assistere la creazione project/entity senza automatismi nascosti
+capace di distinguere comandi strutturali puri da eventi ordinari a primo livello controllato
 
 NON:
 
@@ -3808,37 +4459,62 @@ completamente automatico
 semantico avanzato
 decisionale
 orientato a KPI prima della qualità dati
-interprete automatico di comandi di sistema non ancora validati
+intent engine globale o assistente conversazionale avanzato
 
 NEXT STEP CONSIGLIATI
 
-UX CLEANUP — SUGGESTION CONTAINER / MOBILE
+INPUT RENDERING STABILITY / CONTAINER STRUCTURE
 
 Obiettivo futuro:
 
-rifinire graficamente il container suggestion.
-
-Vincolo:
-
-non modificare logica, parser, matching, DB o save flow.
-
----
-
-COMMAND INTENT — CREATE PROJECT / ENTITY
-
-Obiettivo futuro:
-
-riconoscere frasi tipo:
-
-- crea progetto Aspri
-- crea entità Patrizio
+ridurre rendering progressivo / flash su input evento normale.
 
 Vincoli:
 
-- distinguere comando di sistema da evento operativo
-- mostrare conferma guidata
-- non salvare evento se l’input è comando puro
-- non creare automaticamente project/entity senza conferma
+- non modificare parser
+- non modificare matching
+- non modificare DB
+- non rompere command intent
+- non rompere suggestion container
+- non rompere edit flow
+
+---
+
+PREVIEW MODEL / HINT STATE CONSOLIDATION
+
+Obiettivo futuro:
+
+consolidare hint/warning ancora embedded nella Sintesi.
+
+Focus:
+
+- “Da verificare” dentro Sintesi
+- separazione hint bloccanti / warning informativi / suggestion visuali
+- preview più vicina a view pura
+- evitare divergenze tra ciò che l’utente legge e ciò che viene salvato
+
+---
+
+INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+
+Obiettivo futuro:
+
+valutare un layer unico di analisi interrogabile dalle UI.
+
+Fonti oggi distribuite:
+
+- parse_input_controlled
+- ui_state.parsed
+- project_state
+- entity_state
+- create_suggestion_state
+- command_intent_state
+- preview logic
+- select values
+
+Vincolo:
+
+non introdurre refactor globale senza nodo dedicato.
 
 ---
 
@@ -3874,6 +4550,19 @@ giornata lavorativa e mezza giornata.
 Vincolo:
 
 evitare conversioni automatiche ambigue.
+
+---
+
+AZIONI RAPIDE OPERATIVE
+
+Obiettivo futuro:
+
+rendere operative le Azioni rapide senza duplicare command_intent_state,
+type classification o button_input_confirm.
+
+Vincolo:
+
+nessun evento salvato senza conferma utente.
 
 CHANGELOG
 
@@ -4130,4 +4819,46 @@ v12 — 2026-05-09
 - confermato create_suggestion_state invariato
 - confermata type classification invariata
 - confermata duration normalization invariata
+- nessun output/KPI anticipato
+
+v13 — 2026-05-13
+
+- integrazione COMMAND INTENT — CREATE PROJECT / ENTITY
+- documentato command_intent_state
+- documentato container_command_intent
+- documentati input_command_project_name / input_command_entity_name
+- documentati btn_command_create_project / btn_command_create_entity / btn_command_go_events
+- aggiornato principio INPUT EVENTO ≠ COMMAND INTENT
+- documentato comando generico “crea”
+- documentato create project incompleto
+- documentato create project completo
+- documentato create entity incompleto
+- documentato create entity completo
+- documentati sinonimi base crea / aggiungi / inserisci / nuovo / nuova
+- documentato elemento già presente
+- documentata guida non operativa “modifica evento”
+- documentato che comandi puri non salvano eventi
+- documentato che project/entity da command richiedono conferma utente
+- documentato riuso insert_project / insert_entity
+- documentato feedback_mode in ui_state
+- documentato feedback project_created
+- documentato feedback entity_created
+- documentato feedback evento ordinario preservato
+- documentato feedback_summary strutturale per progetto/entità
+- documentato Command Intent Flow
+- aggiornato trigger_parse_debounced con command_intent_state
+- aggiornato Mobile Safari Baseline includendo input command
+- aggiornati limiti attuali
+- aggiunti test Command Intent validati
+- aggiornati next step consigliati post Command Intent
+- documentati residui:
+  - rendering progressivo input evento normale
+  - “Da verificare” interno alla Sintesi
+  - input analysis model unico non implementato
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- type classification invariata
+- duration normalization invariata
 - nessun output/KPI anticipato

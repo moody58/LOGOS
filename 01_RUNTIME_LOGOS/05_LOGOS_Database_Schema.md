@@ -1,6 +1,6 @@
-# 05_LOGOS_Database_Schema_v08
+# 05_LOGOS_Database_Schema_v09
 
-DATA: 2026-05-07
+DATA: 2026-05-13
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -23,6 +23,14 @@ C (Completezza): 10/10
 - popolamento projects/entities da UI documentato
 - confermato che la creazione inline non modifica schema DB
 - confermato che create_suggestion_state non viene persistito
+- Command Intent — Create Project / Entity integrato
+- confermato che command_intent_state non viene persistito
+- confermato che Command Intent è gestito lato Retool
+- confermato schema DB invariato dopo Command Intent
+- confermato che nessun comando puro crea record in events
+- confermato che insert_project / insert_entity sono riusati anche da Command Intent
+- confermato che feedback_mode non viene persistito
+- confermato che container_command_intent non modifica schema DB
 
 Q (Qualità): 9.5/10  
 - struttura corretta  
@@ -39,6 +47,12 @@ Q (Qualità): 9.5/10
 - chiarito che il DB non interpreta suggestion
 - chiarito che il DB non distingue evento operativo da command intent
 - chiarito che nessun audit trail dedicato è stato introdotto
+- chiarito che il DB non interpreta command intent
+- chiarito che il DB non distingue input evento da comando puro
+- chiarito che command_intent_state resta runtime frontend
+- chiarito che i comandi puri vengono esclusi dal save flow evento lato Retool
+- chiarito che project/entity creati da command sono normali record projects/entities
+- chiarito che Command Intent non introduce deduplicazione strutturale DB
 
 D (Deployabilità): 10/10  
 - documento utilizzabile come riferimento AS-IS  
@@ -51,6 +65,12 @@ D (Deployabilità): 10/10
 - insert_project validato su DB reale
 - insert_entity validato su DB reale
 - evento con project_id/entity_id creati inline validato
+- conferma schema invariato dopo Command Intent — Create Project / Entity
+- command create project validato tramite insert_project esistente
+- command create entity validato tramite insert_entity esistente
+- comandi puri non salvano events validato runtime
+- nessun campo command_intent aggiunto
+- nessuna tabella command_intent aggiunta
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -73,6 +93,12 @@ Il documento descrive:
 - stato dei dati dopo Project / Entity Create Suggestion First Controlled Level
 - popolamento controllato di projects/entities tramite Retool
 - assenza di modifiche schema dopo creazione inline project/entity
+- stato dei dati dopo Command Intent — Create Project / Entity
+- assenza di modifiche schema dopo Command Intent
+- Command Intent come logica frontend Retool non persistita
+- esclusione dei comandi puri dalla tabella events
+- riuso di insert_project / insert_entity anche da command
+- feedback_mode come stato UI non persistito
 
 ------------------------------------------------
 PRINCIPIO ARCHITETTURALE
@@ -93,7 +119,14 @@ NON contiene:
 - creazione automatica project/entity
 - logica di suggestion project/entity
 - command intent
+- command_intent_state
+- routing command intent
+- distinzione autonoma tra evento e comando puro
+- feedback_mode
+- container_command_intent
 - audit trail automatico per creazione project/entity
+- audit trail automatico per creazione project/entity da command
+- deduplicazione strutturale project/entity da command
 - disambiguazione autonoma
 
 ---
@@ -219,6 +252,66 @@ create_suggestion_state
 → select_entity.value
 → events.entity_id su conferma evento
 
+Nota Command Intent — Create Project / Entity:
+
+Il Command Intent avviene lato Retool.
+
+Il database NON interpreta frasi come:
+
+- crea
+- crea progetto Villa Nuova
+- crea entità Patrizio
+- modifica evento
+
+Il database NON decide se un input è evento ordinario o comando puro.
+
+Retool può eseguire:
+
+- insert_project
+- insert_entity
+
+anche da Command Intent,
+ma solo dopo conferma esplicita dell’utente.
+
+Dopo creazione project/entity da command:
+
+- projects / entities vengono aggiornate
+- viene mostrato feedback UI temporaneo
+- nessun record viene creato in events
+- nessun evento NEW nasce automaticamente
+- feedback_mode non viene salvato nel DB
+
+Catena command project:
+
+command_intent_state
+→ container_command_intent
+→ btn_command_create_project
+→ insert_project
+→ projects
+→ projects_list refresh
+→ feedback project_created
+→ nessun insert_event
+
+Catena command entity:
+
+command_intent_state
+→ container_command_intent
+→ btn_command_create_entity
+→ insert_entity
+→ entities
+→ entities_list refresh
+→ feedback entity_created
+→ nessun insert_event
+
+Catena command guida evento:
+
+command_intent_state
+→ container_command_intent
+→ btn_command_go_events
+→ Lista eventi
+→ nessun update_event
+→ nessuna modifica DB
+
 ------------------------------------------------
 MODELLO DATI
 ------------------------------------------------
@@ -316,6 +409,11 @@ UTILIZZO REALE:
 ✔ project_id può derivare da project creato inline e poi selezionato
 ✔ entity_id può derivare da entity creata inline e poi selezionata
 ✔ evento non salvato automaticamente dopo insert_project / insert_entity
+✔ evento non salvato da comandi puri Command Intent
+✔ input “crea progetto...” non genera record in events
+✔ input “crea entità...” non genera record in events
+✔ input “modifica evento” non genera update_event automatico
+✔ feedback project_created / entity_created non genera record in events
 ✔ suggestion ignorata consente salvataggio con project_id/entity_id null  
 ✔ status sempre NEW in insert  
 ✔ updated_at valorizzato in insert/update  
@@ -324,7 +422,7 @@ UTILIZZO REALE:
 
 ---
 
-NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION + PROJECT / ENTITY CREATE SUGGESTION — IMPATTO SU events:
+NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION + PROJECT / ENTITY CREATE SUGGESTION + COMMAND INTENT — IMPATTO SU events:
 
 La tabella non è stata modificata.
 
@@ -343,6 +441,12 @@ La qualità del dato è migliorata perché il frontend ora invia:
 - project_id/entity_id creati inline quando l’utente conferma la creazione project/entity
 - project/entity mancanti ancora ammessi come null se l’utente ignora la suggestion
 - nessuna ambiguità project/entity salvata silenziosamente
+- comandi puri esclusi dal salvataggio evento
+- nessun evento creato da “crea progetto...”
+- nessun evento creato da “crea entità...”
+- nessun update_event eseguito da “modifica evento”
+- Command Intent non aggiunge campi a events
+- command_intent_state non viene persistito in events
 
 Esempi:
 
@@ -460,6 +564,33 @@ acquisto 50 euro materiale nuovo
 → entity_id: null
 → status NEW
 
+Esempi Command Intent:
+
+crea
+→ nessun record in events
+→ nessun record in projects/entities
+→ guida UI con esempi
+
+crea progetto Villa Nuova
+→ insert_project se confermato dall’utente
+→ nuovo record in projects
+→ nessun record in events
+
+crea entità Patrizio
+→ insert_entity se confermato dall’utente
+→ nuovo record in entities
+→ nessun record in events
+
+crea progetto villa
+→ se Villa esiste già, nessun insert_project
+→ nessuna duplicazione
+→ nessun record in events
+
+modifica evento
+→ nessun update_event
+→ nessuna modifica DB
+→ routing UI verso Lista eventi
+
 CAMPI NON UTILIZZATI O NON CONSOLIDATI:
 
 reference_id
@@ -467,6 +598,17 @@ source
 payment_method
 notes
 payload
+command_intent_type
+command_intent_payload
+feedback_mode
+
+Nota:
+
+Questi campi NON esistono nello schema attuale.
+Non sono stati aggiunti con il nodo Command Intent.
+
+Command Intent resta stato runtime Retool,
+non modello dati persistente.
 
 CAMPI ORA UTILIZZATI A LIVELLO BASE:
 
@@ -523,6 +665,9 @@ UTILIZZO REALE:
 ✔ popolabile tramite insert_project lato Retool
 ✔ creazione inline project validata
 ✔ utilizzata anche da Project Create Suggestion First Controlled Level
+✔ utilizzata anche da Command Intent — Create Project
+✔ popolabile tramite btn_command_create_project + insert_project
+✔ command create project validato runtime
 
 NOTE:
 
@@ -544,6 +689,25 @@ Regole runtime:
 - type resta null salvo casi esistenti/manuali
 - status può essere valorizzato ACTIVE secondo query insert_project
 - evento non salvato automaticamente dopo creazione project
+
+Command Intent — Create Project:
+
+projects può essere popolata anche da command intent tramite insert_project.
+
+Regole runtime:
+
+- creazione solo previa conferma utente
+- nessun evento creato automaticamente
+- nessun command_intent_state persistito
+- nessun command_intent_payload salvato
+- nessuna gerarchia assegnata automaticamente
+- parent_project_id resta null salvo gestione manuale/futura
+- controllo duplicati base gestito lato frontend
+- nessuna deduplicazione strutturale DB introdotta
+
+Esempi validati:
+
+Command Final Project 2
 
 Esempi validati:
 
@@ -595,6 +759,9 @@ UTILIZZO REALE:
 ✔ popolabile tramite insert_entity lato Retool
 ✔ creazione inline entity validata
 ✔ utilizzata anche da Entity Create Suggestion First Controlled Level
+✔ utilizzata anche da Command Intent — Create Entity
+✔ popolabile tramite btn_command_create_entity + insert_entity
+✔ command create entity validato runtime
 
 LIMITI:
 
@@ -638,6 +805,27 @@ Nota:
 entity autofill controlled minimal precompila input_new_entity_name,
 ma non crea entity e non scrive nel DB senza conferma utente.
 
+Command Intent — Create Entity:
+
+entities può essere popolata anche da command intent tramite insert_entity.
+
+Regole runtime:
+
+- creazione solo previa conferma utente
+- nessun evento creato automaticamente
+- nessun command_intent_state persistito
+- nessun command_intent_payload salvato
+- nessuna gerarchia assegnata automaticamente
+- parent_entity_id resta null salvo gestione manuale/futura
+- metadata resta {}
+- type/status non vengono valorizzati automaticamente da Command Intent
+- controllo duplicati base gestito lato frontend
+- nessuna deduplicazione strutturale DB introdotta
+
+Esempi validati:
+
+Command Final Entity 2
+
 TABELLA: system_logs
 
 Funzione:
@@ -666,20 +854,33 @@ integrità demandata al frontend.
 
 COMPORTAMENTO GLOBALE
 
-Flusso create:
+Flusso create evento ordinario:
 
 input
+→ command_intent_state
+→ se NON è comando puro
 → parsing controlled
 → normalization base
 → duration normalization
 → type classification base
 → match state project/entity
 → create_suggestion_state
-→ eventuale insert_project / insert_entity previa conferma utente
+→ eventuale insert_project / insert_entity inline previa conferma utente
 → select_project / select_entity
 → preview / suggestion container
 → insert_event manuale
 → status NEW
+
+Flusso command strutturale:
+
+input
+→ command_intent_state
+→ se è comando puro
+→ container_command_intent
+→ eventuale insert_project / insert_entity previa conferma utente
+→ feedback UI
+→ nessun insert_event
+→ nessun status NEW
 
 Flusso edit:
 
@@ -712,6 +913,11 @@ non risolve ambiguità project/entity
 non crea project/entity automaticamente
 non salva suggestion state
 non interpreta command intent
+non distingue evento ordinario da comando puro
+non salva command_intent_state
+non salva feedback_mode
+non crea record events da command intent
+non esegue update_event da “modifica evento”
 non collega automaticamente project/entity creati agli eventi
 non mantiene storico revisioni
 
@@ -1122,14 +1328,165 @@ Step DB:
 1. insert_project
 → projects.name = Villa Sierri 15
 
-2. insert_entity
+1. insert_entity
 → entities.name = Referente Kappa
 
-3. insert_event manuale
+1. insert_event manuale
 → events.project_id = Villa Sierri 15
 → events.entity_id = Referente Kappa
 → events.raw_input = villa sierri 15 sopralluogo referente kappa
 → events.status = NEW
+
+------------------------------------------------
+COMMAND INTENT E DATABASE
+------------------------------------------------
+
+Decisione:
+
+Command Intent — Create Project / Entity NON modifica lo schema DB.
+
+Sono rimasti invariati:
+
+- events
+- projects
+- entities
+- payload
+- system_logs
+
+Non sono stati aggiunti:
+
+- command_intent_type
+- command_intent_payload
+- command_intent_state
+- command_action
+- command_status
+- feedback_mode
+- command_log
+- project_command_source
+- entity_command_source
+- event_command_source
+- audit trail dedicato command
+- relation table
+- alias table
+- deduplication table
+
+Origine runtime:
+
+command_intent_state lato Retool
+
+Catena command project:
+
+command_intent_state
+→ container_command_intent
+→ btn_command_create_project
+→ insert_project
+→ projects
+→ projects_list refresh
+→ feedback project_created
+→ nessun insert_event
+
+Catena command entity:
+
+command_intent_state
+→ container_command_intent
+→ btn_command_create_entity
+→ insert_entity
+→ entities
+→ entities_list refresh
+→ feedback entity_created
+→ nessun insert_event
+
+Catena command guida evento:
+
+command_intent_state
+→ container_command_intent
+→ btn_command_go_events
+→ Lista eventi
+→ nessuna scrittura DB
+
+Regole:
+
+- command_intent_state non viene persistito
+- feedback_mode non viene persistito
+- container_command_intent non viene persistito
+- project/entity creati da command sono normali record projects/entities
+- nessun evento viene creato da comando puro
+- “modifica evento” da command non aggiorna events
+- nessun audit trail dedicato command è stato introdotto
+- nessuna deduplicazione strutturale DB è stata introdotta
+
+Esempio validato project:
+
+Input:
+
+crea progetto Command Final Project 2
+
+Step DB:
+
+1. insert_project
+→ projects.name = Command Final Project 2
+
+2. nessun insert_event
+
+Risultato:
+
+- nuovo project creato
+- nessun evento NEW creato
+
+---
+
+Esempio validato entity:
+
+Input:
+
+crea entità Command Final Entity 2
+
+Step DB:
+
+1. insert_entity
+→ entities.name = Command Final Entity 2
+
+2. nessun insert_event
+
+Risultato:
+
+- nuova entity creata
+- nessun evento NEW creato
+
+---
+
+Esempio validato elemento già presente:
+
+Input:
+
+crea progetto villa
+
+Step DB:
+
+nessuna scrittura
+
+Risultato:
+
+- project esistente riconosciuto lato Retool
+- nessuna duplicazione
+- nessun evento NEW creato
+
+---
+
+Esempio validato guida evento:
+
+Input:
+
+modifica evento
+
+Step DB:
+
+nessuna scrittura
+
+Risultato:
+
+- routing UI verso Lista eventi
+- nessun update_event
 
 ------------------------------------------------
 INSERT
@@ -1192,6 +1549,27 @@ acquisto 50 euro materiale nuovo
 → unit euro
 → status NEW
 
+Command Intent:
+
+I comandi puri non chiamano insert_event.
+
+Esempi:
+
+crea progetto Command Final Project 2
+→ insert_project
+→ nessun insert_event
+
+crea entità Command Final Entity 2
+→ insert_entity
+→ nessun insert_event
+
+crea progetto villa
+→ nessun insert_project se Villa esiste già
+→ nessun insert_event
+
+modifica evento
+→ nessun insert_event
+
 ------------------------------------------------
 UPDATE
 ------------------------------------------------
@@ -1247,6 +1625,21 @@ raw_input aggiornato
 updated_at aggiornato
 status NEW
 
+Command Intent:
+
+Il comando “modifica evento” non chiama update_event.
+
+Comportamento:
+
+modifica evento
+→ guida UI
+→ btn_command_go_events
+→ Lista eventi
+→ nessun update_event
+
+L’update_event resta attivabile solo dal normale edit flow
+su evento NEW selezionato dalla lista eventi.
+
 ------------------------------------------------
 CONTROLLO UTENTE
 ------------------------------------------------
@@ -1291,6 +1684,13 @@ Questo mantiene separati:
 - creazione risorsa
 - salvataggio evento
 
+La stessa regola vale per Command Intent:
+
+- command create project crea solo project
+- command create entity crea solo entity
+- nessun evento viene salvato automaticamente
+- l’eventuale uso del nuovo project/entity in events avviene solo in un successivo flow evento ordinario
+
 ------------------------------------------------
 LIMITI
 ------------------------------------------------
@@ -1305,13 +1705,15 @@ Non implementato:
 - direction field
 - KPI/reportistica
 - retro-normalizzazione eventi storici
-- - match engine avanzato separato
+- match engine avanzato separato
 - alias system
 - fuzzy matching
 - ranking avanzato
-- command intent create project/entity
+- command intent avanzato oltre create project/entity
+- input analysis model unico
 - pending state avanzato project/entity
 - audit trail dedicato creazione project/entity
+- audit trail dedicato command intent
 
 Nota:
 
@@ -1335,6 +1737,10 @@ Project / Entity Create Suggestion First Controlled Level implementato lato fron
 projects/entities popolabili tramite insert inline controllato
 evento salvabile con project_id/entity_id appena creati
 suggestion ignorata consente project_id/entity_id null
+Command Intent implementato lato frontend
+command create project/entity non crea events
+command_intent_state non persistito
+feedback_mode non persistito
 
 RELAZIONI DEBOLI
 project/entity opzionali
@@ -1362,7 +1768,9 @@ Limiti:
 
 - nessun audit trail dedicato
 - nessun pending state persistito
-- nessun command intent
+- command intent create project/entity implementato a primo livello controllato
+- nessun command intent avanzato
+- nessun command_intent_state persistito
 - nessuna deduplicazione DB avanzata
 - nessun alias system
 - nessuna relazione project/entity
@@ -1411,9 +1819,21 @@ Non è stato introdotto:
 payload.duration
 payload.duration_minutes
 payload.duration_original_unit
+payload.command_intent
+payload.command_type
+payload.feedback_mode
 
 Questa scelta mantiene il modello dati semplice
 e coerente con amount/unit esistenti.
+
+Command Intent non usa payload.
+
+Non è stato introdotto:
+
+payload.command_intent
+payload.command_type
+payload.command_action
+payload.feedback_mode
 
 ASSENZA VERSIONING
 modifiche non tracciate storicamente
@@ -1444,9 +1864,12 @@ non aggiungere alias table senza nodo dedicato
 non aggiungere project/entity relation table senza nodo dedicato
 non aggiungere pending project/entity fields senza nodo dedicato
 non aggiungere suggestion_payload senza nodo dedicato
-non aggiungere command_intent fields senza nodo dedicato
+non aggiungere ulteriori command_intent fields senza nodo dedicato
 non spostare matching logic in Supabase
 non spostare create_suggestion_state in Supabase
+non spostare command_intent_state in Supabase
+non creare eventi da comandi puri
+non salvare feedback_mode nel DB
 non creare project/entity automaticamente lato DB
 non aggiungere audit trail project/entity senza nodo dedicato
 
@@ -1477,7 +1900,7 @@ relazioni
 entity-project link
 alias project/entity
 deduplicazione
-command intent create project/entity
+command intent avanzato oltre create project/entity
 pending project/entity workflow avanzato
 audit trail creazione project/entity
 
@@ -1501,7 +1924,8 @@ eventuale payload.duration solo con nodo architetturale dedicato
 match engine avanzato
 fuzzy matching controllato
 ranking avanzato
-command intent
+advanced command intent
+input analysis model unico
 suggestion model persistente solo se validato da nodo dedicato
 
 VERSIONING:
@@ -1517,6 +1941,7 @@ viste aggregate
 dashboard
 KPI
 reportistica
+
 OBIETTIVO DATABASE
 
 Fornire base dati:
@@ -1551,7 +1976,10 @@ select_project.value come fonte per project_id
 select_entity.value come fonte per entity_id
 insert_project / insert_entity controllati lato Retool
 create_suggestion_state non persistito
+command_intent_state non persistito
+feedback_mode non persistito
 separazione tra creazione risorsa e salvataggio evento
+separazione tra comando puro e salvataggio evento
 confirm guard su ambiguità non risolta
 normalization base lato Retool
 duration normalization lato Retool
@@ -1667,3 +2095,33 @@ confermato nessun command intent implementato
 confermato nessun audit trail dedicato project/entity
 confermato nessuna deduplicazione avanzata DB
 nessun output/KPI anticipato
+
+v09 — 2026-05-13
+
+nessuna modifica schema DB
+integrazione Command Intent — Create Project / Entity lato Retool
+documentato command_intent_state come stato runtime non persistito
+documentato feedback_mode come stato UI non persistito
+documentato container_command_intent come UI non persistita
+documentato che Command Intent non aggiunge campi a events
+documentato che Command Intent non aggiunge campi a projects
+documentato che Command Intent non aggiunge campi a entities
+documentato che Command Intent non aggiunge tabelle
+documentato che nessun comando puro crea record in events
+documentato che “crea progetto...” usa insert_project solo previa conferma utente
+documentato che “crea entità...” usa insert_entity solo previa conferma utente
+documentato che project/entity creati da command sono normali record projects/entities
+documentato che feedback project_created / entity_created non viene salvato nel DB
+documentato che “modifica evento” da command non chiama update_event
+documentato “crea progetto villa” come nessuna duplicazione e nessun evento
+documentata sezione Command Intent e Database
+aggiornato impatto su events
+aggiornato comportamento globale
+aggiornati limiti
+aggiornati vincoli operativi
+confermato DB passivo
+confermato payload inutilizzato
+confermato nessun command_intent_payload
+confermato nessun audit trail command
+confermata nessuna deduplicazione strutturale DB
+confermato nessun output/KPI anticipato

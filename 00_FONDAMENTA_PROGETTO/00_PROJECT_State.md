@@ -1,39 +1,29 @@
-# 00_PROJECT_State_v18
+# 00_PROJECT_State_v19
 
-DATA: 2026-05-09
+DATA: 2026-05-13
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-UX MOBILE COHERENCE PASS — COMPLETATO
+COMMAND INTENT — CREATE PROJECT / ENTITY — COMPLETATO
 
 ------------------------------------------------
 FASE:
 ------------------------------------------------
 
 STEP 4 — EVENT EDITING (COMPLETATO)
-
 STEP 4.1 — INPUT SYSTEM STABILIZATION (COMPLETATO)
-
 STEP 6.1 — ENGINE BASE / NORMALIZATION LAYER BASE (COMPLETATO)
-
 PREVIEW ALIGNMENT BASE (COMPLETATO)
-
 STEP 6.2 — ENGINE BASE / DURATION NORMALIZATION (COMPLETATO)
-
 STEP 6.3 — ENGINE BASE / TYPE CLASSIFICATION BASE (COMPLETATO)
-
 STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL (COMPLETATO)
-
 UX / CLEANUP MICRO-BATCH POST MATCH ENGINE (COMPLETATO)
-
 LINTING / STATE HELPER CLEANUP (COMPLETATO)
-
 PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL (COMPLETATO)
-
 UX MOBILE COHERENCE PASS (COMPLETATO)
-
+COMMAND INTENT — CREATE PROJECT / ENTITY (COMPLETATO)
 TRANSIZIONE → NEXT NODE DA DEFINIRE IN ROADMAP DOPO AGGIORNAMENTO DOCUMENTALE
 
 ------------------------------------------------
@@ -79,6 +69,16 @@ C (Completezza): 10/10
 - routing post-save contestuale documentato
 - feedback_summary documentato
 - Mobile Safari font-size 16px documentato
+- Command Intent Create Project / Entity documentato
+- command_intent_state introdotto come helper page-level non operativo su DB
+- comandi puri create project/entity riconosciuti
+- comando generico “crea” guidato
+- comando “modifica evento” gestito come guida non operativa
+- comandi puri esclusi dal salvataggio evento
+- creazione project/entity da comando validata solo previa conferma utente
+- blocco duplicati project/entity esistenti validato
+- feedback project/entity differenziato documentato
+- residui Preview / Rendering Stability / Single Interpretation Layer esplicitati
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
@@ -100,6 +100,11 @@ Q (Qualità): 9.5/10
 - feedback breve e non bloccante consolidato
 - comportamento create/edit più coerente con contesto utente
 - validazione reale su iPhone 13 Safari integrata
+- Command Intent introdotto senza creare logiche DB parallele
+- creazione project/entity da comando riusa insert_project / insert_entity esistenti
+- edit evento da input libero gestito come guida, senza aprire flow parallelo
+- UX mobile del Command Intent rifinita e coerente con Home/Input
+- distinzione comando puro / evento ordinario resa esplicita
 
 D (Deployabilità): 10/10  
 - pronto per Regia  
@@ -123,7 +128,14 @@ D (Deployabilità): 10/10
 - font-size 16px su input/select validato per evitare zoom iOS
 - select mobile validate sia in digitazione sia in dropdown
 - routing insert/update/no-op validato
-- cancel create/edit validato   
+- cancel create/edit validato  
+- command_intent_state validato runtime
+- btn_command_create_project validato runtime
+- btn_command_create_entity validato runtime
+- btn_command_go_events validato runtime
+- feedback project_created / entity_created validato runtime
+- eventi ordinari non regressivi dopo Command Intent
+- edit flow non regressivo dopo Command Intent 
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -225,6 +237,26 @@ INPUT
 ✔ font-size 16px su input/select validato su iPhone 13 Safari
 ✔ zoom automatico iOS Safari risolto
 ✔ select mobile funzionanti sia in digitazione sia in dropdown
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state introdotto come helper controllato page-level
+✔ input “crea” riconosciuto come comando generico incompleto
+✔ input “crea progetto” riconosciuto come comando project incompleto
+✔ input “crea progetto [nome]” riconosciuto come comando project completo
+✔ input “crea entità” riconosciuto come comando entity incompleto
+✔ input “crea entità [nome]” riconosciuto come comando entity completo
+✔ comandi puri create project/entity non salvano eventi
+✔ project/entity da command creati solo previa conferma utente
+✔ btn_command_create_project collegato a insert_project esistente
+✔ btn_command_create_entity collegato a insert_entity esistente
+✔ input “crea progetto villa” blocca duplicazione se Villa esiste già
+✔ input “modifica evento” gestito come guida non operativa
+✔ btn_command_go_events porta alla lista eventi senza modificare record
+✔ feedback project_created introdotto
+✔ feedback entity_created introdotto
+✔ feedback_resume adattato a Evento / Progetto / Entità
+✔ UI mobile Command Intent rifinita con card dedicate
+✔ flow evento ordinario non regressivo dopo Command Intent
+✔ edit flow non regressivo dopo Command Intent
 
 ⚠ accoppiamento input / processing / UI ancora presente  
 ⚠ matching unificato solo a primo livello controllato  
@@ -233,7 +265,10 @@ INPUT
 ⚠ type classification base completata ma non ancora sufficiente per KPI avanzati    
 ⚠ giorni/settimane non convertiti automaticamente   
 ⚠ suggestion container rifinito a livello mobile base, ma restano evoluzioni future su consistenza create/edit e override progetto
-⚠ command intent non implementato
+⚠ command intent implementato solo a primo livello controllato per create project/entity e guida edit evento
+⚠ command intent non è ancora engine intent globale
+⚠ input analysis non ancora unificata in un solo layer interrogabile
+⚠ rendering progressivo input evento normale ancora migliorabile
 ⚠ select options non filtrate in caso di ambiguità
 ⚠ istanze verticali ASPRI / ADEXIMA / MaurizioLab non ancora attive  
 ⚠ Dashboard predisposta in nav ma non implementata
@@ -245,7 +280,7 @@ INPUT
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su dodici layer fondamentali:
+Il sistema è stabilizzato su tredici layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
@@ -258,7 +293,8 @@ Il sistema è stabilizzato su dodici layer fondamentali:
 9. UX / CLEANUP MICRO-BATCH POST MATCH ENGINE  
 10. LINTING / STATE HELPER CLEANUP    
 11. PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL   
-12. UX MOBILE COHERENCE PASS          
+12. UX MOBILE COHERENCE PASS    
+13. COMMAND INTENT — CREATE PROJECT / ENTITY      
 
 ---
 
@@ -543,6 +579,58 @@ RISULTATO:
 - duration normalization invariata
 - nessun output/KPI anticipato
 
+✔ completamento COMMAND INTENT — CREATE PROJECT / ENTITY
+
+- introdotto command_intent_state come query page-level Retool
+- command_intent_state non salva dati
+- command_intent_state non modifica DB
+- command_intent_state non sostituisce parser, matching o preview
+- riconoscimento comandi puri create project/entity implementato
+- riconoscimento comando generico “crea” implementato
+- riconoscimento guida “modifica evento” implementato
+- input “crea progetto” gestito come comando incompleto
+- input “crea progetto [nome]” gestito come comando completo
+- input “crea entità” gestito come comando incompleto
+- input “crea entità [nome]” gestito come comando completo
+- sinonimi base create supportati: crea, aggiungi, inserisci, nuovo, nuova
+- comando puro non mostra Sintesi evento / Dati evento
+- comando puro non salva eventi
+- creazione project/entity da command solo previa conferma utente
+- btn_command_create_project collegato a insert_project esistente
+- btn_command_create_entity collegato a insert_entity esistente
+- nessuna nuova query DB duplicata per creazione project/entity
+- elementi project/entity già esistenti riconosciuti e non duplicati
+- input “crea progetto villa” validato come elemento già presente
+- “modifica evento” gestito come guida non operativa
+- “modifica evento” non apre edit flow alternativo
+- “modifica evento” non modifica record
+- btn_command_go_events apre lista eventi
+- container_command_intent introdotto dentro container_input
+- UI mobile Command Intent rifinita con card dedicate:
+  - comando generico
+  - create project incompleto
+  - create project completo
+  - create entity incompleto
+  - create entity completo
+  - elemento già presente
+  - guida modifica evento
+- feedback_mode introdotto in ui_state
+- feedback project_created implementato
+- feedback entity_created implementato
+- feedback evento ordinario preservato
+- ritorno Home automatico dopo feedback project/entity validato
+- routing lista eventi da guida edit validato
+- flow evento ordinario non regressivo validato
+- edit flow reale non regressivo validato
+- edit no-op / annulla modifica non regressivi validati
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- type classification invariata
+- duration normalization invariata
+- nessun output/KPI anticipato
+
 ------------------------------------------------
 AGGIORNAMENTO CRITICO — INPUT FLOW
 ------------------------------------------------
@@ -564,12 +652,13 @@ ARCHITETTURA ATTUALE:
 input_home
 → input_raw
 → trigger_parse_debounced
+→ command_intent_state
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
 → create_suggestion_state
 → select_project / select_entity
-→ preview / suggestion container / confirm guard / save / edit
+→ preview / command intent / suggestion container / confirm guard / save / edit
 
 ---
 
@@ -645,6 +734,28 @@ PRINCIPIO SUGGESTION INTRODOTTO:
 ✔ creazione project/entity resta previa conferma utente
 ✔ suggestion ignorata non blocca salvataggio
 ✔ suggestion non equivale a decisione
+
+PRINCIPIO COMMAND INTENT INTRODOTTO:
+
+→ COMMAND INTENT STATE = helper controllato per comandi puri
+
+- command_intent_state legge input_raw / input_home
+- riconosce comandi puri espliciti
+- distingue comando strutturale da evento ordinario
+- NON salva eventi
+- NON crea project/entity automaticamente
+- NON modifica parser
+- NON modifica matching
+- NON modifica DB
+- NON apre edit flow alternativi
+- guida l’utente verso funzioni già presenti
+- usa insert_project / insert_entity solo dopo conferma esplicita
+- usa btn_command_go_events per guidare alla lista eventi
+
+✔ comando puro escluso dal save flow evento
+✔ creazione project/entity resta controllata da conferma utente
+✔ “modifica evento” resta guida, non automazione
+✔ evento ordinario resta gestito dal flow esistente
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO — NORMALIZATION LAYER BASE
@@ -1272,6 +1383,37 @@ Principi:
 
 ---
 
+COMMAND INTENT LAYER
+
+- command_intent_state
+- container_command_intent
+- txt_command_intent_loading
+- txt_command_intent_title
+- txt_command_intent_description
+- txt_command_edit_steps
+- divider_command_intent_main
+- txt_command_intent_summary
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+- txt_command_intent_notice
+- txt_command_intent_guide_notice
+
+Principi:
+
+- command_intent_state riconosce comandi puri
+- container_command_intent rappresenta solo comandi riconosciuti
+- comandi puri nascondono Sintesi evento e Dati evento
+- create project/entity richiede conferma utente
+- insert_project / insert_entity restano le query DB effettive
+- modifica evento da input libero resta guida non operativa
+- nessun evento viene salvato da comando puro
+- nessun project/entity viene creato automaticamente
+
+---
+
 LABEL LOGIC (EMBEDDED)
 
 - generazione label dentro preview
@@ -1309,6 +1451,7 @@ ui_state:
     event_date
   },
   status,
+  feedback_mode,
   feedback_text,
   feedback_project,
   feedback_summary
@@ -1338,6 +1481,17 @@ Contenuto atteso:
 ✔ parsed sempre strutturato
 ✔ parsing condiviso tra layer
 ✔ UI completamente state-driven
+
+feedback_mode:
+
+- valore UI temporaneo
+- distingue il tipo di feedback mostrato
+- valori usati:
+  - project_created
+  - entity_created
+  - null / event_created
+- non viene salvato nel DB
+- viene azzerato dopo auto-return post feedback
 
 HELPER STATE TECNICI:
 
@@ -1372,6 +1526,11 @@ FEEDBACK SYSTEM
 ✔ feedback breve e non bloccante
 ✔ auto-return consolidato a 1800 ms
 ✔ routing post-save contestuale
+✔ feedback project_created introdotto
+✔ feedback entity_created introdotto
+✔ feedback evento ordinario preservato
+✔ feedback_title ora distingue Evento salvato / Progetto creato / Entità creata
+✔ feedback_resume adattato al tipo di feedback
 
 FLOW INSERT:
 
@@ -1417,6 +1576,33 @@ ma ora è gestito in modo centralizzato e contestuale.
 ✔ feedback consistente
 ✔ resume basato su ui_state
 ✔ lista eventi aggiornata dopo save reale
+
+FLOW COMMAND CREATE PROJECT:
+
+btn_command_create_project
+→ input_new_project_name valorizzato
+→ insert_project
+→ projects_list refresh
+→ ui_state.feedback_mode = project_created
+→ feedback 1800 ms
+→ Home
+
+FLOW COMMAND CREATE ENTITY:
+
+btn_command_create_entity
+→ input_new_entity_name valorizzato
+→ insert_entity
+→ entities_list refresh
+→ ui_state.feedback_mode = entity_created
+→ feedback 1800 ms
+→ Home
+
+FLOW COMMAND GUIDE EVENTS:
+
+btn_command_go_events
+→ reset input command
+→ events_new refresh
+→ Lista eventi
 
 ------------------------------------------------
 PARSING SYSTEM (STABILIZZATO)
@@ -2187,6 +2373,27 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ zoom automatico Safari iOS risolto
 ✔ select mobile funzionanti in digitazione e dropdown
 ✔ validazione reale iPhone 13 Safari completata
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state introdotto
+✔ comando generico “crea” riconosciuto
+✔ create project incompleto riconosciuto
+✔ create project completo riconosciuto
+✔ create entity incompleto riconosciuto
+✔ create entity completo riconosciuto
+✔ sinonimi create base gestiti
+✔ comando puro escluso dal salvataggio evento
+✔ container_command_intent introdotto
+✔ UI command intent mobile rifinita
+✔ elemento già presente riconosciuto e non duplicato
+✔ guida modifica evento introdotta
+✔ btn_command_create_project collegato a insert_project
+✔ btn_command_create_entity collegato a insert_entity
+✔ btn_command_go_events collegato a lista eventi
+✔ feedback project_created implementato
+✔ feedback entity_created implementato
+✔ feedback evento ordinario non regressivo
+✔ evento normale non regressivo dopo Command Intent
+✔ edit flow non regressivo dopo Command Intent
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -2247,11 +2454,28 @@ MATCHING
 
 COMMAND INTENT
 
-- frasi “crea progetto...”
-- frasi “crea entità...”
-- distinzione comando di sistema / evento operativo
-- conferma guidata command intent
-- non salvare evento se input è comando puro
+Implementato a primo livello controllato:
+
+✔ frasi “crea progetto...”
+✔ frasi “crea entità...”
+✔ sinonimi base crea / aggiungi / inserisci / nuovo / nuova
+✔ comando generico “crea”
+✔ distinzione comando strutturale / evento operativo
+✔ conferma guidata project/entity
+✔ evento non salvato se input è comando puro
+✔ guida non operativa per “modifica evento”
+
+Non implementato:
+
+- engine intent globale
+- routing universale verso dashboard/report
+- azioni rapide operative complete
+- modifica progetto da command
+- modifica entity da command
+- apertura automatica edit flow evento da command
+- consultazione dashboard/report da command
+- intent conversazionale avanzato
+- alias / gerarchie / deduplicazione da command
 
 ---
 
@@ -2401,12 +2625,24 @@ RISOLTO per input/parsing principale
 
 ---
 
-12. COMMAND INTENT NON IMPLEMENTATO
+12. COMMAND INTENT IMPLEMENTATO A PRIMO LIVELLO
 
-- input del tipo “crea progetto Aspri” non è ancora gestito come comando
-- placeholder “Scrivi cosa vuoi fare...” può generare aspettativa di comandi diretti
-- decisione consolidata: non introdurre command intent nel nodo create suggestion
-- nodo futuro candidato: COMMAND INTENT — CREATE PROJECT / ENTITY
+- input del tipo “crea progetto Aspri” ora gestito come comando puro
+- input del tipo “crea entità Patrizio” ora gestito come comando puro
+- comando generico “crea” guidato con esempi
+- input “modifica evento” gestito come guida non operativa
+- comandi puri non salvano eventi
+- project/entity creati solo previa conferma utente
+- elementi già esistenti non vengono duplicati
+
+Limiti residui:
+
+- Command Intent non è ancora engine globale
+- non gestisce dashboard/report
+- non gestisce modifica project/entity
+- non apre edit flow automatici
+- non gestisce intent conversazionale avanzato
+- non sostituisce parser/matching/suggestion
 
 ---
 
@@ -2516,25 +2752,34 @@ PROBLEMI RISOLTI
 ✔ zoom automatico Safari iOS su input → RISOLTO
 ✔ app troncata lateralmente dopo zoom iOS → RISOLTO
 ✔ select mobile senza dropdown stabile → RISOLTO con font-size 16px
+✔ command intent non implementato → RISOLTO A PRIMO LIVELLO
+✔ input “crea progetto...” trattato come evento ordinario → RISOLTO
+✔ input “crea entità...” trattato come evento ordinario → RISOLTO
+✔ comando puro salvabile come evento → RISOLTO
+✔ creazione project/entity da comando senza conferma → EVITATA
+✔ duplicazione project/entity già esistenti da command → RISOLTA
+✔ modifica evento da input libero lasciata senza guida → RISOLTA
+✔ feedback “Evento salvato” su creazione project/entity → RISOLTO
 
 ------------------------------------------------
 STATO LAYER SISTEMA
 ------------------------------------------------
 
-Layer 1 — Input: ~98%
+Layer 1 — Input: ~99%
+Layer Command Intent: ~70%
 Layer 2 — Matching / Suggestion: ~92%
 Layer 3 — View / Preview: ~94%
 Layer HINT SYSTEM: ~93%
-Layer UX Mobile: ~94%
+Layer UX Mobile: ~95%
 Layer 4 — Data Structure: ~32%
-Layer 5 — Engine: ~46%
+Layer 5 — Engine: ~48%
 Layer 6 — Output: 0%
 
 ---
 
 STATO COMPLESSIVO:
 
-~89%
+~90%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -2554,6 +2799,7 @@ FASE ATTUALE
 ✔ LINTING / STATE HELPER CLEANUP — COMPLETATO
 ✔ PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL — COMPLETATO
 ✔ UX MOBILE COHERENCE PASS — COMPLETATO
+✔ COMMAND INTENT — CREATE PROJECT / ENTITY — COMPLETATO
 
 ---
 
@@ -2565,8 +2811,9 @@ TRANSIZIONE:
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Dopo il completamento di Project / Entity Create Suggestion First Controlled Level
-e UX Mobile Coherence Pass,
+Dopo il completamento di Project / Entity Create Suggestion First Controlled Level,
+UX Mobile Coherence Pass
+e Command Intent — Create Project / Entity,
 
 Catene principali attuali:
 
@@ -2624,12 +2871,22 @@ button_input_confirm
 → auto-return 1800 ms
 → Home o Events in base a insert/update
 
+command intent:
+input_home / input_raw
+→ command_intent_state
+→ container_command_intent
+→ btn_command_create_project / btn_command_create_entity / btn_command_go_events
+→ insert_project / insert_entity oppure events_new
+→ feedback project/entity oppure lista eventi
+
 La prossima priorità deve essere definita in Roadmap,
 senza anticipare output/KPI né istanze verticali.
 
 Nodi candidati principali residui:
 
-- COMMAND INTENT — CREATE PROJECT / ENTITY
+- INPUT RENDERING STABILITY / CONTAINER STRUCTURE
+- PREVIEW MODEL / HINT STATE CONSOLIDATION
+- INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 - DATA STRUCTURE / ENTITY HIERARCHY
 - ECONOMIC DIRECTION ADVANCED
 - DURATION ADVANCED — GIORNI / SETTIMANE
@@ -2691,10 +2948,11 @@ Sequenza corretta futura:
 
 1. consolidare cuore eventi
 2. consolidare gestione project/entity
-3. introdurre command intent guidato
-4. UX mobile base rifinita e completata
-5. introdurre command intent / data structure / logiche avanzate
-6. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
+3. introdurre command intent guidato ✔
+4. UX mobile base rifinita e completata ✔
+5. consolidare preview / rendering / input analysis
+6. introdurre data structure / logiche avanzate
+7. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
 
 ---
 
@@ -2720,10 +2978,13 @@ Priorità aggiornata:
 9. linting / state helper cleanup ✔
 10. project/entity create suggestion ✔
 11. UX mobile coherence pass ✔
-12. command intent create project/entity
-13. data structure / entity relations
-14. economic direction advanced
-15. output               
+12. command intent create project/entity ✔
+13. input rendering stability / container structure
+14. preview model / hint state consolidation
+15. input analysis model / single interpretation layer
+16. data structure / entity relations
+17. economic direction advanced
+18. output            
 
 ---
 
@@ -2738,44 +2999,54 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-PRIORITÀ FUTURE:
-
-1. command intent create project/entity
-2. data structure / entity relations
-3. economic direction advanced
-4. duration advanced — giorni / settimane
-5. dashboard / KPI base 
+1. input rendering stability / container structure
+2. preview model / hint state consolidation
+3. input analysis model / single interpretation layer
+4. data structure / entity relations
+5. economic direction advanced
+6. duration advanced — giorni / settimane
+7. dashboard / KPI base
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. . COMMAND INTENT — CREATE PROJECT / ENTITY
+1. INPUT RENDERING STABILITY / CONTAINER STRUCTURE
 
 Scopo:
 
-- riconoscere frasi tipo “crea progetto Aspri”
-- riconoscere frasi tipo “crea entità Patrizio”
-- distinguere comando di sistema da evento operativo
-- mostrare conferma guidata
-- riusare insert_project / insert_entity
-- non salvare evento se l’input è comando puro
-- evitare creazioni automatiche silenziose
+- ridurre rendering progressivo / flash su input evento normale
+- valutare separazione container preview / hint / dati evento
+- valutare stato unico input_analysis_ready
+- migliorare stabilità visiva senza modificare parser/matching/DB
+- mantenere UX mobile fluida
 
 ---
 
-2. ECONOMIC DIRECTION ADVANCED
+2. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
-- valutare amount firmato
-- valutare direction field
-- valutare regole contabili per Spesa/Incasso
-- non attivo finché matching/data quality/report readiness non saranno stabilizzati
+- ridurre natura ibrida della Sintesi
+- separare hint bloccanti / warning informativi / suggerimenti
+- valutare se “Da verificare” debba diventare blocco autonomo
+- preparare preview come view più pura
+- evitare che l’utente legga una cosa diversa da ciò che verrà salvato
 
 ---
 
-3. DATA STRUCTURE / ENTITY HIERARCHY
+3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+
+Scopo:
+
+- valutare direzione verso un solo layer di analisi interrogabile
+- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state
+- ridurre rami ibridi e fonti parallele
+- non introdurre refactor senza nodo dedicato
+
+---
+
+4. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -2787,7 +3058,18 @@ Scopo:
 
 ---
 
-4. DURATION ADVANCED — GIORNI / SETTIMANE
+5. ECONOMIC DIRECTION ADVANCED
+
+Scopo:
+
+- valutare amount firmato
+- valutare direction field
+- valutare regole contabili per Spesa/Incasso
+- non attivo finché matching/data quality/report readiness non saranno stabilizzati
+
+---
+
+6. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -2796,18 +3078,19 @@ Scopo:
 - valutare mezza giornata
 - evitare conversioni automatiche ambigue
 
-5. SUGGESTION CREATE VS EDIT CONSISTENCY
+---
+
+7. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Scopo:
 
 - verificare differenze suggestion tra create flow e edit flow
-- capire perché in alcuni edit flow compare solo suggestion entity
 - mantenere invariati matching e DB finché non serve
 - non introdurre override aggressivi
 
 ---
 
-6. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+8. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
 
 Scopo:
 
@@ -3113,4 +3396,48 @@ create_suggestion_state invariato
 type classification invariata
 duration normalization invariata
 nessun output/KPI anticipato
+transizione verso NEXT NODE da definire in Roadmap
+
+v19 — 2026-05-13
+completamento COMMAND INTENT — CREATE PROJECT / ENTITY
+introdotto command_intent_state come query Retool page-level
+command_intent_state riconosce comandi puri senza salvare dati
+gestito comando generico “crea”
+gestito create project incompleto
+gestito create project completo
+gestito create entity incompleto
+gestito create entity completo
+gestiti sinonimi base crea / aggiungi / inserisci / nuovo / nuova
+comandi puri esclusi dal salvataggio evento
+container_command_intent introdotto dentro container_input
+UI mobile command intent rifinita
+btn_command_create_project collegato a insert_project esistente
+btn_command_create_entity collegato a insert_entity esistente
+btn_command_go_events collegato alla lista eventi
+nessuna nuova query DB duplicata per creazione project/entity
+elementi già presenti riconosciuti e non duplicati
+“crea progetto villa” validato come elemento già presente
+“modifica evento” gestito come guida non operativa
+nessun edit flow alternativo introdotto
+nessuna modifica automatica evento da command
+feedback_mode introdotto in ui_state
+feedback project_created implementato
+feedback entity_created implementato
+feedback evento ordinario preservato
+feedback_resume adattato a Evento / Progetto / Entità
+ritorno Home automatico dopo feedback project/entity validato
+routing “Vai agli eventi” validato
+evento normale non regressivo validato
+edit evento reale non regressivo validato
+edit no-op / annulla modifica non regressivi validati
+DB invariato
+parser invariato
+matching invariato
+create_suggestion_state invariato
+type classification invariata
+duration normalization invariata
+nessun output/KPI anticipato
+residuo “Da verificare” dentro Sintesi documentato
+residuo rendering progressivo input evento normale documentato
+direzione futura Input Analysis Model / Single Interpretation Layer documentata
 transizione verso NEXT NODE da definire in Roadmap

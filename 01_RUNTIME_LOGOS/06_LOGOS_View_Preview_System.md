@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v09
+# 06_LOGOS_View_Preview_System_v10
 
-DATA: 2026-05-09
+DATA: 2026-05-13
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -39,6 +39,13 @@ Il documento descrive:
 - come “Cambia” / “Scegli” restano micro-azioni visive non cliccabili
 - come Feedback mobile e Navigation dock restano esterni alla preview
 - come la baseline 16px mobile Safari riguarda input/select, non la logica preview
+- come la preview convive con Command Intent — Create Project / Entity
+- come container_command_intent sostituisce Sintesi / Dati evento quando l’input è comando puro
+- come command_intent_state resta separato dalla preview
+- come i comandi puri non devono essere rappresentati come eventi
+- come “crea progetto”, “crea entità” e “modifica evento” vengono gestiti fuori dalla Sintesi evento
+- come “Da verificare” resta ancora interno alla Sintesi e non è blocco autonomo
+- come il rendering progressivo dell’input evento normale resta un limite UX aperto
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -55,6 +62,7 @@ Collocazione attuale:
 
 input_raw
 → trigger_parse_debounced
+→ command_intent_state
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
@@ -62,8 +70,9 @@ input_raw
 → select_project / select_entity
 → select1 / type classification base
 → preview (sintesi) / card Da verificare / suggestion container
-→ Dati evento
-→ confirm (insert/update)
+→ oppure container_command_intent
+→ Dati evento oppure command action
+→ confirm evento / insert_project / insert_entity / go events
 → feedback temporaneo
 → routing post-save
 
@@ -73,11 +82,13 @@ Feedback temporaneo, routing post-save e Navigation dock NON fanno parte della p
 
 Sono layer UI separati:
 
-- preview / Sintesi = rappresentazione input interpretato
-- Da verificare = controllo/hint operativo
-- suggestion container = proposta azione project/entity
-- Dati evento = decisione salvabile
-- feedback = conferma temporanea post-save
+- preview / Sintesi = rappresentazione input evento interpretato
+- Da verificare = controllo/hint operativo ancora interno alla Sintesi
+- suggestion container = proposta azione project/entity da input evento
+- container_command_intent = rappresentazione comando puro
+- Dati evento = decisione salvabile per evento ordinario
+- command action = azione controllata per comando puro
+- feedback = conferma temporanea post-save / post-create
 - navigation dock = navigazione UI
 
 ---
@@ -118,11 +129,29 @@ Nota:
 create_suggestion_state non è preview pura.
 È un helper controllato che alimenta suggestion create.
 
-La preview/sintesi e il suggestion container devono restare concettualmente distinti:
+command_intent_state non è preview pura.
 
-- preview = rappresentazione dell’input interpretato
+È un helper controllato che distingue:
+
+- input evento ordinario
+- comando strutturale puro
+- guida non operativa
+
+command_intent_state alimenta container_command_intent,
+non la Sintesi evento.
+
+Regola:
+
+quando command_intent_state riconosce un comando puro,
+la Sintesi evento e Dati evento devono essere nascosti.
+
+La preview/sintesi, il suggestion container e il command container devono restare concettualmente distinti:
+
+- preview = rappresentazione dell’input evento interpretato
 - hint informativi = stato del match / durata / type
-- suggestion create = proposta di azione guidata
+- suggestion create = proposta di azione guidata dentro flow evento
+- command intent = comando puro separato dal flow evento
+- command action = azione controllata fuori dal salvataggio evento
 
 ---
 
@@ -142,6 +171,16 @@ select_entity.value
 dentro button_input_confirm.
 
 insert_project / insert_entity non salvano eventi.
+
+Command Intent non salva eventi.
+
+Quando l’input è un comando puro:
+
+- button_input_confirm non deve essere usato
+- insert_event / update_event non devono essere eseguiti
+- Sintesi evento non deve rappresentare il comando come evento
+- Dati evento non devono essere mostrati
+- container_command_intent diventa il layer UI principale
 
 Il save flow non dipende dalla preview per il type.
 
@@ -198,6 +237,9 @@ Mostra:
 ✔ notice associazioni mancanti nella Sintesi
 ✔ micro-azioni visive “Cambia” / “Scegli”
 ✔ coerenza visuale con Dati evento compatti
+✔ esclusione dei comandi puri dal rendering evento
+✔ convivenza controllata con container_command_intent
+✔ separazione tra input evento e command intent
 
 ---
 
@@ -217,6 +259,21 @@ Contiene:
 - highlight
 - formattazioni locali
 - logiche di supporto UX
+
+Nota post Command Intent:
+
+La preview continua a rappresentare solo input evento ordinari.
+
+Non deve rappresentare come evento:
+
+- crea
+- crea progetto
+- crea progetto [nome]
+- crea entità
+- crea entità [nome]
+- modifica evento
+
+Questi casi appartengono a container_command_intent.
 
 Nota post Project / Entity Create Suggestion:
 
@@ -238,6 +295,29 @@ La Sintesi non sostituisce:
 - button_input_confirm
 
 La zona decisionale resta Dati evento.
+
+Nota post Command Intent:
+
+Per input evento ordinari, la zona decisionale resta Dati evento.
+
+Per comandi puri, la zona decisionale diventa container_command_intent.
+
+Esempi:
+
+crea progetto Villa Nuova
+→ container_command_intent
+→ btn_command_create_project
+→ insert_project
+
+crea entità Patrizio
+→ container_command_intent
+→ btn_command_create_entity
+→ insert_entity
+
+modifica evento
+→ container_command_intent
+→ btn_command_go_events
+→ Lista eventi
 
 ---
 
@@ -270,6 +350,10 @@ Ma:
 ⚠ Feedback mobile non è preview
 ⚠ Navigation dock non è preview
 ⚠ Dati evento resta separato dalla Sintesi
+⚠ “Da verificare” resta ancora interno alla Sintesi
+⚠ hint bloccanti / warning informativi / suggestion visuali non sono ancora separati in stati autonomi
+⚠ rendering progressivo dell’input evento normale ancora migliorabile
+⚠ Command Intent è separato dalla preview ma non esiste ancora un input analysis model unico
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -290,20 +374,35 @@ Fonti dati utilizzate:
 - project_create_suggestion_dismissed.value
 - entity_create_suggestion_dismissed.value
 
+Nota Command Intent:
+
+La preview NON deve usare command_intent_state come fonte di rappresentazione evento.
+
+command_intent_state appartiene al container_command_intent.
+
+La preview può essere nascosta quando:
+
+command_intent_state.data?.isCommand === true
+
+oppure quando l’input è riconosciuto come comando puro pendente.
+
 Nota UX Mobile Coherence Pass:
 
 La preview NON legge:
 
 - feedback_summary
+- feedback_mode
 - container_app_nav
 - stato Dashboard
 - Navigation dock
+- command_intent_state come fonte evento
 
 Motivo:
 
-feedback_summary appartiene al feedback post-save.
+feedback_summary / feedback_mode appartengono al feedback post-save o post-create.
 container_app_nav appartiene alla navigazione UI.
-La preview resta limitata alla rappresentazione dell’input interpretato.
+command_intent_state appartiene al container_command_intent.
+La preview resta limitata alla rappresentazione dell’input evento interpretato.
 
 Nota:
 
@@ -360,9 +459,11 @@ match state project/entity
 select values
 select1.value
 create_suggestion_state
+command_intent_state
 dismissed state project/entity
 local label logic
 local hint logic
+command UI logic
 
 Conseguenza:
 
@@ -372,6 +473,9 @@ Conseguenza:
 ⚠ preview ancora dipendente da più fonti
 ⚠ possibile incoerenza visuale su hint non matching
 ⚠ possibile divergenza tra dato interno e formattazione mostrata
+✔ command intent separato dal salvataggio evento
+⚠ input analysis model unico non implementato
+⚠ esistono ancora più helper interpretativi specializzati
 
 OUTPUT DELLA PREVIEW
 
@@ -391,6 +495,18 @@ Output UI composto da:
   - Scegli
 - card Da verificare, se necessaria
 - notice associazioni mancanti, se necessario
+
+Non include:
+
+- container_command_intent
+- txt_command_intent_title
+- txt_command_intent_description
+- txt_command_edit_steps
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
 
 Nota:
 
@@ -424,6 +540,28 @@ questi elementi sono collegati alla preview UX,
 ma non fanno parte della stringa `labelStyled`.
 
 La suggestion create è UI di supporto,
+non dato preview persistito.
+
+Container command separato:
+
+container_command_intent
+azioni Crea progetto / Crea entità / Vai agli eventi
+input_command_project_name
+input_command_entity_name
+
+Dopo Command Intent — Create Project / Entity:
+
+Il container_command_intent è stato introdotto per evitare che
+i comandi puri vengano trattati come eventi.
+
+Il command container non fa parte della stringa labelStyled.
+
+Regola:
+
+container_command_intent sostituisce Sintesi evento e Dati evento
+quando l’input è un comando puro.
+
+La UI command è supporto operativo controllato,
 non dato preview persistito.
 
 Formato:
@@ -511,9 +649,226 @@ Regola:
 la preview rappresenta il type corrente,
 ma non salva direttamente il dato.
 
+Esempio command generico:
+
+raw_input:
+
+crea
+
+Preview evento:
+
+non mostrata
+
+Command container:
+
+guida con esempi di creazione progetto / entità
+
+DB:
+
+nessun evento salvato
+
+---
+
+Esempio create project:
+
+raw_input:
+
+crea progetto Villa Nuova
+
+Preview evento:
+
+non mostrata
+
+Command container:
+
+riepilogo progetto + CTA Crea progetto
+
+Azione:
+
+btn_command_create_project
+→ insert_project
+
+DB:
+
+nuovo record in projects
+nessun evento salvato
+
+---
+
+Esempio create entity:
+
+raw_input:
+
+crea entità Patrizio
+
+Preview evento:
+
+non mostrata
+
+Command container:
+
+riepilogo entità + CTA Crea entità
+
+Azione:
+
+btn_command_create_entity
+→ insert_entity
+
+DB:
+
+nuovo record in entities
+nessun evento salvato
+
+---
+
+Esempio elemento già presente:
+
+raw_input:
+
+crea progetto villa
+
+Preview evento:
+
+non mostrata
+
+Command container:
+
+Elemento già presente
+
+Azione:
+
+nessun bottone crea
+
+DB:
+
+nessuna duplicazione
+nessun evento salvato
+
+---
+
+Esempio guida modifica evento:
+
+raw_input:
+
+modifica evento
+
+Preview evento:
+
+non mostrata
+
+Command container:
+
+guida operativa + CTA Vai agli eventi
+
+Azione:
+
+btn_command_go_events
+→ Lista eventi
+
+DB:
+
+nessuna modifica
+nessun evento salvato
+
+------------------------------------------------
+COMMAND INTENT E PREVIEW
+------------------------------------------------
+
+Il nodo Command Intent — Create Project / Entity ha introdotto
+un layer UI separato dalla Sintesi.
+
+Componenti coinvolti:
+
+- command_intent_state
+- container_command_intent
+- txt_command_intent_loading
+- txt_command_intent_title
+- txt_command_intent_description
+- txt_command_edit_steps
+- divider_command_intent_main
+- txt_command_intent_summary
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+- txt_command_intent_notice
+- txt_command_intent_guide_notice
+
+Regola principale:
+
+la preview non deve competere con il command intent.
+
+Se l’input è un evento ordinario:
+
+- mostra Sintesi
+- mostra eventuale Da verificare
+- mostra suggestion container se necessario
+- mostra Dati evento
+- button_input_confirm salva evento dopo conferma
+
+Se l’input è comando puro:
+
+- nasconde Sintesi
+- nasconde Dati evento
+- nasconde suggestion container evento se necessario
+- mostra container_command_intent
+- usa azioni command dedicate
+- non salva eventi
+
+---
+
+Casi gestiti:
+
+crea
+→ guida con esempi
+→ nessuna preview evento
+
+crea progetto
+→ input_command_project_name
+→ nessuna preview evento
+
+crea progetto [nome]
+→ riepilogo command
+→ btn_command_create_project
+→ nessuna preview evento
+
+crea entità
+→ input_command_entity_name
+→ nessuna preview evento
+
+crea entità [nome]
+→ riepilogo command
+→ btn_command_create_entity
+→ nessuna preview evento
+
+crea progetto villa
+→ Elemento già presente
+→ nessun bottone crea
+→ nessuna preview evento
+
+modifica evento
+→ guida step
+→ btn_command_go_events
+→ nessuna preview evento
+
+---
+
+Nota:
+
+Command Intent non rende la preview più pura.
+La separa solo dal caso comando puro.
+
+La preview resta ibrida per gli input evento ordinari.
+
 COMPONENTI LOGICI INTERNI
 
 La preview contiene attualmente:
+
+Solo per input evento ordinari.
+
+Per command intent, questi componenti devono essere bypassati
+o nascosti lato UI.
 
 VALUE BUILDER
 
@@ -899,39 +1254,6 @@ Non è stata creata una tab Ambiguità.
 La separazione resta una card visibile solo quando serve.
 
 ------------------------------------------------
-CARD “DA VERIFICARE”
-------------------------------------------------
-
-Durante UX Mobile Coherence Pass, gli hint operativi sono stati confermati
-come blocco separato dalla Sintesi.
-
-Ruolo:
-
-- mostrare controlli richiesti
-- evidenziare ambiguità
-- evidenziare warning non bloccanti
-- guidare l’utente verso Dati evento
-
-Esempi:
-
-- Più entità trovate
-- Più progetti trovati
-- Definisci spesa o incasso
-- Esistono progetti più specifici
-- Normalizzato: X minuti
-- Durata ambigua
-
-Regola:
-
-La Sintesi mostra cosa LOGOS ha interpretato.
-La card Da verificare mostra cosa l’utente deve controllare.
-
-Decisione:
-
-Non è stata creata una tab Ambiguità.
-La separazione resta una card visibile solo quando serve.
-
-------------------------------------------------
 NOTICE ASSOCIAZIONI MANCANTI
 ------------------------------------------------
 
@@ -1006,6 +1328,35 @@ Esempi:
 
 - Crea progetto Villa Sierri 15
 - Crea entità Referente Kappa
+
+Distinzione da Command Intent:
+
+create_suggestion_state opera dentro il flow evento ordinario.
+
+Esempio:
+
+30 euro spesa villa nuova
+→ evento ordinario
+→ possibile suggestion progetto
+→ eventuale creazione inline
+→ poi Conferma evento
+
+command_intent_state opera fuori dal flow evento ordinario.
+
+Esempio:
+
+crea progetto Villa Nuova
+→ comando puro
+→ container_command_intent
+→ insert_project
+→ nessun evento salvato
+
+Regola:
+
+Le due UI non devono competere.
+
+- suggestion container = supporto associazione evento
+- command container = comando strutturale puro
 
 ---
 
@@ -1917,6 +2268,185 @@ duration hint locale
 → feedback mobile separato ma non parte del preview model
 → navigation dock separata ma non parte del preview model
 
+COMMAND INTENT / PREVIEW:
+
+✔ command intent separato dalla Sintesi evento
+✔ comandi puri non renderizzati come eventi
+✔ container_command_intent introdotto
+✔ feedback command separato dal feedback evento tramite feedback_mode
+
+⚠ input analysis model unico non implementato
+⚠ command_intent_state è ancora helper Retool separato
+⚠ create_suggestion_state è ancora helper Retool separato
+⚠ preview continua a contenere hint/label/highlight embedded
+⚠ “Da verificare” resta interno alla Sintesi
+⚠ rendering progressivo input evento normale ancora migliorabile
+
+COMMAND INTENT — TEST VALIDATI:
+
+1. Comando generico
+
+Input:
+
+crea
+
+Esito:
+
+- container_command_intent mostrato
+- esempi leggibili
+- Sintesi evento nascosta
+- Dati evento nascosti
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+2. Create project incompleto
+
+Input:
+
+crea progetto
+
+Esito:
+
+- input_command_project_name visibile
+- CTA disabilitata a campo vuoto
+- Sintesi evento nascosta
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+3. Create project completo
+
+Input:
+
+crea progetto Command Final Project 2
+
+Esito:
+
+- riepilogo command mostrato
+- project creato tramite insert_project
+- feedback Progetto creato
+- ritorno Home automatico
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+4. Create entity incompleto
+
+Input:
+
+crea entità
+
+Esito:
+
+- input_command_entity_name visibile
+- CTA disabilitata a campo vuoto
+- Sintesi evento nascosta
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+5. Create entity completo
+
+Input:
+
+crea entità Command Final Entity 2
+
+Esito:
+
+- riepilogo command mostrato
+- entity creata tramite insert_entity
+- feedback Entità creata
+- ritorno Home automatico
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+6. Elemento già presente
+
+Input:
+
+crea progetto villa
+
+Esito:
+
+- Elemento già presente riconosciuto
+- nessun bottone crea
+- nessuna duplicazione
+- Sintesi evento nascosta
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+7. Guida modifica evento
+
+Input:
+
+modifica evento
+
+Esito:
+
+- guida mostrata
+- step leggibili
+- CTA Vai agli eventi funzionante
+- nessuna modifica automatica
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+---
+
+8. Evento ordinario non regressivo
+
+Input:
+
+30 euro spesa villa citrignano
+
+Esito:
+
+- flow evento ordinario preservato
+- Sintesi evento mostrata
+- Dati evento mostrati
+- Conferma evento funzionante
+- feedback evento corretto
+- ritorno Home automatico
+
+RISULTATO:
+OK
+
+---
+
+9. Edit evento non regressivo
+
+Esito:
+
+- update_event eseguito se modifica reale
+- no-op edit preservato se nessuna modifica
+- ritorno Lista eventi coerente
+- Sintesi evento ancora funzionante in edit flow
+
+RISULTATO:
+OK
+
 FORMATO AMOUNT ALLINEATO IN PREVIEW
 
 dato interno numerico corretto
@@ -2074,6 +2604,7 @@ Type Classification Base è completata.
 Match Engine Unification First Controlled Level è completato.
 Project / Entity Create Suggestion First Controlled Level è completato.
 UX Mobile Coherence Pass è completato.
+Command Intent — Create Project / Entity è completato.
 
 La parte critica di allineamento preview/hint/highlight per project/entity
 è stata risolta a primo livello.
@@ -2081,43 +2612,171 @@ La parte critica di allineamento preview/hint/highlight per project/entity
 La parte suggestion create funziona
 e il container suggestion è stato rifinito a livello mobile base.
 
+Il Command Intent è stato separato dalla Sintesi evento:
+
+- i comandi puri non vengono renderizzati come eventi
+- container_command_intent sostituisce Sintesi / Dati evento quando l’input è comando puro
+- command_intent_state resta helper separato
+- command_intent_state non è fonte preview
+- command_intent_state non è fonte salvabile per events
+- insert_project / insert_entity restano azioni controllate
+- button_input_confirm resta dedicato agli eventi ordinari
+
 La Sintesi è ora coerente con il sistema mobile,
 ma resta un layer ibrido e non una view pura.
 
+Durante il nodo Command Intent è emerso un residuo importante:
+
+“Da verificare” resta interno alla Sintesi
+e non è un blocco autonomo spostabile sotto la CTA.
+
+Questo conferma che la preview contiene ancora:
+
+- rappresentazione evento
+- hint
+- warning informativi
+- label cleaning
+- supporto UX
+- logiche visuali embedded
+
 Nodi futuri candidati:
 
-- COMMAND INTENT — CREATE PROJECT / ENTITY
-- PREVIEW MODEL / HINT STATE CONSOLIDATION
-- CAMBIA / SCEGLI ACTIONS
-- HINT / AMBIGUITÀ ADVANCED
-- SUGGESTION CREATE VS EDIT CONSISTENCY
-- PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
-- separazione preview come view pura
-- estrazione label cleaning in modulo dedicato
-- hint duration/type separati da preview
-- preview model unico
-- type/economic direction advanced
-- mobile polish finale / icon system
+1. INPUT RENDERING STABILITY / CONTAINER STRUCTURE
+
+Obiettivo:
+
+- ridurre rendering progressivo / flash su input evento normale
+- stabilizzare comparsa di Sintesi / hint / suggestion / Dati evento
+- valutare separazione container preview / hint / dati evento
+- valutare eventuale stato unico input_analysis_ready
+
+Vincoli:
+
+- non modificare parser
+- non modificare matching
+- non modificare DB
+- non rompere command intent
+- non rompere suggestion container
+- non rompere edit flow
+
+---
+
+2. PREVIEW MODEL / HINT STATE CONSOLIDATION
+
+Obiettivo:
+
+- consolidare hint/warning ancora embedded nella Sintesi
+- valutare se “Da verificare” debba diventare blocco autonomo
+- distinguere hint bloccanti, warning informativi e suggestion visuali
+- rendere la preview più vicina a una view pura
+- evitare divergenze tra ciò che l’utente legge e ciò che viene salvato
+
+---
+
+3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+
+Obiettivo:
+
+- valutare un layer unico di analisi interrogabile dalle UI
+- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state
+- ridurre rami ibridi e fonti parallele
+- evitare ricalcoli o logiche concorrenti
+
+Vincolo:
+
+non introdurre refactor globale senza nodo dedicato.
+
+---
+
+4. CAMBIA / SCEGLI ACTIONS
+
+Obiettivo:
+
+- trasformare le micro-azioni visive nella Sintesi in azioni reali
+- eventuale focus / scroll / highlight sui campi Dati evento
+- mantenere select_project / select_entity come decisione finale utente
+
+---
+
+5. HINT / AMBIGUITÀ ADVANCED
+
+Obiettivo:
+
+- migliorare gerarchia tra ambiguità, warning e suggerimenti
+- evitare messaggi concorrenti
+- mantenere il sistema leggibile su mobile
+
+---
+
+6. SUGGESTION CREATE VS EDIT CONSISTENCY
+
+Obiettivo:
+
+- verificare differenze suggestion tra create flow e edit flow
+- evitare divergenze tra nuovo evento e modifica evento
+- non modificare create_suggestion_state senza casi riproducibili
+
+---
+
+7. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+
+Obiettivo:
+
+- valutare creazione progetto anche quando esiste un match generico
+- esempio: input “villa” con match Villa e progetti più specifici
+- permettere eventuale scelta esplicita utente
+- evitare duplicati e creazioni aggressive
+
+---
+
+8. TYPE / ECONOMIC DIRECTION ADVANCED
+
+Obiettivo:
+
+- valutare direction field
+- valutare amount firmato
+- valutare logiche avanzate Spesa / Incasso
+- non anticipare KPI o dashboard
+
+---
+
+9. MOBILE POLISH FINALE / ICON SYSTEM
+
+Obiettivo:
+
+- standardizzare icone
+- rifinire spaziature e gerarchie visuali
+- mantenere font-size 16px su input/select per stabilità Safari iOS
 
 Priorità:
 
 non aprire ulteriori nodi preview generici
 se non emerge un problema reale.
 
+I candidati più coerenti post Command Intent sono:
+
+1. INPUT RENDERING STABILITY / CONTAINER STRUCTURE
+2. PREVIEW MODEL / HINT STATE CONSOLIDATION
+3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+
 Vincolo:
 
 non modificare logica, parser, matching, DB o save flow
 senza nodo dedicato.
 
+------------------------------------------------
 OBIETTIVO FUTURO NON ATTIVO
+------------------------------------------------
 
 Separazione layer:
 
 parsing
 normalization
 type classification
+command intent
 label
 matching
+suggestion
 preview
 
 Preview target:
@@ -2132,12 +2791,15 @@ selected project/entity
 hint state già calcolato
 match state già calcolato
 suggestion state già calcolato
+command intent già calcolato fuori dalla preview
 
 Output target:
 
 rendering leggibile
 nessuna logica decisionale
 nessuna trasformazione strutturale
+nessuna interpretazione command intent
+nessuna azione diretta su DB
 
 ⚠ NON implementato attualmente
 
@@ -2155,8 +2817,21 @@ ma questo non è stato implementato.
 Anche il suggestion container futuro potrebbe essere separato in un modello dedicato,
 ma non è attivo ora.
 
+Anche command_intent_state potrebbe in futuro confluire in un modello unico di input analysis,
+ma non è attivo ora.
+
 Il matching project/entity è stato però allineato
 sufficientemente da non essere più un blocco preview immediato.
+
+Il Command Intent è stato separato dalla Sintesi evento
+sufficientemente da evitare che i comandi puri vengano salvati o rappresentati come eventi.
+
+Restano invece aperti:
+
+- rendering progressivo input evento normale
+- “Da verificare” interno alla Sintesi
+- preview ancora ibrida
+- input analysis model unico non implementato
 
 CHANGELOG
 
@@ -2303,3 +2978,36 @@ confermato parser invariato
 confermato matching invariato
 confermato create_suggestion_state invariato
 confermato save flow invariato lato preview
+
+v10 — 2026-05-13
+
+- integrazione Command Intent — Create Project / Entity
+- documentato rapporto tra preview e command_intent_state
+- documentato container_command_intent come layer separato dalla Sintesi
+- documentato che i comandi puri non vengono renderizzati come eventi
+- documentato che Sintesi evento e Dati evento vengono nascosti per command intent
+- documentato comando generico “crea”
+- documentato create project incompleto
+- documentato create project completo
+- documentato create entity incompleto
+- documentato create entity completo
+- documentato elemento già presente
+- documentata guida non operativa “modifica evento”
+- documentato che command intent non salva eventi
+- documentato che insert_project / insert_entity restano azioni controllate
+- documentato che create_suggestion_state e command_intent_state non devono competere
+- documentato feedback command separato tramite feedback_mode
+- aggiunti esempi preview non mostrata per comandi puri
+- aggiunti test Command Intent validati
+- documentati residui:
+  - “Da verificare” ancora interno alla Sintesi
+  - preview ancora ibrida
+  - hint/warning non ancora separati
+  - rendering progressivo input evento normale ancora migliorabile
+  - input analysis model unico non implementato
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- save flow evento ordinario invariato
+- nessun output/KPI anticipato
