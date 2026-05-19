@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v10
+# 00_PROJECT_Gap_Register_v11
 
-DATA: 2026-05-13
+DATA: 2026-05-18
 
 ------------------------------------------------
 SCOPO
@@ -140,7 +140,7 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati sette blocchi funzionali/base-operativi:
+Sono stati avviati e completati otto blocchi funzionali/base-operativi:
 
 - Normalization Layer Base
 - Duration Normalization Base
@@ -149,6 +149,7 @@ Sono stati avviati e completati sette blocchi funzionali/base-operativi:
 - Project / Entity Create Suggestion First Controlled Level
 - UX Mobile Coherence Pass
 - Command Intent — Create Project / Entity
+- UI Readiness / Visibility Aggregator First Controlled Level
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
@@ -174,6 +175,13 @@ i comandi puri non vengono salvati come eventi
 project/entity da command vengono creati solo previa conferma utente
 btn_command_create_project / btn_command_create_entity riusano insert_project / insert_entity
 modifica evento da input libero viene gestita come guida non operativa
+ui_visibility_mode distingue empty / event / command
+ui_visibility_state aggrega la visibilità del flow input
+Hidden principali sono stati centralizzati a primo livello
+container_input è stato stabilizzato
+container vuoto durante digitazione risolto
+bottom bar flash risolto
+edit mode chiarito con notice dedicata
 preview contiene ancora logiche proprie
 processing resta manuale
 output non attivo
@@ -200,7 +208,6 @@ Micro-nodi UX post Match Engine già completati:
 
 Nodi residui candidati:
 
-- Input Rendering Stability / Container Structure
 - Preview Model / Hint State Consolidation
 - Input Analysis Model / Single Interpretation Layer
 - Data Structure / Entity Hierarchy
@@ -208,6 +215,10 @@ Nodi residui candidati:
 - Duration Advanced — giorni/settimane
 - Suggestion Create vs Edit Consistency
 - Project Create Suggestion — Match Present / User Override
+- Command Intent — Edit Guide Generic Alias
+- Feedback Micro-flash Cleanup
+- Linting / Minor Cleanup
+- Cleanup Obsolete UI Guards / Query Reduction
 - Azioni Rapide Operative
 - Dashboard Base
 
@@ -448,6 +459,17 @@ Dashboard presente in nav ma disabilitata.
 Command Intent — Create Project / Entity implementato a primo livello controllato.
 Il command intent non è un form guidato completo, ma introduce una prima distinzione tra input evento e comando strutturale puro.
 
+UI Readiness / Visibility Aggregator ha introdotto una distinzione visiva più stabile tra:
+
+- input vuoto
+- evento ordinario
+- command intent
+
+tramite ui_visibility_mode e ui_visibility_state.
+
+Questo non equivale a una modalità guidata completa,
+ma riduce il rendering progressivo e migliora la stabilità del flow input.
+
 RISCHIO:
 
 Introdurre modalità guidata troppo presto può duplicare logiche
@@ -460,6 +482,7 @@ Non prioritario ora.
 Da rivalutare dopo:
 
 Command Intent implementato a primo livello controllato
+UI Readiness / Visibility Aggregator completato a primo livello controllato
 Preview / Input Analysis eventualmente consolidati
 Data Structure / Entity Hierarchy valutata
 Azioni rapide operative definite come nodo dedicato
@@ -589,6 +612,8 @@ RISCHIO RESIDUO:
 - hint duration/type ancora embedded nella preview
 - preview model unico non implementato
 - “Da verificare” resta dentro Sintesi perché non è blocco autonomo
+- dopo UI Readiness la visibilità della Sintesi è più stabile, ma il contenuto resta ibrido
+- ui_visibility_state governa quando mostrare la Sintesi, non cosa contiene
 - separazione tra hint bloccanti, warning informativi e suggestion non ancora consolidata
 - matching project/entity allineato a primo livello nello STEP 6.4
 
@@ -609,6 +634,13 @@ Non aprire “Hint / Preview State Alignment” come nodo immediato generico.
 Eventuale nodo futuro:
 
 PREVIEW MODEL / HINT STATE CONSOLIDATION
+
+Nota post UI Readiness:
+
+Il nodo UI Readiness ha risolto il rendering progressivo a primo livello,
+ma non ha separato preview, hint, warning e suggestion.
+Il debito Preview Model / Hint State Consolidation resta quindi valido,
+ma non più come fix del container vuoto o del flash input principale.
 
 Motivi ora rafforzati dopo Command Intent:
 
@@ -960,6 +992,7 @@ RISCHIO RESIDUO:
 - creazione guidata project/entity implementata a primo livello controllato
 - command intent create project/entity implementato a primo livello controllato
 - resta assente input analysis model unico
+- ui_visibility_state legge il match state solo per visibilità/hint, non sostituisce il matching
 - deduplicazione project/entity avanzata non implementata
 - preview resta layer ibrido
 - hint duration/type ancora embedded nella preview
@@ -1042,6 +1075,9 @@ e delle select su mobile, ma non ha modificato la struttura dati.
 Command Intent — Create Project / Entity ha introdotto la creazione project/entity da comando puro,
 ma non ha modificato la struttura dati.
 
+UI Readiness / Visibility Aggregator ha introdotto ui_visibility_state e ui_visibility_mode,
+ma non ha modificato la struttura dati.
+
 Il nodo Command Intent:
 
 - non introduce gerarchie
@@ -1050,6 +1086,15 @@ Il nodo Command Intent:
 - non introduce relazioni entity-project
 - non introduce vincoli DB
 - blocca duplicati solo a livello UI quando riconosce un elemento già esistente
+
+Il nodo UI Readiness:
+
+- non introduce gerarchie
+- non introduce alias
+- non introduce deduplicazione avanzata
+- non introduce relazioni entity-project
+- non introduce vincoli DB
+- non modifica projects/entities
 
 Durante il test UX sono emersi due sotto-gap collegati:
 
@@ -1342,6 +1387,24 @@ Nessun rischio operativo rilevato dopo i test.
 Eventuali ulteriori warning Retool dovranno essere trattati solo se reali,
 riproducibili e collegati a regressioni runtime.
 
+Nota post UI Readiness:
+
+Dopo il nodo UI Readiness risultano ancora presenti 5 linting Retool residui.
+Non sono stati trattati nel nodo corrente perché non bloccanti e perché il focus era la stabilità visiva del flow input.
+
+Non riaprire G14 come cleanup base.
+Se necessario, aprire un nuovo micro-nodo:
+
+LINTING / MINOR CLEANUP
+
+Vincoli:
+
+- non modificare parser
+- non modificare matching
+- non modificare save flow
+- non introdurre refactor
+- intervenire solo su warning identificati e riproducibili
+
 AZIONE:
 
 Gap integrato.
@@ -1555,7 +1618,7 @@ FONTE:
 Preview System + Roadmap + Match Engine Unification
 
 STATO:
-IN OSSERVAZIONE — CANDIDATO PRINCIPALE POST COMMAND INTENT
+IN OSSERVAZIONE — CANDIDATO PRINCIPALE POST UI READINESS
 
 DESCRIZIONE:
 
@@ -1596,6 +1659,18 @@ Questo conferma che la preview resta un layer ibrido che contiene:
 - suggestion visive
 - logiche di rendering
 
+Nota post UI Readiness:
+
+Il nodo UI READINESS / VISIBILITY AGGREGATOR ha stabilizzato quando la Sintesi viene mostrata,
+ma non ha modificato il modello interno della Sintesi.
+
+Restano quindi validi i debiti:
+
+- separare hint/warning/suggestion dal contenuto principale
+- valutare blocco autonomo “Da verificare”
+- rendere la preview più view pura
+- ridurre logiche embedded nella Sintesi
+
 Il problema non ha generato regressioni dati,
 ma rende più forte il candidato PREVIEW MODEL / HINT STATE CONSOLIDATION.
 
@@ -1606,7 +1681,7 @@ in un layer UX già stabilizzato.
 
 AZIONE:
 
-Candidato principale post Command Intent, ma da aprire solo se scelto consapevolmente come nodo dedicato.
+Candidato principale post UI Readiness, ma da aprire solo se scelto consapevolmente come nodo dedicato.
 
 Non aprire come “Hint / Preview State Alignment” generico.
 
@@ -1724,8 +1799,10 @@ RISCHIO RESIDUO:
 - project creation override con match generico non implementato
 - Icon System non completamente standardizzato
 - mobile compact advanced / polish finale rimandato
-- rendering progressivo input evento normale osservato dopo Command Intent
+- rendering progressivo input flow ridotto tramite UI Readiness / Visibility Aggregator
 - “Da verificare” resta dentro Sintesi e non è spostabile senza refactor preview
+- micro-flash feedback project/entity ancora presente come residuo minore
+- edit mode chiarito tramite notice compatta introdotta in UI Readiness
 
 AZIONE:
 
@@ -1742,8 +1819,9 @@ Eventuali evoluzioni devono diventare gap/nodi dedicati:
 - Suggestion Create vs Edit Consistency
 - Project Create Suggestion — Match Present / User Override
 - Icon System / Mobile Polish Finale
-- Input Rendering Stability / Container Structure
 - Preview Model / Hint State Consolidation
+- Feedback Micro-flash Cleanup
+- Cleanup Obsolete UI Guards / Query Reduction
 
 ID: G19
 
@@ -1864,7 +1942,8 @@ RISCHIO RESIDUO:
 - non apre edit flow evento automatico
 - non sostituisce parser, matching o suggestion
 - non unifica ancora tutte le fonti di interpretazione
-- rendering progressivo input evento normale ancora migliorabile
+- rendering progressivo input evento normale ridotto tramite UI Readiness / Visibility Aggregator
+- “modifica” generico non ancora riconosciuto come guida edit
 - “Da verificare” resta dentro Sintesi perché non è blocco autonomo
 
 AZIONE:
@@ -1877,6 +1956,7 @@ Eventuali evoluzioni devono diventare gap/nodi dedicati:
 
 - Input Analysis Model / Single Interpretation Layer
 - Advanced Command Intent
+- Command Intent — Edit Guide Generic Alias
 - Dashboard Command / Report Intent
 - Project / Entity Edit Command
 - Azioni Rapide Operative
@@ -1933,6 +2013,7 @@ Sono già consolidate:
 - processing NEW / WRITTEN / ERROR
 - UX mobile coherence pass
 - command intent create project/entity first controlled level
+- UI readiness / visibility aggregator first controlled level
 - navigation dock Home / Eventi / Dashboard predisposta
 - feedback post-save contestuale
 - cancel create/edit contestuale
@@ -1980,9 +2061,10 @@ Sequenza corretta:
 2. consolidare gestione project/entity
 3. rifinire UX mobile base
 4. introdurre command intent guidato
-5. consolidare rendering / preview / input analysis
-6. consolidare data structure / qualità dati
-7. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
+5. consolidare UI readiness / visibility del flow input
+6. consolidare preview / hint / input analysis
+7. consolidare data structure / qualità dati
+8. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
 
 ID: G21
 
@@ -2149,6 +2231,13 @@ Dopo Command Intent, il rischio include anche la duplicazione di logiche tra:
 - input libero
 - button_input_confirm
 
+Dopo UI Readiness, le Azioni rapide dovranno inoltre coordinarsi con:
+
+- ui_visibility_mode
+- ui_visibility_state
+- container_command_intent
+- flow event / command
+
 AZIONE:
 
 Da sviluppare come nodo futuro dedicato.
@@ -2211,6 +2300,7 @@ Non immediato.
 Da valutare solo dopo:
 
 - Command Intent base completato
+- UI Readiness / Visibility Aggregator completato
 - Data Structure, se necessaria
 - eventuale Dashboard Command / Report Intent solo in nodo dedicato
 - Economic Direction Advanced, se necessaria
@@ -2321,19 +2411,19 @@ NOME:
 Input Rendering Stability / Container Structure
 
 FONTE:
-Command Intent Session + test runtime input evento normale
+Command Intent Session + test runtime input evento normale + UI Readiness Session
 
 STATO:
-IDENTIFICATO — CANDIDATO PRINCIPALE
+INTEGRATO BASE
 
 DESCRIZIONE:
 
-Durante il nodo Command Intent è stato osservato un residuo UX:
+Durante il nodo Command Intent era stato osservato un residuo UX:
 
 input evento normale
-→ Sintesi / hint / suggestion possono comparire progressivamente
+→ Sintesi / hint / suggestion potevano comparire progressivamente
 
-Il comportamento non rompe:
+Il comportamento non rompeva:
 
 - parser
 - matching
@@ -2342,42 +2432,98 @@ Il comportamento non rompe:
 - edit flow
 - feedback
 
-ma può disturbare la percezione di stabilità dell’interfaccia mobile.
+ma disturbava la percezione di stabilità dell’interfaccia mobile.
 
 STATO REALE:
 
-Non corretto nel nodo Command Intent.
+Il gap è stato affrontato nel nodo:
 
-Motivo:
+UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
 
-Intervenire avrebbe richiesto modifiche più ampie su:
+Implementato:
 
-- struttura container_input
-- separazione preview / hint / dati evento
-- eventuale stato unico input_analysis_ready
-- timing tra parse_input_controlled, project_state, entity_state, create_suggestion_state e command_intent_state
+- ui_visibility_state come Transformer read-only
+- ui_visibility_mode come Variable Retool
+- valori ui_visibility_mode:
+  - empty
+  - event
+  - command
+- trigger_parse_debounced aggiorna ui_visibility_mode
+- window.__logos_visibility_run_id per evitare update stale da debounce
+- classificazione locale event/command solo per visibilità UI
+- Hidden principali centralizzati:
+  - container_command_intent
+  - sintesi
+  - container_association_suggestions
+  - text_event_data_title
+  - select1
+  - select_project
+  - select_entity
+  - button_input_confirm
+  - btn_cancel_edit
+  - btn_cancel_input_home
+  - container_input
+- container_input stabilizzato tramite ui_visibility_state.isInputFlow
+- container vuoto durante digitazione risolto
+- flash input flow ridotto
+- bottom bar flash risolto tramite micro-fix container_app_nav
+- text_input_analysis_loading introdotto vicino all’input principale
+- text_edit_mode_notice introdotto per chiarire edit mode
+- edit mode confermato prevalente su Command Intent
 
-RISCHIO:
+Regole consolidate:
 
-Un fix locale non progettato potrebbe peggiorare:
+- ui_visibility_state governa solo visibilità UI
+- ui_visibility_mode è latch UI leggero
+- non è Input Analysis Model completo
+- non è fonte unica interpretativa
+- non sostituisce parser
+- non sostituisce matching
+- non sostituisce command_intent_state
+- non sostituisce create_suggestion_state
+- non modifica save flow
+- non modifica DB
 
-- input evento normale
-- command intent
-- suggestion container
-- edit flow
-- rendering mobile
+TEST VALIDATI:
+
+- evento normale
+- comando generico
+- create project incompleto
+- create project completo
+- create entity incompleto
+- create entity completo
+- elemento già presente
+- guida edit
+- suggestion project/entity da evento normale
+- edit evento reale
+- edit no-op
+- annulla edit
+- feedback evento
+- feedback project/entity
+- events list
+- Home vuota + navigation dock
+
+RISCHIO RESIDUO:
+
+- micro-flash feedback project/entity ancora presente
+- 5 linting Retool residui
+- cleanup obsolete guards / query reduction non ancora eseguito
+- Input Analysis Model completo non implementato
+- “modifica” generico non ancora riconosciuto come guida edit
 
 AZIONE:
 
-Da valutare come nodo dedicato.
+Gap integrato a livello base.
 
-Possibili direzioni:
+Non riaprire come Input Rendering Stability / Container Structure.
 
-- stato unico input_analysis_ready
-- skeleton / placeholder durante analisi
-- separazione container preview / hint / dati evento
-- riduzione rendering progressivo
-- mantenimento parser/matching/DB invariati
+Eventuali evoluzioni future devono diventare gap/nodi dedicati:
+
+- Feedback Micro-flash Cleanup
+- Linting / Minor Cleanup
+- Cleanup Obsolete UI Guards / Query Reduction
+- Input Analysis Model / Single Interpretation Layer
+- Preview Model / Hint State Consolidation
 
 ID: G28
 
@@ -2404,6 +2550,8 @@ Oggi LOGOS usa più fonti controllate:
 - command_intent_state
 - preview logic
 - select_project / select_entity / select1
+- ui_visibility_mode
+- ui_visibility_state
 
 Questa struttura è funzionante,
 ma resta distribuita.
@@ -2415,8 +2563,27 @@ Non implementato.
 Il nodo Command Intent ha aggiunto command_intent_state come helper controllato,
 senza sostituire parser, matching o suggestion.
 
+Il nodo UI Readiness ha aggiunto ui_visibility_mode e ui_visibility_state
+come latch/aggregatore UI controllati,
+senza sostituire parser, matching, suggestion o command intent.
+
 Questo è corretto per il nodo,
 ma conferma la necessità futura di valutare un modello unico di analisi.
+
+Nota strategica:
+
+Il checkpoint INPUT RENDERING STABILITY / PRIORITY REVIEW ha confermato una direzione a tre livelli:
+
+1. UI Readiness / Visibility Aggregator
+   → completato a primo livello
+
+2. Input Analysis Result / Single Interpretation Layer
+   → futuro, non attivo
+
+3. Event Interpretation Engine / Multi-source Input
+   → futuro avanzato, non attivo
+
+Il nodo UI Readiness non implementa il livello 2.
 
 RISCHIO:
 
@@ -2441,25 +2608,272 @@ Vincoli:
 - preservare parser, matching, suggestion e save flow finché non esiste alternativa validata
 - procedere per consolidamento progressivo
 
+ID: G29
+
+NOME:
+Feedback Micro-flash Cleanup
+
+FONTE:
+UI Readiness / Visibility Aggregator Session + test feedback project/entity
+
+STATO:
+IDENTIFICATO — RESIDUO MINORE
+
+DESCRIZIONE:
+
+Durante i test finali del nodo UI Readiness è stato osservato un micro-flash
+nel feedback project/entity.
+
+Il feedback funziona correttamente:
+
+- project creato
+- entity creata
+- feedback project/entity corretto
+- ritorno Home automatico
+- nessuna regressione su evento ordinario
+- nessun errore console bloccante
+
+Tuttavia resta un piccolo flash visivo,
+non chiaramente identificabile.
+
+STATO REALE:
+
+Sono stati allineati i flussi:
+
+- btn_command_create_project
+- btn_command_create_entity
+
+Pattern applicato:
+
+1. preparare nextFeedbackState
+2. await ui_state.setValue(nextFeedbackState)
+3. micro-tick setTimeout 0
+4. mostrare container_feedback
+
+Il micro-flash è rimasto presente.
+
+RISCHIO:
+
+Inseguire il micro-flash senza identificare il contenuto esatto può introdurre regressioni su:
+
+- feedback evento
+- feedback project/entity
+- routing Home
+- reset input
+- command intent
+- create project/entity
+
+AZIONE:
+
+Non prioritario.
+
+Da aprire solo come micro-nodo dedicato se il flash diventa fastidioso o identificabile.
+
+Vincoli:
+
+- non modificare DB
+- non modificare insert_project / insert_entity
+- non modificare insert_event / update_event
+- non modificare save flow
+- non modificare command_intent_state
+- intervenire solo sul timing/visibilità feedback se necessario
+
+ID: G30
+
+NOME:
+Command Intent — Edit Guide Generic Alias
+
+FONTE:
+Test mobile post UI Readiness + osservazione utente
+
+STATO:
+IDENTIFICATO — MICRO-NODO FUTURO
+
+DESCRIZIONE:
+
+Il sistema riconosce correttamente:
+
+modifica evento
+→ guida edit non operativa
+
+ma non riconosce ancora:
+
+modifica
+→ attualmente trattato come evento ordinario e mostra la Sintesi
+
+Potenziali alias candidati:
+
+- modifica
+- correggi
+- cambia
+
+STATO REALE:
+
+Non implementato.
+
+La gestione attuale è coerente con il nodo Command Intent completato,
+che supporta “modifica evento” come guida esplicita,
+ma non alias generici.
+
+RISCHIO:
+
+Allargare troppo la classificazione può generare falsi positivi.
+
+Esempi da NON confondere automaticamente:
+
+- modifica preventivo villa
+- modifica colore bagno
+- correggi testo brochure
+- cambia materiale progetto
+
+AZIONE:
+
+Da valutare in micro-nodo dedicato.
+
+Vincoli:
+
+- riconoscere solo alias singoli o pattern estremamente controllati
+- non aprire edit flow automatici
+- non modificare record
+- non salvare eventi
+- non sostituire command_intent_state con intent engine globale
+
+ID: G31
+
+NOME:
+Linting / Minor Cleanup
+
+FONTE:
+UI Readiness / Visibility Aggregator Session + Retool linting panel
+
+STATO:
+IDENTIFICATO — RESIDUO TECNICO MINORE
+
+DESCRIZIONE:
+
+Dopo il nodo UI Readiness risultano ancora presenti 5 linting Retool residui.
+
+Questi linting non hanno impedito:
+
+- evento normale
+- command intent
+- create project/entity
+- edit flow
+- no-op edit
+- annulla edit
+- feedback
+- events list
+- Home vuota + navigation dock
+
+STATO REALE:
+
+Non trattati nel nodo UI Readiness.
+
+Motivo:
+
+Il nodo era dedicato a visibilità/readiness UI e stabilità del flow input.
+Intervenire sui linting avrebbe aperto un micro-nodo tecnico diverso.
+
+RISCHIO:
+
+Correggere linting senza test mirati può introdurre regressioni runtime.
+
+AZIONE:
+
+Da valutare come micro-nodo dedicato.
+
+Vincoli:
+
+- non modificare parser
+- non modificare matching
+- non modificare save flow
+- non modificare DB
+- non aprire refactor
+- trattare solo warning identificati e riproducibili
+
+ID: G32
+
+NOME:
+Cleanup Obsolete UI Guards / Query Reduction
+
+FONTE:
+UI Readiness / Visibility Aggregator Session + centralizzazione Hidden
+
+STATO:
+IDENTIFICATO — CLEANUP FUTURO
+
+DESCRIZIONE:
+
+Il nodo UI Readiness ha centralizzato molti Hidden principali tramite:
+
+- ui_visibility_state
+- ui_visibility_mode
+
+Prima del nodo, diversi componenti avevano regex duplicate o guardie locali
+per distinguere evento / command / edit.
+
+Una parte di queste logiche può ora essere considerata obsoleta o duplicata.
+
+STATO REALE:
+
+Non è stato eseguito cleanup/rimozione nel nodo UI Readiness.
+
+Motivo:
+
+Il nodo doveva stabilizzare il comportamento,
+non eliminare parti legacy nello stesso passaggio.
+
+RISCHIO:
+
+Rimuovere guardie/query/componenti troppo presto può rompere:
+
+- command intent
+- suggestion container
+- edit flow
+- input flow
+- feedback
+- mobile UX
+
+AZIONE:
+
+Da valutare solo dopo stabilità documentata.
+
+Possibile micro-nodo futuro:
+
+CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+
+Vincoli:
+
+- procedere uno alla volta
+- backup prima di ogni rimozione
+- test dopo ogni micro-rimozione
+- non modificare parser
+- non modificare matching
+- non modificare save flow
+- non modificare DB
+
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo Command Intent:
+Ordine attuale consigliato dopo UI Readiness:
 
 NODI STRUTTURALI / OPERATIVI FUTURI:
 
-1. G27 — Input Rendering Stability / Container Structure
-2. G17 — Preview Model / Hint State Consolidation
-3. G28 — Input Analysis Model / Single Interpretation Layer
-4. G11 — Data Structure / Entity Hierarchy
-5. G21 — Suggestion Create vs Edit Consistency
-6. G22 — Project Create Suggestion — Match Present / User Override
-7. G13 — Economic Direction Advanced
-8. G08A — Duration Advanced / Giorni-Settimane
-9. G23 — Azioni Rapide Operative
-10. G24 — Dashboard Base
-11. G04 — Logging / Versioning
-12. G05 — Input Modes
-13. G06 — Multi-source Input
+1. G17 — Preview Model / Hint State Consolidation
+2. G28 — Input Analysis Model / Single Interpretation Layer
+3. G11 — Data Structure / Entity Hierarchy
+4. G21 — Suggestion Create vs Edit Consistency
+5. G22 — Project Create Suggestion — Match Present / User Override
+6. G30 — Command Intent — Edit Guide Generic Alias
+7. G29 — Feedback Micro-flash Cleanup
+8. G31 — Linting / Minor Cleanup
+9. G32 — Cleanup Obsolete UI Guards / Query Reduction
+10. G13 — Economic Direction Advanced
+11. G08A — Duration Advanced / Giorni-Settimane
+12. G23 — Azioni Rapide Operative
+13. G24 — Dashboard Base
+14. G04 — Logging / Versioning
+15. G05 — Input Modes
+16. G06 — Multi-source Input
 
 POLISH / UX FUTURO:
 
@@ -2487,6 +2901,7 @@ G16 — Events List Search / Filter Bar
 G18 — UX Mobile Coherence Pass
 G19 — Command Intent — Create Project / Entity
 G26 — Mobile Safari Font Baseline
+G27 — Input Rendering Stability / Container Structure
 
 Nota:
 
@@ -2737,3 +3152,42 @@ aggiornato ordine consigliato gap/nodi post Command Intent
 confermato output/KPI non attivi
 confermata direzione LOGOS Core modulare
 allineamento con State v19 e Roadmap v13
+
+v11 — 2026-05-18
+
+aggiornato Gap Register dopo UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+integrato esito CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
+integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+aggiornato G02 Processor / Engine Flow con UI Readiness / Visibility Aggregator
+aggiornato G05 Input Modes con distinzione visiva empty/event/command
+aggiornato G07 Preview Alignment con nota post UI Readiness
+aggiornato G10 Match Engine Unification con nota su ui_visibility_state non sostitutivo
+aggiornato G11 Data Structure / Entity Hierarchy con nota su UI Readiness non strutturale
+aggiornato G14 Linting / State Helper Cleanup con nota sui nuovi linting residui non trattati
+aggiornato G17 Preview Model / Hint State Consolidation a candidato principale post UI Readiness
+aggiornato G18 UX Mobile Coherence Pass con residui post UI Readiness
+aggiornato G19 Command Intent — Create Project / Entity con residuo “modifica” generico
+aggiornato G20 Core Event System / Modular Instances con UI Readiness
+aggiornato G23 Azioni Rapide Operative con coordinamento futuro ui_visibility_state
+aggiornato G24 Dashboard Base con UI Readiness completata
+aggiornato G27 Input Rendering Stability / Container Structure a INTEGRATO BASE
+documentato ui_visibility_state
+documentato ui_visibility_mode
+documentato trigger_parse_debounced aggiornato per ui_visibility_mode
+documentato window.__logos_visibility_run_id
+documentata centralizzazione Hidden principali
+documentato container_input stabilizzato
+documentato container vuoto durante digitazione risolto
+documentato flash input flow ridotto
+documentato bottom bar flash risolto
+documentato text_input_analysis_loading
+documentato text_edit_mode_notice
+documentato edit mode prevalente su command intent
+aggiornato G28 Input Analysis Model / Single Interpretation Layer con ui_visibility_state / ui_visibility_mode
+aggiunto G29 Feedback Micro-flash Cleanup
+aggiunto G30 Command Intent — Edit Guide Generic Alias
+aggiunto G31 Linting / Minor Cleanup
+aggiunto G32 Cleanup Obsolete UI Guards / Query Reduction
+aggiornato ordine consigliato gap/nodi post UI Readiness
+confermato output/KPI non attivi
+confermata direzione LOGOS Core modulare

@@ -1,6 +1,6 @@
-# 00_PROJECT_System_v05
+# 00_PROJECT_System_v06
 
-DATA: 2026-05-02
+DATA: 2026-05-18
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -76,6 +76,14 @@ Logica:
 - Match Engine Unification First Controlled Level lato Retool
 - match state project/entity lato Retool
 - preview lato Retool
+- Project / Entity Create Suggestion lato Retool
+- UX Mobile Coherence Pass lato Retool
+- Command Intent — Create Project / Entity lato Retool
+- UI Readiness / Visibility Aggregator lato Retool
+- ui_visibility_mode lato Retool
+- ui_visibility_state lato Retool
+- feedback temporaneo lato Retool
+- navigation dock lato Retool
 
 Server / Database:
 
@@ -88,6 +96,11 @@ Server / Database:
 - nessuna decisione project/entity lato DB
 - nessuna risoluzione ambiguità lato DB
 - nessuna creazione automatica project/entity lato DB
+- nessuna gestione command intent lato DB
+- nessuna gestione ui_visibility_mode lato DB
+- nessuna gestione ui_visibility_state lato DB
+- nessuna gestione feedback temporaneo lato DB
+- nessuna gestione navigation dock lato DB
 
 ------------------------------------------------
 PRINCIPI ARCHITETTURALI
@@ -108,6 +121,14 @@ Il database:
 - riceve project_id/entity_id già determinati lato UI
 - non riceve match state
 - non salva matches / count / isAmbiguous / singleMatch
+- non conosce command_intent_state
+- non conosce create_suggestion_state
+- non conosce ui_visibility_mode
+- non conosce ui_visibility_state
+- non conosce feedback_mode
+- non governa visibilità UI
+- non interpreta comandi puri
+- non crea eventi da command intent
 
 ---
 
@@ -126,6 +147,14 @@ La UI:
 - costruisce preview
 - guida decisione utente
 - invia payload al database
+- propone creazione project/entity controllata
+- distingue input evento da command intent
+- esclude comandi puri dal salvataggio evento
+- crea project/entity da command solo previa conferma utente
+- coordina feedback temporaneo post-save / post-create
+- coordina navigation dock
+- governa visibilità input flow tramite ui_visibility_state
+- distingue empty / event / command tramite ui_visibility_mode
 
 ---
 
@@ -149,9 +178,16 @@ amount, unit, event_date, type, project_id, entity_id:
 - project_id deriva da select_project.value
 - entity_id deriva da select_entity.value
 - project_id/entity_id sono supportati da project_state/entity_state
+- project_id/entity_id possono essere supportati da create_suggestion_state prima della conferma evento
+- type/project/entity restano decisioni UI/utente prima del salvataggio
 - possono essere incompleti
 - possono essere corretti mentre l’evento è NEW
 - non sostituiscono raw_input
+
+Nota:
+
+command_intent_state, ui_visibility_mode e ui_visibility_state non sono dati strutturati evento.
+Sono helper runtime/UI e non vengono salvati negli eventi.
 
 ---
 
@@ -196,9 +232,18 @@ Stato attuale:
 ✔ Match Engine Unification First Controlled Level introdotto  
 ✔ matching project/entity unificato a primo livello controllato  
 ✔ select / hint / highlight / confirm guard allineati a match state  
-⚠ preview ancora ibrida  
+✔ Project / Entity Create Suggestion First Controlled Level introdotto
+✔ UX Mobile Coherence Pass completato
+✔ Command Intent — Create Project / Entity introdotto
+✔ UI Readiness / Visibility Aggregator introdotto a primo livello
+✔ ui_visibility_mode introdotto come latch UI empty / event / command
+✔ ui_visibility_state introdotto come aggregatore read-only di visibilità
+✔ container vuoto durante digitazione risolto
+✔ bottom bar flash risolto
+⚠ preview ancora ibrida nel contenuto
+⚠ input analysis model unico non implementato
 ⚠ match engine avanzato separato non implementato  
-⚠ output non attivo    
+⚠ output non attivo      
 
 ------------------------------------------------
 ARCHITETTURA FUNZIONALE
@@ -212,17 +257,23 @@ LIVELLI ATTUALI:
 4. DURATION NORMALIZATION BASE LAYER
 5. TYPE CLASSIFICATION BASE LAYER
 6. MATCH STATE LAYER — FIRST CONTROLLED LEVEL
-7. PREVIEW / VIEW LAYER
-8. UI STATE LAYER
-9. INSERT / UPDATE LAYER
-10. PROCESSING LAYER
+7. PROJECT / ENTITY CREATE SUGGESTION LAYER
+8. COMMAND INTENT LAYER — FIRST CONTROLLED LEVEL
+9. UI READINESS / VISIBILITY LAYER — FIRST CONTROLLED LEVEL
+10. PREVIEW / VIEW LAYER
+11. UI STATE LAYER
+12. INSERT / UPDATE LAYER
+13. PROCESSING LAYER
+14. UX MOBILE / NAVIGATION / FEEDBACK LAYER
 
 LIVELLI FUTURI:
 
-11. MATCH ENGINE EVOLUTION ADVANCED
-12. DATA STRUCTURE / ENTITY HIERARCHY
-13. ECONOMIC DIRECTION ADVANCED
-14. OUTPUT / ANALYTICS LAYER
+15. PREVIEW MODEL / HINT STATE CONSOLIDATION
+16. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+17. MATCH ENGINE EVOLUTION ADVANCED
+18. DATA STRUCTURE / ENTITY HIERARCHY
+19. ECONOMIC DIRECTION ADVANCED
+20. OUTPUT / ANALYTICS LAYER
 
 ------------------------------------------------
 1 — INPUT LAYER
@@ -591,7 +642,175 @@ nessuna deduplicazione
 nessuna creazione guidata project/entity
 nessun ranking avanzato
 
-7 — PREVIEW / VIEW LAYER
+------------------------------------------------
+7 — PROJECT / ENTITY CREATE SUGGESTION LAYER
+------------------------------------------------
+
+Stato:
+
+✔ implementato a primo livello controllato
+
+Componenti:
+
+- create_suggestion_state
+- container_association_suggestions
+- input_new_project_name
+- input_new_entity_name
+- insert_project
+- insert_entity
+- project_create_inline_open
+- entity_create_inline_open
+- project_create_suggestion_dismissed
+- entity_create_suggestion_dismissed
+
+Funzione:
+
+proporre creazione project/entity quando l’input evento ordinario
+non trova associazioni controllate.
+
+Regole:
+
+- suggestion create opera dentro il flow evento ordinario
+- non salva eventi automaticamente
+- insert_project scrive solo in projects
+- insert_entity scrive solo in entities
+- dopo creazione, l’evento richiede comunque Conferma evento
+- project/entity mancanti non bloccano il salvataggio evento
+- project/entity ambigui bloccano conferma finché non risolti
+
+Limiti:
+
+- suggestion create vs edit consistency da verificare
+- project creation override con match generico non implementato
+- entity/project hierarchy non implementata
+
+------------------------------------------------
+8 — COMMAND INTENT LAYER — FIRST CONTROLLED LEVEL
+------------------------------------------------
+
+Stato:
+
+✔ implementato a primo livello controllato
+
+Componenti:
+
+- command_intent_state
+- container_command_intent
+- input_command_project_name
+- input_command_entity_name
+- btn_command_create_project
+- btn_command_create_entity
+- btn_command_go_events
+
+Funzione:
+
+distinguere comandi strutturali puri da eventi ordinari.
+
+Casi gestiti:
+
+- crea
+- crea progetto
+- crea progetto [nome]
+- crea entità
+- crea entità [nome]
+- crea progetto [nome esistente]
+- modifica evento
+
+Regole:
+
+- i comandi puri non generano eventi NEW
+- button_input_confirm resta dedicato agli eventi ordinari
+- insert_project / insert_entity restano azioni controllate
+- “modifica evento” guida alla lista eventi, non apre edit flow automatico
+- Command Intent non modifica stati evento
+- Command Intent non sostituisce parser/matching/suggestion
+
+Limiti:
+
+- alias guida edit generici non implementati:
+  - modifica
+  - correggi
+  - cambia
+- command intent avanzato non implementato
+- non è intent engine globale
+
+------------------------------------------------
+9 — UI READINESS / VISIBILITY LAYER — FIRST CONTROLLED LEVEL
+------------------------------------------------
+
+Stato:
+
+✔ implementato a primo livello controllato
+
+Componenti:
+
+- ui_visibility_mode
+- ui_visibility_state
+- text_input_analysis_loading
+- text_edit_mode_notice
+
+Funzione:
+
+governare la visibilità del flow input senza modificare dati salvabili.
+
+ui_visibility_mode:
+
+- Variable Retool
+- valori:
+  - empty
+  - event
+  - command
+- aggiornata da trigger_parse_debounced
+- latch UI leggero
+- non è fonte dati
+- non sostituisce command_intent_state
+
+ui_visibility_state:
+
+- Transformer Retool read-only
+- aggrega flag di visibilità
+- governa Hidden principali del flow input
+
+Componenti governati:
+
+- container_command_intent
+- sintesi
+- container_association_suggestions
+- text_event_data_title
+- select1
+- select_project
+- select_entity
+- button_input_confirm
+- btn_cancel_edit
+- btn_cancel_input_home
+- container_input
+
+Regole:
+
+- non salva dati
+- non modifica DB
+- non modifica parser
+- non modifica matching
+- non modifica command_intent_state
+- non modifica create_suggestion_state
+- non costruisce payload
+- non è Input Analysis Model completo
+
+Risultati:
+
+✔ container vuoto durante digitazione risolto
+✔ flash input flow ridotto
+✔ bottom bar flash risolto
+✔ flow event / command più stabile
+✔ edit mode chiarito con notice dedicata
+
+Limiti:
+
+⚠ micro-flash feedback project/entity ancora presente
+⚠ 5 linting Retool residui
+⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
+
+10 — PREVIEW / VIEW LAYER
 
 Funzione:
 
@@ -626,12 +845,18 @@ Limiti:
 ⚠ contiene hint logic
 ⚠ contiene highlight
 ⚠ usa fonti multiple
+✔ visibilità governata da ui_visibility_state.showEventPreview
+✔ nascosta durante command intent puro
+✔ container_command_intent separato
+✔ rendering progressivo input ridotto tramite UI Readiness
 ✔ hint matching project/entity alimentati da project_state/entity_state
 ✔ highlight project/entity alimentato da matches
 ✔ detection locale preview non più fonte decisionale matching
 ✔ formattazione italiana amount allineata
 ✔ durata normalizzata mostrata in forma umana
-⚠ preview non ancora view pura
+⚠ contenuto interno preview ancora ibrido
+⚠ “Da verificare” ancora interno alla Sintesi / card collegata
+⚠ Preview Model / Hint State Consolidation non implementato
 
 Esempi attuali:
 
@@ -661,7 +886,7 @@ La persistenza avviene tramite:
 select_project.value → project_id
 select_entity.value → entity_id
 
-8 — UI STATE LAYER
+11 — UI STATE LAYER
 
 State principale:
 
@@ -678,7 +903,9 @@ Struttura attuale:
   },
   status: null,
   feedback_text: null,
-  feedback_project: null
+  feedback_project: null,
+  feedback_mode: null,
+  feedback_summary: null
 }
 
 Ruolo:
@@ -710,6 +937,16 @@ Fonte project/entity salvabile:
 select_project.value
 select_entity.value
 
+Fonte visibility/readiness:
+
+ui_visibility_mode
+ui_visibility_state
+
+Nota:
+
+ui_visibility_mode e ui_visibility_state non sono dati evento.
+Servono solo a governare la visibilità del flow input.
+
 Usato da:
 
 preview
@@ -730,7 +967,7 @@ Regola:
 ui_state.parsed deve restare sempre oggetto strutturato,
 non null.
 
-9 — INSERT / UPDATE LAYER
+12 — INSERT / UPDATE LAYER
 
 Componenti:
 
@@ -773,10 +1010,13 @@ Fonti controllate payload:
 button_input_confirm non ricalcola parsing.
 button_input_confirm non ricalcola matching.
 button_input_confirm non legge la preview come fonte dati.
+button_input_confirm non legge ui_visibility_state come fonte payload.
+ui_visibility_state governa solo la visibilità del bottone tramite showConfirm.
 
 Insert:
 
 crea evento NEW
+non viene eseguito se l’input è un comando puro
 salva raw_input
 salva type
 salva amount/unit/event_date
@@ -806,8 +1046,11 @@ Risultato:
 ✔ update stabile
 ✔ lista aggiornata senza refresh pagina
 ✔ parsing duplicato nel save rimosso
+✔ comandi puri esclusi dal save flow
+✔ project/entity da command creati senza creare eventi
+✔ feedback temporaneo post-save / post-create separato dal DB
 
-10 — PROCESSING LAYER
+13 — PROCESSING LAYER
 
 Funzione:
 
@@ -845,6 +1088,50 @@ lifecycle limitato
 no versioning storico
 no stati intermedi
 no revisione batch
+
+------------------------------------------------
+14 — UX MOBILE / NAVIGATION / FEEDBACK LAYER
+------------------------------------------------
+
+Stato:
+
+✔ implementato a primo livello controllato
+
+Componenti:
+
+- feedback_summary
+- feedback_mode
+- container_feedback
+- container_app_nav
+- input_events_search
+- text_input_analysis_loading
+- text_edit_mode_notice
+
+Funzione:
+
+migliorare usabilità mobile e chiarezza del flow.
+
+Elementi consolidati:
+
+- feedback temporaneo post insert/update
+- feedback project_created / entity_created
+- routing post-save contestuale
+- Home / Events / Feedback separati
+- navigation dock contestuale
+- events list mobile rifinita
+- search/filter lista eventi
+- font-size 16px su input/select per Safari iOS
+- edit mode notice
+- bottom bar flash risolto
+
+Regole:
+
+- feedback non è dato DB
+- navigation dock non è stato evento
+- feedback_mode non è stato evento
+- text_edit_mode_notice non modifica eventi
+- container_app_nav non abilita output/KPI
+
 FLOW COMPLETO SISTEMA
 
 CREATE FLOW:
@@ -859,13 +1146,34 @@ input_home → input_raw
 
 ↓
 
-DEBOUNCE:
+DEBOUNCE / UI READINESS:
 
 trigger_parse_debounced
+→ ui_visibility_mode
+
+UI READINESS:
+
+ui_visibility_mode / ui_visibility_state
 
 ↓
 
-PARSING:
+COMMAND INTENT CHECK:
+
+command_intent_state
+
+↓
+
+SE COMMAND:
+
+ui_visibility_state
+→ container_command_intent
+→ eventuale insert_project / insert_entity / go events
+→ feedback temporaneo oppure Lista eventi
+→ nessun evento creato
+
+↓
+
+SE EVENTO:
 
 parse_input_controlled
 
@@ -895,6 +1203,14 @@ project_state / entity_state
 
 ↓
 
+CREATE SUGGESTION:
+
+create_suggestion_state
+→ eventuale insert_project / insert_entity inline
+→ evento ancora non salvato
+
+↓
+
 SELECT:
 
 select_project / select_entity
@@ -907,9 +1223,21 @@ ui_state.parsed
 
 ↓
 
+UI VISIBILITY:
+
+ui_visibility_state
+
+↓
+
 PREVIEW:
 
 sintesi
+
+↓
+
+DATI EVENTO:
+
+select1 / select_project / select_entity
 
 ↓
 
@@ -929,6 +1257,12 @@ DATABASE:
 
 evento salvato con status NEW, type valorizzato,
 project_id/entity_id valorizzati se selezionati
+
+↓
+
+FEEDBACK:
+
+feedback temporaneo
 
 ↓
 
@@ -954,6 +1288,10 @@ evento NEW selezionato
 LOAD:
 
 raw_input → input_home / input_raw
+
+EDIT NOTICE:
+
+text_edit_mode_notice visibile
 
 ↓
 
@@ -1002,6 +1340,12 @@ button_input_confirm
 UPDATE:
 
 update_event
+
+Nota:
+
+Durante edit mode, Command Intent non prende controllo del flow.
+Scrivere “crea” resta testo dell’evento in modifica.
+Per uscire bisogna usare Annulla modifica.
 
 ↓
 
@@ -1077,13 +1421,36 @@ STATO ARCHITETTURALE
 ✔ DB coerente con payload
 ✔ events.type valorizzato in insert/update
 ✔ lista aggiornata dopo save/update
+✔ Project / Entity Create Suggestion First Controlled Level completato
+✔ create_suggestion_state introdotto
+✔ creazione project/entity inline controllata
+✔ evento non salvato automaticamente dopo creazione project/entity
+✔ UX Mobile Coherence Pass completato
+✔ feedback temporaneo post-save introdotto
+✔ routing post-save contestuale introdotto
+✔ navigation dock introdotta
+✔ font-size 16px mobile Safari validato per input/select
+✔ Command Intent — Create Project / Entity completato
+✔ command_intent_state introdotto
+✔ container_command_intent introdotto
+✔ comandi puri esclusi dal save flow evento
+✔ project/entity da command creati senza creare eventi
+✔ “modifica evento” gestito come guida non operativa
+✔ UI Readiness / Visibility Aggregator First Controlled Level completato
+✔ ui_visibility_mode introdotto
+✔ ui_visibility_state introdotto
+✔ Hidden principali centralizzati
+✔ container vuoto durante digitazione risolto
+✔ bottom bar flash risolto
+✔ edit mode chiarito con text_edit_mode_notice
 
 ⚠ sistema incompleto nei layer evolutivi:
 
+preview model / hint state consolidation
+input analysis model unico
 match engine avanzato separato
 alias / fuzzy / ranking avanzato
 data structure avanzata
-project/entity create suggestion
 economic direction advanced
 output
 
@@ -1102,7 +1469,11 @@ KPI
 
 LIMITI STRUTTURALI
 
-preview non ancora view pura
+preview non ancora view pura nel contenuto
+“Da verificare” ancora interno alla Sintesi / card collegata
+hint/warning non ancora separati in modello autonomo
+ui_visibility_state non è Input Analysis Model completo
+input analysis model unico non implementato
 matching project/entity unificato solo a primo livello controllato
 match engine avanzato separato non implementato
 hint duration/type ancora embedded nella preview
@@ -1115,8 +1486,13 @@ multi-unit avanzato non supportato
 dati storici non retro-normalizzati
 lifecycle senza versioning
 output non attivo
-linting Retool residuo non bloccante
-creazione guidata project/entity non implementata
+micro-flash feedback project/entity ancora presente
+5 linting Retool residui ancora presenti
+cleanup obsolete UI guards / query reduction non ancora eseguito
+alias guida edit generici non implementati
+creazione guidata project/entity implementata a primo livello controllato
+suggestion create vs edit consistency da verificare
+project creation override con match generico non implementato
 alias / gerarchie / deduplicazione non implementati
 
 DIREZIONE EVOLUTIVA
@@ -1131,24 +1507,34 @@ preview alignment base ✔
 duration normalization ✔
 type classification base ✔
 match engine unification first controlled level ✔
-micro-nodi UX/helper
-project/entity create suggestion
+micro-nodi UX/helper ✔
+linting / state helper cleanup ✔
+project/entity create suggestion ✔
+UX mobile coherence pass ✔
+command intent create project/entity ✔
+UI readiness / visibility aggregator ✔
+preview / hint consolidation
+input analysis model / single interpretation layer
 data structure avanzata
 economic direction advanced
 output / dashboard
 
 Candidati micro-nodo:
 
-- LINTING / STATE HELPER CLEANUP
-- EDIT MODE CANCEL / RETURN TO EVENTS LIST
-- EVENTS LIST SEARCH / FILTER BAR
-- EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
+- COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+- FEEDBACK MICRO-FLASH CLEANUP
+- LINTING / MINOR CLEANUP
+- CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 
 Candidati non immediati:
 
 - PREVIEW MODEL / HINT STATE CONSOLIDATION
+- INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+- DATA STRUCTURE / ENTITY HIERARCHY
+- ECONOMIC DIRECTION ADVANCED
 - ALIAS / SYNONYMS CONTROLLED MATCHING
 - MATCH CONFIDENCE / RANKING ADVANCED
+- DASHBOARD BASE
 
 Nota:
 
@@ -1173,6 +1559,12 @@ Runtime / tecnici:
 06_LOGOS_View_Preview_System
 LOGOS_RETOOL_RUNTIME_REAL
 LOGOS_SUPABASE_RUNTIME_REAL
+
+Checkpoint recenti:
+
+- CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
+- CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -1238,3 +1630,37 @@ aggiornati flow create/edit
 aggiornati limiti strutturali
 aggiornata direzione evolutiva
 confermato output/KPI non attivi
+
+v06 — 2026-05-18
+
+- aggiornamento sistemico post Project / Entity Create Suggestion First Controlled Level
+- aggiornamento sistemico post UX Mobile Coherence Pass
+- aggiornamento sistemico post Command Intent — Create Project / Entity
+- aggiornamento sistemico post UI Readiness / Visibility Aggregator — First Controlled Level
+- documentato create_suggestion_state come layer project/entity create suggestion
+- documentato Command Intent Layer come primo livello controllato
+- documentato container_command_intent
+- documentato che i comandi puri non generano eventi
+- documentato che project/entity da command non generano eventi
+- documentato “modifica evento” come guida non operativa
+- documentato UI Readiness / Visibility Layer
+- documentato ui_visibility_mode
+- documentato ui_visibility_state
+- documentato che ui_visibility_state non è Input Analysis Model completo
+- documentata centralizzazione Hidden principali
+- documentato container vuoto durante digitazione risolto
+- documentato bottom bar flash risolto
+- documentato text_edit_mode_notice
+- documentato edit mode prevalente su Command Intent
+- documentato feedback temporaneo post-save / post-create
+- documentata navigation dock
+- documentato font-size 16px mobile Safari per input/select
+- aggiornati livelli architetturali attuali da 10 a 14
+- aggiornati livelli futuri
+- aggiornato flow completo create/edit
+- aggiornati limiti strutturali
+- aggiornata direzione evolutiva
+- confermato DB passivo
+- confermato output/KPI non attivi
+- confermato Input Analysis Model completo non implementato
+- confermato Event Interpretation Engine non implementato

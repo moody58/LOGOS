@@ -1,6 +1,6 @@
-# 03_LOGOS_Event_Lifecycle_v09
+# 03_LOGOS_Event_Lifecycle_v10
 
-DATA: 2026-05-13
+DATA: 2026-05-18
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -46,6 +46,17 @@ C (Completezza): 10/10
 - btn_command_create_project / btn_command_create_entity / btn_command_go_events documentati
 - evento ordinario non regressivo dopo Command Intent documentato
 - edit flow non regressivo dopo Command Intent documentato
+- UI Readiness / Visibility Aggregator First Controlled Level documentato nel lifecycle come layer UI separato
+- ui_visibility_mode documentato come latch UI non persistente
+- ui_visibility_state documentato come aggregatore read-only di visibilità input flow
+- confermato che UI Readiness non introduce nuovi stati evento
+- confermato che UI Readiness non modifica NEW / WRITTEN / ERROR
+- confermato che edit mode prevale su Command Intent
+- documentato text_edit_mode_notice come supporto UX al lifecycle edit
+- documentato che durante edit mode scrivere “crea” non apre Command Intent
+- documentato che UI Readiness non modifica insert_event / update_event
+- micro-flash feedback project/entity documentato come residuo UI esterno al lifecycle evento
+- residuo “modifica” generico non riconosciuto come guida edit documentato
 
 Q (Qualità): 9.5/10  
 - lifecycle coerente con sistema reale  
@@ -69,6 +80,13 @@ Q (Qualità): 9.5/10
 - chiarito che “modifica evento” da command non apre edit flow automatico
 - mantenuta separazione tra lifecycle dati e routing UI command
 - feedback project/entity distinto dal feedback evento
+- migliorata distinzione tra lifecycle dati e visibilità UI input flow
+- chiarito che ui_visibility_state governa solo UI, non stati evento
+- chiarito che ui_visibility_mode non è uno stato evento
+- chiarito che il lifecycle edit resta dominante rispetto al flow command
+- migliorata leggibilità del comportamento edit tramite notice dedicata
+- mantenuta separazione tra evento ordinario, command intent e lifecycle dati
+- nessuna anticipazione Input Analysis Model completo
 
 D (Deployabilità): 10/10  
 - documento stabile  
@@ -99,6 +117,19 @@ D (Deployabilità): 10/10
 - chiarito che “modifica evento” da command non apre edit flow automatico
 - mantenuta separazione tra lifecycle dati e routing UI command
 - feedback project/entity distinto dal feedback evento
+- UI Readiness / Visibility Aggregator validato runtime
+- test obbligatori 1–16 superati
+- evento ordinario non regressivo dopo UI Readiness validato
+- command intent non regressivo dopo UI Readiness validato
+- edit reale non regressivo dopo UI Readiness validato
+- edit no-op non regressivo dopo UI Readiness validato
+- annulla edit non regressivo dopo UI Readiness validato
+- feedback evento validato
+- feedback project/entity validato con micro-flash residuo non bloccante
+- events list validata
+- Home vuota + navigation dock validata
+- DB invariato
+- stati evento invariati
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -133,6 +164,13 @@ Il documento stabilisce:
 - creazione project/entity da command come azione strutturale separata
 - feedback project_created / entity_created come feedback UI temporaneo
 - guida “modifica evento” come routing UI non operativo sul dato
+- UI Readiness / Visibility Aggregator come layer UI non persistente
+- ui_visibility_mode come latch UI empty / event / command
+- ui_visibility_state come aggregatore read-only di visibilità input flow
+- conferma che UI Readiness non modifica lifecycle evento
+- conferma che edit mode prevale su Command Intent
+- text_edit_mode_notice come supporto UX alla modifica evento
+- micro-flash feedback project/entity come residuo UI non lifecycle
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -156,6 +194,17 @@ Esempi:
 Questi input vengono gestiti da Command Intent
 e non generano automaticamente eventi NEW.
 
+Nota post UI Readiness:
+
+La distinzione visiva tra evento ordinario e command intent è ora supportata da:
+
+- ui_visibility_mode
+- ui_visibility_state
+
+Questi helper non sono stati evento.
+Non generano eventi.
+Non modificano il lifecycle NEW / WRITTEN / ERROR.
+
 ---
 
 2. APPEND-ONLY CONTROLLATO
@@ -175,6 +224,9 @@ Gli eventi:
 - non vengono creati se l’input è un comando puro riconosciuto da command_intent_state
 - restano separati da project/entity creati tramite command intent
 - non vengono modificati da “modifica evento” scritto come command intent
+- non vengono modificati da ui_visibility_mode
+- non vengono modificati da ui_visibility_state
+- non cambiano lifecycle quando cambia la visibilità del flow input
 
 ---
 
@@ -210,6 +262,9 @@ Il sistema:
 - richiede conferma esplicita per creare project/entity da command
 - guida l’utente alla lista eventi se scrive “modifica evento”
 - non decide definitivamente
+- coordina la visibilità UI tramite ui_visibility_state
+- non considera ui_visibility_state una fonte dati
+- mantiene il lifecycle evento separato dal layer UI Readiness
 
 ---
 
@@ -234,6 +289,9 @@ La qualità viene migliorata progressivamente tramite:
 - esclude i comandi puri dal salvataggio evento
 - richiede conferma esplicita per creare project/entity da command
 - guida l’utente alla lista eventi se scrive “modifica evento”
+- rende più chiaro edit mode tramite text_edit_mode_notice
+- mantiene edit mode prevalente su Command Intent
+- durante edit mode non apre Command Intent se l’utente scrive “crea”
 
 ------------------------------------------------
 STATI EVENTO ATTUALI
@@ -267,8 +325,17 @@ NEW
 - dopo no-op edit torna Lista eventi senza feedback
 - usa feedback_summary solo come riepilogo UI temporaneo
 - usa edit_mode / editing_event come helper tecnici del flow edit
+- può essere accompagnato da ui_visibility_state per mostrare/nascondere parti del flow input
+- ui_visibility_state non modifica lo stato NEW
+- ui_visibility_mode non modifica lo stato NEW
+- text_edit_mode_notice può essere mostrato durante edit mode
 - edit_mode / editing_event non usano più additionalScope { value }
 - resta sotto controllo utente
+
+Nota:
+
+UI Readiness / Visibility Aggregator non introduce nuovi stati evento.
+Coordina solo la visibilità del flow input.
 
 ---
 
@@ -295,6 +362,8 @@ FLUSSO ATTUALE
 
 INPUT  
 ↓  
+UI VISIBILITY MODE CHECK  
+↓  
 COMMAND INTENT CHECK  
 ↓  
 SE COMANDO PURO  
@@ -305,6 +374,8 @@ SE COMANDO PURO
 → NESSUN EVENTO NEW  
 
 SE EVENTO ORDINARIO  
+↓  
+UI VISIBILITY STATE  
 ↓  
 PARSE CONTROLLED  
 ↓  
@@ -363,6 +434,11 @@ e guida “modifica evento” sono stati/UI flow.
 
 Non sono stati evento.
 
+Anche ui_visibility_mode e ui_visibility_state sono stati/helper UI.
+Non sono stati evento.
+
+Non introducono transizioni lifecycle.
+
 Command Intent non introduce nuovi stati lifecycle.
 
 Gli stati evento restano:
@@ -395,6 +471,10 @@ EDIT:
 - azzera edit_mode dopo update reale completato
 - azzera editing_event dopo update reale completato
 - usa helper edit_mode / editing_event senza additionalScope { value }
+- mostra text_edit_mode_notice durante la modifica
+- edit mode prevale su Command Intent
+- se l’utente scrive “crea” durante edit mode, resta nel flow modifica
+- per uscire dall’edit flow deve usare Annulla modifica
 
 ---
 
@@ -579,6 +659,129 @@ Non modifica:
 - edit flow reale
 - processing WRITTEN / ERROR
 
+------------------------------------------------
+UI READINESS / VISIBILITY NEL LIFECYCLE
+------------------------------------------------
+
+UI Readiness / Visibility Aggregator — First Controlled Level
+è un layer UI/runtime che coordina la visibilità del flow input.
+
+Componenti principali:
+
+- ui_visibility_mode
+- ui_visibility_state
+- text_input_analysis_loading
+- text_edit_mode_notice
+
+Regola principale:
+
+UI Readiness non introduce stati evento.
+
+Gli stati evento restano:
+
+- NEW
+- WRITTEN
+- ERROR
+
+---
+
+ui_visibility_mode:
+
+- Variable Retool
+- valori:
+  - empty
+  - event
+  - command
+- aggiornata da trigger_parse_debounced
+- serve solo a distinguere il flow visivo dell’input
+- non viene salvata nel DB
+- non modifica eventi
+- non modifica project/entity
+- non modifica status
+
+---
+
+ui_visibility_state:
+
+- Transformer Retool read-only
+- aggrega flag di visibilità
+- governa Hidden principali del flow input
+- non salva dati
+- non modifica DB
+- non modifica parser
+- non modifica matching
+- non modifica command_intent_state
+- non modifica create_suggestion_state
+- non modifica insert_event / update_event
+- non modifica insert_project / insert_entity
+
+Componenti governati a livello UI:
+
+- container_command_intent
+- sintesi
+- container_association_suggestions
+- text_event_data_title
+- select1
+- select_project
+- select_entity
+- button_input_confirm
+- btn_cancel_edit
+- btn_cancel_input_home
+- container_input
+
+Componenti non governati direttamente:
+
+- container_home
+- container_feedback
+- container_events_list
+- list_events
+
+---
+
+Effetti sul lifecycle:
+
+- nessuna nuova transizione evento
+- nessun nuovo status DB
+- nessuna modifica a NEW / WRITTEN / ERROR
+- nessuna modifica al processing WRITTEN / ERROR
+- nessuna modifica al save flow
+- nessuna modifica alla validazione manuale
+
+Effetti sulla UX:
+
+- container vuoto durante digitazione risolto
+- flash input flow ridotto
+- bottom bar flash risolto
+- flow event / command più stabile
+- edit mode più chiaro tramite notice dedicata
+
+---
+
+EDIT MODE E COMMAND INTENT
+
+Regola consolidata:
+
+edit mode prevale su Command Intent.
+
+Durante edit mode:
+
+- l’utente sta modificando un evento NEW
+- scrivere “crea” non apre Command Intent
+- scrivere “crea progetto” non avvia create project command
+- il testo resta parte dell’evento in modifica
+- per uscire bisogna premere Annulla modifica
+
+Supporto UX:
+
+text_edit_mode_notice
+
+Contenuto:
+
+Evento in modifica · Premi Annulla modifica per uscire.
+
+Questa notice non modifica eventi.
+Serve solo a chiarire il contesto.
+
 ---
 
 CANCEL CONTESTUALE:
@@ -610,11 +813,15 @@ EDIT MODE:
 - resetta ui_state.parsed
 - azzera feedback_mode / feedback_text / feedback_project / feedback_summary
 - torna alla lista eventi NEW
+- nasconde text_edit_mode_notice perché edit_mode torna false
+- ripristina il comportamento ordinario event / command
 
 Nota:
 
 Cancel create/input e cancel edit sono routing UI.
 Non modificano lo stato evento.
+Non modificano nemmeno ui_visibility_state come dato.
+La visibilità si riallinea automaticamente leggendo input/edit_mode/ui_state.
 
 ---
 
@@ -775,6 +982,42 @@ nessuno.
 
 ---
 
+UI VISIBILITY CHANGE
+
+Nota:
+
+questa NON è una transizione evento.
+
+Casi:
+
+- input vuoto → ui_visibility_mode empty
+- input evento → ui_visibility_mode event
+- input command → ui_visibility_mode command
+- edit mode attivo → notice edit mode visibile
+
+Comportamento:
+
+- cambia cosa viene mostrato nella UI
+- non crea eventi
+- non modifica eventi
+- non aggiorna status
+- non modifica updated_at
+- non salva dati
+- non valida eventi
+
+Stati evento coinvolti:
+
+nessuno.
+
+Helper coinvolti:
+
+- ui_visibility_mode
+- ui_visibility_state
+- text_input_analysis_loading
+- text_edit_mode_notice
+
+---
+
 NEW → WRITTEN
 
 - azione: conferma / scrittura
@@ -831,6 +1074,8 @@ L’utente deve:
 - confermare separatamente il salvataggio evento dopo eventuale creazione project/entity
 - distinguere tra Torna alla home e Annulla modifica
 - verificare il riepilogo feedback solo come conferma UI temporanea
+- riconoscere quando è in modifica evento tramite il notice dedicato
+- usare Annulla modifica per uscire dall’edit mode prima di inserire nuovi comandi
 
 ---
 
@@ -849,6 +1094,10 @@ Il sistema NON:
 - modifica eventi automaticamente quando l’utente scrive “modifica evento”
 - usa feedback_summary come dato persistente
 - considera la navigation dock parte del lifecycle evento
+- considera ui_visibility_mode parte del lifecycle evento
+- considera ui_visibility_state parte del lifecycle evento
+- cambia stato evento quando cambia visibilità UI
+- apre Command Intent durante edit mode
 
 ------------------------------------------------
 QUALITÀ DEL DATO
@@ -1004,6 +1253,10 @@ INPUT SYSTEM:
 - usa select_project/select_entity come fonte project_id/entity_id
 - usa create_suggestion_state per suggestion project/entity
 - usa command_intent_state per distinguere comandi puri da eventi ordinari
+- usa ui_visibility_mode per distinguere visivamente empty / event / command
+- usa ui_visibility_state per governare gli Hidden principali del flow input
+- usa text_input_analysis_loading come micro-stato UX
+- usa text_edit_mode_notice per chiarire edit mode
 - usa insert_project / insert_entity solo su conferma utente
 - usa btn_command_create_project / btn_command_create_entity per project/entity da command
 - usa btn_command_go_events per guidare alla lista eventi da “modifica evento”
@@ -1019,12 +1272,14 @@ Create flow evento ordinario:
 input_home  
 → input_raw  
 → trigger_parse_debounced  
+→ ui_visibility_mode  
 → command_intent_state  
 → se NON è comando puro  
 → parse_input_controlled  
 → ui_state.parsed  
 → project_state / entity_state  
 → create_suggestion_state  
+→ ui_visibility_state  
 → eventuale insert_project / insert_entity inline su conferma utente  
 → select_project / select_entity  
 → select1  
@@ -1033,14 +1288,16 @@ input_home
 → insert_event  
 → feedback temporaneo  
 → Home  
-→ NEW 
+→ NEW
 
 Command flow strutturale:
 
 input_home  
 → input_raw  
 → trigger_parse_debounced  
+→ ui_visibility_mode  
 → command_intent_state  
+→ ui_visibility_state  
 → se è comando puro  
 → container_command_intent  
 → eventuale btn_command_create_project / btn_command_create_entity / btn_command_go_events  
@@ -1058,6 +1315,7 @@ evento NEW selezionato
 → window.__logos_edit_mode_value = true  
 → edit_mode  
 → load raw_input  
+→ text_edit_mode_notice visibile  
 → input_home  
 → input_raw  
 → parse_input_controlled  
@@ -1075,6 +1333,13 @@ Il comando mostra solo una guida e il pulsante Vai agli eventi.
 
 L’edit flow reale resta attivato solo da un evento NEW nella lista eventi
 tramite il pulsante Modifica.
+
+Nota UI Readiness:
+
+Durante edit mode, il sistema mostra text_edit_mode_notice
+e non lascia che Command Intent prenda controllo del flow.
+
+Questo evita che una modifica evento venga interrotta da un comando scritto per errore.
 
 Percorsi possibili:
 
@@ -1203,6 +1468,15 @@ Command Intent:
 - non attiva update_event
 - btn_command_go_events fa solo routing alla lista eventi
 
+UI Readiness:
+
+- legge edit_mode per determinare la visibilità del flow
+- mostra text_edit_mode_notice quando edit_mode è true
+- non modifica edit_mode
+- non modifica editing_event
+- non modifica update_event
+- non modifica lifecycle evento
+
 Effetto:
 
 - linting edit_mode risolto
@@ -1308,6 +1582,14 @@ Command Intent:
 - non cambia lifecycle evento
 - non valida evento
 
+UI Readiness:
+
+- legge project_state / entity_state solo per visibilità/hint
+- non modifica matching
+- non modifica select_project / select_entity come fonti salvabili
+- non cambia lifecycle evento
+- non valida evento
+
 ---
 
 Limiti:
@@ -1362,9 +1644,20 @@ Stato attuale:
 - preview resta layer ibrido
 - per i comandi puri la preview viene sostituita da container_command_intent
 
+Dopo UI Readiness:
+
+- la visibilità preview è governata da ui_visibility_state.showEventPreview
+- container_command_intent è governato da ui_visibility_state.showCommandContainer
+- Dati evento è governato da ui_visibility_state.showEventData
+- Conferma evento è governata da ui_visibility_state.showConfirm
+- la preview resta visuale e non salva
+- ui_visibility_state non è fonte lifecycle
+
 Limite attuale:
 
 la preview non è ancora una view pura.
+UI Readiness ha stabilizzato quando mostrarla,
+ma non ha modificato il contenuto interno della Sintesi.
 
 Dopo Command Intent:
 
@@ -1423,6 +1716,11 @@ Il database NON:
 - salva feedback_mode
 - interpreta command intent
 - crea eventi da comandi puri
+- conosce ui_visibility_mode
+- conosce ui_visibility_state
+- salva ui_visibility_mode
+- salva ui_visibility_state
+- modifica eventi in base alla visibilità UI
 
 ---
 
@@ -1457,6 +1755,7 @@ Project/entity creation:
 - possono essere invocate da suggestion inline oppure da command intent
 - nessuna delle due azioni crea automaticamente un evento
 - nessun comando puro crea automaticamente un record in events
+- Nessun cambio di visibilità UI crea o modifica un record in events.
 
 ------------------------------------------------
 INTEGRAZIONE CON PROCESSING
@@ -1483,6 +1782,7 @@ NEW → NEW (ANNULLA EDIT)
 NEW → NEW (EDIT NO-OP)  
 CREATE INPUT → HOME (nessun evento creato) 
 COMMAND INPUT → HOME / EVENTS LIST (nessun evento creato)
+UI VISIBILITY CHANGE → nessun evento creato / nessun evento modificato
 
 ---
 
@@ -1525,6 +1825,13 @@ Dopo command “modifica evento”:
 - routing Lista eventi
 - nessun update_event
 - nessun evento modificato
+
+Dopo cambio ui_visibility_mode / ui_visibility_state:
+
+- nessun insert_event
+- nessun update_event
+- nessun cambio status
+- nessun updated_at aggiornato
 
 Ordine corretto:
 
@@ -1623,6 +1930,13 @@ LIMITI ATTUALI
 - command intent implementato solo a primo livello controllato
 - command intent avanzato non implementato
 - input analysis model unico non implementato
+- ui_visibility_state implementato solo come aggregatore UI/readiness
+- ui_visibility_mode implementato solo come latch UI
+- UI Readiness non è Input Analysis Model completo
+- “modifica” generico non ancora riconosciuto come guida edit
+- micro-flash feedback project/entity ancora presente come residuo UI non lifecycle
+- 5 linting Retool residui ancora presenti
+- cleanup obsolete UI guards / query reduction non ancora eseguito
 - navigation dock non rappresenta stato evento
 
 ------------------------------------------------
@@ -1758,6 +2072,11 @@ INPUT SYSTEM
 → intercetta comandi puri prima del save flow evento
 → gestisce feedback_mode per project/entity da command
 → non crea eventi da comandi puri
+→ gestisce ui_visibility_mode
+→ gestisce ui_visibility_state
+→ coordina Hidden principali del flow input
+→ mostra text_edit_mode_notice durante edit mode
+→ non modifica lifecycle tramite UI Readiness
 
 ---
 
@@ -1784,6 +2103,7 @@ PREVIEW
 → visualizza interpretazione  
 → non salva  
 → non valida  
+→ visibilità governata da ui_visibility_state.showEventPreview
 
 ---
 
@@ -1801,6 +2121,20 @@ COMMAND INTENT
 
 ---
 
+UI READINESS / VISIBILITY
+
+→ distingue visivamente empty / event / command
+→ governa Hidden principali del flow input
+→ non cambia stato evento
+→ non valida evento
+→ non crea eventi
+→ non modifica eventi
+→ non sostituisce command_intent_state
+→ non sostituisce parser/matching/suggestion
+→ non sostituisce Input Analysis Model completo
+
+---
+
 DATABASE
 
 → memorizza eventi  
@@ -1809,9 +2143,12 @@ DATABASE
 → non salva feedback_summary
 → non conosce navigation dock
 → non conosce routing UI post-save
-→ gestisce command_intent_state
-→ intercetta comandi puri prima del save flow evento
-→ gestisce feedback_mode per project/entity da command
+→ non conosce command_intent_state
+→ non conosce ui_visibility_state
+→ non conosce ui_visibility_mode
+→ non conosce feedback_mode
+→ non intercetta comandi
+→ non governa visibilità UI
 → non crea eventi da comandi puri
 
 ---
@@ -1865,14 +2202,16 @@ Strategia:
 1B. non salvare automaticamente eventi dopo creazione project/entity
 1C. non salvare comandi puri come eventi
 1D. guidare comandi strutturali verso azioni controllate separate
-1. correggere in NEW
+1E. coordinare visibilità input senza trasformarla in lifecycle evento
+1F. mantenere edit mode prevalente su Command Intent
+2. correggere in NEW
 2A. evitare aggiornamenti inutili se l’edit non cambia il dato
 2B. permettere uscita sicura dall’edit senza salvare
 2C. chiudere in modo pulito edit_mode / editing_event al termine del flow edit
 2D. usare feedback breve e routing contestuale per non bloccare il flusso utente
-1. normalizzare progressivamente
-2. validare manualmente
-3. usare per output solo quando sufficientemente affidabile
+3. normalizzare progressivamente
+4. validare manualmente
+5. usare per output solo quando sufficientemente affidabile
 
 ------------------------------------------------
 VINCOLI OPERATIVI
@@ -1889,6 +2228,11 @@ VINCOLI OPERATIVI
 - non creare eventi da comandi puri
 - non aprire edit flow automatico da “modifica evento”
 - non usare feedback project/entity come stato evento
+- non usare ui_visibility_mode come stato evento
+- non usare ui_visibility_state come stato evento
+- non confondere visibilità UI con transizione lifecycle
+- non aprire Command Intent durante edit mode
+- non trasformare UI Readiness in Input Analysis Model completo senza nodo dedicato
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1934,6 +2278,18 @@ Il lifecycle attuale è:
 ✔ “modifica evento” da command gestito come guida non operativa
 ✔ evento ordinario non regressivo dopo Command Intent validato
 ✔ edit flow non regressivo dopo Command Intent validato
+✔ UI Readiness / Visibility Aggregator First Controlled Level completato
+✔ ui_visibility_mode introdotto come latch UI empty / event / command
+✔ ui_visibility_state introdotto come aggregatore read-only di visibilità
+✔ UI Readiness non introduce nuovi stati evento
+✔ UI Readiness non modifica NEW / WRITTEN / ERROR
+✔ container vuoto durante digitazione risolto
+✔ flash input flow ridotto
+✔ bottom bar flash risolto
+✔ edit mode chiarito tramite text_edit_mode_notice
+✔ edit mode prevale su Command Intent
+✔ durante edit mode scrivere “crea” non apre Command Intent
+✔ test obbligatori 1–16 superati dopo UI Readiness
 
 ---
 
@@ -1955,6 +2311,10 @@ Ma:
 ⚠ Command Intent è solo primo livello controllato
 ⚠ command intent avanzato non implementato
 ⚠ input analysis model unico non implementato
+⚠ UI Readiness è solo aggregatore UI/readiness
+⚠ “modifica” generico non ancora riconosciuto come guida edit
+⚠ micro-flash feedback project/entity residuo UI non lifecycle
+⚠ 5 linting Retool residui
 
 ---
 
@@ -1976,10 +2336,12 @@ solo dopo stabilizzazione:
 12. Project / Entity Create Suggestion First Controlled Level ✔
 13. UX Mobile Coherence Pass ✔
 14. Command Intent — Create Project / Entity ✔
-15. input rendering stability / preview consolidation / input analysis
-16. data structure / project-entity evolution
-17. economic direction advanced
-18. output / dashboard base
+15. UI Readiness / Visibility Aggregator ✔
+16. preview / hint consolidation
+17. input analysis model / single interpretation layer
+18. data structure / project-entity evolution
+19. economic direction advanced
+20. output / dashboard base
 
 ------------------------------------------------
 CHANGELOG
@@ -2151,4 +2513,44 @@ v09 — 2026-05-13
 - matching invariato
 - type classification invariata
 - duration normalization invariata
+- nessun output/KPI anticipato
+
+v10 — 2026-05-18
+
+- integrazione UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL nel lifecycle
+- integrato esito CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
+- integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- documentato ui_visibility_mode come latch UI empty / event / command
+- documentato ui_visibility_state come aggregatore read-only di visibilità input flow
+- chiarito che UI Readiness non introduce nuovi stati evento
+- confermati stati evento invariati: NEW / WRITTEN / ERROR
+- chiarito che ui_visibility_mode non è stato evento
+- chiarito che ui_visibility_state non è stato evento
+- documentato UI VISIBILITY CHANGE come non-transizione evento
+- aggiornato flow attuale con UI VISIBILITY MODE CHECK
+- aggiornata integrazione con Input System
+- aggiornata integrazione con Preview
+- aggiornata integrazione con Database
+- aggiornata integrazione con Processing
+- documentato text_edit_mode_notice come supporto UX al lifecycle edit
+- documentato edit mode prevalente su Command Intent
+- documentato che durante edit mode scrivere “crea” non apre Command Intent
+- documentato che per uscire da edit flow bisogna usare Annulla modifica
+- documentato che UI Readiness non modifica insert_event / update_event
+- documentato che UI Readiness non modifica insert_project / insert_entity
+- documentato che UI Readiness non modifica parser/matching/suggestion/DB
+- documentato container vuoto durante digitazione risolto
+- documentato flash input flow ridotto
+- documentato bottom bar flash risolto
+- documentato micro-flash feedback project/entity come residuo UI non lifecycle
+- documentato residuo “modifica” generico non riconosciuto come guida edit
+- documentati 5 linting Retool residui
+- corretto blocco Database: DB non conosce command_intent_state / ui_visibility_state / ui_visibility_mode / feedback_mode
+- test obbligatori 1–16 superati dopo UI Readiness
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- command_intent_state invariato
+- save flow evento ordinario invariato
 - nessun output/KPI anticipato

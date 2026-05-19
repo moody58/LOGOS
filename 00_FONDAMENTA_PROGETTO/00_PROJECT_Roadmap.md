@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v13
+# 00_PROJECT_Roadmap_v14
 
-DATA: 2026-05-13
+DATA: 2026-05-18
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -79,9 +79,22 @@ La Roadmap deve quindi preservare questa sequenza:
 2. consolidare project/entity
 3. rifinire UX mobile base
 4. introdurre command intent guidato
-5. consolidare rendering / preview / input analysis
-6. consolidare data structure / relazioni / qualità dati
-7. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
+5. consolidare UI readiness / visibility del flow input
+6. consolidare preview / hint / input analysis
+7. consolidare data structure / relazioni / qualità dati
+8. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
+
+Nota post UI Readiness:
+
+Il consolidamento UI Readiness / Visibility Aggregator è stato completato a primo livello controllato.
+
+Questo NON equivale a Input Analysis Model completo.
+
+La direzione futura resta:
+
+- UI Readiness / Visibility Aggregator → completato a primo livello
+- Input Analysis Model / Single Interpretation Layer → futuro, non attivo
+- Event Interpretation Engine / Multi-source Input → futuro avanzato, non attivo
 
 Divieto operativo:
 
@@ -115,12 +128,13 @@ FASE COMPLETATA:
 ✔ PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL (COMPLETATO)
 ✔ UX MOBILE COHERENCE PASS (COMPLETATO)
 ✔ COMMAND INTENT — CREATE PROJECT / ENTITY (COMPLETATO)
+✔ UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL (COMPLETATO)
 
 ---
 
 FASE ATTIVA CONSIGLIATA:
 
-NEXT NODE POST COMMAND INTENT DA DEFINIRE
+AGGIORNAMENTO DOCUMENTALE POST UI READINESS / VISIBILITY AGGREGATOR
 
 ---
 
@@ -130,7 +144,6 @@ NEXT NODE POST COMMAND INTENT DA DEFINIRE
 
 Candidati principali residui:
 
-- INPUT RENDERING STABILITY / CONTAINER STRUCTURE
 - PREVIEW MODEL / HINT STATE CONSOLIDATION
 - INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 - DATA STRUCTURE / ENTITY HIERARCHY
@@ -138,6 +151,10 @@ Candidati principali residui:
 - DURATION ADVANCED — GIORNI / SETTIMANE
 - SUGGESTION CREATE VS EDIT CONSISTENCY
 - PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+- COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+- FEEDBACK MICRO-FLASH CLEANUP
+- LINTING / MINOR CLEANUP
+- CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 - AZIONI RAPIDE OPERATIVE
 
 Candidati non immediati:
@@ -281,11 +298,19 @@ Output raggiunto:
 ✔ nessun trigger circolare critico  
 ✔ base pronta per engine  
 
-Limite residuo emerso dopo Command Intent:
+Evoluzione successiva:
 
-⚠ input evento normale può ancora mostrare rendering progressivo tra Sintesi / hint / suggestion
-⚠ il residuo non impatta salvataggio, parser, matching o DB
-⚠ da valutare in nodo futuro INPUT RENDERING STABILITY / CONTAINER STRUCTURE
+✔ UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL completato
+✔ rendering progressivo input flow ridotto
+✔ container vuoto durante digitazione risolto
+✔ bottom bar flash risolto
+✔ flow event / command stabilizzato a primo livello
+
+Limiti residui:
+
+⚠ micro-flash feedback project/entity ancora presente
+⚠ 5 linting Retool residui ancora presenti
+⚠ Input Analysis Model completo non implementato
 
 ------------------------------------------------
 
@@ -349,10 +374,12 @@ Stato:
 ⚠ non attivo  
 ✔ creazione guidata project/entity completata a primo livello controllato  
 ✔ Command Intent create project/entity completato a primo livello controllato
+✔ UI Readiness / Visibility Aggregator completato a primo livello controllato
 ⚠ deduplicazione avanzata non implementata  
 ⚠ gerarchie / alias / relazioni evolute non implementate  
 ⚠ fortemente consigliato prima di moduli verticali e output avanzati 
 ⚠ Command Intent non introduce gerarchie, alias o deduplicazione avanzata
+⚠ UI Readiness non introduce gerarchie, alias, deduplicazione o nuove strutture dati
 ⚠ elementi già esistenti vengono bloccati a livello UI, ma non esiste ancora deduplicazione strutturale avanzata
 
 ------------------------------------------------
@@ -1481,6 +1508,114 @@ Eventuali evoluzioni future devono essere nodi dedicati:
 
 ------------------------------------------------
 
+UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL (COMPLETATO)
+
+Obiettivo:
+
+Introdurre un primo livello controllato di readiness / visibility UI
+per stabilizzare il flow input, distinguere evento ordinario / command intent
+e ridurre Hidden duplicate e rendering progressivo.
+
+---
+
+Principi:
+
+- aggregare la visibilità UI senza modificare dati salvabili
+- non sostituire parser, matching, suggestion o command intent
+- non introdurre Input Analysis Model completo
+- non introdurre Event Interpretation Engine
+- non modificare DB
+- non modificare save flow
+- procedere tramite micro-step testati
+
+---
+
+Interventi eseguiti:
+
+✔ introdotto ui_visibility_state come Transformer read-only
+✔ introdotto ui_visibility_mode come Variable Retool
+✔ ui_visibility_mode supporta:
+  - empty
+  - event
+  - command
+✔ trigger_parse_debounced aggiorna ui_visibility_mode
+✔ introdotto window.__logos_visibility_run_id per evitare update stale da debounce precedenti
+✔ classificazione locale event/command usata solo per visibilità UI
+✔ ui_visibility_state legge ui_visibility_mode e stati runtime esistenti
+✔ Hidden principali centralizzati:
+  - container_command_intent
+  - sintesi
+  - container_association_suggestions
+  - text_event_data_title
+  - select1
+  - select_project
+  - select_entity
+  - button_input_confirm
+  - btn_cancel_edit
+  - btn_cancel_input_home
+  - container_input
+✔ container_input stabilizzato tramite ui_visibility_state.isInputFlow
+✔ container vuoto durante digitazione risolto
+✔ flash input flow ridotto
+✔ container_app_nav corretto usando input_home.value al posto di input_raw.value
+✔ bottom bar flash risolto
+✔ text_input_analysis_loading introdotto vicino all’input principale
+✔ text_edit_mode_notice introdotto per chiarire edit mode
+✔ edit mode prevale su command intent
+✔ durante edit mode scrivere “crea” non apre Command Intent
+✔ btn_command_create_project / btn_command_create_entity allineati nel timing del feedback
+✔ test obbligatori 1–16 superati
+
+---
+
+Output raggiunto:
+
+✔ flow event / command più stabile
+✔ input flow più leggibile
+✔ rendering progressivo ridotto
+✔ container vuoto eliminato
+✔ bottom bar stabile
+✔ edit mode più chiaro per l’utente
+✔ Command Intent preservato
+✔ save flow preservato
+✔ DB invariato
+✔ parser invariato
+✔ matching invariato
+✔ create_suggestion_state invariato
+✔ command_intent_state invariato
+✔ preview content invariato
+✔ button_input_confirm payload invariato
+✔ insert_event / update_event invariati
+✔ insert_project / insert_entity invariati
+✔ nessun output/KPI anticipato
+
+---
+
+Limiti residui:
+
+⚠ micro-flash feedback project/entity ancora presente
+⚠ 5 linting Retool residui ancora presenti
+⚠ “modifica” generico non ancora riconosciuto come guida edit
+⚠ Input Analysis Model completo non implementato
+⚠ ui_visibility_mode è latch UI, non fonte interpretativa completa
+
+---
+
+Stato:
+
+COMPLETATO — FIRST CONTROLLED LEVEL
+
+Non riaprire come UI Readiness base.
+Eventuali evoluzioni future devono essere nodi dedicati:
+
+- INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+- FEEDBACK MICRO-FLASH CLEANUP
+- LINTING / MINOR CLEANUP
+- CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+- COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+
+------------------------------------------------
+
 STEP 7 — OUTPUT (NON ATTIVO)
 
 Obiettivo:
@@ -1518,6 +1653,7 @@ Il sistema NON può avanzare allo STEP 7 finché:
 - data structure / entity relations non sono ancora consolidate
 - project/entity create suggestion è completato a primo livello, ma gerarchie/deduplicazione non sono ancora consolidate
 - command intent è implementato solo a primo livello controllato e non abilita ancora dashboard/report
+- UI readiness è implementata solo a primo livello controllato e non abilita ancora dashboard/report
 - istanze verticali non sono ancora attive
 - direzione economica avanzata non è stata ancora valutata
 - dati storici non sono retro-normalizzati
@@ -1558,6 +1694,10 @@ Command Intent — Create Project / Entity è completato.
 Questo consente di distinguere comandi puri da eventi ordinari,
 ma NON abilita ancora STEP 7, dashboard, KPI o reportistica.
 
+UI Readiness / Visibility Aggregator — First Controlled Level è completato.
+Questo consente di stabilizzare il flow input e ridurre rendering progressivo,
+ma NON abilita ancora STEP 7, dashboard, KPI o reportistica.
+
 ------------------------------------------------
 NODO ATTIVO CONSIGLIATO
 ------------------------------------------------
@@ -1565,28 +1705,10 @@ NODO ATTIVO CONSIGLIATO
 NEXT NODE POST COMMAND INTENT DA DEFINIRE
 
 ------------------------------------------------
-NODI CANDIDATI POST COMMAND INTENT
+NODI CANDIDATI POST UI READINESS
 ------------------------------------------------
 
-1. INPUT RENDERING STABILITY / CONTAINER STRUCTURE
-
-Scopo:
-
-- ridurre rendering progressivo / flash su input evento normale
-- valutare separazione container preview / hint / dati evento
-- valutare stato unico input_analysis_ready
-- migliorare stabilità visiva senza modificare parser/matching/DB
-- mantenere UX mobile fluida
-
-Motivo:
-
-Durante il nodo Command Intent è stato osservato che l’input evento normale
-può mostrare Sintesi / hint / suggestion in modo progressivo.
-Il comportamento non genera regressioni dati, ma può disturbare la UX.
-
----
-
-2. PREVIEW MODEL / HINT STATE CONSOLIDATION
+1. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
@@ -1598,29 +1720,32 @@ Scopo:
 
 Motivo:
 
-Durante il nodo Command Intent è emerso che “Da verificare” non è spostabile
-perché fa parte della Sintesi. Questo conferma il debito preview già noto.
+Dopo UI Readiness il rendering input è stato stabilizzato a primo livello,
+ma la Sintesi resta un layer ibrido che contiene ancora preview, hint,
+highlight, warning e supporto decisionale.
 
 ---
 
-3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+2. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 
 Scopo:
 
 - valutare direzione verso un solo layer di analisi interrogabile
-- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state
+- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state e ui_visibility_state
 - ridurre rami ibridi e fonti parallele
 - non introdurre refactor senza nodo dedicato
 
 Motivo:
 
-Il Command Intent ha aggiunto un nuovo helper controllato.
-È stato confermato che a regime sarebbe preferibile un layer unico interrogabile
-dalle UI, ma non va introdotto senza nodo dedicato.
+Il checkpoint INPUT RENDERING STABILITY / PRIORITY REVIEW ha confermato che LOGOS può tendere
+a un Input Analysis Result completo, ma non come estensione immediata del nodo UI Readiness.
+
+Il nodo UI Readiness ha introdotto solo un aggregatore/latch UI.
+Resta futuro il passaggio a un vero Single Interpretation Layer.
 
 ---
 
-4. DATA STRUCTURE / ENTITY HIERARCHY
+3. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -1638,7 +1763,7 @@ ma la struttura dati resta ancora piatta.
 
 ---
 
-5. SUGGESTION CREATE VS EDIT CONSISTENCY
+4. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Scopo:
 
@@ -1654,7 +1779,7 @@ tra suggestion in create flow e suggestion in edit flow.
 
 ---
 
-6. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+5. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
 
 Scopo:
 
@@ -1670,7 +1795,7 @@ quando esiste già un match generico.
 
 ---
 
-7. ECONOMIC DIRECTION ADVANCED
+6. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -1681,7 +1806,7 @@ Scopo:
 
 ---
 
-8. DURATION ADVANCED — GIORNI / SETTIMANE
+7. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -1692,7 +1817,7 @@ Scopo:
 
 ---
 
-9. AZIONI RAPIDE OPERATIVE
+8. AZIONI RAPIDE OPERATIVE
 
 Scopo:
 
@@ -1708,7 +1833,79 @@ candidato rilevante dopo consolidamento rendering / preview oppure come nodo UX 
 
 ---
 
-10. DASHBOARD BASE
+9. COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+
+Scopo:
+
+- valutare riconoscimento di comandi guida generici:
+  - modifica
+  - correggi
+  - cambia
+- evitare che “modifica” da solo venga trattato come evento ordinario
+- non confondere frasi operative reali come “modifica preventivo villa”
+- non aprire edit flow automatici
+
+Motivo:
+
+“modifica evento” viene riconosciuto correttamente come guida edit.
+“modifica” da solo è ancora trattato come evento ordinario e mostra la Sintesi.
+
+Stato:
+
+micro-nodo futuro, non bloccante.
+
+---
+
+10. FEEDBACK MICRO-FLASH CLEANUP
+
+Scopo:
+
+- analizzare micro-flash residuo su feedback project/entity
+- non modificare save flow
+- non modificare insert_project / insert_entity
+- intervenire solo se il flash risulta identificabile e fastidioso
+
+Motivo:
+
+Dopo UI Readiness il feedback project/entity funziona correttamente,
+ma resta un micro-flash visivo non bloccante.
+
+Stato:
+
+residuo minore, non immediato.
+
+---
+
+11. LINTING / MINOR CLEANUP
+
+Scopo:
+
+- risolvere 5 linting Retool residui
+- non modificare logiche runtime
+- non aprire refactor
+
+Stato:
+
+nodo tecnico minore, da aprire solo se utile.
+
+---
+
+12. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+
+Scopo:
+
+- rimuovere regex duplicate ormai sostituite da ui_visibility_state
+- eliminare componenti/query obsolete solo dopo stabilità documentata
+- semplificare manutenzione
+- non modificare parser/matching/save flow
+
+Stato:
+
+cleanup futuro, non immediato.
+
+---
+
+13. DASHBOARD BASE
 
 Scopo:
 
@@ -1723,7 +1920,7 @@ La voce Dashboard è predisposta ma disabilitata.
 
 ---
 
-11. ICON SYSTEM / MOBILE POLISH FINALE
+14. ICON SYSTEM / MOBILE POLISH FINALE
 
 Scopo:
 
@@ -1738,7 +1935,7 @@ polish futuro, non nodo funzionale prioritario.
 
 ---
 
-12. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
+15. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
 
 Scopo futuro:
 
@@ -1906,18 +2103,27 @@ Project / Entity Create Suggestion First Controlled Level è completato.
 Creazione inline project/entity validata.
 Flow combinato project + entity validato.
 Command Intent — Create Project / Entity è completato a primo livello controllato.
+UI Readiness / Visibility Aggregator — First Controlled Level è completato.
+Il flow input è stato stabilizzato a livello visivo tramite ui_visibility_mode e ui_visibility_state.
+Il rendering progressivo input è stato ridotto, il container vuoto durante la digitazione è stato risolto
+e la bottom bar è stata stabilizzata.
 Istanze verticali non attive.
 UX Mobile Coherence Pass è completato.
 Home, Events list, Feedback e Navigation dock sono stati rifiniti e validati.
 La validazione reale su iPhone 13 Safari ha consolidato il vincolo tecnico:
 input/select mobile devono mantenere font-size minimo 16px per evitare zoom iOS.
 
-Il nodo Command Intent ha inoltre confermato due residui da non confondere con regressioni dati:
+Il nodo UI Readiness ha risolto a primo livello il residuo rendering progressivo input evento normale.
 
-- rendering progressivo input evento normale
+Restano residui non bloccanti:
+
+- micro-flash feedback project/entity
+- 5 linting Retool residui
+- “modifica” generico non ancora riconosciuto come guida edit
 - “Da verificare” ancora interno alla Sintesi
+- Input Analysis Model completo non implementato
 
-Entrambi non bloccano il sistema, ma possono orientare i prossimi nodi UX/Preview.
+Questi residui non bloccano il sistema, ma possono orientare i prossimi nodi UX/Preview/Command.
 
 Tuttavia type + matching base non abilitano ancora automaticamente KPI/reportistica.
 
@@ -2256,3 +2462,63 @@ v13 — 2026-05-13
 - aggiunto candidato INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 - PREVIEW MODEL / HINT STATE CONSOLIDATION promosso tra candidati principali
 - confermato blocco verso OUTPUT fino a data structure / economic direction / report readiness
+
+v14 — 2026-05-18
+
+- completamento UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- integrato esito CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
+- integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- introdotto ui_visibility_state come Transformer read-only
+- introdotto ui_visibility_mode come Variable Retool
+- ui_visibility_mode supporta empty / event / command
+- trigger_parse_debounced aggiorna ui_visibility_mode
+- introdotto window.__logos_visibility_run_id per evitare update stale da debounce
+- classificazione locale event/command usata solo per visibilità UI
+- ui_visibility_state non sostituisce parser, matching, command_intent_state o create_suggestion_state
+- Hidden principali centralizzati:
+  - container_command_intent
+  - sintesi
+  - container_association_suggestions
+  - text_event_data_title
+  - select1
+  - select_project
+  - select_entity
+  - button_input_confirm
+  - btn_cancel_edit
+  - btn_cancel_input_home
+  - container_input
+- container_input stabilizzato tramite ui_visibility_state.isInputFlow
+- container vuoto durante digitazione risolto
+- flash input flow ridotto
+- container_app_nav corretto usando input_home.value al posto di input_raw.value
+- bottom bar flash risolto
+- text_input_analysis_loading introdotto vicino all’input principale
+- text_edit_mode_notice introdotto per chiarire edit mode
+- edit mode prevale su command intent
+- durante edit mode scrivere “crea” non apre Command Intent
+- btn_command_create_project / btn_command_create_entity allineati nel timing del feedback
+- feedback project/entity funzionante con micro-flash residuo
+- test obbligatori 1–16 superati
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- command_intent_state invariato
+- preview content invariato
+- button_input_confirm payload invariato
+- insert_event / update_event invariati
+- insert_project / insert_entity invariati
+- Input Analysis Model completo non implementato
+- Event Interpretation Engine non implementato
+- residuo “modifica” generico non riconosciuto come guida edit documentato
+- residuo micro-flash feedback project/entity documentato
+- 5 linting Retool residui documentati
+- INPUT RENDERING STABILITY / CONTAINER STRUCTURE rimosso dai candidati principali perché completato a primo livello tramite UI Readiness
+- aggiunti candidati:
+  - COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+  - FEEDBACK MICRO-FLASH CLEANUP
+  - LINTING / MINOR CLEANUP
+  - CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+- Dashboard resta non attiva
+- istanze verticali restano non attive
+- blocco verso OUTPUT confermato

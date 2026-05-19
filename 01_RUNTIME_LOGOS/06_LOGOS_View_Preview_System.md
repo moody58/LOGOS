@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v10
+# 06_LOGOS_View_Preview_System_v11
 
-DATA: 2026-05-13
+DATA: 2026-05-18
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -45,7 +45,13 @@ Il documento descrive:
 - come i comandi puri non devono essere rappresentati come eventi
 - come “crea progetto”, “crea entità” e “modifica evento” vengono gestiti fuori dalla Sintesi evento
 - come “Da verificare” resta ancora interno alla Sintesi e non è blocco autonomo
-- come il rendering progressivo dell’input evento normale resta un limite UX aperto
+- come il rendering progressivo dell’input evento normale è stato ridotto tramite UI Readiness / Visibility Aggregator
+- come ui_visibility_state governa la visibilità della Sintesi
+- come ui_visibility_mode distingue empty / event / command
+- come container_command_intent / Sintesi / Dati evento sono coordinati dal layer UI Readiness
+- come la Sintesi resta ibrida nel contenuto, anche se la sua visibilità è più stabile
+- come il micro-flash feedback project/entity resta esterno alla preview
+- come “modifica” generico resta residuo Command Intent, non preview
 
 ⚠ NON descrive un modello ideale
 ⚠ descrive lo stato reale attuale
@@ -62,11 +68,13 @@ Collocazione attuale:
 
 input_raw
 → trigger_parse_debounced
+→ ui_visibility_mode
 → command_intent_state
 → parse_input_controlled
 → ui_state.parsed
 → project_state / entity_state
 → create_suggestion_state
+→ ui_visibility_state
 → select_project / select_entity
 → select1 / type classification base
 → preview (sintesi) / card Da verificare / suggestion container
@@ -90,6 +98,36 @@ Sono layer UI separati:
 - command action = azione controllata per comando puro
 - feedback = conferma temporanea post-save / post-create
 - navigation dock = navigazione UI
+
+Nota post UI Readiness / Visibility Aggregator:
+
+La visibilità della Sintesi non dipende più da guardie Hidden duplicate locali,
+ma viene governata a primo livello da:
+
+ui_visibility_state.showEventPreview
+
+Il container command viene governato da:
+
+ui_visibility_state.showCommandContainer
+
+La sezione Dati evento viene governata da:
+
+ui_visibility_state.showEventData
+
+Il bottone Conferma evento viene governato da:
+
+ui_visibility_state.showConfirm
+
+Questo riduce il rendering progressivo e rende più stabile la distinzione tra:
+
+- input vuoto
+- evento ordinario
+- command intent
+
+Nota:
+
+ui_visibility_state governa quando mostrare/nascondere la Sintesi.
+Non modifica il contenuto interno della Sintesi.
 
 ---
 
@@ -140,10 +178,35 @@ command_intent_state non è preview pura.
 command_intent_state alimenta container_command_intent,
 non la Sintesi evento.
 
+ui_visibility_state legge ui_visibility_mode e stati runtime esistenti
+per decidere se mostrare:
+
+- Sintesi evento
+- container_command_intent
+- suggestion container
+- Dati evento
+- Conferma evento
+
 Regola:
 
-quando command_intent_state riconosce un comando puro,
+la preview non deve leggere ui_visibility_state come fonte dati evento.
+La usa solo come guardia di visibilità.
+
+Regola:
+
+quando l’input è in flow command,
 la Sintesi evento e Dati evento devono essere nascosti.
+
+Dopo UI Readiness questa separazione è governata da:
+
+- ui_visibility_mode = command
+- ui_visibility_state.showCommandContainer = true
+- ui_visibility_state.showEventPreview = false
+- ui_visibility_state.showEventData = false
+- ui_visibility_state.showConfirm = false
+
+command_intent_state resta la fonte funzionale del comando,
+ma ui_visibility_mode può anticipare la visibilità command per evitare flash.
 
 La preview/sintesi, il suggestion container e il command container devono restare concettualmente distinti:
 
@@ -240,6 +303,9 @@ Mostra:
 ✔ esclusione dei comandi puri dal rendering evento
 ✔ convivenza controllata con container_command_intent
 ✔ separazione tra input evento e command intent
+✔ visibilità stabilizzata tramite ui_visibility_state.showEventPreview
+✔ esclusione più stabile dei command intent dalla Sintesi
+✔ riduzione del rendering progressivo input flow
 
 ---
 
@@ -352,8 +418,11 @@ Ma:
 ⚠ Dati evento resta separato dalla Sintesi
 ⚠ “Da verificare” resta ancora interno alla Sintesi
 ⚠ hint bloccanti / warning informativi / suggestion visuali non sono ancora separati in stati autonomi
-⚠ rendering progressivo dell’input evento normale ancora migliorabile
+✔ rendering progressivo dell’input evento normale ridotto tramite UI Readiness
+⚠ micro-flash feedback project/entity ancora presente, ma esterno alla preview
+⚠ “modifica” generico non ancora riconosciuto come guida edit, residuo Command Intent
 ⚠ Command Intent è separato dalla preview ma non esiste ancora un input analysis model unico
+⚠ ui_visibility_state non è Input Analysis Model completo
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -373,6 +442,28 @@ Fonti dati utilizzate:
 - create_suggestion_state.data
 - project_create_suggestion_dismissed.value
 - entity_create_suggestion_dismissed.value
+- ui_visibility_state.value solo per la visibilità del componente
+
+Nota UI Readiness:
+
+La preview non usa ui_visibility_state come fonte di contenuto.
+
+ui_visibility_state serve solo a stabilire se la Sintesi deve essere visibile.
+
+Fonte visibilità:
+
+ui_visibility_state.showEventPreview
+
+Fonte contenuto:
+
+- input_raw.value
+- ui_state.parsed
+- select1.value
+- project_state.data
+- entity_state.data
+- create_suggestion_state.data
+- select_project.value
+- select_entity.value
 
 Nota Command Intent:
 
@@ -380,11 +471,21 @@ La preview NON deve usare command_intent_state come fonte di rappresentazione ev
 
 command_intent_state appartiene al container_command_intent.
 
-La preview può essere nascosta quando:
+La preview viene nascosta quando:
 
-command_intent_state.data?.isCommand === true
+ui_visibility_state.showEventPreview = false
 
-oppure quando l’input è riconosciuto come comando puro pendente.
+In particolare:
+
+- input vuoto
+- command intent
+- input non ancora pronto
+- edit mode gestito dal flow event ma con notice dedicata se attivo
+
+Nota:
+
+command_intent_state resta la fonte funzionale del comando.
+ui_visibility_mode / ui_visibility_state governano la visibilità.
 
 Nota UX Mobile Coherence Pass:
 
@@ -464,6 +565,8 @@ dismissed state project/entity
 local label logic
 local hint logic
 command UI logic
+ui_visibility_mode
+ui_visibility_state
 
 Conseguenza:
 
@@ -475,6 +578,7 @@ Conseguenza:
 ⚠ possibile divergenza tra dato interno e formattazione mostrata
 ✔ command intent separato dal salvataggio evento
 ⚠ input analysis model unico non implementato
+⚠ ui_visibility_state è solo aggregatore UI/readiness, non fonte interpretativa completa
 ⚠ esistono ancora più helper interpretativi specializzati
 
 OUTPUT DELLA PREVIEW
@@ -507,6 +611,16 @@ Non include:
 - btn_command_create_project
 - btn_command_create_entity
 - btn_command_go_events
+
+Non include inoltre:
+
+- ui_visibility_mode
+- ui_visibility_state
+
+Nota:
+
+ui_visibility_state non è output preview.
+È solo un layer read-only che decide se la preview deve essere mostrata.
 
 Nota:
 
@@ -553,6 +667,20 @@ Dopo Command Intent — Create Project / Entity:
 
 Il container_command_intent è stato introdotto per evitare che
 i comandi puri vengano trattati come eventi.
+
+Dopo UI Readiness, questa sostituzione è coordinata da:
+
+- ui_visibility_mode
+- ui_visibility_state.showCommandContainer
+- ui_visibility_state.showEventPreview
+- ui_visibility_state.showEventData
+- ui_visibility_state.showConfirm
+
+Risultato:
+
+- meno flash tra evento e command
+- meno rendering progressivo
+- Hidden principali più centralizzati
 
 Il command container non fa parte della stringa labelStyled.
 
@@ -799,6 +927,31 @@ Regola principale:
 
 la preview non deve competere con il command intent.
 
+Dopo UI Readiness, questa regola viene applicata tramite ui_visibility_state.
+
+Pattern:
+
+evento ordinario:
+- ui_visibility_mode = event
+- showEventPreview = true
+- showCommandContainer = false
+- showEventData = true
+- showConfirm = true
+
+command:
+- ui_visibility_mode = command
+- showEventPreview = false
+- showCommandContainer = true
+- showEventData = false
+- showConfirm = false
+
+input vuoto:
+- ui_visibility_mode = empty
+- showEventPreview = false
+- showCommandContainer = false
+- showEventData = false
+- showConfirm = false
+
 Se l’input è un evento ordinario:
 
 - mostra Sintesi
@@ -860,6 +1013,102 @@ Command Intent non rende la preview più pura.
 La separa solo dal caso comando puro.
 
 La preview resta ibrida per gli input evento ordinari.
+
+------------------------------------------------
+UI READINESS / VISIBILITY E PREVIEW
+------------------------------------------------
+
+Il nodo UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+ha introdotto un layer read-only di visibilità UI.
+
+Componenti:
+
+- ui_visibility_mode
+- ui_visibility_state
+
+Ruolo:
+
+stabilizzare quando mostrare Sintesi, command container, suggestion,
+Dati evento e conferma.
+
+---
+
+ui_visibility_mode:
+
+- Variable Retool
+- valori:
+  - empty
+  - event
+  - command
+- aggiornata da trigger_parse_debounced
+- serve solo come latch UI
+- non salva dati
+- non sostituisce command_intent_state
+
+---
+
+ui_visibility_state:
+
+- Transformer Retool
+- aggregatore read-only
+- legge ui_visibility_mode e stati runtime esistenti
+- espone flag di visibilità
+
+Flag rilevanti per preview:
+
+- showEventPreview
+- showCommandContainer
+- showAssociationSuggestions
+- showEventData
+- showConfirm
+- isInputFlow
+- isEditMode
+
+Componenti governati:
+
+- sintesi
+- container_command_intent
+- container_association_suggestions
+- text_event_data_title
+- select1
+- select_project
+- select_entity
+- button_input_confirm
+- btn_cancel_edit
+- btn_cancel_input_home
+- container_input
+
+Regole:
+
+- ui_visibility_state non modifica il contenuto della Sintesi
+- ui_visibility_state non modifica labelStyled
+- ui_visibility_state non modifica hint
+- ui_visibility_state non modifica highlight
+- ui_visibility_state non modifica parser
+- ui_visibility_state non modifica matching
+- ui_visibility_state non modifica create_suggestion_state
+- ui_visibility_state non modifica command_intent_state
+- ui_visibility_state non modifica DB
+- ui_visibility_state non costruisce payload
+
+Risultati:
+
+✔ Sintesi mostrata solo nel flow evento
+✔ Sintesi nascosta nel flow command
+✔ container command mostrato in modo più stabile
+✔ Dati evento nascosti nel flow command
+✔ Conferma evento nascosta nel flow command
+✔ container vuoto durante digitazione risolto
+✔ flash input flow ridotto
+✔ bottom bar flash risolto tramite container_app_nav
+✔ Hidden principali centralizzati
+
+Limiti:
+
+⚠ la Sintesi resta ibrida nel contenuto
+⚠ hint/warning restano embedded
+⚠ “Da verificare” resta interno alla Sintesi / card collegata
+⚠ ui_visibility_state non è Input Analysis Model completo
 
 COMPONENTI LOGICI INTERNI
 
@@ -1248,6 +1497,14 @@ Regola:
 La Sintesi mostra cosa LOGOS ha interpretato.
 La card Da verificare mostra cosa l’utente deve controllare.
 
+Nota post UI Readiness:
+
+La card Da verificare resta collegata alla Sintesi/event flow.
+Non è stata trasformata in un modello hint autonomo.
+
+La sua visibilità può essere coordinata dal flow event,
+ma il contenuto e la logica interna restano parte del Preview System.
+
 Decisione:
 
 Non è stata creata una tab Ambiguità.
@@ -1358,6 +1615,20 @@ Le due UI non devono competere.
 - suggestion container = supporto associazione evento
 - command container = comando strutturale puro
 
+Dopo UI Readiness:
+
+container_association_suggestions viene mostrato/nascosto tramite:
+
+ui_visibility_state.showAssociationSuggestions
+
+Questo riduce la competizione visuale con:
+
+- container_command_intent
+- Sintesi
+- Dati evento
+
+Ma non modifica create_suggestion_state.
+
 ---
 
 MATCH PIÙ SPECIFICI:
@@ -1434,6 +1705,23 @@ Aggiornamento Match Engine Unification First Controlled Level:
 Limite:
 
 non esiste ancora un hint engine globale separato.
+
+Nota post UI Readiness:
+
+ui_visibility_state non separa gli hint dalla Sintesi.
+
+Il nodo UI Readiness ha agito solo sul livello di visibilità:
+
+- mostrare/nascondere Sintesi
+- mostrare/nascondere suggestion container
+- mostrare/nascondere Dati evento
+- mostrare/nascondere Conferma evento
+
+La logica hint resta interna al Preview System.
+
+Per separare davvero hint, warning e “Da verificare” serve ancora un nodo dedicato:
+
+PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Aggiornamento Project / Entity Create Suggestion First Controlled Level:
 
@@ -2115,6 +2403,26 @@ La preview non sostituisce:
 Le micro-azioni “Cambia” / “Scegli” nella Sintesi indicano dove intervenire,
 ma non modificano ancora i campi.
 
+Dopo UI Readiness:
+
+Dati evento viene mostrato/nascosto tramite:
+
+ui_visibility_state.showEventData
+
+Regola:
+
+- visibile nel flow evento
+- nascosto nel flow command
+- nascosto quando il flow input non è pronto
+
+Questo non modifica:
+
+- select1.value
+- select_project.value
+- select_entity.value
+
+Le select restano le fonti salvabili finali.
+
 ------------------------------------------------
 RELAZIONE CON FEEDBACK MOBILE
 ------------------------------------------------
@@ -2148,6 +2456,16 @@ Feedback:
 Regola:
 
 Non usare feedback_summary come fonte preview.
+
+Nota post UI Readiness:
+
+Il micro-flash feedback project/entity osservato nei test finali
+non appartiene alla preview.
+
+È residuo del feedback/routing post-create,
+non del rendering Sintesi.
+
+Il feedback project/entity resta esterno alla preview.
 
 ------------------------------------------------
 RELAZIONE CON NAVIGATION DOCK
@@ -2187,6 +2505,23 @@ La navigation dock è solo UI di navigazione contestuale.
 Non abilita output.
 Non abilita KPI.
 Non modifica il comportamento della Sintesi.
+
+Micro-fix post UI Readiness:
+
+container_app_nav.Hidden usa input_home.value invece di input_raw.value.
+
+Motivo:
+
+input_raw può aggiornarsi con ritardo rispetto a input_home
+e causare flash della bottom bar durante la digitazione.
+
+Esito:
+
+✔ bottom bar flash risolto
+
+Nota:
+
+questo fix non modifica la preview.
 
 ------------------------------------------------
 RELAZIONE CON MOBILE SAFARI BASELINE
@@ -2261,6 +2596,8 @@ Dati evento compatti
 card Da verificare
 notice associazioni mancanti
 duration hint locale
+ui_visibility_mode
+ui_visibility_state
 
 → assenza di preview model unico
 → assenza di suggestion model separato come layer documentale autonomo
@@ -2280,7 +2617,10 @@ COMMAND INTENT / PREVIEW:
 ⚠ create_suggestion_state è ancora helper Retool separato
 ⚠ preview continua a contenere hint/label/highlight embedded
 ⚠ “Da verificare” resta interno alla Sintesi
-⚠ rendering progressivo input evento normale ancora migliorabile
+✔ rendering progressivo input evento normale ridotto tramite UI Readiness
+⚠ micro-flash feedback project/entity ancora presente, esterno alla preview
+⚠ “modifica” generico non ancora riconosciuto come guida edit
+⚠ ui_visibility_state è aggregatore UI, non input analysis model completo
 
 COMMAND INTENT — TEST VALIDATI:
 
@@ -2520,6 +2860,12 @@ PROPRIETÀ DEL SISTEMA
 ✔ Dati evento compatti separati dalla Sintesi
 ✔ feedback mobile temporaneo separato dalla preview
 ✔ navigation dock separata dalla preview
+✔ visibilità Sintesi governata da ui_visibility_state.showEventPreview
+✔ container_command_intent governato da ui_visibility_state.showCommandContainer
+✔ Dati evento governati da ui_visibility_state.showEventData
+✔ Conferma evento governata da ui_visibility_state.showConfirm
+✔ container vuoto durante digitazione risolto
+✔ bottom bar flash risolto
 
 MA:
 
@@ -2536,6 +2882,9 @@ MA:
 ⚠ suggestion create vs edit consistency da verificare
 ⚠ project creation override con match generico non implementato
 ⚠ suggestion create non ancora separata in modello dedicato
+⚠ ui_visibility_state non separa il contenuto interno della Sintesi
+⚠ ui_visibility_state non è Input Analysis Model completo
+⚠ 5 linting Retool residui non appartengono alla preview ma restano nel sistema
 
 STATO ATTUALE
 
@@ -2580,6 +2929,18 @@ STATO ATTUALE
 ✔ feedback mobile separato dalla preview
 ✔ navigation dock separata dalla preview
 ✔ font-size 16px mobile Safari validato per input/select
+✔ UI Readiness / Visibility Aggregator First Controlled Level completato
+✔ ui_visibility_mode implementato
+✔ ui_visibility_state implementato
+✔ Sintesi governata da ui_visibility_state.showEventPreview
+✔ container_command_intent governato da ui_visibility_state.showCommandContainer
+✔ suggestion container governato da ui_visibility_state.showAssociationSuggestions
+✔ Dati evento governati da ui_visibility_state.showEventData
+✔ Conferma evento governata da ui_visibility_state.showConfirm
+✔ container vuoto durante digitazione risolto
+✔ flash input flow ridotto
+✔ bottom bar flash risolto
+✔ edit mode chiarito da text_edit_mode_notice
 
 ⚠ preview ancora ibrida
 ✔ hint matching project/entity state-driven  
@@ -2592,7 +2953,11 @@ STATO ATTUALE
 ⚠ Cambia / Scegli ancora non cliccabili
 ⚠ suggestion create vs edit consistency da verificare
 ⚠ project creation override con match generico non implementato
-⚠ command intent non implementato
+✔ command intent implementato a primo livello controllato
+⚠ micro-flash feedback project/entity ancora presente, esterno alla preview
+⚠ “modifica” generico non ancora riconosciuto come guida edit
+⚠ Input Analysis Model completo non implementato
+⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
 
 OBIETTIVO FUTURO IMMEDIATO
 
@@ -2605,6 +2970,7 @@ Match Engine Unification First Controlled Level è completato.
 Project / Entity Create Suggestion First Controlled Level è completato.
 UX Mobile Coherence Pass è completato.
 Command Intent — Create Project / Entity è completato.
+UI Readiness / Visibility Aggregator — First Controlled Level è completato.
 
 La parte critica di allineamento preview/hint/highlight per project/entity
 è stata risolta a primo livello.
@@ -2625,10 +2991,18 @@ Il Command Intent è stato separato dalla Sintesi evento:
 La Sintesi è ora coerente con il sistema mobile,
 ma resta un layer ibrido e non una view pura.
 
-Durante il nodo Command Intent è emerso un residuo importante:
+Durante il nodo UI Readiness è stato risolto a primo livello
+il residuo di rendering progressivo input evento normale:
 
-“Da verificare” resta interno alla Sintesi
-e non è un blocco autonomo spostabile sotto la CTA.
+- container vuoto durante digitazione risolto
+- flash input flow ridotto
+- bottom bar flash risolto
+- Hidden principali centralizzati
+
+Resta però un residuo Preview importante:
+
+“Da verificare” resta interno alla Sintesi / card collegata
+e non è un modello hint autonomo.
 
 Questo conferma che la preview contiene ancora:
 
@@ -2641,27 +3015,7 @@ Questo conferma che la preview contiene ancora:
 
 Nodi futuri candidati:
 
-1. INPUT RENDERING STABILITY / CONTAINER STRUCTURE
-
-Obiettivo:
-
-- ridurre rendering progressivo / flash su input evento normale
-- stabilizzare comparsa di Sintesi / hint / suggestion / Dati evento
-- valutare separazione container preview / hint / dati evento
-- valutare eventuale stato unico input_analysis_ready
-
-Vincoli:
-
-- non modificare parser
-- non modificare matching
-- non modificare DB
-- non rompere command intent
-- non rompere suggestion container
-- non rompere edit flow
-
----
-
-2. PREVIEW MODEL / HINT STATE CONSOLIDATION
+1. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Obiettivo:
 
@@ -2673,14 +3027,19 @@ Obiettivo:
 
 ---
 
-3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+2. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 
 Obiettivo:
 
 - valutare un layer unico di analisi interrogabile dalle UI
-- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state
+- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state e ui_visibility_state
 - ridurre rami ibridi e fonti parallele
 - evitare ricalcoli o logiche concorrenti
+
+Nota:
+
+UI Readiness / Visibility Aggregator è già implementato a primo livello,
+ma non equivale a Input Analysis Model completo.
 
 Vincolo:
 
@@ -2688,7 +3047,63 @@ non introdurre refactor globale senza nodo dedicato.
 
 ---
 
-4. CAMBIA / SCEGLI ACTIONS
+3. COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+
+Obiettivo:
+
+- valutare riconoscimento di:
+  - modifica
+  - correggi
+  - cambia
+
+come guida edit generica.
+
+Vincolo:
+
+non confondere frasi operative reali come:
+
+- modifica preventivo villa
+- correggi testo brochure
+- cambia materiale progetto
+
+con comando guida.
+
+---
+
+4. FEEDBACK MICRO-FLASH CLEANUP
+
+Obiettivo:
+
+- analizzare micro-flash residuo su feedback project/entity
+
+Nota:
+
+questo residuo non appartiene alla preview.
+
+Vincoli:
+
+- non modificare insert_project / insert_entity
+- non modificare save flow
+- intervenire solo se il flash è identificabile e fastidioso
+
+---
+
+5. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+
+Obiettivo:
+
+- rimuovere regex/guardie duplicate ormai sostituite da ui_visibility_state
+
+Vincoli:
+
+- procedere uno alla volta
+- backup prima di ogni rimozione
+- test dopo ogni micro-rimozione
+- non modificare parser/matching/save flow
+
+---
+
+6. CAMBIA / SCEGLI ACTIONS
 
 Obiettivo:
 
@@ -2698,7 +3113,7 @@ Obiettivo:
 
 ---
 
-5. HINT / AMBIGUITÀ ADVANCED
+7. HINT / AMBIGUITÀ ADVANCED
 
 Obiettivo:
 
@@ -2708,7 +3123,7 @@ Obiettivo:
 
 ---
 
-6. SUGGESTION CREATE VS EDIT CONSISTENCY
+8. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Obiettivo:
 
@@ -2718,7 +3133,7 @@ Obiettivo:
 
 ---
 
-7. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+9. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
 
 Obiettivo:
 
@@ -2729,7 +3144,7 @@ Obiettivo:
 
 ---
 
-8. TYPE / ECONOMIC DIRECTION ADVANCED
+10. TYPE / ECONOMIC DIRECTION ADVANCED
 
 Obiettivo:
 
@@ -2740,7 +3155,7 @@ Obiettivo:
 
 ---
 
-9. MOBILE POLISH FINALE / ICON SYSTEM
+11. MOBILE POLISH FINALE / ICON SYSTEM
 
 Obiettivo:
 
@@ -2748,21 +3163,11 @@ Obiettivo:
 - rifinire spaziature e gerarchie visuali
 - mantenere font-size 16px su input/select per stabilità Safari iOS
 
-Priorità:
+I candidati più coerenti post UI Readiness sono:
 
-non aprire ulteriori nodi preview generici
-se non emerge un problema reale.
-
-I candidati più coerenti post Command Intent sono:
-
-1. INPUT RENDERING STABILITY / CONTAINER STRUCTURE
-2. PREVIEW MODEL / HINT STATE CONSOLIDATION
-3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
-
-Vincolo:
-
-non modificare logica, parser, matching, DB o save flow
-senza nodo dedicato.
+1. PREVIEW MODEL / HINT STATE CONSOLIDATION
+2. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+3. COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
 
 ------------------------------------------------
 OBIETTIVO FUTURO NON ATTIVO
@@ -2792,6 +3197,7 @@ hint state già calcolato
 match state già calcolato
 suggestion state già calcolato
 command intent già calcolato fuori dalla preview
+visibility state già calcolato fuori dalla preview
 
 Output target:
 
@@ -2819,6 +3225,8 @@ ma non è attivo ora.
 
 Anche command_intent_state potrebbe in futuro confluire in un modello unico di input analysis,
 ma non è attivo ora.
+Anche ui_visibility_state potrebbe in futuro essere letto da un modello unico di input analysis,
+ma oggi resta solo un aggregatore UI/readiness.
 
 Il matching project/entity è stato però allineato
 sufficientemente da non essere più un blocco preview immediato.
@@ -2828,10 +3236,12 @@ sufficientemente da evitare che i comandi puri vengano salvati o rappresentati c
 
 Restano invece aperti:
 
-- rendering progressivo input evento normale
-- “Da verificare” interno alla Sintesi
+- “Da verificare” interno alla Sintesi / card collegata
 - preview ancora ibrida
+- hint/warning non ancora separati in modello autonomo
 - input analysis model unico non implementato
+- “modifica” generico non riconosciuto come guida edit
+- micro-flash feedback project/entity esterno alla preview
 
 CHANGELOG
 
@@ -3009,5 +3419,38 @@ v10 — 2026-05-13
 - parser invariato
 - matching invariato
 - create_suggestion_state invariato
+- save flow evento ordinario invariato
+- nessun output/KPI anticipato
+
+v11 — 2026-05-18
+
+- integrazione UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- integrato esito CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
+- integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- documentato ui_visibility_mode come latch UI empty / event / command
+- documentato ui_visibility_state come aggregatore read-only di visibilità
+- documentato che ui_visibility_state governa la visibilità della Sintesi tramite showEventPreview
+- documentato che container_command_intent è governato da showCommandContainer
+- documentato che Dati evento è governato da showEventData
+- documentato che button_input_confirm è governato da showConfirm
+- documentata distinzione tra visibilità preview e contenuto preview
+- documentato che ui_visibility_state non modifica labelStyled
+- documentato che ui_visibility_state non modifica hint, highlight, parser, matching o DB
+- documentato container vuoto durante digitazione risolto
+- documentato flash input flow ridotto
+- documentato bottom bar flash risolto tramite container_app_nav
+- documentato che rendering progressivo input evento normale è stato ridotto a primo livello
+- documentato che la Sintesi resta layer ibrido nel contenuto
+- documentato che “Da verificare” resta interno alla Sintesi / card collegata
+- documentato che hint/warning non sono ancora modello autonomo
+- documentato che micro-flash feedback project/entity è esterno alla preview
+- documentato residuo “modifica” generico non riconosciuto come guida edit
+- documentato Input Analysis Model completo non implementato
+- aggiornati nodi futuri candidati post UI Readiness
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- command_intent_state invariato
 - save flow evento ordinario invariato
 - nessun output/KPI anticipato

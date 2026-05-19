@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v07
+# 02_LOGOS_Match_Engine_v08
 
-DATA: 2026-05-13
+DATA: 2026-05-18
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -32,6 +32,12 @@ C (Completezza): 10/10
 - documentato che i comandi puri non entrano nel save flow evento
 - documentato blocco duplicati project/entity esistenti da command
 - documentata separazione tra matching, suggestion e command intent
+- documentato rapporto tra Match Engine e UI Readiness / Visibility Aggregator
+- chiarito che ui_visibility_state può leggere project_state / entity_state solo per visibilità/hint
+- chiarito che ui_visibility_state non sostituisce project_state / entity_state
+- chiarito che ui_visibility_state non modifica matching, select o confirm guard
+- chiarito che ui_visibility_mode non è parte del Match Engine
+- documentato residuo Input Analysis Model / Single Interpretation Layer come futuro non attivo
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -49,6 +55,10 @@ Q (Qualità): 9.5/10
 - evitata duplicazione tra match engine e command intent
 - chiarito che la rilevazione “elemento già presente” da command è una guardia UI, non deduplicazione strutturale
 - mantenuto il principio select = decisione finale per gli eventi ordinari
+- mantenuta separazione tra matching e visibility/readiness UI
+- evitata confusione tra aggregatore Hidden e Match Engine
+- confermato che UI Readiness non modifica la logica matching
+- confermato che il Match Engine resta fonte minima project/entity per eventi ordinari
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -68,6 +78,13 @@ D (Deployabilità): 10/10
 - edit flow non regressivo dopo Command Intent validato
 - comandi puri create project/entity esclusi dal save flow evento
 - command_intent_state validato come helper separato dal matching
+- UI Readiness / Visibility Aggregator validato come layer separato dal matching
+- test obbligatori 1–16 post UI Readiness superati senza regressione matching
+- create flow non regressivo dopo UI Readiness validato
+- edit flow non regressivo dopo UI Readiness validato
+- suggestion project/entity non regressiva dopo UI Readiness validata
+- DB invariato
+- matching invariato
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -88,6 +105,10 @@ Il documento guida:
 - distinzione tra match engine, create suggestion e command intent
 - rapporto tra project_state/entity_state e command_intent_state
 - limiti del command intent rispetto al matching
+- rapporto tra Match Engine e UI Readiness / Visibility Aggregator
+- distinzione tra project_state/entity_state e ui_visibility_state
+- chiarimento che ui_visibility_state non è fonte matching
+- chiarimento che ui_visibility_mode non è Match Engine
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -195,6 +216,43 @@ Regole:
 - i comandi puri vengono esclusi dal save flow evento
 - select_project / select_entity restano la decisione finale salvabile per eventi ordinari
 
+10. MATCHING ≠ UI READINESS / VISIBILITY
+
+Il Match Engine calcola project/entity matching per eventi ordinari.
+
+UI Readiness / Visibility Aggregator governa solo la visibilità del flow input.
+
+Componenti UI Readiness:
+
+- ui_visibility_mode
+- ui_visibility_state
+
+Regole:
+
+- ui_visibility_state può leggere project_state / entity_state
+- ui_visibility_state può usare isAmbiguous / select valorizzate per decidere cosa mostrare
+- ui_visibility_state NON calcola matches
+- ui_visibility_state NON calcola count
+- ui_visibility_state NON calcola singleMatch
+- ui_visibility_state NON calcola moreSpecificMatches
+- ui_visibility_state NON sostituisce project_state
+- ui_visibility_state NON sostituisce entity_state
+- ui_visibility_state NON modifica select_project / select_entity
+- ui_visibility_state NON modifica button_input_confirm payload
+- ui_visibility_state NON modifica confirm guard funzionale
+- ui_visibility_state NON salva dati
+- ui_visibility_state NON scrive DB
+
+ui_visibility_mode distingue solo:
+
+- empty
+- event
+- command
+
+Non riconosce project/entity.
+Non è Match Engine.
+Non è Input Analysis Model completo.
+
 ------------------------------------------------
 ENTITÀ COINVOLTE
 ------------------------------------------------
@@ -220,11 +278,13 @@ Il matching opera dentro il seguente flow:
 input_home  
 → input_raw  
 → trigger_parse_debounced  
+→ ui_visibility_mode  
 → command_intent_state  
 → parse_input_controlled  
 → ui_state.parsed  
 → project_state / entity_state  
 → create_suggestion_state  
+→ ui_visibility_state  
 → select_project / select_entity  
 → preview / hint / highlight / suggestion container  
 → oppure container_command_intent  
@@ -270,20 +330,33 @@ Dopo COMMAND INTENT — CREATE PROJECT / ENTITY:
 - insert_project / insert_entity vengono usati solo dopo conferma utente
 - button_input_confirm resta dedicato agli eventi ordinari
 
+Dopo UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL:
+
+- ui_visibility_mode distingue empty / event / command a livello UI
+- ui_visibility_state aggrega la visibilità del flow input
+- ui_visibility_state può leggere project_state / entity_state per capire se esistono ambiguità non risolte
+- ui_visibility_state governa la visibilità di suggestion, Dati evento, Conferma e container command
+- ui_visibility_state non modifica project_state / entity_state
+- ui_visibility_state non modifica create_suggestion_state
+- ui_visibility_state non modifica select_project / select_entity
+- ui_visibility_state non modifica il Match Engine
+- il Match Engine resta fonte minima project/entity per eventi ordinari
+
 ------------------------------------------------
 PIPELINE MATCH
 ------------------------------------------------
 
-Pipeline match attuale post PROJECT / ENTITY CREATE SUGGESTION FIRST CONTROLLED LEVEL:
+Pipeline match attuale post UI READINESS / VISIBILITY AGGREGATOR:
 
 input_raw  
 → project_state / entity_state  
 → matches / count / isAmbiguous / singleMatch  
 → create_suggestion_state  
+→ ui_visibility_state legge stato matching per visibilità  
 → select_project / select_entity  
 → preview hint / highlight / suggestion container  
 → button_input_confirm guard  
-→ project_id / entity_id salvati solo se selezionati   
+→ project_id / entity_id salvati solo se selezionati    
 
 Pipeline command separata:
 
@@ -341,6 +414,11 @@ button_input_confirm NON valuta più direttamente array matches in modo fragile.
 Legge ambiguità non risolta.
 
 command_intent_state NON modifica questa regola.
+
+ui_visibility_state NON modifica questa regola.
+
+UI Readiness può decidere se mostrare o nascondere componenti,
+ma non cambia la fonte matching e non decide project/entity.
 
 Per gli eventi ordinari:
 
@@ -683,6 +761,17 @@ Auto-select SOLO tramite:
 project_state.data.singleMatch  
 entity_state.data.singleMatch  
 
+Nota post UI Readiness:
+
+ui_visibility_state non partecipa all’auto-select.
+
+Non può valorizzare:
+
+- select_project
+- select_entity
+
+La selezione automatica resta limitata a singleMatch.
+
 ---
 
 select_project:
@@ -830,6 +919,25 @@ lo arricchisce solo con un percorso guidato opzionale.
 
 Il command intent non cambia il confirm guard degli eventi ordinari.
 
+Nota post UI Readiness:
+
+ui_visibility_state può leggere lo stato di ambiguità per decidere la visibilità di:
+
+- suggestion container
+- Dati evento
+- Conferma evento
+
+ma non modifica la regola di ambiguità.
+
+Il blocco funzionale resta:
+
+- project ambiguo + select_project vuoto
+- entity ambigua + select_entity vuoto
+
+ui_visibility_state non risolve ambiguità.
+ui_visibility_state non seleziona project/entity.
+ui_visibility_state non cambia il confirm guard logico.
+
 Se l’input è comando puro:
 
 - il confirm guard evento non viene usato
@@ -889,6 +997,23 @@ Restano embedded nella preview altri hint:
 - durata ambigua
 
 Questi non sono stati separati in un hint engine globale.
+
+Nota post UI Readiness:
+
+ui_visibility_state può governare la visibilità del container che ospita hint/suggestion,
+ma non è un hint engine.
+
+Non separa:
+
+- hint matching
+- hint duration/type
+- warning
+- “Da verificare”
+- suggestion create
+
+Questa separazione resta demandata a un nodo futuro:
+
+PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 ---
 
@@ -1017,6 +1142,21 @@ modifica evento
 Il command intent quindi riduce un caso di falsa preview evento,
 ma non rende la preview un layer puro.
 
+Dopo UI Readiness:
+
+- la visibilità della preview è governata da ui_visibility_state.showEventPreview
+- container_command_intent è governato da ui_visibility_state.showCommandContainer
+- container_association_suggestions è governato da ui_visibility_state.showAssociationSuggestions
+- Dati evento sono governati da ui_visibility_state.showEventData
+- Conferma evento è governata da ui_visibility_state.showConfirm
+
+Nota:
+
+questo non modifica il matching.
+
+La preview continua a leggere project_state / entity_state per hint e highlight.
+ui_visibility_state decide solo quando mostrare i componenti.
+
 ------------------------------------------------
 RELAZIONE CON CREATE SUGGESTION
 ------------------------------------------------
@@ -1112,9 +1252,14 @@ Se project/entity è ambiguo:
 - create suggestion non viene mostrata per quel layer
 - Conferma resta disabilitata finché l’utente non sceglie manualmente
 
-Motivo:
+Nota post UI Readiness:
 
-non proporre creazioni nuove quando il sistema ha già più match possibili.
+container_association_suggestions è ora visibile/nascosto tramite ui_visibility_state.showAssociationSuggestions.
+
+Questo non modifica create_suggestion_state.
+
+create_suggestion_state resta il layer che consuma il matching
+e propone eventuale creazione controllata.
 
 ------------------------------------------------
 RELAZIONE CON COMMAND INTENT
@@ -1200,6 +1345,77 @@ ma questa verifica non sostituisce deduplicazione avanzata,
 alias, fuzzy matching o vincoli DB.
 
 ------------------------------------------------
+RELAZIONE CON UI READINESS / VISIBILITY
+------------------------------------------------
+
+UI Readiness / Visibility Aggregator è un layer separato dal Match Engine.
+
+Componenti:
+
+- ui_visibility_mode
+- ui_visibility_state
+
+---
+
+ui_visibility_mode:
+
+- distingue empty / event / command
+- non legge project_state / entity_state come fonte matching
+- non calcola project/entity
+- non decide ambiguità
+- non decide select
+- non salva dati
+
+---
+
+ui_visibility_state:
+
+- aggrega flag di visibilità
+- può leggere project_state / entity_state
+- può leggere select_project / select_entity
+- può leggere create_suggestion_state
+- può leggere command_intent_state / ui_visibility_mode
+- decide solo cosa mostrare/nascondere
+
+Non produce:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
+- project_id
+- entity_id
+
+Non modifica:
+
+- project_state
+- entity_state
+- create_suggestion_state
+- command_intent_state
+- select_project
+- select_entity
+- button_input_confirm payload
+- insert_event / update_event
+- insert_project / insert_entity
+
+Regola:
+
+il Match Engine resta la fonte minima per project/entity matching.
+
+UI Readiness è solo coordinamento visivo.
+
+Risultato post UI Readiness:
+
+✔ container vuoto durante digitazione risolto
+✔ flow event / command più stabile
+✔ suggestion container non compete più visivamente con command container
+✔ Dati evento / Conferma evento più coerenti con flow event/command
+✔ matching invariato
+
+------------------------------------------------
 RELAZIONE CON NORMALIZATION LAYER BASE
 ------------------------------------------------
 
@@ -1260,6 +1476,7 @@ CASI NON SUPPORTATI
 - modifica project/entity da command
 - dashboard/report intent
 - input analysis model unico
+- integrazione completa di ui_visibility_state in un Single Interpretation Layer
 - creazione automatica silenziosa project/entity
 
 ---
@@ -1284,6 +1501,11 @@ LIMITI ATTUALI
 - command intent create project/entity implementato a primo livello controllato
 - command intent avanzato non implementato
 - input analysis model unico non implementato
+- ui_visibility_state implementato solo come aggregatore UI/readiness
+- ui_visibility_mode implementato solo come latch UI
+- UI Readiness non è Match Engine
+- UI Readiness non è Input Analysis Model completo
+- cleanup obsolete UI guards / query reduction non ancora eseguito
 - nessuna creazione automatica silenziosa project/entity
 - nessun audit trail dedicato per creazione project/entity
 - nessuna deduplicazione strutturale avanzata per project/entity creati da command
@@ -1309,6 +1531,11 @@ Risolto a primo livello:
 ✔ comandi puri esclusi dal save flow evento
 ✔ “crea progetto villa” riconosciuto come elemento già presente
 ✔ project/entity da command creati solo previa conferma utente
+✔ UI Readiness / Visibility Aggregator completato senza modificare matching
+✔ ui_visibility_state introdotto come aggregatore visibilità separato dal Match Engine
+✔ container vuoto durante digitazione risolto
+✔ bottom bar flash risolto
+✔ flow event / command stabilizzato a primo livello
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
@@ -1406,6 +1633,23 @@ Nota:
 Command Intent non risolve il problema strutturale del match engine avanzato.
 Aggiunge un layer separato per comandi puri.
 
+STATO DOPO UI READINESS / VISIBILITY AGGREGATOR:
+
+✔ ui_visibility_mode introdotto come latch UI empty / event / command
+✔ ui_visibility_state introdotto come aggregatore read-only di visibilità
+✔ ui_visibility_state può leggere project_state / entity_state
+✔ ui_visibility_state non modifica il Match Engine
+✔ project_state / entity_state restano fonte minima matching
+✔ create_suggestion_state resta layer suggestion separato
+✔ command_intent_state resta layer command separato
+✔ select_project / select_entity restano fonti salvabili
+✔ container vuoto durante digitazione risolto
+✔ bottom bar flash risolto
+✔ matching invariato
+
+UI Readiness non risolve il problema strutturale del match engine avanzato.
+Aggiunge un layer separato per visibilità/readiness UI.
+
 ------------------------------------------------
 TARGET FUTURO — MATCH ENGINE EVOLUTION
 ------------------------------------------------
@@ -1437,9 +1681,10 @@ Evoluzioni future possibili solo come nodi dedicati:
 3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
 
 - valutare un layer unico di analisi interrogabile
-- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state
+- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state, ui_visibility_state
 - ridurre rami ibridi e fonti parallele
 - evitare duplicazioni future tra matching, suggestion e command intent
+- valutare se ui_visibility_state debba restare layer UI separato o diventare parte di un Input Analysis Result futuro
 - non introdurre refactor globale senza nodo dedicato
 
 4. MATCH CONFIDENCE / RANKING ADVANCED
@@ -1486,6 +1731,7 @@ EVOLUZIONE FUTURA NON ATTIVA
 - deduplicazione
 - command intent avanzato oltre create project/entity
 - input analysis model unico
+- single interpretation layer che includa anche ui_visibility_state
 - creazione automatica silenziosa project/entity
 - filtro select su match ambigui
 - pending state avanzato per nuovi project/entity
@@ -1536,6 +1782,12 @@ senza trasformare il Match Engine in un sistema di command routing.
 
 Il Match Engine resta dedicato a project/entity dentro eventi ordinari.
 
+Il successivo UI Readiness / Visibility Aggregator
+ha aggiunto un layer separato per coordinare la visibilità del flow input,
+senza trasformare il Match Engine in un sistema di readiness UI.
+
+Il Match Engine resta invariato.
+
 Il prossimo livello non è “rifare il Match Engine”,
 ma evolverlo tramite nodi dedicati.
 
@@ -1571,6 +1823,13 @@ STATO ATTUALE
 ✔ comandi puri non salvano eventi
 ✔ project/entity da command creati solo previa conferma utente
 ✔ elemento già presente da command riconosciuto e non duplicato
+✔ UI Readiness / Visibility Aggregator completato
+✔ ui_visibility_mode introdotto come latch UI
+✔ ui_visibility_state introdotto come aggregatore read-only
+✔ ui_visibility_state separato dal Match Engine
+✔ project_state / entity_state restano fonte minima matching
+✔ matching invariato dopo UI Readiness
+✔ test obbligatori 1–16 superati senza regressione matching
 
 ---
 
@@ -1583,6 +1842,9 @@ STATO ATTUALE
 ✔ creazione guidata project/entity implementata a primo livello controllato
 ⚠ command intent avanzato non implementato
 ⚠ input analysis model unico non implementato
+⚠ ui_visibility_state non è Input Analysis Model completo
+⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
+⚠ 5 linting Retool residui ancora presenti
 ⚠ filtro select su match ambigui non implementato
 ⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
@@ -1704,3 +1966,31 @@ v07 — 2026-05-13
 - type classification invariata
 - duration normalization invariata
 - nessun output/KPI anticipato
+
+v08 — 2026-05-18
+
+- micro-allineamento post UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- integrato esito CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
+- integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- documentato rapporto tra Match Engine e UI Readiness / Visibility Aggregator
+- documentato ui_visibility_mode come latch UI separato dal Match Engine
+- documentato ui_visibility_state come aggregatore read-only di visibilità separato dal Match Engine
+- chiarito che ui_visibility_state può leggere project_state / entity_state solo per visibilità/hint
+- chiarito che ui_visibility_state non calcola matches / count / singleMatch / isAmbiguous
+- chiarito che ui_visibility_state non sostituisce project_state / entity_state
+- chiarito che ui_visibility_state non modifica create_suggestion_state
+- chiarito che ui_visibility_state non modifica command_intent_state
+- chiarito che ui_visibility_state non modifica select_project / select_entity
+- chiarito che ui_visibility_state non modifica confirm guard funzionale
+- chiarito che ui_visibility_state non modifica payload o DB
+- aggiornata pipeline runtime con ui_visibility_mode e ui_visibility_state
+- documentato che container_association_suggestions è governato da ui_visibility_state.showAssociationSuggestions
+- documentato che preview / Dati evento / Conferma evento sono governati da ui_visibility_state
+- confermato Match Engine invariato
+- confermato DB invariato
+- confermato parser invariato
+- confermato create_suggestion_state invariato
+- confermato command_intent_state invariato
+- confermati test 1–16 post UI Readiness senza regressione matching
+- Input Analysis Model completo non implementato
+- Event Interpretation Engine non implementato
