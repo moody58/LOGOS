@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v14
+# 01_LOGOS_Input_System_v15
 
-DATA: 2026-05-18
+DATA: 2026-05-20
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -65,6 +65,21 @@ Il documento è utilizzato per:
 - ui_visibility_mode come latch UI empty / event / command
 - ui_visibility_state come aggregatore read-only di visibilità input flow
 - centralizzazione Hidden principali del flow input
+- Preview Analysis State — First Controlled Layer
+- preview_analysis_state come Transformer read-only per hint/status della Sintesi
+- Input Analysis Result / Single Interpretation Layer Base — Read-only Diagnostic
+- input_analysis_result come layer compositivo raw / selection / effective
+- Input Analysis Result — Controlled UI Consumption Pass
+- migrazione parziale degli Hidden principali da ui_visibility_state a input_analysis_result
+- distinzione tra raw command e effective command
+- distinzione tra raw match e project/entity effective usability
+- edit mode prevalente su Command Intent a livello effective
+- stabilizzazione edit mode + input vuoto
+- Home idle container nascosti durante edit mode
+- notice associazioni mancanti coerente con presenza reale dei suggerimenti operativi
+- ui_visibility_state ancora operativo e non deprecato
+- button_input_confirm non ancora migrato a input_analysis_result
+- linting Retool attuali saliti a 19
 - container_input stabilizzato tramite ui_visibility_state
 - container vuoto durante digitazione risolto
 - bottom bar flash risolto
@@ -221,52 +236,82 @@ Non è ancora un intent engine globale.
 
 ---
 
-10. UI READINESS ≠ INPUT ANALYSIS MODEL COMPLETO
+10. UI READINESS / INPUT ANALYSIS RESULT ≠ MOTORE MONOLITICO
 
-Il sistema introduce un primo livello controllato di readiness/visibility UI.
-
-Questo livello serve a coordinare cosa mostrare o nascondere nel flow input,
-senza diventare fonte interpretativa completa.
-
-Componenti:
+Il sistema ha introdotto prima un livello controllato di readiness/visibility UI:
 
 - ui_visibility_mode
 - ui_visibility_state
 
-ui_visibility_mode distingue:
+Successivamente ha introdotto:
 
-- empty
-- event
-- command
+- preview_analysis_state
+- input_analysis_result
 
-ui_visibility_state aggrega flag di visibilità per:
+preview_analysis_state:
 
-- container_command_intent
-- sintesi
-- container_association_suggestions
-- text_event_data_title
-- select1
-- select_project
-- select_entity
-- button_input_confirm
+- raccoglie hint/status/warning/Da verificare/associazioni mancanti della Sintesi
+- è read-only
+- non salva dati
+- non modifica parser
+- non modifica matching
+- non modifica command_intent_state
+- non modifica create_suggestion_state
+- non modifica save flow
+- non modifica DB
+
+input_analysis_result:
+
+- compone lo stato dell’input flow
+- distingue raw / selection / effective
+- distingue event / command / edit flow
+- legge parser, matching, select, suggestion, command e preview state
+- non ricalcola parsing
+- non ricalcola matching
+- non alimenta select_project / select_entity
+- non costruisce payload save
+- non modifica DB
+
+Regola architetturale:
+
+LOGOS non evolve verso un mega-motore monolitico.
+
+La direzione corretta è:
+
+- moduli specializzati che calcolano
+- input_analysis_result che compone
+- UI che legge progressivamente una verità operativa coerente
+
+Stato attuale:
+
+input_analysis_result è fonte UI controllata parziale per:
+
+- sintesi.Hidden
+- text_event_data_title.Hidden
+- select1.Hidden
+- select_project.Hidden
+- select_entity.Hidden
+- container_command_intent.Hidden
+- container_association_suggestions.Hidden
+- micro-copy notice associazioni mancanti
+
+ui_visibility_state resta ancora operativo e non deprecato per:
+
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
 - btn_cancel_edit
 - btn_cancel_input_home
-- container_input
+- button_input_confirm
+- altri controlli strutturali residui
 
 Regole:
 
-- ui_visibility_state non salva dati
-- ui_visibility_state non modifica DB
-- ui_visibility_state non modifica parser
-- ui_visibility_state non modifica matching
-- ui_visibility_state non modifica command_intent_state
-- ui_visibility_state non modifica create_suggestion_state
-- ui_visibility_state non modifica preview content
-- ui_visibility_state non costruisce payload
-- ui_visibility_state non è Input Analysis Model completo
-
-Il livello UI Readiness riduce rendering progressivo e Hidden duplicate,
-ma non sostituisce un futuro Single Interpretation Layer.
+- input_analysis_result non è ancora Input Analysis Model completo
+- input_analysis_result non è Event Interpretation Engine
+- ui_visibility_state non è deprecato
+- button_input_confirm non è ancora migrato
+- save readiness non è ancora centralizzata
+- evitare loop: finché input_analysis_result legge ui_visibility_state come raw diagnostic, ui_visibility_state non deve leggere input_analysis_result
 
 ---
 
@@ -409,8 +454,25 @@ ui_visibility_state
 → Transformer Retool read-only
 → aggrega flag di visibilità del flow input
 → legge ui_visibility_mode e stati runtime esistenti
-→ governa Hidden principali
+→ resta operativo per componenti strutturali residui
 → non è fonte dati salvabile
+→ non è deprecato
+
+preview_analysis_state
+→ Transformer Retool read-only
+→ raccoglie hint/status/warning/Da verificare/associazioni mancanti della Sintesi
+→ fonte specializzata per preview/hint
+→ non salva dati
+→ non modifica parser/matching/save flow/DB
+
+input_analysis_result
+→ Transformer Retool compositivo read-only
+→ aggrega input, parsed, type, project/entity, selection, suggestion, command, preview e readiness
+→ espone raw / selection / effective
+→ fonte UI controllata parziale per preview/data/command/suggestion visibility
+→ non alimenta select_project / select_entity
+→ non costruisce payload save
+→ non modifica DB
 
 parse_input_controlled
 → parser controllato + normalization base + duration normalization base
@@ -550,6 +612,8 @@ input_home
 → ui_visibility_state
 → select_project / select_entity
 → select1 / type classification base
+→ preview_analysis_state
+→ input_analysis_result
 → preview / command intent / hint / highlight / suggestion container
 → Dati evento oppure container_command_intent
 → eventuale creazione inline project/entity previa conferma utente
@@ -623,6 +687,48 @@ Command guida modifica evento:
 Nota:
 
 La creazione inline project/entity non sostituisce la conferma evento.
+
+Nota post Input Analysis Result:
+
+input_analysis_result agisce come layer compositivo read-only.
+
+Legge:
+
+- input_home / input_raw
+- ui_visibility_mode / ui_visibility_state
+- edit_mode
+- command_intent_state
+- ui_state.parsed
+- select1
+- project_state / entity_state
+- select_project / select_entity
+- create_suggestion_state
+- preview_analysis_state
+
+Espone:
+
+- mode
+- input
+- parsed
+- type
+- project.raw / project.selection / project.effective
+- entity.raw / entity.selection / entity.effective
+- suggestion
+- command
+- preview
+- readiness
+- diagnostics
+
+Non modifica:
+
+- parser
+- matching
+- command_intent_state
+- create_suggestion_state
+- select value/default
+- button_input_confirm payload
+- insert_event / update_event
+- DB
 
 Dopo insert_project / insert_entity:
 
@@ -715,6 +821,40 @@ Contenuto:
 Evento in modifica · Premi Annulla modifica per uscire.
 
 Per uscire dall’edit flow l’utente deve premere Annulla modifica.
+
+Nota post Input Analysis Result:
+
+input_analysis_result rende esplicita questa regola a livello effective.
+
+In edit mode:
+
+- raw command può essere true
+- rawIsCommand può essere true
+- rawIsPureCommand può essere true
+- isSuppressedByEditMode = true
+- effective command = false
+- effectiveFlowType = edit
+- effective event flow resta prevalente
+
+Caso noto:
+
+edit mode + input “crea”
+
+Comportamento attuale:
+
+- Command Intent non prende controllo del flow
+- container_command_intent resta nascosto
+- l’utente resta in modifica evento
+- eventuali suggestion project/entity possono comparire se create_suggestion_state produce contenuti
+
+Residuo UX:
+
+manca una guidance esplicita tipo:
+“Se vuoi creare qualcosa, annulla prima la modifica evento.”
+
+Nodo futuro:
+
+COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
 
 ------------------------------------------------
 COMMAND INTENT FLOW
@@ -910,7 +1050,7 @@ Command Intent NON deve:
 - anticipare dashboard/KPI
 
 ------------------------------------------------
-UI READINESS / VISIBILITY FLOW
+UI READINESS / INPUT ANALYSIS RESULT FLOW
 ------------------------------------------------
 
 UI Readiness / Visibility Aggregator è stato implementato a primo livello controllato.
@@ -924,11 +1064,16 @@ Obiettivo:
 - ridurre rendering progressivo
 - risolvere flash bottom bar
 - preservare parser / matching / command / suggestion / save flow
+- introdurre progressivamente input_analysis_result come lettura UI coerente
+- distinguere raw / selection / effective state
+- ridurre letture sparse senza sostituire i moduli specializzati
 
 Componenti:
 
 - ui_visibility_mode
 - ui_visibility_state
+- preview_analysis_state
+- input_analysis_result
 - text_input_analysis_loading
 - text_edit_mode_notice
 
@@ -1010,7 +1155,16 @@ Espone flag:
 - showCancelEdit
 - showCancelInputHome
 
-Componenti governati:
+Componenti ancora governati da ui_visibility_state o da logiche residue:
+
+- container_input
+- text_input_analysis_loading
+- button_input_confirm
+- btn_cancel_edit
+- btn_cancel_input_home
+- altri controlli strutturali residui
+
+Componenti migrati a input_analysis_result:
 
 - container_command_intent
 - sintesi
@@ -1019,10 +1173,6 @@ Componenti governati:
 - select1
 - select_project
 - select_entity
-- button_input_confirm
-- btn_cancel_edit
-- btn_cancel_input_home
-- container_input
 
 Componenti non governati direttamente:
 
@@ -1050,6 +1200,13 @@ Risultati:
 ✔ Hidden principali centralizzati
 ✔ flow event / command più stabile
 ✔ edit mode più chiaro
+✔ preview_analysis_state introdotto per hint/status Sintesi
+✔ input_analysis_result introdotto come layer compositivo
+✔ una parte degli Hidden principali migrata a input_analysis_result
+✔ edit mode + input vuoto stabilizzato
+✔ Home idle container nascosti durante edit mode
+✔ Dati evento / Sintesi / Conferma nascosti con edit input vuoto
+✔ micro-copy notice associazioni mancanti coerente con presenza suggerimenti
 
 ------------------------------------------------
 INPUT_HOME
@@ -1479,10 +1636,10 @@ Non modifica:
 - lifecycle evento
 
 ------------------------------------------------
-UI_VISIBILITY_MODE / UI_VISIBILITY_STATE
+UI_VISIBILITY_MODE / UI_VISIBILITY_STATE / INPUT_ANALYSIS_RESULT
 ------------------------------------------------
 
-Questi helper appartengono al layer UI Readiness.
+Questi helper appartengono alla linea UI Readiness / Input Analysis.
 
 Non fanno parte di ui_state.parsed.
 
@@ -1499,6 +1656,7 @@ ui_visibility_mode:
   - command
 - aggiornata da trigger_parse_debounced
 - usata da ui_visibility_state
+- letta anche da input_analysis_result
 - non salva dati
 - non sostituisce command_intent_state
 
@@ -1509,30 +1667,92 @@ ui_visibility_state:
 - Transformer Retool
 - aggregatore read-only
 - espone flag di visibilità
-- governa Hidden principali del flow input
+- governa ancora componenti strutturali residui
 - non modifica dati
 - non modifica parser
 - non modifica matching
 - non modifica DB
 - non costruisce payload
+- non è deprecato
+
+Componenti ancora collegati a ui_visibility_state:
+
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
+- btn_cancel_edit
+- btn_cancel_input_home
+- button_input_confirm
+- eventuali controlli strutturali residui
+
+Componenti migrati a input_analysis_result:
+
+- sintesi.Hidden
+- text_event_data_title.Hidden
+- select1.Hidden
+- select_project.Hidden
+- select_entity.Hidden
+- container_command_intent.Hidden
+- container_association_suggestions.Hidden
+
+---
+
+preview_analysis_state:
+
+- Transformer Retool read-only
+- fonte specializzata preview/hint
+- raccoglie:
+  - hints
+  - hasHints
+  - hasBlockingAmbiguity
+  - hasWarning
+  - statusLabel
+  - statusColor
+  - statusBg
+  - dotColor
+  - missingAssociationTitle
+  - showMissingAssociationNotice
+
+---
+
+input_analysis_result:
+
+- Transformer Retool compositivo read-only
+- legge ui_visibility_state solo come raw diagnostic
+- calcola una readiness effettiva propria
+- espone raw / selection / effective state
+- fonte UI controllata parziale
 
 Relazione con input system:
 
 input_home / input_raw
 → trigger_parse_debounced
 → ui_visibility_mode
-→ ui_visibility_state
-→ Hidden principali del flow input
+→ command_intent_state
+→ parse_input_controlled
+→ project_state / entity_state
+→ create_suggestion_state
+→ preview_analysis_state
+→ input_analysis_result
+→ Hidden principali migrati
 
 Relazione con futuro Input Analysis Model:
 
-ui_visibility_state è solo un primo livello UI/readiness.
+input_analysis_result è il primo layer compositivo concreto,
+ma non è ancora Input Analysis Model completo.
 
 Non è:
 
-- Single Interpretation Layer
 - Event Interpretation Engine
-- modello unico di analisi input
+- motore monolitico
+- sostituto del parser
+- sostituto del matching
+- sostituto delle select
+- fonte payload save
+
+Regola anti-loop:
+
+finché input_analysis_result legge ui_visibility_state come raw diagnostic,
+ui_visibility_state non deve leggere input_analysis_result.
 
 ------------------------------------------------
 HELPER EDIT STATE
@@ -2294,19 +2514,34 @@ IMPORTANTE:
 ⚠ “Da verificare” resta interno alla Sintesi e non è blocco autonomo
 ⚠ hint bloccanti / warning informativi / suggestion visuali non sono ancora separati in container indipendenti
 
-Nota post UI Readiness:
+Nota post Preview Analysis State / Input Analysis Result:
+
+La logica hint/status principale della Sintesi è ora raccolta in:
+
+preview_analysis_state
 
 La visibilità della Sintesi è ora governata da:
 
-ui_visibility_state.showEventPreview
+input_analysis_result.readiness.canShowEventPreview
 
 La Sintesi viene nascosta durante command intent puro,
 mentre container_command_intent viene mostrato tramite:
 
-ui_visibility_state.showCommandContainer
+input_analysis_result.readiness.canShowCommandContainer
 
-Il contenuto interno della Sintesi non è stato modificato.
-La Sintesi resta un layer ibrido.
+Il contenuto interno della Sintesi non è stato trasformato in view pura.
+La Sintesi resta un layer ibrido perché conserva ancora:
+
+- rendering HTML
+- label cleaning
+- highlight
+- layout visuale
+- micro-copy finale
+
+Nota:
+
+input_analysis_result non ricalcola gli hint.
+Li legge da preview_analysis_state.
 
 AGGIORNAMENTO MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL:
 
@@ -2696,7 +2931,15 @@ hint
 
 Visibilità preview:
 
-ui_visibility_state.showEventPreview
+input_analysis_result.readiness.canShowEventPreview
+
+Fonte hint/status:
+
+preview_analysis_state
+
+Fonte compositiva UI/readiness:
+
+input_analysis_result
 
 Regola:
 
@@ -3159,12 +3402,14 @@ Nota post UI Readiness:
 ui_visibility_mode può anticipare visivamente il flow command,
 ma command_intent_state resta la fonte funzionale del comando.
 
-ui_visibility_state governa la visibilità di:
+Dopo Input Analysis Result Controlled UI Consumption,
+input_analysis_result governa la visibilità di:
 
 - container_command_intent
 - sintesi
 - Dati evento
-- Conferma evento
+
+button_input_confirm resta fuori dalla migrazione corrente.
 
 I comandi puri restano esclusi dal salvataggio evento.
 
@@ -3251,16 +3496,18 @@ Dati evento contiene le fonti salvabili:
 
 Le select non vengono spostate nella Sintesi.
 
-Visibilità post UI Readiness:
+Visibilità post Input Analysis Result Controlled UI Consumption:
 
 La sezione Dati evento è governata da:
 
-ui_visibility_state.showEventData
+input_analysis_result.readiness.canShowEventData
 
 Regola:
 
 - visibile nel flow evento
+- visibile nel flow edit con input valorizzato
 - nascosta nel flow command
+- nascosta quando edit mode ha input vuoto
 - nascosta quando input flow non è pronto
 
 CONFERMA EVENTO
@@ -3331,7 +3578,24 @@ REGOLE:
 ✔ suggestion ignorata non blocca salvataggio
 ✔ comando puro riconosciuto da command_intent_state non deve arrivare al save flow evento
 ✔ container_command_intent sostituisce Sintesi/Dati evento per command puri
-✔ button_input_confirm è visibile solo tramite ui_visibility_state.showConfirm
+⚠ button_input_confirm non è ancora migrato completamente a input_analysis_result
+
+Nota:
+
+button_input_confirm resta un punto delicato perché unisce:
+
+- visibilità bottone
+- disabled state
+- input vuoto
+- ambiguità project/entity
+- edit mode
+- save readiness
+- payload insert/update
+- no-op edit guard
+
+Nodo futuro dedicato:
+
+BUTTON CONFIRM READINESS ALIGNMENT
 
 ✔ gestione edit_mode:
 
@@ -3394,7 +3658,8 @@ button_input_confirm non legge command_intent_state come fonte dati salvabile.
 
 command_intent_state serve solo a distinguere e guidare il flow command.
 I comandi puri devono essere intercettati prima del salvataggio evento.
-La separazione visiva viene gestita da ui_visibility_mode / ui_visibility_state.
+La separazione visiva viene gestita ora da ui_visibility_mode + input_analysis_result per i componenti migrati.
+ui_visibility_state resta operativo per componenti strutturali residui.
 La separazione funzionale viene gestita da command_intent_state.
 
 create_suggestion_state può aiutare a creare project/entity,
@@ -4009,7 +4274,7 @@ duplicato project/entity da command intent
 comando generico incompleto
 command intent non eseguibile
 micro-flash feedback project/entity
-linting Retool residui
+19 linting Retool attuali
 alias edit generico non riconosciuto
 candidate suggestion non sicura
 
@@ -4026,7 +4291,8 @@ COMPORTAMENTO:
 ✔ non mostrare bottone crea se l’elemento esiste già
 ✔ guidare l’utente se il comando è incompleto
 ✔ non salvare eventi se l’input è comando puro
-✔ non trattare ui_visibility_state come fonte dati
+✔ non trattare ui_visibility_state come fonte dati salvabile
+✔ non trattare input_analysis_result come fonte payload save
 ✔ non correggere linting o micro-flash dentro nodi non dedicati
 
 TEST VALIDATI
@@ -4443,6 +4709,145 @@ Validazioni finali:
 ✔ parser invariato
 ✔ matching invariato
 ✔ save flow invariato
+
+INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS — TEST VALIDATI:
+
+1. Evento normale
+
+30 euro spesa materiale
+
+Esito:
+
+- Sintesi visibile
+- Dati evento visibili
+- select visibili
+- command container nascosto
+
+RISULTATO:
+OK
+
+---
+
+2. Euro senza direzione
+
+30 euro materiale
+
+Esito:
+
+- warning “Definisci spesa o incasso”
+- Dati evento visibili
+- salvataggio ancora consentito se non ci sono blocchi matching
+
+RISULTATO:
+OK
+
+---
+
+3. Durata normalizzata
+
+1 ora e 15 minuti lavoro
+
+Esito:
+
+- amount 75
+- unit minuti
+- type Tempo
+- hint Normalizzato: 75 minuti
+- input_analysis_result readiness coerente
+
+RISULTATO:
+OK
+
+---
+
+4. Ambiguità entity
+
+30 euro cliente test
+
+Esito:
+
+- entity ambigua
+- hint “Più entità trovate”
+- canConfirm false
+- Sintesi e Dati evento visibili
+
+RISULTATO:
+OK
+
+---
+
+5. Command puro
+
+crea progetto Nome Test
+
+Esito:
+
+- effectiveFlowType command
+- container_command_intent visibile
+- Sintesi nascosta
+- Dati evento nascosti
+- project/entity raw ignorati come dati evento
+
+RISULTATO:
+OK
+
+---
+
+6. Edit mode + input crea
+
+Esito:
+
+- raw command true
+- command effective false
+- edit mode prevale
+- container_command_intent nascosto
+- event flow preservato
+- residuo UX guidance tracciato
+
+RISULTATO:
+OK
+
+---
+
+7. Edit mode + input vuoto
+
+Esito:
+
+- Sintesi nascosta
+- Dati evento nascosti
+- Conferma nascosta
+- Home idle container nascosti
+- Annulla modifica visibile
+
+RISULTATO:
+OK
+
+---
+
+8. Suggestion container
+
+Esito:
+
+- container_association_suggestions governato da input_analysis_result
+- non appare vuoto
+- la notice associazioni mancanti non promette suggerimenti se non sono visibili
+
+RISULTATO:
+OK
+
+---
+
+Validazioni finali:
+
+✔ preview_analysis_state operativo
+✔ input_analysis_result operativo come fonte UI parziale
+✔ ui_visibility_state ancora operativo e non deprecato
+✔ parser invariato
+✔ matching invariato
+✔ create_suggestion_state invariato
+✔ command_intent_state invariato
+✔ save flow invariato
+✔ DB invariato
 
 ------------------------------------------------
 
@@ -5046,12 +5451,18 @@ command intent implementato a primo livello controllato
 container suggestion UI rifinito a livello mobile base
 create_suggestion_state ancora helper Retool, non modulo engine separato
 command_intent_state ancora helper Retool, non modulo engine separato
-input analysis model unico non implementato
+input_analysis_result implementato come layer compositivo parziale
+Input Analysis Model completo non implementato
 ui_visibility_state non sostituisce match engine
-rendering progressivo input evento normale ridotto tramite UI Readiness
+ui_visibility_state ancora operativo e non deprecato
+Full Visibility Migration non completata
+button_input_confirm non migrato
+save readiness non centralizzata
+rendering progressivo input evento normale ridotto tramite UI Readiness e input_analysis_result
 micro-flash feedback project/entity ancora presente
-5 linting Retool residui ancora presenti
+19 linting Retool attualmente presenti
 “modifica” generico non ancora riconosciuto come guida edit
+“crea” in edit mode soppresso correttamente ma senza guidance esplicita
 cleanup obsolete UI guards / query reduction non ancora eseguito
 
 COMMAND INTENT:
@@ -5099,6 +5510,8 @@ progressivamente normalizzato
 capace di assistere la creazione project/entity senza automatismi nascosti
 capace di distinguere comandi strutturali puri da eventi ordinari a primo livello controllato
 capace di coordinare la visibilità del flow input tramite UI Readiness a primo livello controllato
+capace di comporre raw / selection / effective state tramite input_analysis_result
+capace di alimentare progressivamente la UI senza diventare un motore monolitico
 
 NON:
 
@@ -5108,11 +5521,86 @@ semantico avanzato
 decisionale
 orientato a KPI prima della qualità dati
 intent engine globale o assistente conversazionale avanzato
-Input Analysis Model completo
+Input Analysis Model completo già concluso
 Event Interpretation Engine
-fonte unica interpretativa già implementata
+fonte unica interpretativa completa già implementata
+mega-motore monolitico che sostituisce i moduli specializzati
 
 NEXT STEP CONSIGLIATI
+
+INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+
+Obiettivo futuro:
+
+completare in modo controllato la migrazione visibility ancora rimasta su ui_visibility_state.
+
+Focus:
+
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
+- btn_cancel_edit / btn_cancel_input_home
+- button_input_confirm.Hidden senza toccare payload
+- evitare dipendenze circolari tra ui_visibility_state e input_analysis_result
+- decidere se ui_visibility_state resta wrapper minimo o viene deprecato gradualmente
+
+Vincoli:
+
+- non modificare parser
+- non modificare matching
+- non modificare command_intent_state
+- non modificare create_suggestion_state
+- non modificare select value/default
+- non modificare save flow
+- non modificare DB
+
+---
+
+LINTING / RETOOL QUERY SAFETY PASS
+
+Obiettivo futuro:
+
+analizzare e ridurre le 19 segnalazioni linting Retool attuali.
+
+Focus:
+
+- misleading line break before "?"
+- raw_input non definito nei body query
+- id non definito nei body query
+- distinzione falsi positivi statici / rischi runtime reali
+
+Vincoli:
+
+- non aprire refactor globale
+- non modificare logiche funzionali se non necessario
+- procedere per warning identificati
+
+---
+
+BUTTON CONFIRM READINESS ALIGNMENT
+
+Obiettivo futuro:
+
+allineare button_input_confirm a input_analysis_result dove possibile,
+senza toccare payload e save flow.
+
+Focus:
+
+- Hidden
+- Disabled
+- canConfirm
+- ambiguity
+- input vuoto
+- edit mode
+- no-op guard
+
+Vincoli:
+
+- non modificare insert_event / update_event
+- non modificare payload
+- non modificare parser/matching
+- testare create / edit / no-op / command / ambiguity / empty input
+
+---
 
 PREVIEW MODEL / HINT STATE CONSOLIDATION
 
@@ -5123,47 +5611,25 @@ consolidare hint/warning ancora embedded nella Sintesi.
 Focus:
 
 - “Da verificare” dentro Sintesi
+- status OK + card Da verificare
 - separazione hint bloccanti / warning informativi / suggestion visuali
 - preview più vicina a view pura
 - evitare divergenze tra ciò che l’utente legge e ciò che viene salvato
 
 ---
 
-INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
 
 Obiettivo futuro:
 
-valutare un layer unico di analisi interrogabile dalle UI.
+valutare guidance quando command intent viene soppresso in edit mode.
 
-Fonti oggi distribuite:
+Esempio:
 
-- parse_input_controlled
-- ui_state.parsed
-- project_state
-- entity_state
-- create_suggestion_state
-- command_intent_state
-- ui_visibility_mode
-- ui_visibility_state
-- preview logic
-- select values
+edit mode + “crea”
+→ suggerire: “Se vuoi creare qualcosa, annulla prima la modifica evento.”
 
-Nota:
-
-UI Readiness / Visibility Aggregator è già implementato a primo livello,
-ma non equivale a Input Analysis Model completo.
-
-Vincolo:
-
-non introdurre refactor globale senza nodo dedicato.
-
----
-
-COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
-
-Obiettivo futuro:
-
-valutare riconoscimento di:
+Valutare anche riconoscimento di:
 
 - modifica
 - correggi
@@ -5171,44 +5637,20 @@ valutare riconoscimento di:
 
 come guida edit generica.
 
-Vincolo:
-
-non confondere frasi operative reali come:
-
-- modifica preventivo villa
-- correggi testo brochure
-- cambia materiale progetto
-
-con comando guida.
-
 ---
 
-FEEDBACK MICRO-FLASH CLEANUP
+SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Obiettivo futuro:
 
-analizzare micro-flash residuo su feedback project/entity.
+verificare differenze suggestion tra create flow e edit flow.
 
-Vincoli:
+Focus:
 
-- non modificare insert_project / insert_entity
-- non modificare save flow
-- intervenire solo se il flash è identificabile e fastidioso
-
----
-
-LINTING / MINOR CLEANUP
-
-Obiettivo futuro:
-
-risolvere 5 linting Retool residui.
-
-Vincoli:
-
-- non modificare parser
-- non modificare matching
-- non modificare save flow
-- non aprire refactor
+- missing association notice
+- suggestion operativa
+- container suggestion non vuoto
+- create_suggestion_state in edit mode
 
 ---
 
@@ -5216,62 +5658,13 @@ CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 
 Obiettivo futuro:
 
-rimuovere regex/guardie duplicate ormai sostituite da ui_visibility_state.
+rimuovere guardie duplicate ormai sostituite da input_analysis_result o ui_visibility_state.
 
 Vincoli:
 
-- procedere uno alla volta
-- backup prima di ogni rimozione
-- test dopo ogni micro-rimozione
-- non modificare parser/matching/save flow
-
----
-
-DATA STRUCTURE / ENTITY HIERARCHY
-
-Obiettivo futuro:
-
-valutare gerarchie, alias, deduplicazione e relazioni entity-project.
-
-Vincolo:
-
-non modificare schema DB senza nodo dedicato.
-
----
-
-ECONOMIC DIRECTION ADVANCED
-
-Obiettivo futuro non attivo:
-
-valutare amount firmato
-valutare direction field
-valutare regole contabili avanzate Spesa/Incasso
-
----
-
-DURATION ADVANCED — GIORNI / SETTIMANE
-
-Obiettivo futuro:
-
-decidere eventuale gestione di giorni/settimane,
-giornata lavorativa e mezza giornata.
-
-Vincolo:
-
-evitare conversioni automatiche ambigue.
-
----
-
-AZIONI RAPIDE OPERATIVE
-
-Obiettivo futuro:
-
-rendere operative le Azioni rapide senza duplicare command_intent_state,
-ui_visibility_state, type classification o button_input_confirm.
-
-Vincolo:
-
-nessun evento salvato senza conferma utente.
+- non prima della Visibility Migration
+- non prima di valutare button_input_confirm
+- non prima di verificare linting principali
 
 CHANGELOG
 
@@ -5628,3 +6021,50 @@ v14 — 2026-05-18
 - 5 linting Retool residui documentati
 - cleanup obsolete UI guards / query reduction rimandato
 - aggiornati next step consigliati post UI Readiness
+
+v15 — 2026-05-20
+
+- integrazione PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
+- documentato preview_analysis_state come Transformer read-only
+- documentato preview_analysis_state come fonte hint/status/warning/Da verificare/associazioni mancanti della Sintesi
+- documentato che preview_analysis_state non modifica parser, matching, command_intent_state, create_suggestion_state, save flow o DB
+
+- integrazione INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC
+- documentato input_analysis_result come Transformer compositivo read-only
+- documentata distinzione raw / selection / effective
+- documentato event / command / edit effective flow
+- documentato command raw vs command effective
+- documentato edit mode prevalente su command intent
+- documentato project/entity raw match vs effective usability
+- documentato che input_analysis_result non alimenta select_project / select_entity
+- documentato che input_analysis_result non costruisce payload save
+- documentato che input_analysis_result non sostituisce parser o matching
+
+- integrazione INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
+- documentato input_analysis_result come fonte UI controllata parziale
+- documentata migrazione di sintesi.Hidden a input_analysis_result
+- documentata migrazione di text_event_data_title / select1 / select_project / select_entity Hidden a input_analysis_result
+- documentata migrazione di container_command_intent.Hidden a input_analysis_result
+- documentata migrazione di container_association_suggestions.Hidden a input_analysis_result
+- documentata micro-copy notice associazioni mancanti coerente con presenza reale suggerimenti
+- documentato edit mode + input vuoto stabilizzato
+- documentato Home idle container nascosti durante edit mode
+- documentato Dati evento / Sintesi / Conferma nascosti con edit input vuoto
+- documentato che solo Annulla modifica resta visibile in edit input vuoto
+- documentato che ui_visibility_state resta operativo e non deprecato
+- documentato che container_input / loading / cancel / confirm restano fuori dalla migrazione corrente
+- documentato che button_input_confirm non è ancora migrato
+- documentato che button_input_confirm payload resta invariato
+- documentato che save readiness non è centralizzata
+- documentato aumento linting Retool a 19
+- aggiornati limiti attuali
+- aggiornati test validati
+- aggiornati next step consigliati
+- DB invariato
+- parser invariato
+- matching invariato
+- create_suggestion_state invariato
+- command_intent_state invariato
+- insert_event / update_event invariati
+- insert_project / insert_entity invariati
+- nessun output/KPI anticipato

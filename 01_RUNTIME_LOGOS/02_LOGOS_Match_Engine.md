@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v08
+# 02_LOGOS_Match_Engine_v09
 
-DATA: 2026-05-18
+DATA: 2026-05-20
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -38,6 +38,14 @@ C (Completezza): 10/10
 - chiarito che ui_visibility_state non modifica matching, select o confirm guard
 - chiarito che ui_visibility_mode non è parte del Match Engine
 - documentato residuo Input Analysis Model / Single Interpretation Layer come futuro non attivo
+- documentato rapporto tra Match Engine e preview_analysis_state
+- documentato rapporto tra Match Engine e input_analysis_result
+- chiarito che input_analysis_result legge project_state / entity_state ma non sostituisce il matching
+- chiarito che input_analysis_result distingue raw match / selection / effective usability
+- chiarito che input_analysis_result non modifica project_state / entity_state
+- chiarito che input_analysis_result non modifica select_project / select_entity
+- chiarito che input_analysis_result non modifica confirm guard funzionale o payload
+- documentato che il Match Engine resta invariato dopo Controlled UI Consumption Pass
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -59,6 +67,10 @@ Q (Qualità): 9.5/10
 - evitata confusione tra aggregatore Hidden e Match Engine
 - confermato che UI Readiness non modifica la logica matching
 - confermato che il Match Engine resta fonte minima project/entity per eventi ordinari
+- input_analysis_result documentato come layer compositivo, non come nuovo motore matching
+- preservata separazione tra matching, selection, suggestion, command e UI readiness
+- evitata confusione tra raw match e dato effettivamente usabile nel flow corrente
+- mantenuto il principio select = decisione finale salvabile
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -85,6 +97,14 @@ D (Deployabilità): 10/10
 - suggestion project/entity non regressiva dopo UI Readiness validata
 - DB invariato
 - matching invariato
+- Preview Analysis State validato senza regressione matching
+- Input Analysis Result Read-only Diagnostic validato senza regressione matching
+- Controlled UI Consumption Pass validato senza regressione matching
+- project_state / entity_state invariati
+- select_project / select_entity invariati
+- create_suggestion_state invariato
+- command_intent_state invariato
+- button_input_confirm payload invariato
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -109,6 +129,11 @@ Il documento guida:
 - distinzione tra project_state/entity_state e ui_visibility_state
 - chiarimento che ui_visibility_state non è fonte matching
 - chiarimento che ui_visibility_mode non è Match Engine
+- rapporto tra Match Engine e preview_analysis_state
+- rapporto tra Match Engine e input_analysis_result
+- chiarimento che input_analysis_result non è Match Engine
+- chiarimento che input_analysis_result compone raw / selection / effective state ma non calcola matches
+- chiarimento che il Controlled UI Consumption Pass non ha modificato il matching
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -253,6 +278,67 @@ Non riconosce project/entity.
 Non è Match Engine.
 Non è Input Analysis Model completo.
 
+11. MATCHING ≠ INPUT_ANALYSIS_RESULT
+
+input_analysis_result non è il Match Engine.
+
+Il Match Engine resta composto da:
+
+- project_state
+- entity_state
+
+input_analysis_result può leggere:
+
+- project_state.data
+- entity_state.data
+- select_project.value
+- select_entity.value
+- create_suggestion_state.data
+- command_intent_state.data
+- preview_analysis_state.value
+
+ma non calcola:
+
+- matches
+- count
+- hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
+
+input_analysis_result distingue:
+
+- raw match:
+  risultato tecnico di project_state / entity_state
+
+- selection:
+  valore attuale delle select
+
+- effective usability:
+  se quel match/valore è realmente utilizzabile nel flow corrente
+
+Esempi:
+
+- in event flow, project/entity raw possono diventare usable se coerenti
+- in command flow, project/entity raw possono esistere ma vengono ignorati come dati evento
+- in edit mode, command raw può essere true ma command effective viene soppresso
+
+Regole:
+
+- input_analysis_result NON modifica project_state
+- input_analysis_result NON modifica entity_state
+- input_analysis_result NON modifica select_project / select_entity
+- input_analysis_result NON crea project/entity
+- input_analysis_result NON modifica create_suggestion_state
+- input_analysis_result NON modifica command_intent_state
+- input_analysis_result NON modifica button_input_confirm payload
+- input_analysis_result NON salva dati
+- input_analysis_result NON scrive DB
+
+Il suo ruolo è compositivo/readiness UI,
+non matching.
+
 ------------------------------------------------
 ENTITÀ COINVOLTE
 ------------------------------------------------
@@ -286,6 +372,8 @@ input_home
 → create_suggestion_state  
 → ui_visibility_state  
 → select_project / select_entity  
+→ preview_analysis_state  
+→ input_analysis_result  
 → preview / hint / highlight / suggestion container  
 → oppure container_command_intent  
 → button_input_confirm oppure command action  
@@ -342,18 +430,46 @@ Dopo UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL:
 - ui_visibility_state non modifica il Match Engine
 - il Match Engine resta fonte minima project/entity per eventi ordinari
 
+Dopo PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER:
+
+- preview_analysis_state raccoglie hint/status/warning/Da verificare/associazioni mancanti della Sintesi
+- preview_analysis_state può leggere stati derivati da project_state / entity_state
+- preview_analysis_state non modifica project_state / entity_state
+- preview_analysis_state non calcola matching
+- preview_analysis_state non seleziona project/entity
+- preview_analysis_state non modifica confirm guard o payload
+
+Dopo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS:
+
+- input_analysis_result legge project_state / entity_state come raw match source
+- input_analysis_result legge select_project / select_entity come selection source
+- input_analysis_result calcola project/entity effective usability
+- input_analysis_result distingue event / command / edit flow
+- input_analysis_result può ignorare project/entity raw in command flow
+- input_analysis_result può sopprimere command effective in edit mode
+- input_analysis_result governa parte della UI/readiness
+- input_analysis_result non modifica il Match Engine
+- input_analysis_result non modifica project_state / entity_state
+- input_analysis_result non modifica select_project / select_entity
+- input_analysis_result non modifica create_suggestion_state
+- input_analysis_result non modifica command_intent_state
+- input_analysis_result non modifica button_input_confirm payload
+- input_analysis_result non salva dati
+
 ------------------------------------------------
 PIPELINE MATCH
 ------------------------------------------------
 
-Pipeline match attuale post UI READINESS / VISIBILITY AGGREGATOR:
+Pipeline match attuale post INPUT ANALYSIS RESULT CONTROLLED UI CONSUMPTION:
 
 input_raw  
 → project_state / entity_state  
 → matches / count / isAmbiguous / singleMatch  
 → create_suggestion_state  
-→ ui_visibility_state legge stato matching per visibilità  
+→ ui_visibility_state legge stato matching per visibilità strutturale residua  
 → select_project / select_entity  
+→ preview_analysis_state legge stato matching per hint/status preview  
+→ input_analysis_result legge raw match + selection + effective usability  
 → preview hint / highlight / suggestion container  
 → button_input_confirm guard  
 → project_id / entity_id salvati solo se selezionati    
@@ -416,6 +532,21 @@ Legge ambiguità non risolta.
 command_intent_state NON modifica questa regola.
 
 ui_visibility_state NON modifica questa regola.
+
+preview_analysis_state NON modifica questa regola.
+
+input_analysis_result NON modifica questa regola.
+
+input_analysis_result può comporre lo stato effettivo del flow,
+ma non cambia la fonte minima matching:
+
+- project_state
+- entity_state
+
+e non cambia le fonti salvabili:
+
+- select_project.value
+- select_entity.value
 
 UI Readiness può decidere se mostrare o nascondere componenti,
 ma non cambia la fonte matching e non decide project/entity.
@@ -772,6 +903,22 @@ Non può valorizzare:
 
 La selezione automatica resta limitata a singleMatch.
 
+Nota post Input Analysis Result:
+
+input_analysis_result non partecipa all’auto-select.
+
+Non può valorizzare:
+
+- select_project
+- select_entity
+
+Non può sostituire:
+
+- project_state.data.singleMatch
+- entity_state.data.singleMatch
+
+La selezione automatica resta limitata a singleMatch prodotto da project_state / entity_state.
+
 ---
 
 select_project:
@@ -938,6 +1085,26 @@ ui_visibility_state non risolve ambiguità.
 ui_visibility_state non seleziona project/entity.
 ui_visibility_state non cambia il confirm guard logico.
 
+Nota post Input Analysis Result:
+
+input_analysis_result può leggere ambiguità e selection per calcolare readiness/effective usability,
+ma non risolve ambiguità.
+
+input_analysis_result non seleziona project/entity.
+input_analysis_result non cambia il confirm guard funzionale.
+input_analysis_result non modifica button_input_confirm payload.
+
+Il blocco funzionale resta:
+
+- project ambiguo + select_project vuoto
+- entity ambigua + select_entity vuoto
+
+In command flow, eventuali raw match project/entity possono essere presenti,
+ma non vengono considerati dati evento usabili.
+
+In edit flow, la regola matching resta quella degli eventi ordinari,
+mentre command intent viene soppresso a livello effective.
+
 Se l’input è comando puro:
 
 - il confirm guard evento non viene usato
@@ -1011,9 +1178,19 @@ Non separa:
 - “Da verificare”
 - suggestion create
 
-Questa separazione resta demandata a un nodo futuro:
+Dopo Preview Analysis State:
 
-PREVIEW MODEL / HINT STATE CONSOLIDATION
+preview_analysis_state raccoglie a primo livello hint/status/warning/Da verificare/associazioni mancanti della Sintesi.
+
+Questo riduce la logica hint embedded nella Sintesi,
+ma non rende ancora la preview una view pura.
+
+input_analysis_result legge preview_analysis_state e lo compone nella propria readiness/UI state.
+
+Restano comunque demandati a nodi futuri:
+
+- PREVIEW MODEL / HINT STATE CONSOLIDATION
+- STATUS SEMANTICS ALIGNMENT
 
 ---
 
@@ -1142,20 +1319,25 @@ modifica evento
 Il command intent quindi riduce un caso di falsa preview evento,
 ma non rende la preview un layer puro.
 
-Dopo UI Readiness:
+Dopo Input Analysis Result Controlled UI Consumption:
 
-- la visibilità della preview è governata da ui_visibility_state.showEventPreview
-- container_command_intent è governato da ui_visibility_state.showCommandContainer
-- container_association_suggestions è governato da ui_visibility_state.showAssociationSuggestions
-- Dati evento sono governati da ui_visibility_state.showEventData
-- Conferma evento è governata da ui_visibility_state.showConfirm
+- la visibilità della preview è governata da input_analysis_result.readiness.canShowEventPreview
+- container_command_intent è governato da input_analysis_result.readiness.canShowCommandContainer
+- container_association_suggestions è governato da input_analysis_result.readiness.canShowAssociationSuggestions
+- Dati evento sono governati da input_analysis_result.readiness.canShowEventData
+- Conferma evento non è ancora migrata completamente a input_analysis_result
+- ui_visibility_state resta operativo per componenti strutturali residui
 
 Nota:
 
 questo non modifica il matching.
 
 La preview continua a leggere project_state / entity_state per hint e highlight.
-ui_visibility_state decide solo quando mostrare i componenti.
+input_analysis_result decide ora parte della visibility/readiness UI.
+
+ui_visibility_state resta operativo per componenti strutturali residui.
+
+Nessuno dei due modifica il matching.
 
 ------------------------------------------------
 RELAZIONE CON CREATE SUGGESTION
@@ -1252,15 +1434,27 @@ Se project/entity è ambiguo:
 - create suggestion non viene mostrata per quel layer
 - Conferma resta disabilitata finché l’utente non sceglie manualmente
 
-Nota post UI Readiness:
+Dopo Input Analysis Result Controlled UI Consumption:
 
-container_association_suggestions è ora visibile/nascosto tramite ui_visibility_state.showAssociationSuggestions.
+container_association_suggestions è ora visibile/nascosto tramite:
+
+input_analysis_result.readiness.canShowAssociationSuggestions.
 
 Questo non modifica create_suggestion_state.
 
 create_suggestion_state resta il layer che consuma il matching
 e propone eventuale creazione controllata.
 
+Regola consolidata:
+
+missing association notice
+≠
+suggestion operativa
+
+input_analysis_result può governare la visibilità del container,
+ma non deve inventare contenuti se create_suggestion_state non li produce.
+
+Il container non deve apparire vuoto.
 ------------------------------------------------
 RELAZIONE CON COMMAND INTENT
 ------------------------------------------------
@@ -1345,15 +1539,17 @@ ma questa verifica non sostituisce deduplicazione avanzata,
 alias, fuzzy matching o vincoli DB.
 
 ------------------------------------------------
-RELAZIONE CON UI READINESS / VISIBILITY
+RELAZIONE CON UI READINESS / INPUT ANALYSIS RESULT
 ------------------------------------------------
 
-UI Readiness / Visibility Aggregator è un layer separato dal Match Engine.
+UI Readiness / Input Analysis Result è una linea separata dal Match Engine.
 
 Componenti:
 
 - ui_visibility_mode
 - ui_visibility_state
+- preview_analysis_state
+- input_analysis_result
 
 ---
 
@@ -1405,7 +1601,30 @@ Regola:
 
 il Match Engine resta la fonte minima per project/entity matching.
 
-UI Readiness è solo coordinamento visivo.
+preview_analysis_state:
+
+- legge stati utili a costruire hint/status preview
+- può leggere indirettamente informazioni derivate da project_state / entity_state
+- non calcola matches
+- non calcola singleMatch
+- non seleziona project/entity
+- non modifica il matching
+
+input_analysis_result:
+
+- legge project_state / entity_state come raw match source
+- legge select_project / select_entity come selection source
+- calcola effective usability
+- distingue event / command / edit flow
+- non calcola matches
+- non calcola singleMatch
+- non seleziona project/entity
+- non modifica il matching
+- non modifica confirm payload
+- non salva dati
+
+UI Readiness / Input Analysis Result è coordinamento visivo e compositivo,
+non matching.
 
 Risultato post UI Readiness:
 
@@ -1475,8 +1694,10 @@ CASI NON SUPPORTATI
 - command intent avanzato oltre create project/entity
 - modifica project/entity da command
 - dashboard/report intent
-- input analysis model unico
-- integrazione completa di ui_visibility_state in un Single Interpretation Layer
+- Input Analysis Model completo
+- Full Visibility Migration completa
+- decommission di ui_visibility_state
+- button_input_confirm migrato a input_analysis_result
 - creazione automatica silenziosa project/entity
 
 ---
@@ -1500,11 +1721,14 @@ LIMITI ATTUALI
 - creazione guidata project/entity implementata solo a primo livello controllato
 - command intent create project/entity implementato a primo livello controllato
 - command intent avanzato non implementato
-- input analysis model unico non implementato
-- ui_visibility_state implementato solo come aggregatore UI/readiness
+- input_analysis_result implementato come layer compositivo parziale
+- Input Analysis Model completo non implementato
+- ui_visibility_state ancora operativo e non deprecato
 - ui_visibility_mode implementato solo come latch UI
-- UI Readiness non è Match Engine
-- UI Readiness non è Input Analysis Model completo
+- UI Readiness / Input Analysis Result non è Match Engine
+- Full Visibility Migration non completata
+- button_input_confirm non migrato
+- save readiness non centralizzata
 - cleanup obsolete UI guards / query reduction non ancora eseguito
 - nessuna creazione automatica silenziosa project/entity
 - nessun audit trail dedicato per creazione project/entity
@@ -1536,6 +1760,11 @@ Risolto a primo livello:
 ✔ container vuoto durante digitazione risolto
 ✔ bottom bar flash risolto
 ✔ flow event / command stabilizzato a primo livello
+✔ preview_analysis_state introdotto senza modificare matching
+✔ input_analysis_result introdotto senza modificare matching
+✔ raw / selection / effective state introdotti
+✔ Controlled UI Consumption Pass completato senza regressione matching
+✔ visibility preview/data/command/suggestion migrata parzialmente a input_analysis_result
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
@@ -1650,6 +1879,25 @@ STATO DOPO UI READINESS / VISIBILITY AGGREGATOR:
 UI Readiness non risolve il problema strutturale del match engine avanzato.
 Aggiunge un layer separato per visibilità/readiness UI.
 
+STATO DOPO PREVIEW ANALYSIS STATE / INPUT ANALYSIS RESULT:
+
+✔ preview_analysis_state introdotto come layer read-only preview/hint
+✔ input_analysis_result introdotto come layer compositivo read-only
+✔ raw / selection / effective state introdotti
+✔ input_analysis_result legge project_state / entity_state ma non li sostituisce
+✔ input_analysis_result legge select_project / select_entity ma non li valorizza
+✔ input_analysis_result distingue raw match da effective usability
+✔ in command flow project/entity raw non diventano dati evento usabili
+✔ in edit flow command intent viene soppresso a livello effective
+✔ Controlled UI Consumption Pass completato senza modificare il matching
+✔ Match Engine invariato
+✔ project_state / entity_state restano fonte minima matching
+
+Nota:
+
+Input Analysis Result non risolve il problema strutturale del Match Engine avanzato.
+Aggiunge un layer compositivo sopra i moduli specializzati.
+
 ------------------------------------------------
 TARGET FUTURO — MATCH ENGINE EVOLUTION
 ------------------------------------------------
@@ -1678,16 +1926,25 @@ Evoluzioni future possibili solo come nodi dedicati:
 - relazioni entity-project
 - deduplicazione
 
-3. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+3. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 
-- valutare un layer unico di analisi interrogabile
-- coordinare parse_input_controlled, project_state, entity_state, create_suggestion_state, command_intent_state, ui_visibility_state
-- ridurre rami ibridi e fonti parallele
-- evitare duplicazioni future tra matching, suggestion e command intent
-- valutare se ui_visibility_state debba restare layer UI separato o diventare parte di un Input Analysis Result futuro
-- non introdurre refactor globale senza nodo dedicato
+- completare la migrazione visibility ancora rimasta su ui_visibility_state
+- mantenere project_state / entity_state come fonte matching
+- mantenere select_project / select_entity come decisione finale salvabile
+- evitare dipendenze circolari tra ui_visibility_state e input_analysis_result
+- decidere se ui_visibility_state resta wrapper minimo o viene deprecato gradualmente
+- non modificare matching, suggestion, command, select value, save flow o DB
 
-4. MATCH CONFIDENCE / RANKING ADVANCED
+4. BUTTON CONFIRM READINESS ALIGNMENT
+
+- valutare button_input_confirm.Hidden
+- valutare button_input_confirm.Disabled
+- distinguere visibility / disabled / save readiness
+- mantenere payload invariato
+- non modificare project_state / entity_state
+- non modificare insert_event / update_event
+
+5. MATCH CONFIDENCE / RANKING ADVANCED
 
 - ranking più evoluto
 - confidence controllata
@@ -1703,13 +1960,13 @@ Vincoli futuri:
 - utente sempre in controllo
 - output/KPI non anticipati
 
-5. SELECT OPTIONS FILTERING — AMBIGUITY UX
+6. SELECT OPTIONS FILTERING — AMBIGUITY UX
 
 - filtrare opzioni select sui match ambigui
 - migliorare risoluzione ambiguità
 - non ridurre possibilità di selezione manuale libera senza nodo dedicato
 
-6. ADVANCED COMMAND INTENT
+7. ADVANCED COMMAND INTENT
 
 - modifica project/entity da command
 - dashboard/report intent
@@ -1730,8 +1987,10 @@ EVOLUZIONE FUTURA NON ATTIVA
 - relazioni entity-project
 - deduplicazione
 - command intent avanzato oltre create project/entity
-- input analysis model unico
-- single interpretation layer che includa anche ui_visibility_state
+- Input Analysis Model completo
+- Full Visibility Migration completa
+- eventuale decommission di ui_visibility_state
+- button_input_confirm readiness alignment
 - creazione automatica silenziosa project/entity
 - filtro select su match ambigui
 - pending state avanzato per nuovi project/entity
@@ -1786,7 +2045,18 @@ Il successivo UI Readiness / Visibility Aggregator
 ha aggiunto un layer separato per coordinare la visibilità del flow input,
 senza trasformare il Match Engine in un sistema di readiness UI.
 
+Il successivo Preview Analysis State
+ha aggiunto un layer separato per hint/status della Sintesi,
+senza trasformare il Match Engine in un sistema preview.
+
+Il successivo Input Analysis Result
+ha aggiunto un layer compositivo raw / selection / effective,
+senza trasformare il Match Engine in un motore monolitico.
+
 Il Match Engine resta invariato.
+
+project_state / entity_state restano la fonte minima matching.
+select_project / select_entity restano la fonte finale salvabile.
 
 Il prossimo livello non è “rifare il Match Engine”,
 ma evolverlo tramite nodi dedicati.
@@ -1830,6 +2100,16 @@ STATO ATTUALE
 ✔ project_state / entity_state restano fonte minima matching
 ✔ matching invariato dopo UI Readiness
 ✔ test obbligatori 1–16 superati senza regressione matching
+✔ Preview Analysis State — First Controlled Layer completato
+✔ preview_analysis_state introdotto senza modificare matching
+✔ Input Analysis Result / Single Interpretation Layer Base completato come diagnostico
+✔ input_analysis_result introdotto senza modificare matching
+✔ raw / selection / effective state introdotti
+✔ Controlled UI Consumption Pass completato senza regressione matching
+✔ input_analysis_result legge project_state / entity_state ma non li sostituisce
+✔ input_analysis_result legge select_project / select_entity ma non li valorizza
+✔ project_state / entity_state restano fonte minima matching
+✔ select_project / select_entity restano fonti salvabili
 
 ---
 
@@ -1841,10 +2121,14 @@ STATO ATTUALE
 ⚠ nessuna deduplicazione  
 ✔ creazione guidata project/entity implementata a primo livello controllato
 ⚠ command intent avanzato non implementato
-⚠ input analysis model unico non implementato
-⚠ ui_visibility_state non è Input Analysis Model completo
+✔ input_analysis_result implementato come layer compositivo parziale
+⚠ Input Analysis Model completo non implementato
+⚠ ui_visibility_state ancora operativo e non deprecato
+⚠ Full Visibility Migration non completata
+⚠ button_input_confirm non migrato
+⚠ save readiness non centralizzata
 ⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
-⚠ 5 linting Retool residui ancora presenti
+⚠ 19 linting Retool attualmente presenti
 ⚠ filtro select su match ambigui non implementato
 ⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
@@ -1994,3 +2278,39 @@ v08 — 2026-05-18
 - confermati test 1–16 post UI Readiness senza regressione matching
 - Input Analysis Model completo non implementato
 - Event Interpretation Engine non implementato
+
+v09 — 2026-05-20
+
+- aggiornamento post PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
+- documentato preview_analysis_state come layer read-only preview/hint
+- chiarito che preview_analysis_state può leggere stati derivati dal matching ma non calcola matching
+- chiarito che preview_analysis_state non modifica project_state / entity_state
+- chiarito che preview_analysis_state non seleziona project/entity
+
+- aggiornamento post INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC
+- documentato input_analysis_result come layer compositivo read-only
+- documentata distinzione raw / selection / effective
+- chiarito che input_analysis_result legge project_state / entity_state ma non li sostituisce
+- chiarito che input_analysis_result legge select_project / select_entity ma non li valorizza
+- chiarito che input_analysis_result non calcola matches, count, singleMatch o ambiguità
+- chiarito che input_analysis_result non è Match Engine
+
+- aggiornamento post INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
+- documentato che input_analysis_result è fonte UI controllata parziale
+- documentato che input_analysis_result governa visibility/readiness senza modificare matching
+- documentato che in command flow i raw match project/entity possono esistere ma non sono usabili come dati evento
+- documentato che in edit flow il command intent viene soppresso a livello effective
+- documentato che container_association_suggestions.Hidden ora legge input_analysis_result.readiness.canShowAssociationSuggestions
+- documentata distinzione missing association notice ≠ suggestion operativa
+- documentato che create_suggestion_state resta fonte del contenuto operativo dei suggerimenti
+- documentato che ui_visibility_state resta operativo e non deprecato
+- documentato che button_input_confirm non è ancora migrato
+- confermato Match Engine invariato
+- confermato project_state / entity_state invariati
+- confermato select_project / select_entity invariati
+- confermato create_suggestion_state invariato
+- confermato command_intent_state invariato
+- confermato button_input_confirm payload invariato
+- confermato DB invariato
+- confermato parser invariato
+- documentato aumento linting Retool a 19 come debito tecnico generale
