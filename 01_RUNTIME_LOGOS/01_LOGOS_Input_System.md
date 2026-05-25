@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v16
+# 01_LOGOS_Input_System_v17
 
-DATA: 2026-05-23
+DATA: 2026-05-25
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -88,7 +88,7 @@ Il documento è utilizzato per:
 - linting Retool azzerati
 - typing_state eliminato come query legacy unused
 - handle_event_success eliminato come query legacy unused
-- container_input stabilizzato tramite ui_visibility_state
+- container_input stabilizzato progressivamente e poi migrato a input_analysis_result per gli Hidden principali del flow input
 - container vuoto durante digitazione risolto
 - bottom bar flash risolto
 - text_input_analysis_loading
@@ -96,6 +96,52 @@ Il documento è utilizzato per:
 - edit mode prevalente su Command Intent
 - feedback project/entity timing alignment
 - residui UI Readiness documentati
+
+------------------------------------------------
+RESPONSABILITÀ CANONICA DEL DOCUMENTO
+------------------------------------------------
+
+Questo documento è fonte canonica per:
+
+- input flow LOGOS
+- input_home / input_raw
+- trigger_parse_debounced
+- parse_input_controlled
+- ui_state.parsed nel contesto input
+- normalization base
+- duration normalization base
+- type classification base nel contesto input
+- Command Intent nel contesto input
+- Project / Entity Create Suggestion nel contesto input
+- input_analysis_result nel contesto input
+- relazione tra input_analysis_result, ui_visibility_mode e ui_visibility_state
+- relazione tra input flow e button_input_confirm
+- fonti controllate usate dal payload evento
+
+Questo documento NON è fonte canonica completa per:
+
+- matching project/entity avanzato
+- wiring completo dei componenti Retool
+- preview/Sintesi/hint/warning completi
+- lifecycle evento completo
+- schema DB completo
+- runtime Retool as-is completo
+- runtime Supabase as-is completo
+
+Fonti canoniche collegate:
+
+- 02_LOGOS_Match_Engine per project_state / entity_state / singleMatch / isAmbiguous / moreSpecificMatches / confirm guard matching.
+- 03_LOGOS_Event_Lifecycle per lifecycle evento, NEW / WRITTEN / ERROR, edit, no-op, cancel e processing.
+- 04_LOGOS_Retool_Architecture per componenti, query, Hidden e wiring Retool.
+- 05_LOGOS_Database_Schema per schema DB, tabelle, campi e vincoli.
+- 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+
+Nota post Pacchetto B:
+
+State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo dell’input system.
+Il dettaglio completo resta qui e nei documenti canonici collegati.
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -642,11 +688,15 @@ input_home
 → feedback temporaneo
 → routing post-save contestuale
 
-Nota UI Readiness:
+Nota UI Readiness / Input Analysis Result:
 
-ui_visibility_mode e ui_visibility_state agiscono solo sulla visibilità UI.
+La visibility/readiness del flow input è coordinata da:
 
-Non modificano:
+- ui_visibility_mode come latch leggero empty / event / command
+- input_analysis_result come fonte UI controllata per gli Hidden principali del flow input
+- ui_visibility_state come residuo tecnico deprecabile / rollback
+
+Questi helper non modificano:
 
 - amount
 - unit
@@ -657,6 +707,11 @@ Non modificano:
 - raw_input
 - payload
 - DB
+
+Regola:
+
+input_analysis_result governa visibility/readiness del flow input,
+ma non diventa fonte payload e non sostituisce parser, matching, select o save flow.
 
 Nota post Visibility Migration Completion:
 
@@ -2948,6 +3003,18 @@ Non implementato:
 
 PREVIEW SYSTEM
 
+Nota canonica:
+
+Questa sezione documenta la preview nel contesto dell’input flow.
+
+La fonte canonica completa per Sintesi, hint, warning, label visuali,
+micro-copy e residui semantici della preview è:
+
+- 06_LOGOS_View_Preview_System
+
+Il presente documento mantiene solo il collegamento tra input parsed,
+type, matching e preview.
+
 FUNZIONE:
 
 mostrare interpretazione sistema.
@@ -3123,6 +3190,22 @@ AGGIORNAMENTO MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL:
 ✔ preview non decide project/entity
 
 MATCHING BASE — FIRST CONTROLLED LEVEL
+
+Nota canonica:
+
+Questa sezione documenta il matching nel contesto dell’input flow.
+
+La fonte canonica completa del Match Engine è:
+
+- 02_LOGOS_Match_Engine
+
+Per il wiring Retool dei componenti coinvolti:
+
+- 04_LOGOS_Retool_Architecture
+
+Per gli effetti visuali in Sintesi / hint / highlight:
+
+- 06_LOGOS_View_Preview_System
 
 Oggetti:
 
@@ -4919,7 +5002,7 @@ Validazioni finali:
 
 ✔ preview_analysis_state operativo
 ✔ input_analysis_result operativo come fonte UI parziale
-✔ ui_visibility_state ancora operativo e non deprecato
+✔ in quella fase ui_visibility_state era ancora operativo e non deprecato; stato successivamente superato da Visibility Migration Completion, che lo ha riclassificato come residuo tecnico deprecabile / rollback
 ✔ parser invariato
 ✔ matching invariato
 ✔ create_suggestion_state invariato
@@ -5615,7 +5698,8 @@ label cleaning ancora embedded
 hint matching project/entity allineati a state
 hint duration/type ancora embedded
 “Da verificare” ancora interno alla Sintesi
-visibilità Sintesi governata da ui_visibility_state.showEventPreview
+visibilità Sintesi governata da input_analysis_result.readiness.canShowEventPreview
+ui_visibility_state resta residuo tecnico deprecabile / rollback e non governa più gli Hidden principali migrati.
 contenuto interno Sintesi ancora non separato
 warning informativi non separati in blocchi autonomi
 
@@ -5710,126 +5794,45 @@ Event Interpretation Engine
 fonte unica interpretativa completa già implementata
 mega-motore monolitico che sostituisce i moduli specializzati
 
-NEXT STEP CONSIGLIATI
+STATO DOCUMENTALE / REGOLE DI AGGIORNAMENTO
 
-DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+01_LOGOS_Input_System è documento tecnico canonico.
 
-Obiettivo futuro:
+Questo documento non governa:
 
-ridurre ridondanze nella documentazione LOGOS senza perdere ricostruibilità.
+- nodo attivo
+- roadmap
+- priorità operative
+- ordine dei prossimi nodi
 
-Focus:
+Nodo attivo, priorità e sequenza sono governati da:
 
-- una logica fondamentale completa in un solo documento canonico
-- richiami espliciti negli altri documenti
-- mappa responsabilità documentale
-- Session Boot Matrix
-- riduzione del numero di documenti da aggiornare per ogni micro-sessione
+- 00_PROJECT_State
+- 00_PROJECT_Roadmap
+- 00_PROJECT_Gap_Register
 
-Vincoli:
+Questo documento va aggiornato solo quando cambia una logica dell’area input oppure quando serve registrare un impatto documentale diretto su:
 
-- non cancellare contenuti critici
-- non alterare logiche runtime
-- non rendere i documenti troppo astratti
-- preservare possibilità di ricostruzione del sistema in caso di crash
+- input flow
+- parser
+- normalization
+- duration normalization
+- type classification nel contesto input
+- Command Intent nel contesto input
+- create_suggestion_state nel contesto input
+- input_analysis_result
+- fonti controllate usate dal payload evento
 
----
+Regola:
 
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+non usare questo documento come Roadmap.
+Non inserire qui “nodo corrente”, “prossimo nodo” o pacchetti documentali in corso.
 
-Obiettivo futuro:
+Le evoluzioni future collegate all’input devono restare in:
 
-correggere la label “Importo” quando il valore rappresenta una durata.
-
-Focus:
-
-- euro → Importo
-- minuti / ore → Durata
-- nessuna unità → riga assente o label neutra
-
-Vincoli:
-
-- non modificare parser
-- non modificare duration normalization
-- non modificare DB
-- non modificare save flow
-- non modificare amount/unit salvati
-
----
-
-INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
-
-Obiettivo futuro:
-
-analizzare flash residui durante digitazione e cambio schermata.
-
-Vincoli:
-
-- non modificare parser
-- non modificare matching
-- non modificare save flow
-- non introdurre routing alternativo
-- intervenire solo se il fix è locale e reversibile
-
----
-
-BUTTON CONFIRM READINESS ALIGNMENT
-
-Obiettivo futuro:
-
-valutare solo la parte non migrata di button_input_confirm.
-
-Focus:
-
-- Disabled
-- canConfirm
-- ambiguity
-- input vuoto
-- edit mode
-- no-op guard
-- save readiness
-
-Già completato:
-
-- button_input_confirm.Hidden migrato a input_analysis_result.readiness.canShowConfirm
-
-Vincoli:
-
-- non modificare insert_event / update_event
-- non modificare payload
-- non modificare parser/matching
-- testare create / edit / no-op / command / ambiguity / empty input
-
----
-
-PREVIEW MODEL / HINT STATE CONSOLIDATION
-
-Obiettivo futuro:
-
-consolidare hint/warning ancora embedded nella Sintesi.
-
-Focus:
-
-- “Da verificare” dentro Sintesi
-- status OK + card Da verificare
-- separazione hint bloccanti / warning informativi / suggestion visuali
-- preview più vicina a view pura
-- evitare divergenze tra ciò che l’utente legge e ciò che viene salvato
-
----
-
-CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
-
-Obiettivo futuro:
-
-valutare eliminazione ui_visibility_state e guardie duplicate residue.
-
-Vincoli:
-
-- non prima dell’audit documentale
-- non prima di test regressione dedicati
-- non modificare parser/matching/save flow
-- non eliminare query/componenti senza graph aggiornato
+- 00_PROJECT_Roadmap per sequenza e priorità
+- 00_PROJECT_Gap_Register per gap e debiti
+- checkpoint operativo solo durante il nodo attivo
 
 CHANGELOG
 
@@ -6216,7 +6219,7 @@ v15 — 2026-05-20
 - documentato Home idle container nascosti durante edit mode
 - documentato Dati evento / Sintesi / Conferma nascosti con edit input vuoto
 - documentato che solo Annulla modifica resta visibile in edit input vuoto
-- documentato che ui_visibility_state resta operativo e non deprecato
+- documentato che in quella fase ui_visibility_state restava operativo e non deprecato; stato successivamente superato da Visibility Migration Completion, che lo ha riclassificato come residuo tecnico deprecabile / rollback
 - documentato che container_input / loading / cancel / confirm restano fuori dalla migrazione corrente
 - documentato che button_input_confirm non è ancora migrato
 - documentato che button_input_confirm payload resta invariato
@@ -6274,3 +6277,38 @@ v16 — 2026-05-23
 - confermato payload invariato
 - aggiornati limiti attuali
 - aggiornati next step consigliati
+
+v17 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto C — Documenti tecnici canonici su 01_LOGOS_Input_System
+- documento aggiornato da v16 a v17
+- confermato 01_LOGOS_Input_System come fonte canonica per input flow, parser, normalization, duration normalization, type classification base nel contesto input, Command Intent, create_suggestion_state e input_analysis_result
+- aggiunta sezione RESPONSABILITÀ CANONICA DEL DOCUMENTO
+- aggiunti richiami canonici a:
+  - 02_LOGOS_Match_Engine per matching project/entity completo
+  - 03_LOGOS_Event_Lifecycle per lifecycle evento
+  - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/wiring Retool
+  - 05_LOGOS_Database_Schema per schema DB
+  - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning e label visuali
+  - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+  - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
+- chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo dell’input system
+- chiarito che il dettaglio completo resta in questo documento e nei documenti canonici collegati
+- corretto residuo documentale su container_input stabilizzato tramite ui_visibility_state
+- chiarito che input_analysis_result governa gli Hidden principali del flow input
+- ribadito che ui_visibility_state resta residuo tecnico deprecabile / rollback
+- aggiornato riferimento alla visibilità Sintesi da ui_visibility_state.showEventPreview a input_analysis_result.readiness.canShowEventPreview
+- aggiunta nota canonica nella sezione Matching Base
+- aggiunta nota canonica nella sezione Preview System
+- aggiornata sezione NEXT STEP / STATO DOCUMENTALE
+- nessuna riduzione aggressiva applicata
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload

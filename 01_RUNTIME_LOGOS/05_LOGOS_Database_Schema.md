@@ -1,6 +1,6 @@
-# 05_LOGOS_Database_Schema_v09
+# 05_LOGOS_Database_Schema_v10
 
-DATA: 2026-05-13
+DATA: 2026-05-25
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -31,6 +31,16 @@ C (Completezza): 10/10
 - confermato che insert_project / insert_entity sono riusati anche da Command Intent
 - confermato che feedback_mode non viene persistito
 - confermato che container_command_intent non modifica schema DB
+- Documentation Architecture Audit / Redundancy Reduction integrato
+- responsabilità canonica del documento esplicitata
+- richiami canonici ai documenti tecnici collegati aggiunti
+- confermato schema DB invariato dopo UX Mobile Coherence Pass
+- confermato schema DB invariato dopo UI Readiness / Visibility Aggregator
+- confermato schema DB invariato dopo Preview Analysis State
+- confermato schema DB invariato dopo Input Analysis Result
+- confermato schema DB invariato dopo Visibility Migration Completion
+- confermato schema DB invariato dopo Linting / Retool Query Safety Pass
+- confermato che input_analysis_result, preview_analysis_state, ui_visibility_mode e ui_visibility_state non vengono persistiti
 
 Q (Qualità): 9.5/10  
 - struttura corretta  
@@ -53,6 +63,10 @@ Q (Qualità): 9.5/10
 - chiarito che i comandi puri vengono esclusi dal save flow evento lato Retool
 - chiarito che project/entity creati da command sono normali record projects/entities
 - chiarito che Command Intent non introduce deduplicazione strutturale DB
+- rafforzato il ruolo del documento come fonte madre dello schema DB
+- chiarito che i layer UI/readiness/preview non modificano Supabase
+- chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico DB
+- ridotto rischio di interpretare helper Retool come campi DB
 
 D (Deployabilità): 10/10  
 - documento utilizzabile come riferimento AS-IS  
@@ -71,6 +85,10 @@ D (Deployabilità): 10/10
 - comandi puri non salvano events validato runtime
 - nessun campo command_intent aggiunto
 - nessuna tabella command_intent aggiunta
+- documento coerente con la Documentation Architecture Audit / Redundancy Reduction
+- pronto come fonte canonica per future sessioni DB / Supabase
+- nessuna migrazione Supabase richiesta
+- nessuna modifica schema richiesta
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -99,6 +117,68 @@ Il documento descrive:
 - esclusione dei comandi puri dalla tabella events
 - riuso di insert_project / insert_entity anche da command
 - feedback_mode come stato UI non persistito
+- stato DB dopo UX Mobile Coherence Pass
+- stato DB dopo UI Readiness / Visibility Aggregator
+- stato DB dopo Preview Analysis State
+- stato DB dopo Input Analysis Result
+- stato DB dopo Input Analysis Result — Visibility Migration Completion
+- stato DB dopo Linting / Retool Query Safety Pass
+- assenza di persistenza per ui_visibility_mode
+- assenza di persistenza per ui_visibility_state
+- assenza di persistenza per preview_analysis_state
+- assenza di persistenza per input_analysis_result
+- assenza di modifiche schema dopo i nodi UI/readiness/visibility
+
+------------------------------------------------
+RESPONSABILITÀ CANONICA DEL DOCUMENTO
+------------------------------------------------
+
+Questo documento è fonte canonica per:
+
+- schema DB LOGOS reale
+- tabelle Supabase / PostgreSQL
+- events
+- projects
+- entities
+- system_logs
+- campi persistiti
+- campi non utilizzati
+- campi non esistenti
+- comportamento DB passivo
+- impatto DB di insert_event / update_event
+- impatto DB di insert_project / insert_entity
+- relazione tra frontend Retool e Supabase
+- limiti attuali del modello dati
+- assenza di trigger / logica DB applicativa
+- assenza di audit trail dedicato
+- assenza di retro-normalizzazione
+- assenza di payload strutturato
+- vincoli operativi su future modifiche schema
+
+Questo documento NON è fonte canonica completa per:
+
+- input flow / parser / normalization nel dettaglio runtime frontend
+- Match Engine project/entity nel dettaglio runtime frontend
+- lifecycle evento nel dettaglio UI/applicativo completo
+- componenti / query / Hidden Retool completi
+- Preview / Sintesi / hint / warning completi
+- runtime Retool as-is completo
+- roadmap / priorità / gap governance
+
+Fonti canoniche collegate:
+
+- 01_LOGOS_Input_System per input flow, parser, normalization, duration normalization, type classification base nel contesto input, Command Intent, create_suggestion_state e input_analysis_result.
+- 02_LOGOS_Match_Engine per project_state / entity_state / matches / isAmbiguous / singleMatch / moreSpecificMatches / confirm guard matching.
+- 03_LOGOS_Event_Lifecycle per lifecycle evento, edit, no-op, cancel, NEW / WRITTEN / ERROR e processing.
+- 04_LOGOS_Retool_Architecture per componenti, query, Hidden, button_input_confirm, insert_event, update_event, insert_project, insert_entity e wiring Retool.
+- 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+
+Nota post Pacchetto B:
+
+State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo dello schema DB.
+Il dettaglio completo del modello dati resta in questo documento e nei documenti canonici collegati.
 
 ------------------------------------------------
 PRINCIPIO ARCHITETTURALE
@@ -124,6 +204,21 @@ NON contiene:
 - distinzione autonoma tra evento e comando puro
 - feedback_mode
 - container_command_intent
+- ui_visibility_mode
+- ui_visibility_state
+- preview_analysis_state
+- input_analysis_result
+- readiness UI
+- visibility UI
+- canShowEventPreview
+- canShowCommandContainer
+- canShowEventData
+- canShowAssociationSuggestions
+- canShowConfirm
+- canConfirm
+- button_input_confirm.Disabled
+- stato Hidden componenti Retool
+- stato loading/cancel/input container
 - audit trail automatico per creazione project/entity
 - audit trail automatico per creazione project/entity da command
 - deduplicazione strutturale project/entity da command
@@ -312,6 +407,42 @@ command_intent_state
 → nessun update_event
 → nessuna modifica DB
 
+Nota UI Readiness / Preview Analysis State / Input Analysis Result:
+
+I layer seguenti sono runtime frontend Retool e NON vengono persistiti nel DB:
+
+- ui_visibility_mode
+- ui_visibility_state
+- preview_analysis_state
+- input_analysis_result
+
+Il database NON salva:
+
+- readiness
+- visibility
+- raw / selection / effective state
+- hasHints
+- hasWarning
+- hasBlockingAmbiguity
+- statusLabel
+- canShowEventPreview
+- canShowCommandContainer
+- canShowEventData
+- canShowAssociationSuggestions
+- canShowConfirm
+- canConfirm
+
+La Visibility Migration Completion ha modificato gli Hidden dei componenti Retool,
+non lo schema Supabase.
+
+Il Linting / Retool Query Safety Pass ha eliminato query Retool legacy unused,
+non campi o tabelle DB.
+
+Regola:
+
+Supabase riceve solo i payload finali delle query di scrittura confermate.
+Non riceve lo stato interno dei layer UI/readiness/preview.
+
 ------------------------------------------------
 MODELLO DATI
 ------------------------------------------------
@@ -422,7 +553,7 @@ UTILIZZO REALE:
 
 ---
 
-NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION + PROJECT / ENTITY CREATE SUGGESTION + COMMAND INTENT — IMPATTO SU events:
+NORMALIZATION BASE + DURATION NORMALIZATION + TYPE CLASSIFICATION BASE + MATCH ENGINE UNIFICATION + PROJECT / ENTITY CREATE SUGGESTION + COMMAND INTENT + INPUT ANALYSIS RESULT — IMPATTO SU events:
 
 La tabella non è stata modificata.
 
@@ -447,6 +578,13 @@ La qualità del dato è migliorata perché il frontend ora invia:
 - nessun update_event eseguito da “modifica evento”
 - Command Intent non aggiunge campi a events
 - command_intent_state non viene persistito in events
+- input_analysis_result non viene persistito in events
+- preview_analysis_state non viene persistito in events
+- ui_visibility_mode non viene persistito in events
+- ui_visibility_state non viene persistito in events
+- canShowConfirm / canConfirm non vengono persistiti in events
+- button_input_confirm.Hidden / Disabled non vengono persistiti in events
+- visibility/readiness modificano solo la UI, non i campi salvati
 
 Esempi:
 
@@ -593,14 +731,33 @@ modifica evento
 
 CAMPI NON UTILIZZATI O NON CONSOLIDATI:
 
+Campi esistenti ma non consolidati / non utilizzati:
+
 reference_id
 source
 payment_method
 notes
 payload
+
+Campi / stati NON esistenti nello schema attuale:
+
 command_intent_type
 command_intent_payload
 feedback_mode
+ui_visibility_mode
+ui_visibility_state
+preview_analysis_state
+input_analysis_result
+canShowEventPreview
+canShowCommandContainer
+canShowEventData
+canShowAssociationSuggestions
+canShowConfirm
+canConfirm
+button_confirm_disabled_state
+hidden_state_payload
+readiness_payload
+visibility_payload
 
 Nota:
 
@@ -609,6 +766,18 @@ Non sono stati aggiunti con il nodo Command Intent.
 
 Command Intent resta stato runtime Retool,
 non modello dati persistente.
+
+Nota post Visibility Migration Completion:
+
+input_analysis_result e preview_analysis_state sono transformer/helper Retool.
+Non sono campi DB.
+Non devono essere aggiunti allo schema senza nodo schema dedicato.
+
+Nota post Linting / Retool Query Safety Pass:
+
+typing_state e handle_event_success sono state query Retool legacy unused eliminate.
+Non erano campi DB.
+La loro eliminazione non modifica Supabase.
 
 CAMPI ORA UTILIZZATI A LIVELLO BASE:
 
@@ -882,6 +1051,25 @@ input
 → nessun insert_event
 → nessun status NEW
 
+Flusso UI readiness / visibility:
+
+input / edit / command
+→ ui_visibility_mode
+→ preview_analysis_state
+→ input_analysis_result
+→ Hidden principali flow input
+→ nessuna scrittura DB
+
+Regola:
+
+questo flusso coordina solo visibilità/readiness UI.
+Non genera insert_event.
+Non genera update_event.
+Non genera insert_project.
+Non genera insert_entity.
+Non modifica schema.
+Non persiste helper state.
+
 Flusso edit:
 
 evento NEW
@@ -916,6 +1104,13 @@ non interpreta command intent
 non distingue evento ordinario da comando puro
 non salva command_intent_state
 non salva feedback_mode
+non salva ui_visibility_mode
+non salva ui_visibility_state
+non salva preview_analysis_state
+non salva input_analysis_result
+non salva readiness/visibility UI
+non salva stato Hidden componenti
+non salva canShowConfirm / canConfirm
 non crea record events da command intent
 non esegue update_event da “modifica evento”
 non collega automaticamente project/entity creati agli eventi
@@ -1067,6 +1262,93 @@ Il DB riceve solo:
 - project_id/entity_id in events, solo se l’utente conferma l’evento
 
 Nessuna modifica schema è stata introdotta.
+
+------------------------------------------------
+INPUT ANALYSIS RESULT / PREVIEW ANALYSIS STATE / UI READINESS E DATABASE
+------------------------------------------------
+
+Decisione:
+
+UI Readiness / Visibility Aggregator,
+Preview Analysis State,
+Input Analysis Result,
+Visibility Migration Completion
+e Linting / Retool Query Safety Pass
+NON modificano lo schema DB.
+
+Sono rimasti invariati:
+
+- events
+- projects
+- entities
+- payload
+- system_logs
+
+Non sono stati aggiunti:
+
+- input_analysis_result
+- preview_analysis_state
+- ui_visibility_mode
+- ui_visibility_state
+- readiness_state
+- visibility_state
+- canShowEventPreview
+- canShowCommandContainer
+- canShowEventData
+- canShowAssociationSuggestions
+- canShowConfirm
+- canConfirm
+- button_confirm_state
+- hidden_state_payload
+- preview_status_payload
+- hint_payload
+- command_visibility_payload
+
+Origine runtime:
+
+- ui_visibility_mode lato Retool
+- preview_analysis_state lato Retool
+- input_analysis_result lato Retool
+- ui_visibility_state residuo tecnico Retool deprecabile / rollback
+
+Regole:
+
+- input_analysis_result governa Hidden principali del flow input
+- preview_analysis_state alimenta hint/status della Sintesi
+- ui_visibility_mode agisce come latch empty / event / command
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
+- nessuno di questi helper viene persistito
+- nessuno di questi helper modifica amount / unit / event_date / type / project_id / entity_id
+- nessuno di questi helper modifica raw_input
+- nessuno di questi helper modifica payload
+- nessuno di questi helper crea eventi
+- nessuno di questi helper crea project/entity
+
+Impatto DB:
+
+nessuno.
+
+Impatto runtime:
+
+solo frontend Retool.
+
+Nota:
+
+button_input_confirm.Hidden è stato migrato a input_analysis_result.readiness.canShowConfirm.
+button_input_confirm.Disabled resta guard funzionale separata.
+Entrambi restano stati UI / component state Retool e non vengono persistiti nel DB.
+
+Nota Linting / Retool Query Safety Pass:
+
+typing_state e handle_event_success sono state eliminate come query legacy unused.
+Questa eliminazione non ha modificato:
+
+- schema DB
+- tabelle
+- campi
+- payload
+- query Supabase di scrittura
+- dati persistiti
 
 ------------------------------------------------
 DURATION NORMALIZATION E DATABASE
@@ -1711,6 +1993,11 @@ Non implementato:
 - ranking avanzato
 - command intent avanzato oltre create project/entity
 - input analysis model unico
+- input_analysis_result persistente
+- preview_analysis_state persistente
+- visibility/readiness persistente
+- audit trail UI readiness
+- audit trail preview/status/hint
 - pending state avanzato project/entity
 - audit trail dedicato creazione project/entity
 - audit trail dedicato command intent
@@ -1870,6 +2157,14 @@ non spostare create_suggestion_state in Supabase
 non spostare command_intent_state in Supabase
 non creare eventi da comandi puri
 non salvare feedback_mode nel DB
+non salvare input_analysis_result nel DB
+non salvare preview_analysis_state nel DB
+non salvare ui_visibility_mode nel DB
+non salvare ui_visibility_state nel DB
+non salvare readiness/visibility UI nel DB
+non aggiungere campi canShow* senza nodo schema dedicato
+non aggiungere campi hint/status preview senza nodo schema dedicato
+non usare payload per stati UI/readiness senza decisione architetturale dedicata
 non creare project/entity automaticamente lato DB
 non aggiungere audit trail project/entity senza nodo dedicato
 
@@ -1911,6 +2206,10 @@ review status
 confidence
 source quality
 
+eventuale audit trail UI/readiness solo con nodo dedicato
+eventuale persistenza hint/status solo con nodo dedicato
+eventuale preview_status persistente solo con nodo dedicato
+
 ENGINE SUPPORT:
 
 tabelle derivate
@@ -1927,6 +2226,10 @@ ranking avanzato
 advanced command intent
 input analysis model unico
 suggestion model persistente solo se validato da nodo dedicato
+
+eventuale input_analysis_result persistente solo se validato da nodo dedicato
+eventuale preview_analysis_state persistente solo se validato da nodo dedicato
+eventuale readiness model persistente solo se validato da nodo dedicato
 
 VERSIONING:
 
@@ -2125,3 +2428,45 @@ confermato nessun command_intent_payload
 confermato nessun audit trail command
 confermata nessuna deduplicazione strutturale DB
 confermato nessun output/KPI anticipato
+
+v10 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto C — Documenti tecnici canonici su 05_LOGOS_Database_Schema
+- documento aggiornato da v09 a v10
+- confermato 05_LOGOS_Database_Schema come fonte canonica per schema DB LOGOS reale, tabelle, campi persistiti, campi non utilizzati, campi non esistenti, comportamento DB passivo, impatto insert/update e vincoli schema futuri
+- aggiunta sezione RESPONSABILITÀ CANONICA DEL DOCUMENTO
+- chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo dello schema DB
+- chiarito che il dettaglio completo del modello dati resta in questo documento e nei documenti canonici collegati
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per input flow, parser, normalization, Command Intent, create_suggestion_state e input_analysis_result
+  - 02_LOGOS_Match_Engine per Match Engine project/entity
+  - 03_LOGOS_Event_Lifecycle per lifecycle evento
+  - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/button_input_confirm/insert_event/update_event/insert_project/insert_entity/wiring Retool
+  - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning e label visuali
+  - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+  - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
+- confermato schema DB invariato dopo UX Mobile Coherence Pass
+- confermato schema DB invariato dopo UI Readiness / Visibility Aggregator
+- confermato schema DB invariato dopo Preview Analysis State
+- confermato schema DB invariato dopo Input Analysis Result
+- confermato schema DB invariato dopo Visibility Migration Completion
+- confermato schema DB invariato dopo Linting / Retool Query Safety Pass
+- chiarito che ui_visibility_mode, ui_visibility_state, preview_analysis_state e input_analysis_result sono helper/transformer Retool non persistiti
+- chiarito che canShowEventPreview, canShowCommandContainer, canShowEventData, canShowAssociationSuggestions, canShowConfirm e canConfirm non sono campi DB
+- chiarito che button_input_confirm.Hidden e button_input_confirm.Disabled non vengono persistiti
+- aggiunta sezione INPUT ANALYSIS RESULT / PREVIEW ANALYSIS STATE / UI READINESS E DATABASE
+- aggiornati campi/stati non esistenti nello schema attuale
+- aggiornati limiti e vincoli operativi
+- nessuna riduzione aggressiva applicata
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica schema
+- nessuna migrazione Supabase
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload

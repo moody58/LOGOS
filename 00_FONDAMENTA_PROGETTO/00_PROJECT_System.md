@@ -1,6 +1,6 @@
-# 00_PROJECT_System_v06
+# 00_PROJECT_System_v08
 
-DATA: 2026-05-18
+DATA: 2026-05-25
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -20,6 +20,51 @@ Modello:
 
 Event Ledger user-driven  
 Append-only controllato
+
+------------------------------------------------
+RESPONSABILITÀ DOCUMENTALE
+------------------------------------------------
+
+00_PROJECT_System descrive l’architettura alta del sistema LOGOS.
+
+Questo documento è fonte di riferimento per:
+
+- identità sistema
+- modello architetturale alto
+- stack tecnologico
+- principi architetturali
+- layer funzionali principali
+- direzione evolutiva generale
+- limiti strutturali al livello sistema
+
+Questo documento NON governa:
+
+- nodo attivo
+- roadmap operativa
+- priorità immediate
+- ordine dei prossimi nodi
+- gap aperti
+- checkpoint attivi
+- dettagli runtime Retool completi
+- dettagli runtime Supabase completi
+- implementazioni tecniche puntuali
+
+Fonti competenti:
+
+- 00_PROJECT_State per stato corrente e prossimo nodo consigliato
+- 00_PROJECT_Roadmap per sequenza operativa e priorità
+- 00_PROJECT_Gap_Register per gap, debiti e futuri
+- 00_PROJECT_KERNEL_MANIFEST per architettura documentale, fonti canoniche e Session Boot Matrix
+- documenti tecnici canonici per logiche complete
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase reale as-is
+
+Regola:
+
+00_PROJECT_System non deve diventare Roadmap,
+State, Gap Register o runtime manifest.
+
+Deve restare documento di architettura alta.
 
 ------------------------------------------------
 OBIETTIVO SISTEMA
@@ -81,9 +126,19 @@ Logica:
 - Command Intent — Create Project / Entity lato Retool
 - UI Readiness / Visibility Aggregator lato Retool
 - ui_visibility_mode lato Retool
-- ui_visibility_state lato Retool
+- input_analysis_result lato Retool come layer compositivo read-only per gli Hidden principali del flow input
+- ui_visibility_state lato Retool come residuo tecnico deprecabile / rollback, non più fonte primaria degli Hidden principali migrati
 - feedback temporaneo lato Retool
 - navigation dock lato Retool
+
+Nota canonica:
+
+Per il comportamento completo di input_analysis_result, raw / selection / effective, readiness e Hidden principali del flow input,
+la fonte canonica è:
+
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture per wiring/componenti Retool
+- LOGOS_RETOOL_RUNTIME_REAL per stato runtime reale as-is
 
 Server / Database:
 
@@ -153,8 +208,15 @@ La UI:
 - crea project/entity da command solo previa conferma utente
 - coordina feedback temporaneo post-save / post-create
 - coordina navigation dock
-- governa visibilità input flow tramite ui_visibility_state
 - distingue empty / event / command tramite ui_visibility_mode
+- governa gli Hidden principali del flow input tramite input_analysis_result
+- mantiene ui_visibility_state come residuo tecnico deprecabile / rollback, non come fonte primaria degli Hidden principali migrati
+
+Nota:
+
+ui_visibility_mode resta un latch UI leggero.
+input_analysis_result compone lo stato operativo del flow input e governa gli Hidden principali migrati.
+ui_visibility_state non è più letto da input_analysis_result e non deve tornare fonte primaria della visibility del flow input.
 
 ---
 
@@ -237,7 +299,10 @@ Stato attuale:
 ✔ Command Intent — Create Project / Entity introdotto
 ✔ UI Readiness / Visibility Aggregator introdotto a primo livello
 ✔ ui_visibility_mode introdotto come latch UI empty / event / command
-✔ ui_visibility_state introdotto come aggregatore read-only di visibilità
+✔ input_analysis_result introdotto come layer compositivo read-only per raw / selection / effective / readiness
+✔ Hidden principali del flow input migrati progressivamente a input_analysis_result
+✔ ui_visibility_state riclassificato come residuo tecnico deprecabile / rollback
+✔ input_analysis_result non legge più ui_visibility_state
 ✔ container vuoto durante digitazione risolto
 ✔ bottom bar flash risolto
 ⚠ preview ancora ibrida nel contenuto
@@ -259,21 +324,59 @@ LIVELLI ATTUALI:
 6. MATCH STATE LAYER — FIRST CONTROLLED LEVEL
 7. PROJECT / ENTITY CREATE SUGGESTION LAYER
 8. COMMAND INTENT LAYER — FIRST CONTROLLED LEVEL
-9. UI READINESS / VISIBILITY LAYER — FIRST CONTROLLED LEVEL
+9. UI READINESS / INPUT ANALYSIS RESULT LAYER — FIRST CONTROLLED LEVEL
 10. PREVIEW / VIEW LAYER
 11. UI STATE LAYER
 12. INSERT / UPDATE LAYER
 13. PROCESSING LAYER
 14. UX MOBILE / NAVIGATION / FEEDBACK LAYER
+15. DOCUMENTATION ARCHITECTURE / CANONICAL SOURCES LAYER
 
 LIVELLI FUTURI:
 
-15. PREVIEW MODEL / HINT STATE CONSOLIDATION
-16. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
-17. MATCH ENGINE EVOLUTION ADVANCED
-18. DATA STRUCTURE / ENTITY HIERARCHY
-19. ECONOMIC DIRECTION ADVANCED
-20. OUTPUT / ANALYTICS LAYER
+16. PREVIEW MODEL / HINT STATE CONSOLIDATION
+17. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+18. MATCH ENGINE EVOLUTION ADVANCED
+19. DATA STRUCTURE / ENTITY HIERARCHY
+20. ECONOMIC DIRECTION ADVANCED
+21. OUTPUT / ANALYTICS LAYER
+
+Nota post Visibility Migration Completion:
+
+Il layer UI Readiness non coincide più solo con ui_visibility_state.
+
+Lo stato attuale distingue:
+
+- ui_visibility_mode: latch UI leggero empty / event / command
+- input_analysis_result: Transformer compositivo read-only che governa gli Hidden principali del flow input
+- ui_visibility_state: residuo tecnico deprecabile / rollback
+
+Fonte canonica per il comportamento completo:
+
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
+
+Nota post Documentation Architecture Audit:
+
+La documentazione LOGOS è stata normalizzata secondo il principio di fonti canoniche.
+
+Stato consolidato:
+
+- documenti core alleggeriti
+- documenti tecnici canonici preservati come fonti madri
+- runtime manifest distinti dai documenti tecnici
+- Kernel Manifest aggiornato con Principio Fonti Canoniche
+- Session Boot Matrix consolidata
+- regola aggiornamenti futuri consolidata
+
+Questa modifica è documentale.
+Non modifica runtime LOGOS, Retool, Supabase, DB, parser, matching, preview, payload o save flow.
+
+Fonte canonica documentale:
+
+- 00_PROJECT_KERNEL_MANIFEST
+- CHECKPOINT — DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 
 ------------------------------------------------
 1 — INPUT LAYER
@@ -735,16 +838,17 @@ Limiti:
 - non è intent engine globale
 
 ------------------------------------------------
-9 — UI READINESS / VISIBILITY LAYER — FIRST CONTROLLED LEVEL
+9 — UI READINESS / INPUT ANALYSIS RESULT LAYER — FIRST CONTROLLED LEVEL
 ------------------------------------------------
 
 Stato:
 
 ✔ implementato a primo livello controllato
 
-Componenti:
+Componenti / helper principali:
 
 - ui_visibility_mode
+- input_analysis_result
 - ui_visibility_state
 - text_input_analysis_loading
 - text_edit_mode_notice
@@ -765,36 +869,52 @@ ui_visibility_mode:
 - non è fonte dati
 - non sostituisce command_intent_state
 
-ui_visibility_state:
+input_analysis_result:
 
-- Transformer Retool read-only
-- aggrega flag di visibilità
-- governa Hidden principali del flow input
+- Transformer Retool compositivo read-only
+- compone raw / selection / effective state
+- espone readiness del flow input
+- governa gli Hidden principali del flow input migrati
+- non salva dati
+- non costruisce payload
+- non sostituisce parser, matching, suggestion, command, select o save flow
 
-Componenti governati:
+Hidden principali migrati a input_analysis_result:
 
-- container_command_intent
+- container_input
+- text_input_analysis_loading
+- btn_cancel_edit
+- btn_cancel_input_home
+- button_input_confirm
 - sintesi
-- container_association_suggestions
 - text_event_data_title
 - select1
 - select_project
 - select_entity
-- button_input_confirm
-- btn_cancel_edit
-- btn_cancel_input_home
-- container_input
+- container_command_intent
+- container_association_suggestions
+
+ui_visibility_state:
+
+- Transformer Retool read-only legacy/residuo
+- residuo tecnico deprecabile / rollback
+- non è più letto da input_analysis_result
+- non governa più gli Hidden principali migrati
+- non va eliminato fuori da un nodo cleanup dedicato
 
 Regole:
 
-- non salva dati
-- non modifica DB
-- non modifica parser
-- non modifica matching
-- non modifica command_intent_state
-- non modifica create_suggestion_state
-- non costruisce payload
-- non è Input Analysis Model completo
+- input_analysis_result non salva dati
+- input_analysis_result non modifica DB
+- input_analysis_result non modifica parser
+- input_analysis_result non modifica matching
+- input_analysis_result non modifica command_intent_state
+- input_analysis_result non modifica create_suggestion_state
+- input_analysis_result non costruisce payload
+- input_analysis_result non sostituisce select_project / select_entity
+- input_analysis_result non è Input Analysis Model completo
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
+- non reintrodurre dipendenze circolari tra input_analysis_result e ui_visibility_state
 
 Risultati:
 
@@ -845,7 +965,11 @@ Limiti:
 ⚠ contiene hint logic
 ⚠ contiene highlight
 ⚠ usa fonti multiple
-✔ visibilità governata da ui_visibility_state.showEventPreview
+✔ visibilità principale del flow input governata da input_analysis_result
+    Nota:
+
+    ui_visibility_state resta residuo tecnico deprecabile / rollback.
+    Non è più fonte primaria degli Hidden principali migrati.
 ✔ nascosta durante command intent puro
 ✔ container_command_intent separato
 ✔ rendering progressivo input ridotto tramite UI Readiness
@@ -940,12 +1064,21 @@ select_entity.value
 Fonte visibility/readiness:
 
 ui_visibility_mode
+input_analysis_result
+
+Residuo tecnico:
+
 ui_visibility_state
 
 Nota:
 
-ui_visibility_mode e ui_visibility_state non sono dati evento.
-Servono solo a governare la visibilità del flow input.
+ui_visibility_mode, input_analysis_result e ui_visibility_state non sono dati evento.
+
+- ui_visibility_mode distingue il flow visivo empty / event / command
+- input_analysis_result governa gli Hidden principali del flow input migrati
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
+
+Nessuno di questi helper viene salvato nel DB.
 
 Usato da:
 
@@ -1011,7 +1144,13 @@ button_input_confirm non ricalcola parsing.
 button_input_confirm non ricalcola matching.
 button_input_confirm non legge la preview come fonte dati.
 button_input_confirm non legge ui_visibility_state come fonte payload.
-ui_visibility_state governa solo la visibilità del bottone tramite showConfirm.
+
+La visibilità del bottone Conferma è stata migrata a:
+
+input_analysis_result.readiness.canShowConfirm
+
+button_input_confirm.Disabled resta guard funzionale separata.
+Il payload resta invariato.
 
 Insert:
 
@@ -1151,9 +1290,10 @@ DEBOUNCE / UI READINESS:
 trigger_parse_debounced
 → ui_visibility_mode
 
-UI READINESS:
+UI READINESS / INPUT ANALYSIS RESULT:
 
-ui_visibility_mode / ui_visibility_state
+ui_visibility_mode
+→ input_analysis_result
 
 ↓
 
@@ -1225,7 +1365,12 @@ ui_state.parsed
 
 UI VISIBILITY:
 
-ui_visibility_state
+input_analysis_result
+
+Nota:
+
+ui_visibility_state resta residuo tecnico deprecabile / rollback,
+non fonte primaria degli Hidden principali migrati.
 
 ↓
 
@@ -1437,12 +1582,22 @@ STATO ARCHITETTURALE
 ✔ project/entity da command creati senza creare eventi
 ✔ “modifica evento” gestito come guida non operativa
 ✔ UI Readiness / Visibility Aggregator First Controlled Level completato
+✔ Input Analysis Result / Single Interpretation Layer Base introdotto come layer compositivo read-only
+✔ Input Analysis Result — Controlled UI Consumption Pass completato
+✔ Input Analysis Result — Visibility Migration Completion completato
 ✔ ui_visibility_mode introdotto
-✔ ui_visibility_state introdotto
-✔ Hidden principali centralizzati
+✔ input_analysis_result consolidato come fonte UI controllata per gli Hidden principali del flow input
+✔ ui_visibility_state riclassificato come residuo tecnico deprecabile / rollback
+✔ input_analysis_result non legge più ui_visibility_state
+✔ Hidden principali del flow input migrati a input_analysis_result
 ✔ container vuoto durante digitazione risolto
 ✔ bottom bar flash risolto
 ✔ edit mode chiarito con text_edit_mode_notice
+✔ Documentation Architecture Audit / Redundancy Reduction completato
+✔ fonti canoniche consolidate
+✔ Kernel Manifest aggiornato
+✔ Session Boot Matrix consolidata
+✔ regola aggiornamenti futuri consolidata
 
 ⚠ sistema incompleto nei layer evolutivi:
 
@@ -1472,8 +1627,9 @@ LIMITI STRUTTURALI
 preview non ancora view pura nel contenuto
 “Da verificare” ancora interno alla Sintesi / card collegata
 hint/warning non ancora separati in modello autonomo
-ui_visibility_state non è Input Analysis Model completo
+input_analysis_result non è Input Analysis Model completo
 input analysis model unico non implementato
+ui_visibility_state resta residuo tecnico deprecabile / rollback
 matching project/entity unificato solo a primo livello controllato
 match engine avanzato separato non implementato
 hint duration/type ancora embedded nella preview
@@ -1487,7 +1643,7 @@ dati storici non retro-normalizzati
 lifecycle senza versioning
 output non attivo
 micro-flash feedback project/entity ancora presente
-5 linting Retool residui ancora presenti
+linting Retool azzerati dopo Linting / Retool Query Safety Pass
 cleanup obsolete UI guards / query reduction non ancora eseguito
 alias guida edit generici non implementati
 creazione guidata project/entity implementata a primo livello controllato
@@ -1513,8 +1669,12 @@ project/entity create suggestion ✔
 UX mobile coherence pass ✔
 command intent create project/entity ✔
 UI readiness / visibility aggregator ✔
+preview analysis state / input analysis result first controlled layers ✔
+input_analysis_result visibility migration completion ✔
+linting / Retool query safety pass ✔
+documentation architecture audit / redundancy reduction ✔
 preview / hint consolidation
-input analysis model / single interpretation layer
+input analysis model completo / single interpretation layer avanzato
 data structure avanzata
 economic direction advanced
 output / dashboard
@@ -1543,27 +1703,47 @@ ma non deve essere anticipato senza checkpoint.
 
 DOCUMENTI TECNICI COLLEGATI
 
-Core:
+Core / governance:
 
-00_PROJECT_State
-00_PROJECT_Roadmap
-00_PROJECT_System
+- 00_PROJECT_State
+- 00_PROJECT_Roadmap
+- 00_PROJECT_Gap_Register
+- 00_PROJECT_KERNEL_MANIFEST
 
-Runtime / tecnici:
+Tecnici canonici:
 
-01_LOGOS_Input_System
-02_LOGOS_Match_Engine
-03_LOGOS_Event_Lifecycle
-04_LOGOS_Retool_Architecture
-05_LOGOS_Database_Schema
-06_LOGOS_View_Preview_System
-LOGOS_RETOOL_RUNTIME_REAL
-LOGOS_SUPABASE_RUNTIME_REAL
+- 01_LOGOS_Input_System
+- 02_LOGOS_Match_Engine
+- 03_LOGOS_Event_Lifecycle
+- 04_LOGOS_Retool_Architecture
+- 05_LOGOS_Database_Schema
+- 06_LOGOS_View_Preview_System
 
-Checkpoint recenti:
+Runtime manifest:
 
-- CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
-- CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
+- LOGOS_RETOOL_RUNTIME_REAL
+- LOGOS_SUPABASE_RUNTIME_REAL
+
+Checkpoint attivo post-audit:
+
+- CHECKPOINT — DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+
+Checkpoint precedenti archiviabili:
+
+- CHECKPOINT - INPUT ANALYSIS RESULT - VISIBILITY MIGRATION COMPLETION
+- CHECKPOINT — LINTING RETOOL QUERY SAFETY PASS
+- CHECKPOINT — DOCUMENTATION ARCHITECTURE MAP
+
+Regola:
+
+i checkpoint sono riferimenti storico-operativi.
+Le regole permanenti devono restare nei documenti attivi,
+in particolare:
+
+- 00_PROJECT_KERNEL_MANIFEST per fonti canoniche e Session Boot Matrix
+- 00_PROJECT_State per stato corrente
+- 00_PROJECT_Roadmap per sequenza operativa
+- 00_PROJECT_Gap_Register per gap e debiti
 
 CHANGELOG
 
@@ -1664,3 +1844,79 @@ v06 — 2026-05-18
 - confermato output/KPI non attivi
 - confermato Input Analysis Model completo non implementato
 - confermato Event Interpretation Engine non implementato
+
+v07 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicata normalizzazione controllata Pacchetto A — Allineamento alto / Lifecycle / Supabase
+- allineato il documento allo stato post INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+- allineato il documento allo stato post LINTING / RETOOL QUERY SAFETY PASS
+- aggiornato riferimento al layer UI Readiness / Visibility
+- introdotto input_analysis_result come layer compositivo read-only per raw / selection / effective / readiness
+- documentato input_analysis_result come fonte UI controllata per gli Hidden principali del flow input
+- riclassificato ui_visibility_state come residuo tecnico deprecabile / rollback
+- chiarito che ui_visibility_state non è più letto da input_analysis_result
+- chiarito che ui_visibility_state non governa più gli Hidden principali migrati
+- chiarito che ui_visibility_state non va eliminato fuori da nodo cleanup dedicato
+- aggiornato il livello architetturale 9 in UI READINESS / INPUT ANALYSIS RESULT LAYER — FIRST CONTROLLED LEVEL
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per comportamento input_analysis_result / raw / selection / effective / readiness
+  - 04_LOGOS_Retool_Architecture per wiring, componenti Retool e Hidden
+  - LOGOS_RETOOL_RUNTIME_REAL per stato runtime reale as-is
+- aggiornato UI STATE LAYER distinguendo:
+  - ui_visibility_mode come latch UI empty / event / command
+  - input_analysis_result come fonte visibility/readiness per Hidden principali migrati
+  - ui_visibility_state come residuo tecnico deprecabile
+- aggiornato FLOW COMPLETO SISTEMA sostituendo ui_visibility_state con input_analysis_result come fonte primaria della visibility del flow input
+- aggiornato STATO ARCHITETTURALE con:
+  - Input Analysis Result / Single Interpretation Layer Base
+  - Input Analysis Result — Controlled UI Consumption Pass
+  - Input Analysis Result — Visibility Migration Completion
+  - Linting / Retool Query Safety Pass
+- aggiornati LIMITI STRUTTURALI:
+  - input_analysis_result non è Input Analysis Model completo
+  - ui_visibility_state resta residuo tecnico deprecabile / rollback
+  - linting Retool azzerati dopo Linting / Retool Query Safety Pass
+- aggiornata DIREZIONE EVOLUTIVA con preview_analysis_state / input_analysis_result first controlled layers completati
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica save flow
+- nessuna modifica preview
+- nessuna anticipazione output / KPI / dashboard
+- mantenuto 00_PROJECT_System come documento di architettura alta, non come documento tecnico operativo
+
+v08 — 2026-05-25
+
+- aggiornamento finale post DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- System aggiornato da v07 a v08
+- aggiunta sezione RESPONSABILITÀ DOCUMENTALE
+- chiarito che 00_PROJECT_System descrive architettura alta e non governa nodo attivo, roadmap, priorità o gap
+- aggiunto Documentation Architecture / Canonical Sources Layer
+- registrato completamento Documentation Architecture Audit / Redundancy Reduction
+- registrato consolidamento fonti canoniche
+- registrato aggiornamento Kernel Manifest
+- registrata Session Boot Matrix consolidata
+- registrata regola aggiornamenti futuri consolidata
+- corretto riferimento storico a ui_visibility_state nella Preview
+- chiarito che la visibility principale del flow input è governata da input_analysis_result
+- chiarito che ui_visibility_state resta residuo tecnico deprecabile / rollback
+- corretto riferimento a button_input_confirm.showConfirm
+- chiarito che button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm
+- confermato che button_input_confirm.Disabled resta guard funzionale separata
+- aggiornata sezione DOCUMENTI TECNICI COLLEGATI
+- sostituiti checkpoint precedenti con checkpoint attivo post-audit
+- chiarito che i checkpoint sono riferimenti storico-operativi e non unica fonte delle regole permanenti
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard

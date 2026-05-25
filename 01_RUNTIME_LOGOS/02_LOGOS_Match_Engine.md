@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v10
+# 02_LOGOS_Match_Engine_v11
 
-DATA: 2026-05-23
+DATA: 2026-05-25
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -56,6 +56,9 @@ C (Completezza): 10/10
 - documentato che Linting / Retool Query Safety Pass non ha modificato il Match Engine
 - documentato linting Retool azzerato come debito tecnico risolto fuori dal matching
 - documentato caso match più specifico come policy non bloccante invariata
+- documentata responsabilità canonica del documento nel modello post Pacchetto B
+- chiarito che State, Roadmap e Gap Register richiamano il Match Engine senza duplicarne il dettaglio tecnico completo
+- aggiunti richiami canonici ai documenti tecnici collegati
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -88,6 +91,9 @@ Q (Qualità): 9.5/10
 - chiarita separazione tra button_input_confirm.Hidden e confirm guard funzionale
 - confermato che la policy match più specifici resta informativa e non bloccante
 - confermato che il nodo linting ha ridotto rumore tecnico senza modificare logica matching
+- rafforzato il ruolo del documento come fonte madre del matching
+- ridotto rischio di ricalcolo futuro delle decisioni consolidate sul matching
+- chiariti i confini tra Match Engine e documenti canonici collegati
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -134,6 +140,8 @@ D (Deployabilità): 10/10
 - linting Retool azzerati
 - typing_state eliminato senza impatto matching
 - handle_event_success eliminato senza impatto matching
+- documento coerente con la Documentation Architecture Audit / Redundancy Reduction
+- pronto come fonte canonica per future sessioni su matching project/entity
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -168,6 +176,58 @@ Il documento guida:
 - chiarimento che button_input_confirm.Hidden migrato non modifica confirm guard funzionale
 - chiarimento che Linting / Retool Query Safety Pass non modifica il Match Engine
 - chiarimento che la policy match più specifici resta invariata
+
+------------------------------------------------
+RESPONSABILITÀ CANONICA DEL DOCUMENTO
+------------------------------------------------
+
+Questo documento è fonte canonica per:
+
+- Match Engine project/entity
+- project_state
+- entity_state
+- matches / count / hasMatch
+- isAmbiguous
+- singleMatch
+- moreSpecificMatches
+- hasMoreSpecificMatches
+- priority match minimo
+- auto-select tramite singleMatch
+- gestione ambiguità project/entity
+- confirm guard collegata ad ambiguità non risolta
+- policy match più specifici
+- rapporto tra matching e select_project / select_entity
+- rapporto tra matching e create_suggestion_state
+- rapporto tra matching e Command Intent
+- rapporto tra matching e input_analysis_result
+- limiti futuri del Match Engine
+
+Questo documento NON è fonte canonica completa per:
+
+- input flow / parser / normalization
+- Command Intent nel dettaglio runtime completo
+- create_suggestion_state nel dettaglio input completo
+- componenti / query / Hidden Retool completi
+- Sintesi / preview / hint / warning completi
+- lifecycle evento completo
+- schema DB completo
+- runtime Retool as-is completo
+- runtime Supabase as-is completo
+
+Fonti canoniche collegate:
+
+- 01_LOGOS_Input_System per input flow, parser, normalization, Command Intent nel contesto input, create_suggestion_state e input_analysis_result.
+- 03_LOGOS_Event_Lifecycle per lifecycle evento, edit, no-op, cancel, NEW / WRITTEN / ERROR e processing.
+- 04_LOGOS_Retool_Architecture per componenti, query, Hidden, select e wiring Retool.
+- 05_LOGOS_Database_Schema per schema DB, tabelle, campi e vincoli.
+- 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, highlight e label visuali.
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+
+Nota post Pacchetto B:
+
+State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo del Match Engine.
+Il dettaglio completo resta in questo documento e nei documenti canonici collegati.
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -1367,6 +1427,21 @@ Esempio:
 RELAZIONE CON PREVIEW
 ------------------------------------------------
 
+Nota canonica:
+
+La fonte completa per Sintesi, preview, hint, warning,
+highlight, label visuali e micro-copy è:
+
+- 06_LOGOS_View_Preview_System
+
+Questo documento conserva solo il rapporto tra Match Engine e preview:
+
+- hint project/entity
+- highlight project/entity
+- ambiguità matching
+- match più specifici
+- separazione tra preview visuale e matching decisionale
+
 La preview utilizza project_state / entity_state per:
 
 - mostrare hint ambiguità
@@ -1692,6 +1767,24 @@ alias, fuzzy matching o vincoli DB.
 RELAZIONE CON UI READINESS / INPUT ANALYSIS RESULT
 ------------------------------------------------
 
+Nota canonica:
+
+La fonte completa per input_analysis_result nel contesto input è:
+
+- 01_LOGOS_Input_System
+
+La fonte completa per componenti, Hidden e wiring Retool è:
+
+- 04_LOGOS_Retool_Architecture
+
+Questo documento documenta solo il confine con il Match Engine:
+
+- input_analysis_result può leggere project_state / entity_state
+- input_analysis_result può comporre raw / selection / effective usability
+- input_analysis_result non calcola matching
+- input_analysis_result non modifica select_project / select_entity
+- input_analysis_result non modifica button_input_confirm payload
+
 UI Readiness / Input Analysis Result è una linea separata dal Match Engine.
 
 Componenti:
@@ -1794,6 +1887,20 @@ Risultato post UI Readiness:
 ------------------------------------------------
 RELAZIONE CON NORMALIZATION LAYER BASE
 ------------------------------------------------
+
+Nota canonica:
+
+La fonte completa per input flow, parser, normalization base,
+duration normalization base e type classification nel contesto input è:
+
+- 01_LOGOS_Input_System
+
+Questo documento conserva solo il confine tra normalization e matching.
+
+Regola:
+
+il Match Engine non normalizza amount / unit / event_date
+e non modifica ui_state.parsed.
 
 Il Normalization Layer Base ha migliorato:
 
@@ -2498,7 +2605,7 @@ v09 — 2026-05-20
 - documentato che container_association_suggestions.Hidden ora legge input_analysis_result.readiness.canShowAssociationSuggestions
 - documentata distinzione missing association notice ≠ suggestion operativa
 - documentato che create_suggestion_state resta fonte del contenuto operativo dei suggerimenti
-- documentato che ui_visibility_state resta operativo e non deprecato
+- documentato che in quella fase ui_visibility_state restava ancora operativo; stato successivamente superato da Visibility Migration Completion, che lo ha riclassificato come residuo tecnico deprecabile / rollback
 - documentato che button_input_confirm non è ancora migrato
 - confermato Match Engine invariato
 - confermato project_state / entity_state invariati
@@ -2549,3 +2656,36 @@ v10 — 2026-05-23
 - confermato parser invariato
 - confermato save flow invariato
 - confermato payload invariato
+
+v11 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto C — Documenti tecnici canonici su 02_LOGOS_Match_Engine
+- documento aggiornato da v10 a v11
+- confermato 02_LOGOS_Match_Engine come fonte canonica per project_state, entity_state, matches, count, isAmbiguous, singleMatch, moreSpecificMatches, auto-select, ambiguità, confirm guard matching e policy match più specifici
+- aggiunta sezione RESPONSABILITÀ CANONICA DEL DOCUMENTO
+- chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo del Match Engine
+- chiarito che il dettaglio completo resta in questo documento e nei documenti canonici collegati
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per input flow, parser, normalization, Command Intent nel contesto input, create_suggestion_state e input_analysis_result
+  - 03_LOGOS_Event_Lifecycle per lifecycle evento
+  - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/select/wiring Retool
+  - 05_LOGOS_Database_Schema per schema DB
+  - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, highlight e label visuali
+  - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+  - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
+- corretto residuo storico nel changelog v09 su ui_visibility_state operativo/non deprecato
+- aggiunte note canoniche nelle sezioni:
+  - RELAZIONE CON NORMALIZATION LAYER BASE
+  - RELAZIONE CON PREVIEW
+  - RELAZIONE CON UI READINESS / INPUT ANALYSIS RESULT
+- nessuna riduzione aggressiva applicata
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload

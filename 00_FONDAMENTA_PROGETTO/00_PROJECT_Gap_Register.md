@@ -1,21 +1,45 @@
-# 00_PROJECT_Gap_Register_v13
+# 00_PROJECT_Gap_Register_v15
 
-DATA: 2026-05-23
+DATA: 2026-05-25
 
 ------------------------------------------------
 SCOPO
 ------------------------------------------------
 
-Tracciare i gap strutturali emersi durante audit, sviluppo reale
-e sessioni operative, valutandone utilità effettiva nel sistema LOGOS.
+Tracciare i gap strutturali, funzionali, UX e documentali emersi durante audit,
+sviluppo reale e sessioni operative LOGOS.
 
-Il documento evita:
+Il Gap Register serve a:
 
-- creazione prematura di documenti inutili
-- perdita di elementi strategici
-- dimenticanza di componenti critiche
-- apertura di nodi non prioritari
-- confusione tra gap osservati e funzionalità da implementare subito
+- conservare debiti e nodi futuri
+- distinguere gap integrati da gap aperti
+- impedire perdita di elementi strategici
+- evitare apertura di nodi non prioritari
+- mantenere ordine tra backlog, roadmap e stato reale
+- supportare la Roadmap senza duplicarla
+
+Il documento NON deve diventare:
+
+- diario operativo completo
+- duplicato dello State
+- duplicato della Roadmap
+- duplicato dei documenti tecnici canonici
+- raccolta completa dei test già consolidati altrove
+
+Regola:
+
+il Gap Register registra il gap, lo stato, la priorità e l’azione futura.
+
+Il dettaglio tecnico completo resta nei documenti canonici:
+
+- 01_LOGOS_Input_System per input / parser / command / input_analysis_result
+- 02_LOGOS_Match_Engine per matching project/entity
+- 03_LOGOS_Event_Lifecycle per lifecycle evento
+- 04_LOGOS_Retool_Architecture per componenti/query/Hidden/wiring Retool
+- 05_LOGOS_Database_Schema per schema DB
+- 06_LOGOS_View_Preview_System per Sintesi / preview / hint / warning
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
 
 ------------------------------------------------
 STATO GAP
@@ -33,1669 +57,149 @@ Ogni gap può essere:
 - NON PRIORITARIO
 
 ------------------------------------------------
-GAP REGISTER
+GAP REGISTER — SINTESI CONTROLLATA
 ------------------------------------------------
 
-ID: G01
+Il dettaglio storico/implementativo dei gap integrati non viene duplicato qui.
+
+Questo registro mantiene:
+
+- ID gap
+- stato
+- significato operativo
+- azione futura
+- fonte canonica per il dettaglio completo
+
+------------------------------------------------
+GAP ATTIVO DEL NODO CORRENTE
+------------------------------------------------
+
+Nessun gap documentale attivo.
+
+Il nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION è completato.
+
+Prossimo gap operativo consigliato:
+
+ID: G36
 
 NOME:
-Normalization Model
-
-FONTE:
-Gap Analysis + Roadmap + Engine Base Session
-
-STATO:
-INTEGRATO PARZIALE
-
-DESCRIZIONE:
-
-Necessità di un layer dedicato alla normalizzazione
-dei dati minimi del sistema:
-
-- amount
-- unit
-- event_date
-- struttura base evento
-
-STATO REALE:
-
-È stato implementato il primo blocco minimo:
-
-ENGINE BASE — NORMALIZATION LAYER BASE
-
-Implementato:
-
-- normalizzazione amount base
-- normalizzazione unit base
-- gestione formato numerico italiano
-- supporto unità compatte testuali
-- rimozione amount per numeri senza unità
-- salvataggio tramite ui_state.parsed
-- insert/update validati su DB reale
-
-Esempi gestiti:
-
-```text
-1.500,50 euro → amount 1500.5, unit euro
-1ora lavoro → amount 60, unit minuti
-18min test → amount 18, unit minuti
-1 ora e 15 minuti → amount 75, unit minuti
-2h30 → amount 150, unit minuti
-villa 2 mario → amount null, unit null
-
-NOTE:
-
-La normalizzazione è attualmente integrata in:
-
-parse_input_controlled
-ui_state.parsed
-button_input_confirm tramite payload derivato
-
-Non esiste ancora un modulo engine separato.
-
-Dati ancora parzialmente confrontabili perché restano non implementati:
-
-type classification avanzata
-economic direction advanced
-amount firmato / direction field
-match engine avanzato project/entity
-giorni/settimane come durata automatica
-retro-normalizzazione storico
-
-AZIONE:
-
-Mantenere il gap aperto come INTEGRATO PARZIALE.
-
-Prossimi sotto-gap:
-
-Match Engine Evolution Advanced
-Economic Direction Advanced
-Duration Advanced — giorni/settimane
-Project / Entity Create Suggestion — INTEGRATO BASE
-
-ID: G02
-
-NOME:
-Processor / Engine Flow
-
-FONTE:
-Gap Analysis + Roadmap + Normalization Layer Base
-
-STATO:
-VALIDATO / PARZIALMENTE AVVIATO
-
-DESCRIZIONE:
-
-Pipeline strutturata post-input e pre-output.
-
-Possibile evoluzione:
-
-input
-→ parsing
-→ normalization
-→ matching
-→ classification
-→ processing
-→ output
-
-STATO REALE:
-
-Sono stati avviati e completati tredici blocchi funzionali/base-operativi:
-
-- Normalization Layer Base
-- Duration Normalization Base
-- Type Classification Base
-- Match Engine Unification First Controlled Level
-- Project / Entity Create Suggestion First Controlled Level
-- UX Mobile Coherence Pass
-- Command Intent — Create Project / Entity
-- UI Readiness / Visibility Aggregator First Controlled Level
-- Preview Analysis State — First Controlled Layer
-- Input Analysis Result / Single Interpretation Layer Base — Read-only Diagnostic
-- Input Analysis Result — Controlled UI Consumption Pass
-- Input Analysis Result — Visibility Migration Completion
-- Linting / Retool Query Safety Pass
-
-Tuttavia non esiste ancora un Processor/Engine Flow completo.
-
-Attualmente:
-
-parsing, normalization base, duration normalization, type classification base e match state project/entity sono in Retool
-durate certe ore/minuti sono normalizzate in minuti
-type viene salvato in events.type
-Spesa / Incasso / Tempo / Evento sono persistiti a livello base
-project_state / entity_state sono fonte minima matching project/entity
-select_project / select_entity leggono singleMatch
-matching project/entity è unificato a primo livello controllato
-project/entity possono essere creati inline tramite suggestion controllata
-UX mobile base è stata rifinita e validata
-feedback post-save è centralizzato in button_input_confirm
-routing post-save è contestuale
-navigation dock Home / Eventi / Dashboard è predisposta
-font-size input/select 16px è baseline mobile Safari
-insert_project / insert_entity sono operativi
-select_project / select_entity vengono valorizzati dopo creazione controllata
-command_intent_state riconosce comandi puri create project/entity
-i comandi puri non vengono salvati come eventi
-project/entity da command vengono creati solo previa conferma utente
-btn_command_create_project / btn_command_create_entity riusano insert_project / insert_entity
-modifica evento da input libero viene gestita come guida non operativa
-ui_visibility_mode distingue empty / event / command
-ui_visibility_state aggrega la visibilità del flow input
-preview_analysis_state raccoglie hint/status/warning/Da verificare/associazioni mancanti della Sintesi
-input_analysis_result compone raw / selection / effective state
-input_analysis_result è ora fonte UI controllata per gli Hidden principali del flow input
-container_input, loading, cancel controls e button_input_confirm.Hidden sono stati migrati a input_analysis_result
-button_input_confirm.Disabled resta guard funzionale separata
-button_input_confirm payload resta invariato
-ui_visibility_state non è più letto da input_analysis_result
-ui_visibility_state resta presente come residuo tecnico deprecabile
-Hidden principali del flow input sono ora governati da input_analysis_result
-container_input è stato stabilizzato
-container vuoto durante digitazione risolto
-bottom bar flash risolto
-edit mode chiarito con notice dedicata
-preview contiene ancora logiche proprie
-processing resta manuale
-output non attivo
-
-NOTE:
-
-Il sistema non ha ancora una pipeline engine autonoma.
-L’evoluzione deve restare incrementale.
-
-RISCHIO:
-
-Anticipare engine completo può rompere il sistema esistente.
-
-AZIONE:
-
-Non creare ancora un documento engine globale.
-Procedere per nodi minimi.
-
-Micro-nodi UX post Match Engine già completati:
-
-- Edit Mode Cancel / Return to Events List
-- Events List Search / Filter Bar
-- Events List Label / Updated At Display
-
-Nodi residui candidati:
-
-- Documentation Architecture Audit / Redundancy Reduction
-- Preview / Event Data Label Semantic Alignment
-- Input Flow / Transition Micro-flash Stabilization
-- Button Confirm Readiness Alignment
-- Preview Model / Hint State Consolidation
-- Command Intent — Edit Mode Guidance / Generic Alias
-- Suggestion Create vs Edit Consistency
-- Project Create Suggestion — Match Present / User Override
-- Match Engine Evolution Advanced / Partial Ambiguity
-- Data Structure / Entity Hierarchy
-- Economic Direction Advanced
-- Duration Advanced — giorni/settimane
-- Feedback Consistency / Micro-flash Cleanup
-- Cleanup Obsolete UI Guards / Query Reduction
-- Azioni Rapide Operative
-- Dashboard Base
-
-ID: G03
-
-NOME:
-Project / Entity Create Suggestion
-
-FONTE:
-Gap Analysis + Match Engine + Match Engine Unification First Controlled Level + Project/Entity Create Suggestion Session
-
-STATO:
-INTEGRATO BASE
-
-DESCRIZIONE:
-
-Creazione guidata e controllata di project/entity quando l’input utente
-non produce un match sufficiente oppure contiene una estensione specifica
-non ancora presente nel sistema.
-
-Il sistema può ora proporre all’utente:
-
-- creazione nuovo progetto
-- creazione nuova entità
-- ignorare i suggerimenti
-- salvare comunque evento incompleto
-- bloccare solo in presenza di ambiguità attiva
-
-STATO REALE:
-
-Il nodo PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
-è stato completato e validato.
-
-Implementato:
-
-- create_suggestion_state
-- project_create_inline_open
-- project_create_suggestion_dismissed
-- entity_create_inline_open
-- entity_create_suggestion_dismissed
-- insert_project
-- insert_entity
-- container suggestion inline
-- micro-editor project
-- micro-editor entity
-- bottone Ignora globale
-- bottoni Annulla contestuali
-- controllo duplicati frontend project/entity
-- entity autofill controlled minimal
-
-Regole consolidate:
-
-- nessuna creazione automatica silenziosa
-- creazione solo previa conferma utente
-- evento non salvato automaticamente dopo creazione project/entity
-- select_project / select_entity restano decisione utente finale
-- raw_input resta testo sorgente
-- project/entity mancanti non bloccano il salvataggio
-- project/entity ambigui bloccano il salvataggio finché non risolti manualmente
-- una sola creazione guidata aperta alla volta
-- suggestion ignorata non blocca il salvataggio
-
-Project flow validato:
-
-- input con progetto base + estensione specifica
-- candidate project proposta
-- input_new_project_name precompilato
-- insert_project crea record in projects
-- projects_list viene aggiornata
-- select_project viene valorizzato
-- evento resta non salvato finché l’utente non conferma
-
-Esempi validati:
-
-- Villa Sierri 6
-- Villa Sierri 7
-- Villa Sierri 15
-
-Entity flow validato:
-
-- input con entity mancante
-- creazione entity inline manuale
-- insert_entity crea record in entities
-- entities_list viene aggiornata
-- select_entity viene valorizzata
-- evento resta non salvato finché l’utente non conferma
-
-Esempi validati:
-
-- Tecnico Sierri 4
-- Referente Kappa
-
-Entity Autofill Controlled Minimal:
-
-implementato solo per casi con prefisso forte e no-match entity reale.
-
-Prefissi ammessi:
-
-- referente
-- tecnico
-- cliente
-- fornitore
-- operaio
-- collaboratore
-- contatto
-- responsabile
-- muratore
-- idraulico
-- elettricista
-- geometra
-- architetto
-
-Esempio positivo validato:
-
-villa sierri 15 sopralluogo referente kappa
-→ Referente Kappa
-
-Esempio negativo validato:
-
-acquisto 50 euro materiale nuovo
-→ nessun autofill entity
-
-Caso ambiguo validato:
-
-alfie mario rossi
-→ Crea entità non visibile
-→ Conferma disabilitata finché l’utente sceglie manualmente entity
-
-RISCHIO RESIDUO:
-
-- UI suggestion container rifinita a livello mobile base durante UX Mobile Coherence Pass
-- resta da verificare consistenza suggestion create/edit
-- filtro select su match ambigui non implementato
-- command intent create project/entity implementato a primo livello controllato
-- suggestion operativa resta fonte create_suggestion_state
-- input_analysis_result governa la visibilità del container suggestion tramite readiness UI
-- input_analysis_result non deve inventare contenuti se create_suggestion_state non li produce
-- la migrazione visibility è completata per gli Hidden principali senza modificare create_suggestion_state
-- missing association notice e suggestion operativa restano concetti distinti
-- gerarchie project/entity non implementate
-- alias non implementati
-- deduplicazione avanzata non implementata
-- entities senza deduplicazione strutturale avanzata
-- nessun audit trail dedicato per creazione project/entity
-
-AZIONE:
-
-Gap integrato a livello base.
-
-Non riaprire come Project / Entity Create Suggestion base.
-
-Eventuali evoluzioni devono diventare gap/nodi dedicati:
-
-- Suggestion Create vs Edit Consistency
-- Data Structure / Entity Hierarchy
-- Select Options Filtering — Ambiguity UX
-- Alias / Deduplication Advanced
-- Suggestion Create vs Edit Consistency
-- Project Create Suggestion — Match Present / User Override
-
-ID: G04
-
-NOME:
-Logging System
-
-FONTE:
-Gap Analysis + Supabase Schema
-
-STATO:
-IN OSSERVAZIONE
-
-DESCRIZIONE:
-
-Sistema log eventi, errori, warning, modifiche e audit trail.
-
-NOTE:
-
-Attualmente:
-
-tabella system_logs presente
-non utilizzata
-update_event sovrascrive eventi NEW
-updated_at traccia solo ultima modifica
-nessuno storico revisioni
-
-RISCHIO:
-
-Senza logging/versioning:
-
-modifiche non ricostruibili
-nessun audit trail
-impossibile rollback
-difficile analisi errori
-
-AZIONE:
-
-Non prioritario per il nodo corrente.
-
-Da rivalutare quando emergerà una necessità reale di:
-
-versioning eventi
-audit modifiche
-incident tracking runtime
-rollback su eventi NEW
-
-Possibile evoluzione futura:
-
-event_revisions
-system_logs operativo
-audit trail update_event
-
-ID: G05
-
-NOME:
-Input Modes (Libero vs Guidato)
-
-FONTE:
-Chat utente + UX Evolution
-
-STATO:
-IN OSSERVAZIONE
-
-DESCRIZIONE:
-
-Doppia modalità input:
-
-free text
-guided form
-
-NOTE:
-
-Attualmente:
-
-input libero funzionante
-parsing stabilizzato
-preview disponibile
-editing NEW disponibile
-nessun form guidato
-Azioni rapide Home predisposte graficamente ma non operative.
-Navigation dock predisposta.
-Dashboard presente in nav ma disabilitata.
-Command Intent — Create Project / Entity implementato a primo livello controllato.
-Il command intent non è un form guidato completo, ma introduce una prima distinzione tra input evento e comando strutturale puro.
-
-UI Readiness / Visibility Aggregator ha introdotto una distinzione visiva più stabile tra:
-
-- input vuoto
-- evento ordinario
-- command intent
-
-tramite ui_visibility_mode e ui_visibility_state.
-
-Questo non equivale a una modalità guidata completa,
-ma riduce il rendering progressivo e migliora la stabilità del flow input.
-
-Dopo Input Analysis Result — Visibility Migration Completion:
-
-- input_analysis_result è diventato fonte UI controllata per gli Hidden principali del flow input
-- Sintesi, Dati evento, Command container, Suggestion container, container_input, loading, cancel controls e button_input_confirm.Hidden leggono ora readiness/visibility da input_analysis_result
-- ui_visibility_state non è più letto da input_analysis_result
-- ui_visibility_state resta residuo tecnico deprecabile
-- button_input_confirm.Disabled e payload restano separati
-- questo non equivale ancora a modalità guidata completa
-- questo non equivale a Input Analysis Model completo
-
-RISCHIO:
-
-Introdurre modalità guidata troppo presto può duplicare logiche
-e peggiorare la manutenzione.
-
-AZIONE:
-
-Non prioritario ora.
-
-Da rivalutare dopo:
-
-Command Intent implementato a primo livello controllato
-UI Readiness / Visibility Aggregator completato a primo livello controllato
-Input Analysis Result — Visibility Migration Completion completato
-Button Confirm Readiness Alignment
-Preview / Hint State eventualmente consolidati
-Data Structure / Entity Hierarchy valutata
-Azioni rapide operative definite come nodo dedicato
-Dashboard base eventualmente attivata
-
-Possibile uso futuro:
-
-inserimenti complessi
-spesa/incasso
-eventi con più campi
-correzione dati strutturati
-
-ID: G06
-
-NOME:
-Multi-source Input
-
-FONTE:
-Gap Analysis
-
-STATO:
-NON PRIORITARIO
-
-DESCRIZIONE:
-
-Input da fonti diverse:
-
-API
-voice
-Siri / assistenti vocali
-import
-automazioni esterne
-
-NOTE:
-
-Attualmente:
-
-solo input manuale Retool
-sistema non ancora pronto per fonti multiple
-parsing base stabilizzato ma non completo
-duration normalization base completata
-type classification base completata
-matching project/entity unificato a primo livello controllato
-creazione guidata project/entity implementata a primo livello controllato
-input vocali/Siri non ancora pronti
-command intent create project/entity implementato a primo livello controllato
-
-RISCHIO:
-
-Input multi-source aumenterebbe complessità prima della maturità dati.
-
-AZIONE:
-
-Non lavorare ora.
-
-Da rivalutare solo dopo:
-
-input system maturo
-Command Intent stabilizzato oltre il primo livello controllato
-engine base più completo
-output/reportistica almeno definita
-sicurezza API valutata
-
-ID: G07
-
-NOME:
-Preview Alignment
-
-FONTE:
-Normalization Layer Base + View Preview System
-
-STATO:
-INTEGRATO
-
-DESCRIZIONE:
-
-Allineamento visuale della preview ai dati normalizzati in ui_state.parsed.
-
-Il nodo PREVIEW ALIGNMENT BASE è stato completato.
-
-Implementato:
-
-- formattazione italiana amount
-- euro visualizzato con due decimali
-- grouping migliaia visuale
-- ore/minuti visualizzati coerentemente
-- singolare/plurale unit
-- label cleaning aggiornato
-- correzione bug "minuti" → "uti"
-- separatore data/descrizione
-- highlight unit-safe
-- previewStopTokens
-- nessuna modifica DB
-- nessuna modifica matching
-- nessuna modifica save flow
-
-Esempi validati:
-
-1.500,50 euro materiale
-→ 1.500,50 € • materiale
-
-1500 euro materiale
-→ 1.500,00 € • materiale
-
-18min test
-→ 18 minuti • test
-
-6/4/26 inseminazione alfie
-→ 6 apr • inseminazione alfie
-
-villa 2 mario
-→ villa 2 mario
-
-NOTE:
-
-La preview resta comunque layer ibrido:
-
-- view
-- label cleaning
-- hint logic
-- highlight
-- formattazione locale
-
-RISCHIO RESIDUO:
-
-- preview non ancora view pura
-- hint duration/type ancora embedded nella preview
-- preview model unico non implementato
-- “Da verificare” resta dentro Sintesi perché non è blocco autonomo
-- preview_analysis_state ora raccoglie hint/status/missing association della Sintesi a primo livello
-- la Sintesi legge hint/status da preview_analysis_state
-- input_analysis_result legge preview_analysis_state come fonte preview/composition
-- status OK + card “Da verificare” resta residuo semantico storico
-- dopo UI Readiness la visibilità della Sintesi è più stabile, ma il contenuto resta ibrido
-- ui_visibility_state governa quando mostrare la Sintesi, non cosa contiene
-- separazione tra hint bloccanti, warning informativi e suggestion non ancora consolidata
-- matching project/entity allineato a primo livello nello STEP 6.4
-
-AZIONE:
-
-Gap integrato come Preview Alignment Base.
-
-Non aprire ulteriori nodi preview generici.
-Eventuali modifiche preview devono essere conseguenza controllata di nodi futuri specifici.
-
-Nota post Match Engine Unification:
-
-la parte critica di hint/highlight matching project/entity
-è stata allineata a project_state/entity_state.
-
-Non aprire “Hint / Preview State Alignment” come nodo immediato generico.
-
-Eventuale nodo futuro:
-
-PREVIEW MODEL / HINT STATE CONSOLIDATION
-
-Nota post UI Readiness:
-
-Il nodo UI Readiness ha risolto il rendering progressivo a primo livello,
-ma non ha separato preview, hint, warning e suggestion.
-Il debito Preview Model / Hint State Consolidation resta quindi valido,
-ma non più come fix del container vuoto o del flash input principale.
-
-Motivi ora rafforzati dopo Command Intent:
-
-- “Da verificare” non è spostabile perché interno alla Sintesi
-- preview resta layer ibrido
-- hint/warning/suggestion non sono ancora separati in blocchi autonomi
-- evitare che l’utente legga una cosa diversa da ciò che verrà salvato
-
-Da aprire solo se il problema diventa prioritario o se si decide un refactor preview dedicato.
-
-Nota post Input Analysis Result:
-
-Il nodo PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER ha ridotto la logica hint/status embedded nella Sintesi,
-ma non ha trasformato la Sintesi in view pura.
-
-Il nodo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS ha inoltre allineato la micro-copy della notice associazioni mancanti alla presenza reale dei suggerimenti operativi.
-
-Restano validi:
-
-- Preview Model / Hint State Consolidation
-- Status Semantics Alignment
-- eventuale separazione futura del blocco “Da verificare”
-
-Nota post Visibility Migration Completion:
-
-La migrazione degli Hidden principali a input_analysis_result ha stabilizzato quando la Sintesi viene mostrata,
-ma non modifica il contenuto interno della preview.
-
-Resta valido il gap preview perché:
-
-- la Sintesi resta layer ibrido
-- label cleaning / highlight / micro-copy restano nel rendering
-- status e “Da verificare” richiedono ancora allineamento semantico
-- la label “Importo” viene ancora usata anche quando il valore rappresenta una durata
-
-Nuovo nodo candidato specifico:
-
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
-
-ID: G08
-
-NOME:
-Duration Normalization
-
-FONTE:
-Domande utente + Engine Base
-
-STATO:
-INTEGRATO BASE
-
-DESCRIZIONE:
-
-Gestione durate certe espresse in ore/minuti tramite unità canonica.
-
-Il nodo ENGINE BASE — DURATION NORMALIZATION è stato completato.
-
-Decisione consolidata:
-
-- unità canonica tempo = minuti
-- amount = totale minuti
-- unit = "minuti"
-- raw_input preservato
-- nessuna modifica schema DB
-- nessun payload.duration
-- nessun campo duration_minutes
-
-Implementato:
-
-- 18min → 18 minuti
-- 1 ora → 60 minuti
-- 1ora → 60 minuti
-- 2 ore → 120 minuti
-- 1,5 ore → 90 minuti
-- 1.5 ore → 90 minuti
-- 1 ora e 15 minuti → 75 minuti
-- 1 ora 15 minuti → 75 minuti
-- 2h30 → 150 minuti
-- 2 h 30 → 150 minuti
-- 2 ore 30 → 150 minuti
-- 2 ore e 30 minuti → 150 minuti
-- 90 minuti → 90 minuti
-
-Preview aggiornata:
-
-2h30 rendering
-→ 2 ore 30 minuti • rendering
-→ Normalizzato: 150 minuti
-
-Giorni/settimane:
-
-Non convertiti automaticamente.
-
-Esempio:
-
-2 giorni rendering
-→ amount null
-→ unit null
-→ hint durata ambigua
+Preview / Event Data Label Semantic Alignment
 
 Motivo:
 
-“giorno” e “settimana” sono semanticamente ambigui:
-possono indicare calendario, lavoro, cantiere, evento o turno.
+- micro-nodo UX/semantico
+- scope chiaro
+- rischio contenuto
+- corregge la label “Importo” quando il valore rappresenta una durata
+- non richiede modifiche parser
+- non richiede modifiche DB
+- non richiede modifiche save flow
+- non richiede modifiche duration normalization
 
-RISCHIO RESIDUO:
+Fonte canonica:
+- 06_LOGOS_View_Preview_System
+- 04_LOGOS_Retool_Architecture se coinvolge componenti Retool
 
-- giorni/settimane non normalizzati
-- giornata/mezza giornata non normalizzate
-- parole numeriche tipo “due ore” non supportate
-- forme colloquiali tipo “un paio d’ore” non supportate
-- dati storici non retro-normalizzati
-- type/select1 ora allineato a unit = minuti
-- resta aperta solo type classification avanzata / economic direction
+------------------------------------------------
+GAP RESIDUI PRIORITARI
+------------------------------------------------
 
-AZIONE:
-
-Gap integrato a livello base.
-
-Tenere aperto solo come sotto-gap futuro:
-
-DURATION ADVANCED — GIORNI / SETTIMANE
-
-Da non riaprire come Duration Normalization Base.
-
-ID: G09
+ID: G36
 
 NOME:
-Type Classification Base
-
-FONTE:
-Input System + domanda utente + Roadmap + Checkpoint Type Classification Base
+Preview / Event Data Label Semantic Alignment
 
 STATO:
-INTEGRATO BASE
+IDENTIFICATO — MICRO-NODO UX/SEMANTICO
 
 DESCRIZIONE:
 
-Classificazione base evento tramite select1:
+La UI usa ancora la label “Importo” anche quando il valore rappresenta una durata.
 
-- Evento
-- Tempo
-- Spesa
-- Incasso
+Caso noto:
 
-Nota terminologica:
-
-select1 è un componente UI Select di Retool,
-non una query.
-
-La logica Type Classification Base è contenuta nel Default value del componente select1.
-
-Il valore runtime:
-
-select1.value
-
-viene letto da button_input_confirm e salvato come:
-
-payload.type
-→ events.type
-
-STATO REALE:
-
-Il nodo ENGINE BASE — TYPE CLASSIFICATION BASE è stato completato.
-
-Implementato:
-
-- parsed.unit = minuti → Tempo
-- euro + keyword controllate di uscita → Spesa
-- euro + keyword controllate di entrata → Incasso
-- euro senza direzione chiara → Evento
-- segnali economici contrastanti → Evento
-- nessuna unit significativa → Evento
-- scelta manuale utente preservata
-- type aggiunto al payload di button_input_confirm
-- insert_event salva events.type
-- update_event aggiorna events.type
-- override manuale validato
-- reset/stale value verificato
-
-Esempi validati:
-
-2h30 rendering
+2h30 rendering lavoro
 → type Tempo
 → amount 150
 → unit minuti
+→ label visuale ancora “Importo”
 
-1 ora e 45 minuti lavoro
-→ type Tempo
-→ amount 105
-→ unit minuti
+Azione:
 
-20 euro spesa materiale
-→ type Spesa
-→ amount 20
-→ unit euro
+valutare micro-nodo dedicato.
 
-20 euro incasso cliente
-→ type Incasso
-→ amount 20
-→ unit euro
+Vincoli:
 
-20 euro materiale
-→ type Evento
-→ amount 20
-→ unit euro
+- non modificare parser
+- non modificare duration normalization
+- non modificare DB
+- non modificare save flow
+- modificare solo label/rappresentazione visuale
 
-villa 2 mario
-→ type Evento
-→ amount null
-→ unit null
-
-Override manuale validato:
-
-20 euro materiale
-→ default Evento
-→ utente seleziona Spesa
-→ DB type Spesa
-
-20 euro materiale
-→ default Evento
-→ utente seleziona Incasso
-→ DB type Incasso
-
-NOTE:
-
-La classificazione automatica resta prudente.
-
-"benzina", "materiale", "mangime" e altre parole di dominio
-non classificano automaticamente Spesa.
-
-Il sistema suggerisce,
-ma l’utente mantiene controllo finale.
-
-RISCHIO RESIDUO:
-
-- classificazione economica avanzata non implementata
-- dizionario keyword esteso non implementato
-- amount firmato non implementato
-- direction field non implementato
-- type non sufficiente da solo per KPI avanzati
-- eventi storici non retro-normalizzati
-- match engine avanzato separato non implementato
-- data structure / entity relations non implementate
-
-AZIONE:
-
-Gap integrato a livello base.
-
-Non riaprire come Type Classification Base.
-
-Tenere aperti solo sotto-gap futuri:
-
-- Economic Direction Advanced
-- Type Classification Advanced
-- eventuale bonifica type storico
-
-Nodo operativo successivo consigliato:
-
-NEXT NODE DA DEFINIRE IN ROADMAP
-
-ID: G10
-
-NOME:
-Match Engine Unification
-
-FONTE:
-Match Engine + Preview System + State + Checkpoint Match Engine Unification
-
-STATO:
-INTEGRATO BASE
-
-DESCRIZIONE:
-
-Unificazione a primo livello controllato dei sistemi di matching project/entity.
-
-Prima del nodo, il matching era distribuito tra:
-
-- project_state / entity_state
-- select_project / select_entity
-- preview / detection locale
-- hint locali
-- confirm guard
-
-Il nodo ha reso coerenti:
-
-- match state
-- select
-- hint ambiguità
-- highlight preview
-- confirm guard
-- create flow
-- edit flow
-
-STATO REALE:
-
-Il nodo MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL è completato.
-
-Implementato:
-
-- project_state come fonte minima matching project
-- entity_state come fonte minima matching entity
-- output matching:
-  - matches
-  - count
-  - hasMatch
-  - isAmbiguous
-  - singleMatch
-  - moreSpecificMatches
-  - hasMoreSpecificMatches
-- select_project legge project_state.data.singleMatch
-- select_entity legge entity_state.data.singleMatch
-- trigger_parse_debounced rilancia parse_input_controlled + project_state + entity_state
-- btn_edit rilancia parse_input_controlled + project_state + entity_state
-- match state live in create flow
-- match state live in edit flow
-- hint ambiguità da isAmbiguous
-- highlight preview da matches
-- detection locale preview non più fonte decisionale matching
-- confirm guard da ambiguità non risolta
-- ambiguità risolta manualmente non blocca salvataggio
-- nessun match non blocca salvataggio
-- priority match minimo implementato
-- hint informativo per match più specifici
-- bug €500 label preview risolto
-- linting project_state/entity_state ripuliti
-
-Esempi validati:
-
-villa 2 mario
-→ project Villa 2
-→ entity Mario
-→ conferma abilitata
-
-18 min ristrutturazione bagno
-→ project Ristrutturazione Bagno
-→ type Tempo
-→ conferma abilitata
-
-mario
-→ entity Mario
-→ hint entità più specifiche
-→ conferma abilitata
-
-villa
-→ project Villa
-→ hint progetti più specifici
-→ conferma abilitata
-
-alfie mario rossi
-→ ambiguità reale entity
-→ conferma disabilitata finché non viene scelta entità
-
-4 aprile benzina 50 euro alfie allevamento aspri
-→ project ASPRI
-→ entity ambigua
-→ conferma disabilitata finché non viene scelta entità
-
-NOTE:
-
-Il nodo non ha introdotto:
-
-- fuzzy matching
-- alias
-- gerarchie
-- deduplicazione
-- creazione automatica silenziosa project/entity
-- match engine separato come modulo autonomo
-- modifica schema DB
-- output/KPI
-
-RISCHIO RESIDUO:
-
-- match engine avanzato separato non implementato
-- alias non implementati
-- fuzzy matching non implementato
-- gerarchie project/entity non implementate
-- deduplicazione project/entity non implementata
-- creazione guidata project/entity implementata a primo livello controllato
-- command intent create project/entity implementato a primo livello controllato
-- input_analysis_result introdotto come layer compositivo raw / selection / effective
-- input_analysis_result non sostituisce project_state / entity_state
-- project_state / entity_state restano fonte minima matching
-- Visibility Migration Completion non ha modificato il Match Engine
-- project_state / entity_state restano fonte minima matching
-- il caso match più specifico resta policy non bloccante
-- esempio: Mario selezionato automaticamente con warning “entità più specifiche” e Conferma attiva
-- resta assente Match Engine avanzato separato
-- ui_visibility_state legge il match state solo per visibilità/hint, non sostituisce il matching
-- deduplicazione project/entity avanzata non implementata
-- preview resta layer ibrido
-- hint duration/type ancora embedded nella preview
-- output/KPI non attivi
-
-AZIONE:
-
-Non riaprire come Match Engine Unification base.
-
-Eventuali evoluzioni devono essere nodi dedicati:
-
-- ALIAS / SYNONYMS CONTROLLED MATCHING
-- DATA STRUCTURE / ENTITY HIERARCHY
-- MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
-- SELECT OPTIONS FILTERING — AMBIGUITY UX
-- MATCH CONFIDENCE / RANKING ADVANCED
-- MATCH ENGINE — MORE SPECIFIC MATCH POLICY
-
-ID: G11
-
-NOME:
-Data Structure / Entity Hierarchy
-
-FONTE:
-Database Schema + Match Engine + Roadmap
-
-STATO:
-IN OSSERVAZIONE
-
-DESCRIZIONE:
-
-Strutturazione relazioni project/entity:
-
-gerarchie
-parent_project_id
-parent_entity_id
-relazioni entity-project
-deduplicazione
-alias
-
-NOTE:
-
-Attualmente:
-
-parent_project_id non operativo
-parent_entity_id non operativo
-entities senza UNIQUE name
-possibili duplicati
-integrità demandata a Retool
-
-Match Engine Unification First Controlled Level ha ridotto
-le ambiguità operative a livello runtime,
-ma non ha risolto la struttura dati.
-
-Restano aperti:
-
-- parent_project_id non operativo
-- parent_entity_id non operativo
-- entities senza UNIQUE name
-- possibili duplicati
-- alias assenti
-- deduplicazione assente
-- relazioni entity-project assenti
-
-Project / Entity Create Suggestion First Controlled Level ha introdotto
-creazione inline controllata di project/entity,
-ma non ha risolto la struttura dati avanzata.
-
-La creazione inline migliora usabilità e completezza dati,
-ma non introduce:
-
-- gerarchie
-- alias
-- deduplicazione avanzata
-- relazioni entity-project
-- audit trail dedicato
-
-UX Mobile Coherence Pass ha migliorato la fruibilità dei campi project/entity
-e delle select su mobile, ma non ha modificato la struttura dati.
-
-Command Intent — Create Project / Entity ha introdotto la creazione project/entity da comando puro,
-ma non ha modificato la struttura dati.
-
-UI Readiness / Visibility Aggregator ha introdotto ui_visibility_state e ui_visibility_mode,
-ma non ha modificato la struttura dati.
-
-Il nodo Command Intent:
-
-- non introduce gerarchie
-- non introduce alias
-- non introduce deduplicazione avanzata
-- non introduce relazioni entity-project
-- non introduce vincoli DB
-- blocca duplicati solo a livello UI quando riconosce un elemento già esistente
-
-Il nodo UI Readiness:
-
-- non introduce gerarchie
-- non introduce alias
-- non introduce deduplicazione avanzata
-- non introduce relazioni entity-project
-- non introduce vincoli DB
-- non modifica projects/entities
-
-Durante il test UX sono emersi due sotto-gap collegati:
-
-- suggestion create/edit consistency
-- project creation override in presenza di match generico
-
-RISCHIO:
-
-Senza struttura:
-
-matching ambiguo
-entity duplicate
-project/entity difficili da governare
-report futuri deboli
-
-AZIONE:
-
-Micro-nodi UX/helper completati.
-
-Da valutare come nodo strutturale futuro,
-prima di output/KPI avanzati,
-prima di deduplicazione evoluta
-e prima di istanze verticali ASPRI / ADEXIMA / MaurizioLab.
-
-Il nodo Project / Entity Create Suggestion base è già completato.
-Le evoluzioni strutturali successive devono essere trattate qui o in nodi dedicati.
-
-PRINCIPIO OPERATIVO
-
-Un gap diventa documento SOLO se:
-
-✔ necessario nello sviluppo reale
-✔ validato su uso concreto
-✔ non sostituibile da soluzione più semplice
-✔ utile al nodo operativo imminente
-✔ coerente con Roadmap e State
-
-Un gap NON diventa nodo operativo se:
-
-anticipa la roadmap
-richiede refactor globale
-introduce complessità non validata
-non è necessario al problema immediato
-
-ID: G12
-
-NOME:
-Events List Label / Updated At Display
-
-FONTE:
-Duration Normalization Session + Test runtime + UX Cleanup Micro-Batch
-
-STATO:
-INTEGRATO
-
-DESCRIZIONE:
-
-La lista eventi mostrava la dicitura “modificato oggi”
-anche per eventi appena inseriti.
-
-Il problema era visuale / UX,
-ma poteva generare confusione utente.
-
-CAUSE IDENTIFICATE:
-
-- updated_at valorizzato anche in insert_event
-- created_at / updated_at con formati timezone non omogenei
-- confronto iniziale troppo fragile
-- edit senza modifiche reali aggiornava comunque updated_at
-
-STATO REALE:
-
-Il nodo EVENTS LIST LABEL / UPDATED_AT DISPLAY FIX
-è stato completato dentro:
-
-UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
-
-Implementato:
-
-- normalizzazione robusta created_at / updated_at
-- parsing date DB trattato in modo coerente come UTC
-- conversione visuale Europe/Rome
-- soglia anti-falso positivo tra created_at e updated_at
-- label “creato” per eventi mai modificati
-- label “modificato” solo per eventi realmente aggiornati
-- marcatore leggero per eventi modificati
-- no-op edit guard in button_input_confirm
-- conferma edit senza modifiche reali non esegue update_event
-- updated_at non cambia se non cambiano campi utente
-- amount / unit / event_date esclusi dal confronto no-op perché derivati dal parser
-
-TEST VALIDATI:
-
-- nuovo evento mostra “creato”
-- edit senza modifiche resta “creato”
-- annulla modifica resta “creato”
-- edit con modifica reale mostra “modificato”
-- evento modificato sale in alto nella lista
-- nessuna modifica DB
-- nessuna modifica parser
-- nessuna modifica Match Engine
-- nessuna modifica Type Classification
-- nessuna modifica Duration Normalization
-
-RISCHIO RESIDUO:
-
-- non esiste audit trail storico delle modifiche
-- updated_at traccia solo ultima modifica
-- distinzione storica completa richiederebbe logging/versioning dedicato
-- deduplicazione strutturale dopo command intent
-- eventuale normalizzazione project/entity creati da command
-
-AZIONE:
-
-Gap integrato.
-
-Non riaprire come fix label lista eventi.
-
-Eventuali evoluzioni future devono passare da nodo dedicato:
-
-- Logging / Versioning
-- Event Revisions
-- UI finale lista eventi
-
-ID: G13
-
-NOME:
-Economic Direction Advanced
-
-FONTE:
-Type Classification Base + Database Schema + Roadmap
-
-STATO:
-IDENTIFICATO
-
-DESCRIZIONE:
-
-Gestione avanzata della direzione economica degli eventi.
-
-Dopo Type Classification Base il sistema distingue:
-
-- Spesa
-- Incasso
-
-ma il valore amount resta positivo.
-
-Attualmente:
-
-20 euro spesa materiale
-→ type Spesa
-→ amount 20
-→ unit euro
-
-20 euro incasso cliente
-→ type Incasso
-→ amount 20
-→ unit euro
-
-NON esiste ancora:
-
-- amount firmato
-- direction field
-- money_direction
-- regola contabile applicativa
-- report economico attivo
-- KPI basato su entrate/uscite
-
-NOTE:
-
-La distinzione Spesa / Incasso è già persistita in events.type.
-
-La direzione economica può essere interpretata in futuro dai report,
-oppure consolidata tramite nodo dedicato.
-
-Rischio:
-
-anticipare amount firmato o direction field ora potrebbe introdurre
-complessità contabile prima della stabilizzazione matching/data quality.
-
-AZIONE:
-
-Non prioritario ora.
-
-Da rivalutare dopo:
-
-- Match Engine Unification First Controlled Level completato
-- UX / Cleanup Micro-Batch completato
-- Linting / State Helper Cleanup completato
-- valutazione Data Structure / Entity Hierarchy
-- prima definizione output/report
-- valutazione dati economici reali
-- Project / Entity Create Suggestion First Controlled Level completato
-- Command Intent — Create Project / Entity completato a primo livello controllato
-
-Possibili decisioni future:
-
-1. mantenere amount sempre positivo e usare type per la direzione
-2. introdurre direction field
-3. introdurre amount firmato
-4. derivare entrate/uscite solo in fase report
-
-ID: G14
-
-NOME:
-Linting / State Helper Cleanup
-
-FONTE:
-Match Engine Unification Session + Retool runtime + Linting Cleanup Session
-
-STATO:
-INTEGRATO
-
-DESCRIZIONE:
-
-Risoluzione dei linting Retool residui sugli helper state:
-
-- edit_mode
-- editing_event
-
-Prima del nodo, restavano 2 linting non bloccanti:
-
-- edit_mode: 'value' is not defined
-- editing_event: 'value' is not defined
-
-CAUSA:
-
-Gli helper edit_mode / editing_event usavano:
-
-return value;
-
-con valore passato tramite:
-
-additionalScope: { value: ... }
-
-Il runtime era corretto,
-ma Retool segnalava value come variabile non definita.
-
-STATO REALE:
-
-Il nodo LINTING / STATE HELPER CLEANUP è stato completato.
-
-Implementato:
-
-- rimosso additionalScope { value } da edit_mode / editing_event
-- introdotto passaggio controllato tramite window.__logos_edit_mode_value
-- introdotto passaggio controllato tramite window.__logos_editing_event_value
-- edit_mode legge window.__logos_edit_mode_value
-- editing_event legge window.__logos_editing_event_value
-- gli helper cancellano la chiave window dopo la lettura
-- aggiornato btn_edit
-- aggiornato btn_cancel_edit
-- aggiornato button_input_confirm:
-  - ramo no-op edit guard
-  - reset finale dopo salvataggio reale
-- editing_event azzerato anche dopo update reale completato
-
-TEST VALIDATI:
-
-- linting edit_mode risolto
-- linting editing_event risolto
-- create flow validato
-- edit flow validato
-- annulla modifica validato
-- edit senza modifiche reali validato
-- edit con modifica reale validato
-- updated_at / label creato-modificato validati
-- WRITTEN / ERROR validati
-
-NOTE:
-
-Il fix non ha modificato:
-
-- parser
-- trigger_parse_debounced
-- project_state
-- entity_state
-- Match Engine
-- Type Classification
-- Duration Normalization
-- schema DB
-- insert_event
-- update_event
-- preview
-- lista eventi
-
-RISCHIO RESIDUO:
-
-Nessun rischio operativo rilevato dopo i test.
-
-Eventuali ulteriori warning Retool dovranno essere trattati solo se reali,
-riproducibili e collegati a regressioni runtime.
-
-Nota post Linting / Retool Query Safety Pass:
-
-Dopo i nodi preview_analysis_state / input_analysis_result / controlled UI consumption,
-il pannello Linting Retool mostrava 19 segnalazioni.
-
-Il nodo LINTING / RETOOL QUERY SAFETY PASS è stato completato.
-
-Risolti:
-
-- “Misleading line break before ?” in:
-  - command_intent_state
-  - create_suggestion_state
-  - input_analysis_result
-  - preview_analysis_state
-
-Intervento:
-
-- sostituzione ternari multilinea ambigui con if / else equivalenti
-- nessuna modifica funzionale intenzionale
-- test post-fix superati
-
-Sono state inoltre eliminate due query legacy unused:
-
-- typing_state
-- handle_event_success
-
-Esito:
-
-- linting Retool azzerati
-- Performance unused query risolta
-- nessuna regressione osservata nei test
-
-AZIONE:
-
-Gap integrato.
-
-Non riaprire come micro-nodo base.
-
-Eventuali ulteriori warning Retool dovranno essere trattati solo se reali,
-riproducibili o fonte di rumore tecnico rilevante.
+Fonte canonica:
+- 06_LOGOS_View_Preview_System
+- 04_LOGOS_Retool_Architecture se coinvolge componenti Retool
 
 ---
 
-ID: G15
+ID: G29
 
 NOME:
-Edit Mode Cancel / Return to Events List
-
-FONTE:
-Match Engine Unification Session + osservazione UX + UX Cleanup Micro-Batch
+Feedback / Input Flow Micro-flash Cleanup
 
 STATO:
-INTEGRATO
+IDENTIFICATO — RESIDUO MINORE
 
 DESCRIZIONE:
 
-In modalità modifica evento mancava un pulsante per annullare
-e tornare alla lista eventi senza salvare.
+Persistono micro-flash visivi in feedback project/entity e transizioni input/cambio schermata.
 
-STATO REALE:
+Azione:
 
-Il nodo EDIT MODE CANCEL / RETURN TO EVENTS LIST
-è stato completato dentro:
+aprire solo se il flash diventa fastidioso o riproducibile in modo chiaro.
 
-UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+Vincoli:
 
-ed è stato successivamente evoluto durante:
+- non inseguire micro-flash senza identificazione precisa
+- non modificare save flow
+- non modificare insert/update
+- intervenire solo su timing/visibility UI
 
-UX MOBILE COHERENCE PASS
-
-in una logica cancel contestuale create/edit.
-
-Implementato:
-
-- nuovo pulsante btn_cancel_edit
-- visibile solo in edit mode
-- label “Annulla”
-- stile secondario / outline neutro
-- posizionato sotto Conferma per priorità mobile
-
-Comportamento:
-
-- reset edit_mode
-- reset editing_event
-- reset input_home
-- reset input_raw
-- reset select_project
-- reset select_entity
-- reset select1
-- reset ui_state.parsed
-- ritorno a container_events_list
-- nessuna chiamata update_event
-
-Comportamento aggiornato:
-
-Create/input mode:
-
-- label dinamica “Torna alla home”
-- svuota input_home / input_raw
-- resetta select_project / select_entity / select1
-- resetta ui_state.parsed
-- azzera feedback_text / feedback_project / feedback_summary
-- torna Home
-- nessun salvataggio
-
-Edit mode:
-
-- label dinamica “Annulla modifica”
-- esce da edit_mode
-- azzera editing_event
-- svuota input/select
-- resetta ui_state.parsed
-- torna Lista eventi
-- nessun update_event
-
-Timer feedback pendente:
-
-- viene cancellato se presente
-
-Fix collegato:
-
-btn_edit è stato rafforzato per evitare doppia visibilità tra:
-
-- container_input
-- container_events_list
-
-TEST VALIDATI:
-
-- entra in edit mode
-- Annulla visibile solo in edit mode
-- Annulla torna alla lista eventi
-- nessun update_event eseguito
-- edit_mode.data = false
-- editing_event.data = null
-- edit evento A → annulla → edit evento B senza doppia lista
-- create/edit non regressi
-- create/input → Torna alla home validato
-- edit → Annulla modifica → Lista eventi validato
-- nav corretta dopo cancel create/edit validata
-
-RISCHIO RESIDUO:
-
-Nessun rischio operativo rilevato.
-
-AZIONE:
-
-Gap integrato.
-
-Non riaprire come micro-nodo base.
-Eventuali miglioramenti grafici del pulsante devono restare fuori scope
-fino a revisione UI finale del sistema stabile.
+Fonte canonica:
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
 
 ---
 
-ID: G16
+ID: G33
 
 NOME:
-Events List Search / Filter Bar
-
-FONTE:
-Richiesta utente + gestione lista eventi + UX Cleanup Micro-Batch
+Button Confirm Readiness Alignment
 
 STATO:
-INTEGRATO
+INTEGRATO PARZIALE — HIDDEN MIGRATO / DISABLED NON MIGRATO
 
 DESCRIZIONE:
 
-Aggiungere una barra di ricerca nella lista eventi
-per facilitare ricerca e filtro degli eventi visualizzati.
+button_input_confirm.Hidden è migrato a input_analysis_result.
+button_input_confirm.Disabled e payload restano separati.
 
-STATO REALE:
+Azione:
 
-Il nodo EVENTS LIST SEARCH / FILTER BAR
-è stato completato dentro:
+eventuale nodo dedicato per readiness funzionale / Disabled.
 
-UX / CLEANUP MICRO-BATCH POST MATCH ENGINE
+Vincoli:
 
-La lista eventi è stata successivamente rifinita durante:
+- distinguere Hidden da Disabled
+- non modificare payload
+- non modificare insert_event / update_event
+- non modificare parser/matching/select
+- testare create/edit/no-op/command/ambiguity/empty input
 
-UX MOBILE COHERENCE PASS
-
-Implementato:
-
-- input_events_search
-- posizionato nella testata della lista eventi
-- filtro client-side sulla Data source di list_events
-- nessuna modifica a events_new
-- nessuna modifica DB
-- nessuna modifica insert/update
-- nessuna modifica parser/matching/type/duration
-
-La ricerca filtra su:
-
-- raw_input
-- type
-- status
-- nome progetto
-- nome entità
-
-Aggiornamenti UX Mobile Coherence Pass:
-
-- titolo lista eventi rifinito
-- sottotitolo aggiunto
-- search bar ridimensionata
-- icona search monotona tramite add-on Retool
-- card evento rese più leggibili
-- pulsanti OK / No / Modifica rifiniti con Icon add-ons
-- navigation dock visibile in alto nella vista Events
-- freccia indietro resa non necessaria dalla nav
-
-TEST VALIDATI:
-
-- campo vuoto mostra lista completa
-- ricerca “materiale” funzionante
-- ricerca “villa” funzionante
-- ricerca “alfie” funzionante
-- clear search funzionante
-- lista resta operativa
-- pulsanti WRITTEN / ERROR / EDIT invariati
-- edit da lista filtrata funzionante
-- annulla da lista filtrata funzionante
-
-RISCHIO RESIDUO:
-
-- layout mobile base ora rifinito
-- eventuali filtri avanzati restano fuori scope
-- polish finale font/spaziature rimandato
-- non sono stati introdotti filtri avanzati strutturali
-
-AZIONE:
-
-Gap integrato.
-
-Non riaprire come Search / Filter Bar base.
-Eventuali filtri avanzati devono essere nodo dedicato,
-non semplice estensione implicita.
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
 
 ---
 
@@ -1704,613 +208,108 @@ ID: G17
 NOME:
 Preview Model / Hint State Consolidation
 
-FONTE:
-Preview System + Roadmap + Match Engine Unification
-
 STATO:
 IN OSSERVAZIONE — CANDIDATO POST INPUT ANALYSIS RESULT
 
 DESCRIZIONE:
 
-Consolidamento futuro della preview come modello più ordinato,
-eventualmente più vicino a una view pura.
+La Sintesi resta layer ibrido:
 
-Dopo Match Engine Unification:
-
-- hint matching project/entity sono allineati a project_state/entity_state
-- highlight project/entity legge matches
-- detection locale preview non è più fonte decisionale matching
-
-Restano embedded nella preview:
-
-- label cleaning
-- hint duration normalization
-- hint durata ambigua
-- hint type / Spesa / Incasso
-- highlight rendering
-- formattazioni locali
-
-Nota post UX Cleanup:
-
-La label creato/modificato della lista eventi è stata corretta,
-ma non modifica il modello preview.
-Resta un intervento di lista/processing UX,
-non un refactor preview.
-
-Nota post Command Intent:
-
-Durante il nodo COMMAND INTENT — CREATE PROJECT / ENTITY è emerso che il blocco “Da verificare” non è spostabile sotto la CTA perché fa parte della Sintesi.
-
-Questo conferma che la preview resta un layer ibrido che contiene:
-
-- contenuto principale
-- hint
-- warning informativi
-- suggestion visive
-- logiche di rendering
-
-Nota post UI Readiness:
-
-Il nodo UI READINESS / VISIBILITY AGGREGATOR ha stabilizzato quando la Sintesi viene mostrata,
-ma non ha modificato il modello interno della Sintesi.
-
-Restano quindi validi i debiti:
-
-- separare hint/warning/suggestion dal contenuto principale
-- valutare blocco autonomo “Da verificare”
-- rendere la preview più view pura
-- ridurre logiche embedded nella Sintesi
-
-Il problema non ha generato regressioni dati,
-ma rende più forte il candidato PREVIEW MODEL / HINT STATE CONSOLIDATION.
-
-Nota post Preview Analysis State:
-
-preview_analysis_state è stato introdotto come primo layer read-only per hint/status/missing association della Sintesi.
-
-Questo riduce la logica embedded nella Sintesi,
-ma non completa il Preview Model.
-
-Restano dentro Sintesi:
-
-- layout HTML
+- rendering
 - label cleaning
 - highlight
-- rendering finale
 - micro-copy
-- struttura visuale “Da verificare”
+- hint/warning/status
+- blocco “Da verificare”
 
-Nota post Input Analysis Result:
+preview_analysis_state ha ridotto parte della logica embedded,
+ma non ha trasformato la Sintesi in view pura.
 
-input_analysis_result legge preview_analysis_state e lo compone nel proprio stato preview/readiness.
-Il nodo Controlled UI Consumption Pass ha reso coerente il testo della notice associazioni mancanti con la presenza reale del container suggerimenti.
+Azione:
 
-Il gap resta valido.
+valutare nodo dedicato solo dopo chiusura audit documentale o se emerge problema UX prioritario.
 
-La Visibility Migration degli Hidden principali è stata completata,
-quindi questo gap non riguarda più “quando mostrare” la Sintesi,
-ma “cosa contiene” la Sintesi e come sono organizzati hint, warning, status e label.
+Fonte canonica:
+- 06_LOGOS_View_Preview_System
 
-RISCHIO:
+---
 
-Un refactor preview globale può introdurre regressioni
-in un layer UX già stabilizzato.
+ID: G35
 
-AZIONE:
+NOME:
+Status Semantics Alignment
 
-Candidato futuro importante.
+STATO:
+IDENTIFICATO — RESIDUO UX/SEMANTICO
 
-Non è il primo nodo consigliato se si decide di aprire prima
-DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
+DESCRIZIONE:
 
-Resta comunque tra i nodi tecnici più rilevanti dopo il riordino documentale.
+In alcuni casi la Sintesi può mostrare status OK insieme a card “Da verificare”.
 
-Non aprire come “Hint / Preview State Alignment” generico.
+Azione:
 
-Eventuale nodo futuro solo se emerge un problema reale
-o se si decide un refactor dedicato:
-
-PREVIEW MODEL / HINT STATE CONSOLIDATION
+da trattare dentro Preview Model / Hint State Consolidation o nodo dedicato.
 
 Vincoli:
 
-- nessun refactor globale senza nodo dedicato
-- preservare preview alignment
-- preservare duration visualization
-- preservare type hints
-- preservare match hints
-- nessuna modifica DB
+- non trasformare warning non bloccanti in blocchi
+- non modificare save flow
+- preservare chiarezza utente
 
-ID: G18
+Fonte canonica:
+- 06_LOGOS_View_Preview_System
+
+---
+
+ID: G30
 
 NOME:
-UX Mobile Coherence Pass
-
-FONTE:
-Project / Entity Create Suggestion Session + UX mobile testing + iPhone Safari real test
+Command Intent — Edit Guide Generic Alias
 
 STATO:
-INTEGRATO BASE
+IDENTIFICATO — MICRO-NODO FUTURO
 
 DESCRIZIONE:
 
-Rifinitura grafica e funzionale della UX mobile di LOGOS,
-estendendo il lavoro sul suggestion container anche a:
+Il sistema riconosce “modifica evento” come guida non operativa,
+ma non riconosce ancora alias generici controllati:
 
-- Home
-- Input / Sintesi
-- Da verificare
-- Suggerimenti associazione
-- Dati evento
-- Events list
-- Feedback
-- Navigation dock
-- Cancel create/edit
-- Routing post-save
+- modifica
+- correggi
+- cambia
 
-STATO REALE:
+Azione:
 
-Il nodo UX MOBILE COHERENCE PASS è stato completato.
+valutare micro-nodo dedicato.
 
-Implementato:
+Vincoli:
 
-- Home mobile rifinita
-- card Esempi resa coerente
-- Azioni rapide rifinite e predisposte
-- Suggestion container mobile rifinito
-- Dati evento compattati con label inline nelle select
-- Events list mobile rifinita
-- Feedback mobile stabilizzato
-- feedback_summary introdotto in ui_state
-- Navigation dock Home / Eventi / Dashboard introdotta
-- Dashboard presente ma disabilitata
-- Icon add-ons Retool introdotti nei pulsanti reali
-- cancel create/edit contestuale
-- routing post-save contestuale
-- font-size input/select portato a 16px per Safari iOS
+- evitare falsi positivi
+- non aprire edit flow automatici
+- non modificare record
+- non salvare eventi da comando generico
 
-Routing consolidato:
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 03_LOGOS_Event_Lifecycle
 
-Insert reale:
-→ feedback 1800 ms
-→ Home
-
-Update reale:
-→ feedback 1800 ms
-→ Lista eventi
-
-Edit senza modifiche:
-→ nessun update_event
-→ nessun feedback
-→ Lista eventi immediata
-
-Cancel create/input:
-→ Home
-
-Cancel edit:
-→ Lista eventi
-
-Mobile Safari fix:
-
-Durante test reale su iPhone 13 Safari sono stati rilevati:
-
-- zoom automatico dopo tap input
-- troncamento laterale dell’interfaccia
-- select non pienamente utilizzabili come dropdown
-
-Fix:
-
-- font-size 16px sui campi editabili/select principali
-
-Esito:
-
-- zoom iOS risolto
-- layout non troncato
-- select funzionanti sia in digitazione sia in dropdown
-
-Regola consolidata:
-
-input/select mobile Safari devono mantenere font-size minimo 16px.
-
-RISCHIO RESIDUO:
-
-- Cambia / Scegli nella Sintesi ancora non cliccabili
-- Azioni rapide non operative
-- Dashboard non implementata
-- suggestion create vs edit consistency da verificare
-- project creation override con match generico non implementato
-- Icon System non completamente standardizzato
-- mobile compact advanced / polish finale rimandato
-- rendering progressivo input flow ridotto tramite UI Readiness / Visibility Aggregator
-- “Da verificare” resta dentro Sintesi e non è spostabile senza refactor preview
-- micro-flash feedback project/entity ancora presente come residuo minore
-- edit mode chiarito tramite notice compatta introdotta in UI Readiness
-
-AZIONE:
-
-Gap integrato a livello base.
-
-Non riaprire come UX Cleanup — Suggestion Container / Mobile.
-
-Eventuali evoluzioni devono diventare gap/nodi dedicati:
-
-- Cambia / Scegli Actions
-- Hint / Ambiguità Advanced
-- Azioni Rapide Operative
-- Dashboard Base
-- Suggestion Create vs Edit Consistency
-- Project Create Suggestion — Match Present / User Override
-- Icon System / Mobile Polish Finale
-- Preview Model / Hint State Consolidation
-- Feedback Micro-flash Cleanup
-- Cleanup Obsolete UI Guards / Query Reduction
-
-ID: G19
-
-NOME:
-Command Intent — Create Project / Entity
-
-FONTE:
-Osservazione utente su placeholder/input mobile + Project / Entity Create Suggestion Session + Command Intent Session
-
-STATO:
-INTEGRATO BASE
-
-DESCRIZIONE:
-
-Riconoscimento controllato di frasi comando per creare project/entity
-distinguendole da eventi ordinari.
-
-Esempi:
-
-- crea
-- crea progetto
-- crea progetto Aspri
-- aggiungi progetto Villa Nuova
-- inserisci progetto Villa Nuova
-- nuovo progetto Villa Nuova
-- crea entità Patrizio
-- aggiungi entità Referente Kappa
-- inserisci entità Marco Parisi
-- nuova entità Marco Parisi
-- modifica evento
-
-STATO REALE:
-
-Il nodo COMMAND INTENT — CREATE PROJECT / ENTITY è stato completato e validato.
-
-Implementato:
-
-- command_intent_state come query Retool page-level
-- riconoscimento comando generico “crea”
-- riconoscimento create project incompleto
-- riconoscimento create project completo
-- riconoscimento create entity incompleto
-- riconoscimento create entity completo
-- sinonimi base: crea, aggiungi, inserisci, nuovo, nuova
-- riconoscimento elemento già presente
-- blocco duplicazione project/entity già esistenti
-- guida non operativa per “modifica evento”
-- container_command_intent dentro container_input
-- UI mobile Command Intent rifinita
-- btn_command_create_project collegato a insert_project esistente
-- btn_command_create_entity collegato a insert_entity esistente
-- btn_command_go_events collegato alla lista eventi
-- feedback_mode introdotto in ui_state
-- feedback project_created implementato
-- feedback entity_created implementato
-- feedback evento ordinario preservato
-
-Regole consolidate:
-
-- comando puro non salva eventi
-- project/entity da command vengono creati solo previa conferma utente
-- insert_project / insert_entity restano le query operative di creazione
-- command_intent_state non modifica DB
-- command_intent_state non modifica parser
-- command_intent_state non modifica matching
-- command_intent_state non sostituisce create_suggestion_state
-- select_project / select_entity restano decisione utente finale per gli eventi
-- “modifica evento” non apre edit flow alternativo
-- “modifica evento” non modifica record automaticamente
-
-Esempi validati:
-
-crea
-→ guida con esempi
-→ nessun evento salvato
-
-crea progetto
-→ campo nome progetto
-→ conferma richiesta
-→ nessun evento salvato
-
-crea progetto Command Final Project 2
-→ project creato
-→ feedback Progetto creato
-→ ritorno Home
-→ nessun evento salvato
-
-crea entità
-→ campo nome entità
-→ conferma richiesta
-→ nessun evento salvato
-
-crea entità Command Final Entity 2
-→ entity creata
-→ feedback Entità creata
-→ ritorno Home
-→ nessun evento salvato
-
-crea progetto villa
-→ elemento già presente
-→ nessuna duplicazione
-→ nessun evento salvato
-
-modifica evento
-→ guida con step
-→ Vai agli eventi
-→ nessuna modifica automatica
-
-30 euro spesa villa citrignano
-→ flow evento ordinario non regressivo
-
-RISCHIO RESIDUO:
-
-- Command Intent è solo un primo livello controllato
-- non è ancora engine intent globale
-- non gestisce dashboard/report
-- non gestisce modifica project/entity da command
-- non apre edit flow evento automatico
-- non sostituisce parser, matching o suggestion
-- non unifica ancora tutte le fonti di interpretazione
-- rendering progressivo input evento normale ridotto tramite UI Readiness / Visibility Aggregator
-- “modifica” generico non ancora riconosciuto come guida edit
-- in edit mode il command intent viene soppresso correttamente a livello effective da input_analysis_result
-- se l’utente scrive “crea” in edit mode, il sistema resta in modifica evento
-- manca però una guidance esplicita tipo “Se vuoi creare qualcosa, annulla prima la modifica evento”
-- “Da verificare” resta dentro Sintesi perché non è blocco autonomo
-
-AZIONE:
-
-Gap integrato a livello base.
-
-Non riaprire come Command Intent — Create Project / Entity base.
-
-Eventuali evoluzioni devono diventare gap/nodi dedicati:
-
-- Command Intent — Edit Mode Guidance / Generic Alias
-- Input Analysis Result — Visibility Migration Completion
-- Advanced Command Intent
-- Command Intent — Edit Guide Generic Alias
-- Dashboard Command / Report Intent
-- Project / Entity Edit Command
-- Azioni Rapide Operative
-
-ID: G20
-
-NOME:
-Core Event System / Modular Instances
-
-FONTE:
-Allineamento strategico utente + Roadmap + State
-
-STATO:
-VALIDATO — VINCOLO STRATEGICO
-
-DESCRIZIONE:
-
-LOGOS mantiene l’obiettivo originario di essere un sistema espandibile a blocchi
-fondato su un Core Event System stabile.
-
-Il core è:
-
-input libero
-→ interpretazione controllata
-→ project / entity / type / amount / date
-→ evento normalizzato
-→ ledger eventi
-→ viste / moduli / dashboard futuri
-
-Istanze future previste:
-
-- ASPRI
-- ADEXIMA
-- MaurizioLab
-- uso personale
-- lavoro
-- ristrutturazioni
-- clienti / fornitori / attività
-
-STATO REALE:
-
-Il Core Event System è in costruzione avanzata.
-
-Sono già consolidate:
-
-- input reliability
-- parser controllato
-- normalization base
-- duration normalization
-- type classification base
-- match engine unification first level
-- project/entity create suggestion first level
-- edit flow
-- processing NEW / WRITTEN / ERROR
-- UX mobile coherence pass
-- command intent create project/entity first controlled level
-- UI readiness / visibility aggregator first controlled level
-- preview_analysis_state first controlled layer
-- input_analysis_result read-only diagnostic base
-- input_analysis_result controlled UI consumption pass
-- input_analysis_result visibility migration completion
-- linting / retool query safety pass
-- navigation dock Home / Eventi / Dashboard predisposta
-- feedback post-save contestuale
-- cancel create/edit contestuale
-
-Non sono ancora attive:
-
-- istanze verticali
-- dashboard specifiche
-- moduli ASPRI
-- moduli ADEXIMA
-- moduli MaurizioLab
-- output/KP- Dashboard operativa, anche se predisposta in nav
-- Azioni rapide operative, anche se predisposte in Home
-- Command Intent avanzato per report/dashboard/modifiche strutturali
-
-RISCHIO:
-
-Anticipare istanze verticali prima della stabilità core può trasformare LOGOS
-in un gestionale monolitico o frammentato,
-perdendo l’obiettivo di sistema modulare.
-
-AZIONE:
-
-Mantenere come vincolo strategico anti-deriva.
-
-Regola:
-
-Le istanze ASPRI / ADEXIMA / MaurizioLab sono derivate future del core,
-non nodi da anticipare ora.
-
-Non aprire nodi verticali specifici come:
-
-- dashboard ASPRI
-- CRM ADEXIMA
-- gestione MaurizioLab
-- moduli animali / allevamento
-- moduli fatture / preventivi
-- moduli clienti avanzati
-
-prima che il Core Event System sia sufficientemente stabile.
-
-Sequenza corretta:
-
-1. consolidare cuore eventi
-2. consolidare gestione project/entity
-3. rifinire UX mobile base
-4. introdurre command intent guidato
-5. consolidare UI readiness / visibility del flow input
-6. consolidare preview / hint / input analysis
-6.1 visibility migration degli Hidden principali completata
-6.2 mantenere architettura modulare coordinata, non motore monolitico
-6.3 semplificare la documentazione con fonti canoniche e richiami espliciti
-7. consolidare data structure / qualità dati
-8. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
-
-Principio architetturale post Input Analysis Result:
-
-LOGOS non deve evolvere verso un mega-motore monolitico.
-
-Direzione corretta:
-
-- moduli specializzati calcolano:
-  - parsing
-  - matching
-  - suggestion
-  - command
-  - preview hint/status
-  - save flow
-
-- input_analysis_result compone:
-  - raw state
-  - selection state
-  - effective state
-  - readiness UI
-
-- la UI legge progressivamente una verità operativa coerente
-
-Obiettivo:
-
-massimo controllo,
-massima flessibilità,
-riduzione delle verità parallele.
-
-Principio documentale futuro:
-
-La documentazione deve essere semplificata senza perdere ricostruibilità.
-
-Regola:
-
-- ogni logica fondamentale deve essere completa in un solo documento canonico
-- gli altri documenti devono richiamarla esplicitamente
-- evitare duplicazioni lunghe tra State / Roadmap / Input System / Retool Architecture / View Preview / Runtime
-- creare una Session Boot Matrix per caricare i documenti corretti a inizio sessione
-
-Nodo futuro candidato:
-
-DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+---
 
 ID: G21
 
 NOME:
 Suggestion Create vs Edit Consistency
 
-FONTE:
-UX Mobile Coherence Pass + test edit flow
-
 STATO:
 IDENTIFICATO
 
 DESCRIZIONE:
 
-Durante il test del flow edit è stata osservata una possibile divergenza
-tra suggestion mostrate in create flow e suggestion mostrate in edit flow.
+Possibile divergenza tra suggestion mostrate in create flow e suggestion mostrate in edit flow.
 
-Caso osservato:
+Azione:
 
-- in create/input flow possono comparire suggestion project/entity
-- in alcuni edit flow compare solo suggestion entity
-- project suggestion può non comparire come atteso
-
-STATO REALE:
-
-Non corretto durante UX Mobile Coherence Pass.
-
-Motivo:
-
-La correzione potrebbe richiedere interventi su:
-
-- create_suggestion_state
-- condizioni di visibilità suggestion
-- interazione tra edit_mode, input_raw, project_state/entity_state
-- stato dismissed/open dei micro-editor
-
-Nota post Input Analysis Result:
-
-Durante il Controlled UI Consumption Pass è stata chiarita la distinzione:
-
-missing association notice
-≠
-suggestion operativa
-
-La Sintesi può mostrare “Manca un progetto e un’entità”
-anche quando create_suggestion_state non produce contenuti operativi nel container Suggerimenti associazione.
-
-Decisione consolidata:
-
-- non mostrare container vuoti
-- non forzare suggestion se create_suggestion_state non produce contenuti
-- adattare invece il testo della notice nella Sintesi
-
-Il gap resta valido per chiarire meglio il comportamento create/edit,
-ma non è una regressione del nodo input_analysis_result.
-
-RISCHIO:
-
-Intervenire dentro un nodo UX grafico avrebbe rischiato regressioni su:
-
-- matching
-- suggestion
-- edit flow
-- salvataggio
-- create_suggestion_state
-
-AZIONE:
-
-Da valutare in nodo dedicato.
+verificare in nodo dedicato con casi riproducibili.
 
 Vincoli:
 
@@ -2318,1347 +317,585 @@ Vincoli:
 - non modificare parser
 - non introdurre creazioni automatiche
 - preservare select_project / select_entity come decisione utente
-- verificare prima comportamento reale create vs edit con casi riproducibili
+
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 02_LOGOS_Match_Engine
+- 04_LOGOS_Retool_Architecture
+
+---
 
 ID: G22
 
 NOME:
 Project Create Suggestion — Match Present / User Override
 
-FONTE:
-UX Mobile Coherence Pass + osservazione input “villa”
-
 STATO:
 IDENTIFICATO
 
 DESCRIZIONE:
 
-Quando l’input produce un match generico esistente,
-il sistema può mostrare hint “esistono progetti più specifici”,
-ma non propone la creazione di un nuovo progetto.
+In presenza di match generico esistente, il sistema non propone creazione nuovo progetto.
 
-Caso osservato:
+Esempio:
 
-input:
-villa
+input “villa”
+→ match Villa
+→ hint progetti più specifici
+→ nessuna opzione “crea comunque nuovo progetto”
 
-Comportamento attuale:
+Azione:
 
-- project Villa selezionabile / riconosciuto
-- hint progetti più specifici disponibile
-- nessuna proposta di creazione nuovo progetto
-
-Problema potenziale:
-
-L’utente potrebbe voler creare un nuovo progetto correlato,
-anche se esiste un match generico.
-
-STATO REALE:
-
-Non implementato.
-
-Decisione attuale:
-
-Il sistema evita creazioni aggressive se esiste già un match,
-per ridurre rischio duplicati.
-
-RISCHIO:
-
-Permettere creazione progetto in presenza di match generico può causare:
-
-- duplicati
-- rumore nei progetti
-- peggioramento matching
-- confusione tra selezione progetto esistente e creazione nuovo progetto
-
-AZIONE:
-
-Da valutare in nodo dedicato.
-
-Possibile direzione:
-
-- mostrare una opzione esplicita “Crea comunque nuovo progetto”
-- richiedere conferma forte
-- mostrare progetti simili prima di creare
-- non attivare su ambiguità bloccante
-- non creare automaticamente
-
-ID: G23
-
-NOME:
-Azioni Rapide Operative
-
-FONTE:
-UX Mobile Coherence Pass + Home mobile
-
-STATO:
-VALIDATO — NODO FUTURO
-
-DESCRIZIONE:
-
-La Home contiene ora una sezione “Azioni rapide” con pulsanti:
-
-- Registra spesa
-- Registra incasso
-- Registra tempo
-- Registra evento
-
-STATO REALE:
-
-I pulsanti sono stati rifiniti graficamente e predisposti,
-ma non sono ancora operativi come flow guidato.
-
-Attualmente non devono bypassare:
-
-- input libero
-- select Tipo evento
-- project/entity decision
-- Conferma evento
-
-RISCHIO:
-
-Renderli operativi troppo presto può duplicare logiche già presenti
-in input libero, type classification e button_input_confirm.
-
-Dopo Command Intent, il rischio include anche la duplicazione di logiche tra:
-
-- Azioni rapide
-- command_intent_state
-- type classification
-- input libero
-- button_input_confirm
-
-Dopo UI Readiness, le Azioni rapide dovranno inoltre coordinarsi con:
-
-- ui_visibility_mode
-- ui_visibility_state
-- container_command_intent
-- flow event / command
-
-AZIONE:
-
-Da sviluppare come nodo futuro dedicato.
-
-Possibili comportamenti:
-
-- preimpostare select1
-- focalizzare input
-- mostrare placeholder contestuale
-- guidare l’utente senza creare eventi automaticamente
-- non salvare nulla senza conferma
-- coordinarsi con command_intent_state senza duplicare riconoscimenti
-
-ID: G24
-
-NOME:
-Dashboard Base
-
-FONTE:
-UX Mobile Coherence Pass + Navigation Dock
-
-STATO:
-VALIDATO — NODO FUTURO NON IMMEDIATO
-
-DESCRIZIONE:
-
-La navigation dock ora prevede tre aree:
-
-- Home
-- Eventi
-- Dashboard
-
-La voce Dashboard è presente ma disabilitata.
-
-STATO REALE:
-
-Dashboard non implementata.
-Nessun KPI attivo.
-Nessuna reportistica attiva.
-
-Decisione:
-
-La voce Dashboard è stata predisposta per evitare di rifare la struttura UX,
-ma non abilita lo STEP 7 OUTPUT.
-
-RISCHIO:
-
-Attivare Dashboard troppo presto può produrre metriche fuorvianti perché:
-
-- data structure non consolidata
-- economic direction non avanzata
-- amount firmato non definito
-- type base non sufficiente per KPI avanzati
-- dati storici non retro-normalizzati
-
-AZIONE:
-
-Non immediato.
-
-Da valutare solo dopo:
-
-- Command Intent base completato
-- UI Readiness / Visibility Aggregator completato
-- Data Structure, se necessaria
-- eventuale Dashboard Command / Report Intent solo in nodo dedicato
-- Economic Direction Advanced, se necessaria
-- sufficienza dati reali
-- decisione su KPI minimi non fuorvianti
-
-ID: G25
-
-NOME:
-Icon System / Mobile Polish Finale
-
-FONTE:
-UX Mobile Coherence Pass + Retool add-ons
-
-STATO:
-IN OSSERVAZIONE
-
-DESCRIZIONE:
-
-Durante UX Mobile Coherence Pass sono stati introdotti Icon add-ons Retool
-nei pulsanti reali:
-
-- Azioni rapide
-- Navigation dock
-- Conferma evento
-- Torna alla home / Annulla modifica
-- Events list OK / No / Modifica
-- Search events
-
-Nella Sintesi e nel Feedback restano icone/emoji HTML già funzionanti.
-
-STATO REALE:
-
-Sistema misto:
-
-- Icon add-ons Retool nei componenti reali
-- emoji/icon HTML nella Sintesi e Feedback
-
-Decisione attuale:
-
-Non modificare Sintesi/Feedback perché funzionano e sono sensibili a regressioni HTML.
-
-RISCHIO:
-
-Standardizzare tutto ora potrebbe riaprire codice già validato.
-
-AZIONE:
-
-Da rivalutare solo in polish finale.
+valutare opzione esplicita di override utente.
 
 Vincoli:
 
-- non toccare parser
-- non toccare matching
-- non toccare salvataggio
-- non rompere Sintesi / Feedback
-- preservare leggibilità mobile
-
-ID: G26
-
-NOME:
-Mobile Safari Font Baseline
-
-FONTE:
-Test reale iPhone 13 Safari + UX Mobile Coherence Pass
-
-STATO:
-INTEGRATO COME REGOLA TECNICA
-
-DESCRIZIONE:
-
-Su iPhone 13 Safari è stato osservato zoom automatico sui campi editabili
-e comportamento anomalo delle select.
-
-Problemi osservati:
-
-- tap su input causava zoom automatico
-- app troncata lateralmente dopo zoom
-- select Tipo / Progetto / Entità non pienamente utilizzabili come dropdown
-
-Fix applicato:
-
-- font-size portato a 16px su input/select principali
-
-Esito:
-
-- zoom automatico risolto
-- layout non troncato
-- select funzionanti sia in digitazione sia in dropdown
-
-Regola:
-
-Input e select principali su mobile Safari devono mantenere font-size minimo 16px.
-
-AZIONE:
-
-Gap integrato come regola tecnica.
-Non riaprire salvo regressioni reali.
-
-Da ricordare nel polish finale:
-
-- eventuali riduzioni font non devono riattivare zoom iOS
-- testare sempre su iPhone reale / Safari o WebKit
-
-ID: G27
-
-NOME:
-Input Rendering Stability / Container Structure
-
-FONTE:
-Command Intent Session + test runtime input evento normale + UI Readiness Session
-
-STATO:
-INTEGRATO BASE / EVOLUTO IN INPUT ANALYSIS RESULT
-
-DESCRIZIONE:
-
-Durante il nodo Command Intent era stato osservato un residuo UX:
-
-input evento normale
-→ Sintesi / hint / suggestion potevano comparire progressivamente
-
-Il comportamento non rompeva:
-
-- parser
-- matching
-- salvataggio
-- DB
-- edit flow
-- feedback
-
-ma disturbava la percezione di stabilità dell’interfaccia mobile.
-
-STATO REALE:
-
-Il gap è stato affrontato nel nodo:
-
-UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
-
-Implementato:
-
-- ui_visibility_state come Transformer read-only
-- ui_visibility_mode come Variable Retool
-- valori ui_visibility_mode:
-  - empty
-  - event
-  - command
-- trigger_parse_debounced aggiorna ui_visibility_mode
-- window.__logos_visibility_run_id per evitare update stale da debounce
-- classificazione locale event/command solo per visibilità UI
-- Hidden principali centralizzati:
-  - container_command_intent
-  - sintesi
-  - container_association_suggestions
-  - text_event_data_title
-  - select1
-  - select_project
-  - select_entity
-  - button_input_confirm
-  - btn_cancel_edit
-  - btn_cancel_input_home
-  - container_input
-- container_input stabilizzato tramite ui_visibility_state.isInputFlow
-- container vuoto durante digitazione risolto
-- flash input flow ridotto
-- bottom bar flash risolto tramite micro-fix container_app_nav
-- text_input_analysis_loading introdotto vicino all’input principale
-- text_edit_mode_notice introdotto per chiarire edit mode
-- edit mode confermato prevalente su Command Intent
-
-Regole consolidate:
-
-- ui_visibility_state governa solo visibilità UI
-- ui_visibility_mode è latch UI leggero
-- non è Input Analysis Model completo
-- non è fonte unica interpretativa
-- non sostituisce parser
-- non sostituisce matching
-- non sostituisce command_intent_state
-- non sostituisce create_suggestion_state
-- non modifica save flow
-- non modifica DB
-
-Evoluzione successiva:
-
-Il nodo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS ha migrato una prima parte degli Hidden da ui_visibility_state a input_analysis_result.
-
-Il nodo INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION ha completato la migrazione degli Hidden principali del flow input.
-
-Componenti ora migrati a input_analysis_result:
-
-- sintesi.Hidden
-- text_event_data_title.Hidden
-- select1.Hidden
-- select_project.Hidden
-- select_entity.Hidden
-- container_command_intent.Hidden
-- container_association_suggestions.Hidden
-- container_input.Hidden
-- text_input_analysis_loading.Hidden
-- btn_cancel_edit.Hidden
-- btn_cancel_input_home.Hidden
-- button_input_confirm.Hidden
-
-Sono stati inoltre corretti:
-
-- edit mode + input vuoto
-- Home idle container visibili erroneamente durante edit mode
-- Dati evento visibili con input vuoto
-- container suggestion vuoto
-- micro-copy notice associazioni mancanti incoerente con presenza suggerimenti
-
-TEST VALIDATI:
-
-- evento normale
-- comando generico
-- create project incompleto
-- create project completo
-- create entity incompleto
-- create entity completo
-- elemento già presente
-- guida edit
-- suggestion project/entity da evento normale
-- edit evento reale
-- edit no-op
-- annulla edit
-- feedback evento
-- feedback project/entity
-- events list
-- Home vuota + navigation dock
-
-RISCHIO RESIDUO:
-
-- micro-flash feedback project/entity ancora presente
-- flash residui durante digitazione/cambio schermata ancora presenti
-- linting Retool azzerati
-- Full Visibility Migration degli Hidden principali completata
-- ui_visibility_state ancora presente fisicamente come residuo tecnico deprecabile
-- button_input_confirm.Hidden migrato
-- button_input_confirm.Disabled non ancora migrato
-- cleanup obsolete guards / query reduction non ancora eseguito
-- Input Analysis Model completo non implementato
-- “modifica” generico non ancora riconosciuto come guida edit
-
-AZIONE:
-
-Gap integrato a livello base.
-
-Non riaprire come Input Rendering Stability / Container Structure.
-
-Eventuali evoluzioni future devono diventare gap/nodi dedicati:
-
-- Feedback Micro-flash Cleanup
-- Cleanup Obsolete UI Guards / Query Reduction
-- Button Confirm Readiness Alignment
-- Preview Model / Hint State Consolidation
-- Input Flow / Transition Micro-flash Stabilization
-
-ID: G28
-
-NOME:
-Input Analysis Model / Single Interpretation Layer
-
-FONTE:
-Command Intent Session + Match Engine Unification + osservazioni utente su fonti parallele
-
-STATO:
-INTEGRATO PARZIALE — VISIBILITY MIGRATION COMPLETION
-
-DESCRIZIONE:
-
-Direzione futura verso un solo layer di analisi interrogabile dalle UI.
-
-Oggi LOGOS usa più fonti controllate:
-
-- parse_input_controlled
-- ui_state.parsed
-- project_state
-- entity_state
-- create_suggestion_state
-- command_intent_state
-- preview logic
-- select_project / select_entity / select1
-- ui_visibility_mode
-- ui_visibility_state
-
-Questa struttura è funzionante,
-ma resta distribuita.
-
-STATO REALE:
-
-Implementato parzialmente attraverso quattro nodi:
-
-1. PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
-2. INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC
-3. INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
-4. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
-
-Stato attuale:
-
-preview_analysis_state:
-
-- raccoglie hint/status/warning/Da verificare/associazioni mancanti della Sintesi
-- è read-only
-- non modifica parser, matching, save flow o DB
-
-input_analysis_result:
-
-- è un Transformer Retool compositivo
-- legge input, parsed, type, project/entity, selection, suggestion, command, preview e readiness
-- espone raw / selection / effective state
-- distingue event flow / command flow / edit flow
-- distingue command raw da command effective
-- distingue project/entity raw match da project/entity effective usability
-- edit mode prevale su command intent
-- non alimenta select_project / select_entity
-- non ricalcola matching
-- non ricalcola parsing
-- non costruisce payload save
-- non modifica DB
-
-Controlled UI consumption / visibility migration completata su:
-
-- sintesi.Hidden
-- text_event_data_title.Hidden
-- select1.Hidden
-- select_project.Hidden
-- select_entity.Hidden
-- container_command_intent.Hidden
-- container_association_suggestions.Hidden
-- micro-copy notice associazioni mancanti nella Sintesi
-- container_input.Hidden
-- text_input_analysis_loading.Hidden
-- btn_cancel_edit.Hidden
-- btn_cancel_input_home.Hidden
-- button_input_confirm.Hidden
-
-Componenti / logiche ancora fuori intenzionalmente:
-
-- button_input_confirm.Disabled
-- button_input_confirm payload
-- insert_event / update_event
-- save readiness completa
-- container_home.Hidden
-- container_feedback.Hidden
-- container_events_list.Hidden
-
-Nota:
-
-container_home / feedback / events_list restano correttamente su ui_state.view
-perché appartengono al routing principale dell’app,
-non alla visibility interna del flow input.
-
-ui_visibility_state:
-
-- non è più letto da input_analysis_result
-- non governa più gli Hidden principali migrati
-- resta presente come residuo tecnico deprecabile
-- non va eliminato fuori da nodo cleanup dedicato
-
-RISCHIO:
-
-Il sistema è in una fase intermedia.
-
-Rischi principali:
-
-- button_input_confirm.Disabled mantiene logica autonoma
-- save readiness non centralizzata
-- ui_visibility_state resta presente fisicamente come residuo tecnico
-- cleanup obsolete guards non ancora eseguito
-- rischio di trasformare input_analysis_result in motore monolitico se si migra oltre il suo ruolo compositivo
-
-Non completare la migrazione può mantenere:
-
-- fonti parallele
-- difficoltà di debug
-- incoerenza tra ciò che l’utente legge e ciò che la UI mostra
-
-AZIONE:
-
-Mantenere il gap aperto come INTEGRATO PARZIALE.
-
-La Visibility Migration degli Hidden principali è completata.
-
-Nodi futuri collegati:
-
-- BUTTON CONFIRM READINESS ALIGNMENT
-- CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
-- PREVIEW MODEL / HINT STATE CONSOLIDATION
-- INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER solo se emerge necessità reale
-
-Vincoli:
-
-- non creare motore monolitico
-- non sostituire parser
-- non sostituire matching
-- non sostituire create_suggestion_state
-- non sostituire command_intent_state
-- non alimentare select_project / select_entity
-- non modificare payload save
-- non modificare DB
-- procedere per micro-step testati
-
-ID: G29
-
-NOME:
-Feedback Micro-flash Cleanup
-
-FONTE:
-UI Readiness / Visibility Aggregator Session + test feedback project/entity
-
-STATO:
-IDENTIFICATO — RESIDUO MINORE
-
-DESCRIZIONE:
-
-Durante i test finali del nodo UI Readiness è stato osservato un micro-flash
-nel feedback project/entity.
-
-Il feedback funziona correttamente:
-
-- project creato
-- entity creata
-- feedback project/entity corretto
-- ritorno Home automatico
-- nessuna regressione su evento ordinario
-- nessun errore console bloccante
-
-Tuttavia resta un piccolo flash visivo,
-non chiaramente identificabile.
-
-STATO REALE:
-
-Sono stati allineati i flussi:
-
-- btn_command_create_project
-- btn_command_create_entity
-
-Pattern applicato:
-
-1. preparare nextFeedbackState
-2. await ui_state.setValue(nextFeedbackState)
-3. micro-tick setTimeout 0
-4. mostrare container_feedback
-
-Il micro-flash è rimasto presente.
-
-RISCHIO:
-
-Inseguire il micro-flash senza identificare il contenuto esatto può introdurre regressioni su:
-
-- feedback evento
-- feedback project/entity
-- routing Home
-- reset input
-- command intent
-- create project/entity
-
-AZIONE:
-
-Non prioritario.
-
-Da aprire solo come micro-nodo dedicato se il flash diventa fastidioso o identificabile.
-
-Nota post Linting / Retool Query Safety Pass:
-
-Restano osservati anche flash residui durante digitazione e cambio schermata.
-Questi non sono stati trattati nel nodo linting perché non derivano dai warning statici.
-
-Nodo futuro possibile:
-
-INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
-
-Vincoli:
-
-- non modificare DB
-- non modificare insert_project / insert_entity
-- non modificare insert_event / update_event
-- non modificare save flow
-- non modificare command_intent_state
-- intervenire solo sul timing/visibilità feedback se necessario
-
-ID: G30
-
-NOME:
-Command Intent — Edit Guide Generic Alias
-
-FONTE:
-Test mobile post UI Readiness + osservazione utente
-
-STATO:
-IDENTIFICATO — MICRO-NODO FUTURO
-
-DESCRIZIONE:
-
-Il sistema riconosce correttamente:
-
-modifica evento
-→ guida edit non operativa
-
-ma non riconosce ancora:
-
-modifica
-→ attualmente trattato come evento ordinario e mostra la Sintesi
-
-Potenziali alias candidati:
-
-- modifica
-- correggi
-- cambia
-
-STATO REALE:
-
-Non implementato.
-
-La gestione attuale è coerente con il nodo Command Intent completato,
-che supporta “modifica evento” come guida esplicita,
-ma non alias generici.
-
-RISCHIO:
-
-Allargare troppo la classificazione può generare falsi positivi.
-
-Esempi da NON confondere automaticamente:
-
-- modifica preventivo villa
-- modifica colore bagno
-- correggi testo brochure
-- cambia materiale progetto
-
-AZIONE:
-
-Da valutare in micro-nodo dedicato.
-
-Vincoli:
-
-- riconoscere solo alias singoli o pattern estremamente controllati
-- non aprire edit flow automatici
-- non modificare record
-- non salvare eventi
-- non sostituire command_intent_state con intent engine globale
-
-ID: G31
-
-NOME:
-Linting / Retool Query Safety Pass
-
-FONTE:
-UI Readiness / Visibility Aggregator Session + Retool linting panel
-
-STATO:
-INTEGRATO
-
-DESCRIZIONE:
-
-Dopo i nodi preview_analysis_state / input_analysis_result / controlled UI consumption,
-il pannello Linting Retool mostra 19 segnalazioni.
-
-Questi linting non hanno impedito:
-
-- evento normale
-- command intent
-- create project/entity
-- edit flow
-- no-op edit
-- annulla edit
-- feedback
-- events list
-- Home vuota + navigation dock
-
-STATO REALE:
-
-Il nodo LINTING / RETOOL QUERY SAFETY PASS è stato completato.
-
-Risolti:
-
-- “Misleading line break before ?” in:
-  - command_intent_state
-  - create_suggestion_state
-  - input_analysis_result
-  - preview_analysis_state
-
-Intervento:
-
-- sostituiti ternari multilinea ambigui con if / else equivalenti
-- nessuna modifica funzionale intenzionale
-- nessuna modifica DB
-- nessuna modifica parser
-- nessuna modifica matching
-- nessuna modifica command intent nella logica funzionale
-- nessuna modifica suggestion nella logica funzionale
-- nessuna modifica save flow
-- nessuna modifica payload
-
-Sono state eliminate due query legacy unused:
-
-- typing_state
-- handle_event_success
-
-TEST VALIDATI:
-
-- evento normale
-- command flow
-- edit flow
-- feedback/routing post-save
-- no regressione visibility
-- no regressione confirm
-- no regressione command intent
-
-ESITO:
-
-- linting Retool azzerati
-- Performance unused query risolta
-- nessuna regressione osservata
-
-RISCHIO RESIDUO:
-
-- eventuali nuovi linting futuri
-- cleanup query/componenti più ampio rimandato a nodo dedicato
-- flash durante digitazione/cambio schermata non trattato in questo nodo
-
-AZIONE:
-
-Gap integrato.
-
-Non riaprire come Linting / Retool Query Safety Pass base.
-Eventuali warning futuri vanno trattati solo se reali, riproducibili o fonte di rumore tecnico rilevante.
+- evitare duplicati
+- nessuna creazione automatica
+- conferma forte se implementato
+
+Fonte canonica:
+- 02_LOGOS_Match_Engine
+- 01_LOGOS_Input_System
+
+---
 
 ID: G32
 
 NOME:
 Cleanup Obsolete UI Guards / Query Reduction
 
-FONTE:
-UI Readiness / Visibility Aggregator Session + centralizzazione Hidden
-
 STATO:
 IDENTIFICATO — CLEANUP FUTURO
 
 DESCRIZIONE:
 
-Il nodo UI Readiness ha centralizzato molti Hidden principali tramite:
+Dopo input_analysis_result e Visibility Migration Completion,
+alcune guardie/query legacy possono essere obsolete.
 
-- ui_visibility_state
-- ui_visibility_mode
+Azione:
 
-e successivamente input_analysis_result ha migrato una parte degli Hidden principali.
-
-Prima del nodo, diversi componenti avevano regex duplicate o guardie locali
-per distinguere evento / command / edit.
-
-Una parte di queste logiche può ora essere considerata obsoleta o duplicata.
-
-STATO REALE:
-
-Non è stato eseguito cleanup/rimozione nel nodo UI Readiness.
-
-Dopo Input Analysis Result — Visibility Migration Completion:
-
-Gli Hidden principali del flow input leggono input_analysis_result:
-
-- Sintesi
-- Dati evento
-- select1
-- select_project
-- select_entity
-- Command container
-- Association suggestion container
-- container_input
-- loading state
-- cancel controls
-- button_input_confirm.Hidden
-
-Restano fuori intenzionalmente:
-
-- button_input_confirm.Disabled
-- button_input_confirm payload
-- insert_event / update_event
-- container_home / container_feedback / container_events_list, perché sono routing principale su ui_state.view
-
-ui_visibility_state non è più letto da input_analysis_result,
-ma resta ancora presente come residuo tecnico.
-
-Motivo:
-
-Il nodo doveva stabilizzare il comportamento,
-non eliminare parti legacy nello stesso passaggio.
-
-RISCHIO:
-
-Rimuovere guardie/query/componenti troppo presto può rompere:
-
-- command intent
-- suggestion container
-- edit flow
-- input flow
-- feedback
-- mobile UX
-
-AZIONE:
-
-Da valutare solo dopo stabilità documentata.
-
-Possibile micro-nodo futuro:
-
-CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+valutare solo dopo stabilità documentata e cleanup dedicato.
 
 Vincoli:
 
 - procedere uno alla volta
-- backup prima di ogni rimozione
 - test dopo ogni micro-rimozione
-- non modificare parser
-- non modificare matching
-- non modificare save flow
-- non modificare DB
+- non modificare parser/matching/save flow/DB
+- non eliminare ui_visibility_state fuori nodo dedicato
 
-Non aprire cleanup prima di:
+Fonte canonica:
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
 
-- completamento aggiornamento documentale corrente
-- eventuale audit documentale
-- decisione esplicita su eliminazione ui_visibility_state
-- test regressione dedicati
-
-Nota:
-
-Visibility Migration degli Hidden principali e Linting / Retool Query Safety Pass sono completati.
-
-ID: G33
-
-NOME:
-Button Confirm Readiness Alignment
-
-FONTE:
-Input Analysis Result Controlled UI Consumption Pass + Retool graph
-
-STATO:
-INTEGRATO PARZIALE — HIDDEN MIGRATO / DISABLED NON MIGRATO
-
-DESCRIZIONE:
-
-button_input_confirm.Hidden è stato migrato a input_analysis_result.
-button_input_confirm.Disabled e payload restano fuori dalla migrazione corrente.
-
-Il bottone Conferma è un punto delicato perché unisce:
-
-- visibilità bottone
-- disabled state
-- input vuoto
-- ambiguità project/entity
-- edit mode
-- save readiness
-- payload insert/update
-- no-op edit guard
-
-STATO REALE:
-
-Parzialmente migrato.
-
-Migrato:
-
-- button_input_confirm.Hidden
-- nuovo flag input_analysis_result.readiness.canShowConfirm
-
-Non migrati:
-
-- button_input_confirm.Disabled
-- button_input_confirm payload
-- no-op edit guard
-- insert/update logic
-
-Regola consolidata:
-
-- canShowConfirm = visibilità del bottone
-- canConfirm = readiness funzionale
-- Disabled resta guard funzionale separata
-- payload resta invariato
-
-RISCHIO:
-
-Migrare Disabled/readiness in modo superficiale può causare:
-
-- bottone nascosto quando dovrebbe essere visibile ma disabilitato
-- bottone visibile quando dovrebbe essere nascosto
-- salvataggi non validi
-- rottura edit flow
-- rottura no-op guard
-- divergenza tra readiness UI e payload reale
-
-AZIONE:
-
-Aprire eventuale nodo dedicato solo per la parte non migrata:
-
-BUTTON CONFIRM READINESS ALIGNMENT
-
-Vincoli:
-
-- non modificare payload save
-- non modificare insert_event / update_event
-- non modificare parser
-- non modificare matching
-- distinguere Hidden da Disabled
-- testare create / edit / no-op / command / ambiguity / empty input
+---
 
 ID: G34
 
 NOME:
 UI Visibility State Decommission / Wrapper Reduction
 
-FONTE:
-Input Analysis Result Controlled UI Consumption Pass + Retool graph
-
 STATO:
 IDENTIFICATO — RESIDUO TECNICO POST VISIBILITY MIGRATION
 
 DESCRIZIONE:
 
-ui_visibility_state è stato introdotto come aggregatore read-only di visibilità.
-
-Dopo Visibility Migration Completion,
-gli Hidden principali sono stati migrati a input_analysis_result.
-
 ui_visibility_state non è più letto da input_analysis_result
-e non governa più gli Hidden principali del flow input.
+e non governa più gli Hidden principali migrati,
+ma resta fisicamente presente come residuo tecnico / rollback.
 
-Resta però ancora presente nel progetto come residuo tecnico / rollback.
+Azione:
 
-STATO REALE:
+decommission solo in nodo dedicato.
 
-Deprecabile, ma non eliminato.
+Possibili esiti futuri:
 
-La dipendenza input_analysis_result → ui_visibility_state è stata rimossa.
+1. eliminazione
+2. archiviazione come riferimento storico
+3. mantenimento temporaneo come rollback tecnico
 
-Non eliminarlo fuori da nodo dedicato perché potrebbe servire come riferimento storico/rollback
-fino a cleanup controllato.
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
 
-RISCHIO:
+------------------------------------------------
+GAP STRUTTURALI FUTURI
+------------------------------------------------
 
-Deprecare ui_visibility_state troppo presto può rompere:
-
-- input flow
-- edit flow
-- cancel flow
-- loading state
-- confirm visibility
-- mobile UX
-
-AZIONE:
-
-Da valutare solo dopo:
-
-- completamento aggiornamento documentale corrente
-- eventuale audit documentale
-- verifica graph Retool aggiornata
-- test regressione dedicati
-
-Possibile esito futuro:
-
-1. ui_visibility_state eliminato
-2. ui_visibility_state archiviato come riferimento storico
-3. ui_visibility_state mantenuto temporaneamente come rollback tecnico
-
-Vincolo:
-
-non eliminarlo in sessioni non dedicate.
-
-ID: G35
+ID: G11
 
 NOME:
-Status Semantics Alignment
-
-FONTE:
-Preview Analysis State Session + Controlled UI Consumption Pass
+Data Structure / Entity Hierarchy
 
 STATO:
-IDENTIFICATO — RESIDUO UX/SEMANTICO
+IN OSSERVAZIONE
 
 DESCRIZIONE:
 
-In alcuni casi la Sintesi può mostrare una card “Da verificare”
-insieme a uno status/badge OK.
+Strutturazione futura di:
 
-Caso noto:
+- relazioni entity-project
+- parent_project_id / parent_entity_id
+- alias
+- deduplicazione
+- gerarchie project/entity
+- relazioni persona/azienda/fornitore/cliente/animale/progetto
 
-input economico senza direzione chiara oppure associazioni mancanti non bloccanti.
+Azione:
 
-Valutazione:
+da valutare prima di output/KPI avanzati e prima di istanze verticali.
 
-Il comportamento non rompe il sistema e non blocca il salvataggio,
-ma può essere semanticamente incoerente per l’utente.
-
-STATO REALE:
-
-Non corretto nel nodo corrente.
-
-Motivo:
-
-La correzione richiede una decisione semantica sul significato di:
-
-- OK
-- Verifica
-- warning bloccante
-- warning non bloccante
-- notice informativa
-
-RISCHIO:
-
-Cambiare lo status senza nodo dedicato può alterare la percezione UX
-e creare nuove incoerenze tra Sintesi, readiness e button confirm.
-
-AZIONE:
-
-Da valutare in nodo futuro:
-
-STATUS SEMANTICS ALIGNMENT
-oppure
-PREVIEW MODEL / HINT STATE CONSOLIDATION
-
-Vincoli:
-
-- non modificare save flow
-- non trasformare warning non bloccanti in blocchi
-- preservare chiarezza utente
-
-ID: G36
-
-NOME:
-Preview / Event Data Label Semantic Alignment
-
-FONTE:
-Test Visibility Migration + osservazione runtime su durata normalizzata
-
-STATO:
-IDENTIFICATO — MICRO-NODO UX/SEMANTICO
-
-DESCRIZIONE:
-
-Durante i test post Visibility Migration è stato osservato che,
-in caso di durata normalizzata, la UI mostra ancora la label:
-
-Importo
-
-anche quando il valore rappresenta una durata.
-
-Caso osservato:
-
-2h30 rendering lavoro
-
-Comportamento attuale:
-
-- type Tempo
-- durata riconosciuta correttamente
-- normalizzazione 150 minuti corretta
-- visibility corretta
-- Dati evento mostrano però “Importo” con valore durata
-
-Problema:
-
-La label è semanticamente fuorviante.
-
-STATO REALE:
-
-Non corretto nel nodo Visibility Migration perché fuori scope.
-
-La logica dati è corretta.
-Il problema riguarda la label visuale / semantica dei Dati evento e/o Sintesi.
-
-RISCHIO:
-
-Correggere la label senza nodo dedicato può riaprire preview/layout già validati.
-
-AZIONE:
-
-Da valutare in micro-nodo dedicato:
-
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
-
-Vincoli:
-
-- non modificare parser
-- non modificare duration normalization
-- non modificare DB
-- non modificare save flow
-- non modificare amount/unit salvati
-- modificare solo label/rappresentazione visuale
-
-Possibile regola futura:
-
-- euro → Importo
-- minuti / ore → Durata
-- nessuna unità → riga assente o label neutra
-
-ID: G37
-
-NOME:
-Documentation Architecture Audit / Redundancy Reduction
-
-FONTE:
-Discussione post Visibility Migration + costo aggiornamenti documentali
-
-STATO:
-VALIDATO — NODO FUTURO PRIORITARIO
-
-DESCRIZIONE:
-
-La documentazione LOGOS ha protetto il progetto da deriva e regressioni,
-ma è diventata molto ridondante.
-
-Problema osservato:
-
-- State, Roadmap, Gap Register, Input System, Retool Architecture, View Preview e Runtime ripetono molte logiche
-- ogni micro-sessione richiede aggiornamenti lunghi su troppi documenti
-- il costo documentale sta rallentando lo sviluppo reale
-- la ridondanza può generare deriva se una logica viene aggiornata in un documento ma non negli altri
-
-Obiettivo:
-
-Ridurre ridondanze senza perdere ricostruibilità.
-
-Principio:
-
-Una logica fondamentale deve essere completa in un solo documento canonico.
-Gli altri documenti devono richiamarla esplicitamente senza duplicarla.
-
-STATO REALE:
-
-Non ancora eseguito.
-
-È candidato come prossimo nodo dopo l’aggiornamento documentale cumulativo corrente.
-
-AZIONE:
-
-Aprire nodo dedicato:
-
-DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
-
-Output atteso:
-
-- mappa responsabilità documentale
-- fonte canonica per ogni logica
-- contenuti duplicati da ridurre
-- contenuti da mantenere completi
-- contenuti da richiamare invece che ripetere
-- Session Boot Matrix
-- regola di aggiornamento futuro
-
-Vincoli:
-
-- non cancellare contenuti critici
-- non rendere i documenti troppo astratti
-- preservare ricostruibilità in caso di crash
-- non alterare logiche runtime
-- procedere prima con mappa, poi con semplificazione progressiva
-
-Core Boot futuro consigliato:
-
-- 00_PROJECT_State
+Fonte canonica:
+- 02_LOGOS_Match_Engine
+- 05_LOGOS_Database_Schema
 - 00_PROJECT_Roadmap
-- ultimo checkpoint rilevante
 
-Documenti tecnici da aggiungere in base al nodo:
+---
 
-- Input / parser / command / input_analysis_result → 01_LOGOS_Input_System
-- UI Retool / componenti / Hidden / graph → 04_LOGOS_Retool_Architecture + LOGOS_RETOOL_RUNTIME_REAL
-- Preview / hint / warning / Sintesi → 06_LOGOS_View_Preview_System
-- Matching project/entity → 02_LOGOS_Match_Engine
-- Gap / nodi futuri / debiti → 00_PROJECT_Gap_Register
+ID: G13
 
-ORDINE CONSIGLIATO GAP / NODI
+NOME:
+Economic Direction Advanced
 
-Ordine attuale consigliato dopo Visibility Migration + Linting Safety Pass:
+STATO:
+IDENTIFICATO
 
-NODI STRUTTURALI / OPERATIVI FUTURI:
+DESCRIZIONE:
 
-1. G37 — Documentation Architecture Audit / Redundancy Reduction
+Gestione avanzata della direzione economica.
 
-2. G36 — Preview / Event Data Label Semantic Alignment
+Attualmente:
 
-3. G29 — Feedback / Input Flow Micro-flash Cleanup
-   → possibile nodo: INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+- type Spesa / Incasso è persistito
+- amount resta positivo
+- nessun direction field
+- nessun amount firmato
+- nessun report economico attivo
 
-4. G33 — Button Confirm Readiness Alignment
-   → solo Disabled / readiness funzionale, Hidden già migrato
+Azione:
 
-5. G17 — Preview Model / Hint State Consolidation
+da valutare dopo data quality/matching/data structure e prima di KPI economici.
 
-6. G35 — Status Semantics Alignment
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 05_LOGOS_Database_Schema
+- 00_PROJECT_Roadmap
 
-7. G30 — Command Intent — Edit Guide Generic Alias
+---
 
-8. G21 — Suggestion Create vs Edit Consistency
+ID: G08A
 
-9. G22 — Project Create Suggestion — Match Present / User Override
+NOME:
+Duration Advanced — giorni / settimane
 
-10. G10A — Match Engine Evolution Advanced / Partial Ambiguity
+STATO:
+IDENTIFICATO COME SOTTO-GAP FUTURO
 
-11. G11 — Data Structure / Entity Hierarchy
+DESCRIZIONE:
 
-12. G13 — Economic Direction Advanced
+Ore/minuti sono normalizzati in minuti.
+Giorni/settimane restano ambigui e non convertiti automaticamente.
 
-13. G08A — Duration Advanced / Giorni-Settimane
+Azione:
 
-14. G32 — Cleanup Obsolete UI Guards / Query Reduction
+valutare solo in nodo dedicato.
 
-15. G23 — Azioni Rapide Operative
+Vincoli:
 
-16. G24 — Dashboard Base
+- evitare conversioni automatiche ambigue
+- preservare duration normalization ore/minuti già stabile
 
-17. G04 — Logging / Versioning
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 06_LOGOS_View_Preview_System
 
-18. G05 — Input Modes
+---
 
-19. G06 — Multi-source Input
+ID: G10A
 
-POLISH / UX FUTURO:
+NOME:
+Match Engine Evolution Advanced / Partial Ambiguity
 
-- G25 — Icon System / Mobile Polish Finale
+STATO:
+IDENTIFICATO COME SOTTO-GAP FUTURO
 
-VINCOLI TECNICI:
+DESCRIZIONE:
 
-- G26 — Mobile Safari Font Baseline
+Evoluzione futura del matching:
 
-VINCOLI STRATEGICI:
+- alias
+- fuzzy leggero
+- ranking avanzato
+- ambiguità parziale
+- confidence
+- filtering select su ambiguità
 
-- G20 — Core Event System / Modular Instances
+Azione:
 
-Gap già integrati:
+non introdurre senza nodo dedicato.
 
-G03 — Project / Entity Create Suggestion
-G07 — Preview Alignment
-G08 — Duration Normalization Base
-G09 — Type Classification Base
-G10 — Match Engine Unification First Controlled Level
-G12 — Events List Label / Updated At Display
-G14 — Linting / State Helper Cleanup
-G15 — Edit Mode Cancel / Return to Events List
-G16 — Events List Search / Filter Bar
-G18 — UX Mobile Coherence Pass
-G19 — Command Intent — Create Project / Entity
-G26 — Mobile Safari Font Baseline
-G27 — Input Rendering Stability / Container Structure
-G31 — Linting / Retool Query Safety Pass
+Fonte canonica:
+- 02_LOGOS_Match_Engine
 
-Gap integrati parziali / evolutivi:
+---
+
+ID: G04
+
+NOME:
+Logging System / Versioning
+
+STATO:
+IN OSSERVAZIONE
+
+DESCRIZIONE:
+
+Sistema futuro di log, revisioni, errori, audit trail e rollback.
+
+Azione:
+
+non prioritario ora.
+Da rivalutare se emerge bisogno reale di audit modifiche o rollback.
+
+Fonte canonica:
+- 03_LOGOS_Event_Lifecycle
+- 05_LOGOS_Database_Schema
+- LOGOS_SUPABASE_RUNTIME_REAL
+
+---
+
+ID: G05
+
+NOME:
+Input Modes — Libero vs Guidato
+
+STATO:
+IN OSSERVAZIONE
+
+DESCRIZIONE:
+
+Possibile doppia modalità futura:
+
+- input libero
+- form guidato
+
+Azione:
+
+non prioritario.
+Da rivalutare dopo Command Intent, Input Analysis, Data Structure e Azioni Rapide.
+
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture
+
+---
+
+ID: G06
+
+NOME:
+Multi-source Input
+
+STATO:
+NON PRIORITARIO
+
+DESCRIZIONE:
+
+Input da API, voice, Siri, import o automazioni esterne.
+
+Azione:
+
+non lavorare ora.
+Da rivalutare solo dopo input system maturo, engine più completo e sicurezza API valutata.
+
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 00_PROJECT_Roadmap
+
+------------------------------------------------
+GAP UX / MODULI FUTURI
+------------------------------------------------
+
+ID: G23
+
+NOME:
+Azioni Rapide Operative
+
+STATO:
+VALIDATO — NODO FUTURO
+
+DESCRIZIONE:
+
+La Home contiene azioni rapide predisposte ma non operative:
+
+- Registra spesa
+- Registra incasso
+- Registra tempo
+- Registra evento
+
+Azione:
+
+renderle operative solo in nodo dedicato,
+senza bypassare input_analysis_result, parser, matching o conferma utente.
+
+Fonte canonica:
+- 04_LOGOS_Retool_Architecture
+- 01_LOGOS_Input_System
+
+---
+
+ID: G24
+
+NOME:
+Dashboard Base
+
+STATO:
+VALIDATO — NODO FUTURO NON IMMEDIATO
+
+DESCRIZIONE:
+
+Dashboard presente in Navigation dock ma disabilitata.
+
+Azione:
+
+attivare solo dopo consolidamento Core Event System e qualità dati sufficiente.
+
+Fonte canonica:
+- 00_PROJECT_Roadmap
+- 05_LOGOS_Database_Schema
+
+---
+
+ID: G25
+
+NOME:
+Icon System / Mobile Polish Finale
+
+STATO:
+IN OSSERVAZIONE
+
+DESCRIZIONE:
+
+Sistema icone misto:
+
+- Icon add-ons Retool nei componenti reali
+- emoji/HTML in Sintesi e Feedback
+
+Azione:
+
+rivalutare solo in polish finale.
+
+Fonte canonica:
+- 04_LOGOS_Retool_Architecture
+- 06_LOGOS_View_Preview_System
+
+---
+
+ID: G20
+
+NOME:
+Core Event System / Modular Instances
+
+STATO:
+VALIDATO — VINCOLO STRATEGICO
+
+DESCRIZIONE:
+
+LOGOS resta Core Event System modulare.
+ASPRI / ADEXIMA / MaurizioLab sono istanze future,
+non nodi operativi da anticipare.
+
+Azione:
+
+mantenere vincolo anti-deriva.
+
+Divieto:
+
+non aprire dashboard ASPRI, CRM ADEXIMA, gestione MaurizioLab o moduli verticali
+prima del consolidamento Core Event System.
+
+Fonte canonica:
+- 00_PROJECT_Roadmap
+- 00_PROJECT_State
+
+---
+
+ID: G26
+
+NOME:
+Mobile Safari Font Baseline
+
+STATO:
+INTEGRATO COME REGOLA TECNICA
+
+DESCRIZIONE:
+
+Input/select mobile Safari devono mantenere font-size minimo 16px per evitare zoom automatico iOS.
+
+Azione:
+
+non riaprire salvo regressioni reali.
+Da ricordare nel polish finale.
+
+Fonte canonica:
+- 04_LOGOS_Retool_Architecture
+
+------------------------------------------------
+GAP INTEGRATI / ARCHIVIO COMPATTO
+------------------------------------------------
+
+I gap seguenti sono integrati o integrati a livello base.
+
+Non devono essere riaperti come nodo base.
+Eventuali evoluzioni devono diventare sotto-gap o nodi dedicati.
+
+G37 — Documentation Architecture Audit / Redundancy Reduction
+STATO: COMPLETATO / INTEGRATO COME REGOLA DOCUMENTALE
+Fonte canonica:
+- 00_PROJECT_KERNEL_MANIFEST per Principio Fonti Canoniche e Session Boot Matrix
+- CHECKPOINT — DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION per esito finale del nodo
+- 00_PROJECT_State per stato post-audit
+- 00_PROJECT_Roadmap per sequenza post-audit
+
+Esito:
+
+- fonti canoniche definite
+- documenti core alleggeriti
+- documenti tecnici canonici preservati
+- runtime manifest normalizzati
+- Kernel Manifest aggiornato
+- Session Boot Matrix consolidata
+- regola aggiornamenti futuri consolidata
+- stress test documentale finale completato
+- checkpoint finale prodotto
+
+Regola:
+
+G37 non deve essere riaperto come nodo documentale generico.
+Eventuali futuri interventi documentali devono essere aperti solo se emerge un problema reale di ridondanza, perdita ricostruibilità o incoerenza tra fonti canoniche.
+
 
 G01 — Normalization Model
+STATO: INTEGRATO PARZIALE
+Fonte canonica: 01_LOGOS_Input_System
+
 G02 — Processor / Engine Flow
+STATO: VALIDATO / PARZIALMENTE AVVIATO
+Fonte canonica: 01_LOGOS_Input_System, 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
+
+G03 — Project / Entity Create Suggestion
+STATO: INTEGRATO BASE
+Fonte canonica: 01_LOGOS_Input_System, 02_LOGOS_Match_Engine, 04_LOGOS_Retool_Architecture, 05_LOGOS_Database_Schema
+
+G07 — Preview Alignment
+STATO: INTEGRATO
+Fonte canonica: 06_LOGOS_View_Preview_System
+
+G08 — Duration Normalization Base
+STATO: INTEGRATO BASE
+Fonte canonica: 01_LOGOS_Input_System
+
+G09 — Type Classification Base
+STATO: INTEGRATO BASE
+Fonte canonica: 01_LOGOS_Input_System, 05_LOGOS_Database_Schema
+
+G10 — Match Engine Unification
+STATO: INTEGRATO BASE
+Fonte canonica: 02_LOGOS_Match_Engine
+
+G12 — Events List Label / Updated At Display
+STATO: INTEGRATO
+Fonte canonica: 03_LOGOS_Event_Lifecycle, 04_LOGOS_Retool_Architecture
+
+G14 — Linting / State Helper Cleanup
+STATO: INTEGRATO
+Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
+
+G15 — Edit Mode Cancel / Return to Events List
+STATO: INTEGRATO
+Fonte canonica: 03_LOGOS_Event_Lifecycle, 04_LOGOS_Retool_Architecture
+
+G16 — Events List Search / Filter Bar
+STATO: INTEGRATO
+Fonte canonica: 04_LOGOS_Retool_Architecture
+
+G18 — UX Mobile Coherence Pass
+STATO: INTEGRATO BASE
+Fonte canonica: 04_LOGOS_Retool_Architecture, 06_LOGOS_View_Preview_System
+
+G19 — Command Intent — Create Project / Entity
+STATO: INTEGRATO BASE
+Fonte canonica: 01_LOGOS_Input_System, 03_LOGOS_Event_Lifecycle, 04_LOGOS_Retool_Architecture
+
+G27 — Input Rendering Stability / Container Structure
+STATO: INTEGRATO BASE / EVOLUTO IN INPUT ANALYSIS RESULT
+Fonte canonica: 01_LOGOS_Input_System, 04_LOGOS_Retool_Architecture
+
 G28 — Input Analysis Result / Single Interpretation Layer
-G33 — Button Confirm Readiness Alignment
+STATO: INTEGRATO PARZIALE — VISIBILITY MIGRATION COMPLETION
+Fonte canonica: 01_LOGOS_Input_System, 04_LOGOS_Retool_Architecture
 
-Gap residui tecnici:
+G31 — Linting / Retool Query Safety Pass
+STATO: INTEGRATO
+Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 
-G34 — UI Visibility State Decommission / Wrapper Reduction
+------------------------------------------------
+ORDINE CONSIGLIATO GAP / NODI
+------------------------------------------------
+
+Ordine attuale consigliato post Documentation Architecture Audit:
+
+1. G36 — Preview / Event Data Label Semantic Alignment
+2. G29 — Input Flow / Transition Micro-flash Stabilization
+3. G33 — Button Confirm Readiness Alignment
+4. G17 — Preview Model / Hint State Consolidation
+5. G35 — Status Semantics Alignment
+6. G30 — Command Intent — Edit Guide Generic Alias
+7. G21 — Suggestion Create vs Edit Consistency
+8. G22 — Project Create Suggestion — Match Present / User Override
+9. G10A — Match Engine Evolution Advanced / Partial Ambiguity
+10. G11 — Data Structure / Entity Hierarchy
+11. G13 — Economic Direction Advanced
+12. G08A — Duration Advanced / Giorni-Settimane
+13. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
+14. G23 — Azioni Rapide Operative
+15. G24 — Dashboard Base
+16. G04 — Logging / Versioning
+17. G05 — Input Modes
+18. G06 — Multi-source Input
+
+Vincoli strategici permanenti:
+
+- G20 — Core Event System / Modular Instances
+- G26 — Mobile Safari Font Baseline
 
 Nota:
 
-l’ordine deve sempre essere verificato contro:
+G37 — Documentation Architecture Audit / Redundancy Reduction è completato
+e non resta nodo candidato attivo.
 
-00_PROJECT_State
-00_PROJECT_Roadmap
-checkpoint più recente
+Le regole documentali permanenti sono ora nel Kernel Manifest.
+Il checkpoint finale del nodo resta riferimento storico-operativo,
+ma i checkpoint non devono essere l’unica fonte di regole permanenti.
+
+------------------------------------------------
+REGOLA GAP REGISTER
+------------------------------------------------
+
+Un gap diventa nodo operativo solo se:
+
+✔ necessario nello sviluppo reale
+✔ validato su uso concreto
+✔ non sostituibile da soluzione più semplice
+✔ utile al nodo operativo imminente
+✔ coerente con State e Roadmap
+
+Un gap NON diventa nodo operativo se:
+
+- anticipa la roadmap
+- richiede refactor globale
+- introduce complessità non validata
+- non è necessario al problema immediato
+- crea rischio di regressione su runtime stabile
 
 CHANGELOG
 
@@ -4026,3 +1263,74 @@ confermato:
 - istanze verticali non attive
 - LOGOS resta Core Event System modulare
 - input_analysis_result non deve diventare motore monolitico
+
+v14 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto B — Core Governance su 00_PROJECT_Gap_Register
+- Gap Register aggiornato da v13 a v14
+- ridotta duplicazione tecnica lunga nel Gap Register
+- riportato il documento alla funzione di registro gap / debiti / futuri
+- sostituito GAP REGISTER esteso con GAP REGISTER — SINTESI CONTROLLATA
+- mantenuti tutti gli ID gap principali
+- mantenuti gap attivi, prioritari, strutturali, UX, strategici e integrati
+- spostati i dettagli tecnici completi verso documenti canonici
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System
+  - 02_LOGOS_Match_Engine
+  - 03_LOGOS_Event_Lifecycle
+  - 04_LOGOS_Retool_Architecture
+  - 05_LOGOS_Database_Schema
+  - 06_LOGOS_View_Preview_System
+  - LOGOS_RETOOL_RUNTIME_REAL
+  - LOGOS_SUPABASE_RUNTIME_REAL
+- aggiornato G37 Documentation Architecture Audit / Redundancy Reduction a IN CORSO
+- documentato Pacchetto A come allineato, non ridotto
+- documentato Pacchetto B come in corso / quasi completato
+- aggiornato ordine consigliato gap/nodi post Pacchetto B
+- confermato blocco verso output / dashboard / KPI
+- confermato divieto di anticipare istanze verticali
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard
+
+v15 — 2026-05-25
+
+- aggiornamento finale post DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- Gap Register aggiornato da v14 a v15
+- G37 Documentation Architecture Audit / Redundancy Reduction aggiornato da IN CORSO a COMPLETATO / INTEGRATO COME REGOLA DOCUMENTALE
+- rimosso G37 da GAP ATTIVO DEL NODO CORRENTE
+- registrato che non ci sono gap documentali attivi
+- registrato G36 Preview / Event Data Label Semantic Alignment come prossimo gap operativo consigliato
+- spostato G37 in GAP INTEGRATI / ARCHIVIO COMPATTO
+- registrato esito G37:
+  - fonti canoniche definite
+  - documenti core alleggeriti
+  - documenti tecnici canonici preservati
+  - runtime manifest normalizzati
+  - Kernel Manifest aggiornato
+  - Session Boot Matrix consolidata
+  - regola aggiornamenti futuri consolidata
+  - stress test documentale finale completato
+  - checkpoint finale prodotto
+- aggiornata sezione ORDINE CONSIGLIATO GAP / NODI post audit documentale
+- chiarito che G37 non deve essere riaperto come nodo documentale generico
+- chiarito che le regole documentali permanenti sono nel Kernel Manifest
+- confermato che i checkpoint sono riferimenti storico-operativi e non unica fonte delle regole permanenti
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard

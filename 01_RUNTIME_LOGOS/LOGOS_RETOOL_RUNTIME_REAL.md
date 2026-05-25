@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v15
+# LOGOS_RETOOL_RUNTIME_REAL_v16
 
-DATA: 2026-05-23
+DATA: 2026-05-25
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -58,8 +58,8 @@ C (Completezza): 10/10
 - ui_visibility_state documentato come Transformer read-only
 - trigger_parse_debounced aggiornato con gestione ui_visibility_mode
 - window.__logos_visibility_run_id documentato
-- Hidden principali centralizzati tramite ui_visibility_state
-- container_input stabilizzato tramite ui_visibility_state.isInputFlow
+- Hidden principali storicamente centralizzati tramite ui_visibility_state e successivamente migrati a input_analysis_result
+- container_input storicamente stabilizzato tramite ui_visibility_state.isInputFlow e successivamente migrato a input_analysis_result
 - container_app_nav micro-fix documentato
 - text_input_analysis_loading documentato
 - text_edit_mode_notice documentato
@@ -78,8 +78,8 @@ C (Completezza): 10/10
 - text_event_data_title / select1 / select_project / select_entity Hidden migrati a input_analysis_result documentati
 - container_command_intent.Hidden migrato a input_analysis_result documentato
 - container_association_suggestions.Hidden migrato a input_analysis_result documentato
-- ui_visibility_state ancora operativo e non deprecato documentato
-- container_input / loading / cancel / button_input_confirm ancora fuori migrazione documentati
+- documentato che nella fase Controlled UI Consumption Pass ui_visibility_state era ancora operativo; stato successivamente superato da Visibility Migration Completion
+- documentato che container_input / loading / cancel / button_input_confirm erano fuori migrazione nella fase Controlled UI Consumption Pass; stato successivamente superato da Visibility Migration Completion
 - edit mode + input vuoto stabilizzato documentato
 - Home idle container nascosti durante edit mode documentati
 - notice associazioni mancanti coerente con presenza reale suggerimenti documentata
@@ -144,7 +144,7 @@ Q (Qualità): 9.5/10
 - input_analysis_result introduce composizione raw / selection / effective senza creare motore monolitico
 - parser, matching, suggestion, command, select e save flow restano moduli specializzati
 - input_analysis_result diventa fonte UI controllata parziale
-- ui_visibility_state resta operativo per componenti strutturali residui
+- ui_visibility_state riclassificato come residuo tecnico deprecabile / rollback dopo Visibility Migration Completion
 - distinzione missing association notice / suggestion operativa chiarita
 - edit mode prevalente su command intent formalizzato a livello effective
 - stato intermedio documentato senza dichiarare decommission prematura
@@ -194,10 +194,10 @@ D (Deployabilità): 10/10
 - edit flow non regressivo dopo Command Intent validato runtime
 - nodo UI Readiness / Visibility Aggregator validato runtime
 - ui_visibility_mode validato runtime
-- ui_visibility_state validato runtime
 - trigger_parse_debounced validato con modalità empty / event / command
-- Hidden principali migrati progressivamente e validati
-- container_input validato su empty / event / command / edit mode
+- ui_visibility_state validato storicamente come helper UI, oggi residuo tecnico deprecabile / rollback
+- Hidden principali migrati progressivamente e oggi governati da input_analysis_result
+- container_input validato su empty / event / command / edit mode e oggi governato da input_analysis_result
 - container_app_nav validato con bottom bar stabile
 - text_input_analysis_loading validato
 - text_edit_mode_notice validato
@@ -217,7 +217,7 @@ D (Deployabilità): 10/10
 - Home idle container nascosti durante edit mode validati
 - notice associazioni mancanti validata
 - button_input_confirm mantenuto invariato
-- ui_visibility_state mantenuto operativo per componenti strutturali residui
+- ui_visibility_state mantenuto come residuo tecnico deprecabile / rollback, non più fonte degli Hidden principali migrati
 - nodo Input Analysis Result — Visibility Migration Completion validato runtime
 - container_input.Hidden validato su input vuoto / evento / command / edit
 - text_input_analysis_loading.Hidden validato
@@ -265,6 +265,81 @@ INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTI
 INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
 INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 LINTING / RETOOL QUERY SAFETY PASS
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+PACCHETTO D — LOGOS_RETOOL_RUNTIME_REAL / RUNTIME MANIFEST NORMALIZATION
+
+Nota documentale:
+
+Il presente documento viene normalizzato come manifest runtime Retool reale.
+
+Pacchetto A completato.
+Pacchetto B completato.
+Pacchetto C completato.
+Pacchetto D completato su LOGOS_RETOOL_RUNTIME_REAL.
+
+La normalizzazione del manifest non modifica il runtime Retool.
+Serve solo a chiarire responsabilità canonica, richiami documentali e stato attuale dei residui tecnici.
+
+------------------------------------------------
+RESPONSABILITÀ CANONICA DEL DOCUMENTO
+------------------------------------------------
+
+Questo documento è il manifest runtime reale Retool as-is di LOGOS.
+
+È fonte canonica per:
+
+- stato runtime Retool reale
+- componenti Retool effettivamente presenti
+- query Retool effettivamente presenti
+- helper state / transformer Retool effettivamente presenti
+- wiring runtime tra componenti, query e helper
+- comportamento operativo Retool as-is
+- flow create evento reale
+- flow edit evento reale
+- flow cancel reale
+- flow no-op edit reale
+- flow command intent reale
+- flow project/entity create reale
+- flow feedback/routing reale
+- flow visibility/readiness reale
+- stato effettivo di input_analysis_result
+- stato effettivo di preview_analysis_state
+- stato effettivo di ui_visibility_mode
+- stato effettivo di ui_visibility_state come residuo tecnico deprecabile / rollback
+- elenco query attive / eliminate / legacy
+- test runtime validati
+- debiti runtime Retool residui
+
+Questo documento NON sostituisce i documenti tecnici canonici.
+
+Le logiche complete restano nei documenti madre:
+
+- 01_LOGOS_Input_System per input flow, parser, normalization, Command Intent, create_suggestion_state e input_analysis_result nel contesto input.
+- 02_LOGOS_Match_Engine per project_state, entity_state, matching, ambiguità, singleMatch, moreSpecificMatches e confirm guard matching.
+- 03_LOGOS_Event_Lifecycle per lifecycle evento, stati NEW / WRITTEN / ERROR, edit, no-op, cancel e processing.
+- 04_LOGOS_Retool_Architecture per architettura Retool, componenti, query, Hidden e wiring Retool come modello tecnico.
+- 05_LOGOS_Database_Schema per schema DB LOGOS e comportamento Supabase passivo come modello documentale.
+- 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase reale as-is.
+
+Regola del manifest:
+
+LOGOS_RETOOL_RUNTIME_REAL documenta ciò che esiste realmente in Retool.
+
+Non deve:
+
+- ricalcolare decisioni tecniche già consolidate
+- sostituire i documenti madre
+- diventare roadmap
+- diventare gap register
+- diventare manuale DB
+- anticipare refactor
+- proporre modifiche runtime non eseguite
+
+Può contenere codice e dettagli operativi se servono a ricostruire il runtime reale.
+
+Può richiamare i documenti canonici per evitare duplicazioni interpretative,
+ma non deve perdere il dettaglio Retool necessario alla ricostruzione.
 
 ------------------------------------------------
 DESCRIZIONE OPERATIVA DEL SISTEMA
@@ -391,11 +466,11 @@ INPUT
 ✔ edit flow non regressivo dopo Command Intent validato 
 ✔ UI Readiness / Visibility Aggregator completato
 ✔ ui_visibility_mode implementato
-✔ ui_visibility_state implementato
+✔ ui_visibility_state presente come residuo tecnico deprecabile / rollback
 ✔ trigger_parse_debounced aggiorna ui_visibility_mode
 ✔ window.__logos_visibility_run_id introdotto
-✔ Hidden principali centralizzati
-✔ container_input stabilizzato
+✔ Hidden principali del flow input migrati a input_analysis_result
+✔ container_input.Hidden migrato a input_analysis_result
 ✔ container vuoto durante digitazione risolto
 ✔ flash input flow ridotto
 ✔ bottom bar flash risolto
@@ -492,6 +567,20 @@ Il parsing non viene più eseguito direttamente nel bottone confirm.
 ------------------------------------------------
 3. TRIGGER_PARSE_DEBOUNCED
 ------------------------------------------------
+
+Nota canonica:
+
+Questo documento conserva il comportamento runtime Retool reale di trigger_parse_debounced.
+
+Per la logica completa dell’input flow, parser, Command Intent e input_analysis_result,
+la fonte canonica è:
+
+- 01_LOGOS_Input_System
+
+Per il modello componenti/query/wiring Retool,
+la fonte canonica tecnica è:
+
+- 04_LOGOS_Retool_Architecture
 
 Query/script:
 
@@ -823,7 +912,16 @@ aggregatore read-only di visibilità UI per il flow input.
 
 Stato attuale post Visibility Migration Completion:
 
-deprecabile, ma non eliminato.
+residuo tecnico deprecabile / rollback.
+
+Non è più fonte canonica della visibility del flow input.
+Non è più letto da input_analysis_result.
+Non governa più gli Hidden principali migrati.
+
+Resta nel runtime solo per prudenza tecnica,
+in attesa di eventuale nodo dedicato:
+
+CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 
 Non è più letto da input_analysis_result.
 Non governa più gli Hidden principali del flow input.
@@ -920,6 +1018,26 @@ Regole:
 ------------------------------------------------
 INPUT_ANALYSIS_RESULT
 ------------------------------------------------
+
+Nota canonica:
+
+Questo documento documenta input_analysis_result come runtime Retool reale as-is.
+
+Per la responsabilità canonica completa del layer input_analysis_result nel contesto input,
+la fonte madre è:
+
+- 01_LOGOS_Input_System
+
+Per il wiring Retool dei componenti Hidden migrati,
+la fonte madre tecnica è:
+
+- 04_LOGOS_Retool_Architecture
+
+Regola:
+
+input_analysis_result governa gli Hidden principali del flow input,
+ma non costruisce payload, non sostituisce parser, non sostituisce matching,
+non sostituisce Command Intent e non sostituisce create_suggestion_state.
 
 Tipo:
 
@@ -1172,6 +1290,17 @@ input_analysis_result espone canShowConfirm per la visibilità del bottone Confe
 button_input_confirm.Disabled e payload restano separati.
 
 PARSING CONTROLLED + NORMALIZATION BASE + DURATION NORMALIZATION
+
+Nota canonica:
+
+Il dettaglio logico completo di parser, normalization base,
+duration normalization e type classification nel contesto input
+è documentato in:
+
+- 01_LOGOS_Input_System
+
+Questo manifest conserva il runtime reale Retool e gli esempi validati,
+senza sostituire il documento madre.
 
 Query/script:
 
@@ -1510,6 +1639,16 @@ retro-normalizzazione storico
 ------------------------------------------------
 MATCHING — FIRST CONTROLLED LEVEL
 ------------------------------------------------
+
+Nota canonica:
+
+La logica completa del Match Engine project/entity è documentata in:
+
+- 02_LOGOS_Match_Engine
+
+Questo manifest conserva il runtime reale Retool di project_state,
+entity_state, select_project, select_entity e consumatori runtime,
+senza sostituire il documento madre.
 
 Eseguito in:
 
@@ -2477,6 +2616,17 @@ ma non abilita ancora automaticamente reportistica o KPI.
 
 PREVIEW / SINTESI
 
+Nota canonica:
+
+Il comportamento visuale e semantico completo della Sintesi / Preview
+è documentato in:
+
+- 06_LOGOS_View_Preview_System
+
+Questo manifest conserva le fonti runtime Retool lette dalla Sintesi,
+gli helper coinvolti e i test validati,
+senza sostituire il documento madre della preview.
+
 Costruita da:
 
 input_raw
@@ -2822,6 +2972,23 @@ Limiti:
 ⚠ non è view pura
 
 INSERT / UPDATE EVENT
+
+Nota canonica:
+
+Questo manifest documenta il runtime reale di button_input_confirm,
+insert_event, update_event, feedback/routing e no-op edit guard.
+
+Per il lifecycle evento la fonte canonica è:
+
+- 03_LOGOS_Event_Lifecycle
+
+Per lo schema DB e i campi persistiti la fonte canonica è:
+
+- 05_LOGOS_Database_Schema
+
+Per il wiring Retool generale la fonte canonica tecnica è:
+
+- 04_LOGOS_Retool_Architecture
 
 Componente:
 
@@ -3860,6 +4027,18 @@ button_input_confirm non deve contenere parsing duplicato
 
 SUPABASE
 
+Nota canonica:
+
+Questo manifest documenta il rapporto runtime Retool → Supabase.
+
+Per il runtime Supabase reale as-is la fonte canonica è:
+
+- LOGOS_SUPABASE_RUNTIME_REAL
+
+Per lo schema DB come modello documentale canonico la fonte è:
+
+- 05_LOGOS_Database_Schema
+
 Supabase è database passivo.
 
 Ruolo:
@@ -3929,7 +4108,7 @@ date relative non supportate
 giorni/settimane non convertiti automaticamente
 giornata / mezza giornata non normalizzate
 parole numeriche tipo “due ore” non supportate
-forme colloquiali tipo “un paio d’ore” non supportatei
+forme colloquiali tipo “un paio d’ore” non supportate
 
 NORMALIZATION:
 
@@ -4063,7 +4242,7 @@ PRINCIPI RUNTIME
 ✔ “modifica evento” da command = guida, non edit flow automatico
 ✔ feedback_mode = UI temporanea, non dato DB
 ✔ ui_visibility_mode = latch UI temporaneo, non dato DB
-✔ ui_visibility_state = aggregatore read-only di visibilità, non dato DB
+✔ ui_visibility_state = residuo tecnico deprecabile / rollback, non dato DB e non fonte canonica degli Hidden principali migrati
 ✔ UI Readiness ≠ Input Analysis Model completo
 ✔ visibilità componenti principali centralizzata a primo livello
 ✔ edit mode prevale su Command Intent
@@ -4155,11 +4334,11 @@ Runtime attuale:
 ✔ edit flow non regressivo dopo Command Intent validato
 ✔ UI Readiness / Visibility Aggregator First Controlled Level completato
 ✔ ui_visibility_mode implementato
-✔ ui_visibility_state implementato
+✔ ui_visibility_state presente come residuo tecnico deprecabile / rollback
 ✔ trigger_parse_debounced aggiorna ui_visibility_mode
 ✔ window.__logos_visibility_run_id introdotto
-✔ Hidden principali centralizzati
-✔ container_input stabilizzato tramite ui_visibility_state.isInputFlow
+✔ Hidden principali del flow input migrati a input_analysis_result
+✔ container_input.Hidden migrato a input_analysis_result
 ✔ container vuoto durante digitazione risolto
 ✔ flash input flow ridotto
 ✔ bottom bar flash risolto
@@ -5602,7 +5781,7 @@ Validazioni finali:
 
 ✔ preview_analysis_state operativo
 ✔ input_analysis_result operativo come fonte UI parziale
-✔ ui_visibility_state ancora operativo e non deprecato
+✔ in quella fase ui_visibility_state era ancora operativo e non deprecato; stato successivamente superato da Visibility Migration Completion
 ✔ parser invariato
 ✔ matching invariato
 ✔ create_suggestion_state invariato
@@ -6109,9 +6288,9 @@ documentato edit mode + input vuoto stabilizzato
 documentato Home idle container nascosti durante edit mode
 documentato Dati evento / Sintesi / Conferma nascosti con edit input vuoto
 documentato che solo Annulla modifica resta visibile in edit input vuoto
-documentato che ui_visibility_state resta operativo e non deprecato
-documentato che container_input / loading / cancel / confirm restano fuori dalla migrazione corrente
-documentato che button_input_confirm non è ancora migrato
+documentato che in quella fase ui_visibility_state restava operativo e non deprecato; stato successivamente superato da Visibility Migration Completion
+documentato che in quella fase container_input / loading / cancel / confirm restavano fuori dalla migrazione corrente; stato successivamente superato da Visibility Migration Completion
+documentato che in quella fase button_input_confirm non era ancora migrato; stato successivamente superato dalla migrazione di button_input_confirm.Hidden a input_analysis_result.readiness.canShowConfirm
 documentato che button_input_confirm payload resta invariato
 documentato che save readiness non è centralizzata
 documentato aumento linting Retool a 19
@@ -6176,4 +6355,43 @@ aggiornata sezione INSERT / UPDATE EVENT
 aggiornati LIMITI ATTUALI
 aggiornati PRINCIPI RUNTIME
 aggiornato STATO RUNTIME
-prossimo nodo candidato prioritario: DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+allora indicato come prossimo nodo candidato prioritario: DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION; nodo successivamente completato e consolidato nel checkpoint finale dedicato
+
+v16 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto D — LOGOS_RETOOL_RUNTIME_REAL / Runtime Manifest Normalization
+- documento aggiornato da v15 a v16
+- confermato LOGOS_RETOOL_RUNTIME_REAL come manifest runtime reale Retool as-is
+- aggiunta sezione RESPONSABILITÀ CANONICA DEL DOCUMENTO
+- chiarito che LOGOS_RETOOL_RUNTIME_REAL documenta ciò che esiste realmente in Retool
+- chiarito che il documento non sostituisce i documenti tecnici canonici
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per input flow, parser, normalization, Command Intent, create_suggestion_state e input_analysis_result
+  - 02_LOGOS_Match_Engine per Match Engine project/entity
+  - 03_LOGOS_Event_Lifecycle per lifecycle evento
+  - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/wiring Retool
+  - 05_LOGOS_Database_Schema per schema DB LOGOS
+  - 06_LOGOS_View_Preview_System per Sintesi, preview, hint e warning
+  - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase reale as-is
+- riallineati residui documentali su ui_visibility_state come stato storico / residuo tecnico deprecabile
+- chiarito che ui_visibility_state non è più fonte canonica della visibility del flow input
+- chiarito che gli Hidden principali del flow input sono migrati a input_analysis_result
+- chiarito che button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm
+- confermato che button_input_confirm.Disabled e payload restano separati
+- resi storici i riferimenti del Controlled UI Consumption Pass a ui_visibility_state operativo/non deprecato
+- resi storici i riferimenti del changelog v14 a container_input/loading/cancel/confirm fuori migrazione
+- aggiunte note canoniche nelle sezioni trigger_parse_debounced, input_analysis_result, parsing/normalization, matching, preview, insert/update e Supabase
+- corretto refuso “supportatei”
+- nessuna riduzione aggressiva applicata
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica schema
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard

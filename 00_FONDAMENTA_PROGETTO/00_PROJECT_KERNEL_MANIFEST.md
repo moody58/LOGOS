@@ -1,6 +1,6 @@
-# 00_PROJECT_KERNEL_MANIFEST_v02
+# 00_PROJECT_KERNEL_MANIFEST_v03
 
-DATA: 2026-04-30
+DATA: 2026-05-25
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -185,23 +185,148 @@ Questo documento non sostituisce:
 Ne dichiara solo la posizione nel sistema documentale.
 
 ------------------------------------------------
-REGOLE DI UTILIZZO
+PRINCIPIO FONTI CANONICHE
 ------------------------------------------------
 
-Per avviare una nuova sessione operativa servono almeno:
+A seguito del nodo:
+
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+
+la documentazione LOGOS adotta il principio di fonte canonica.
+
+Regola:
+
+una logica fondamentale deve essere completa in un solo documento madre.
+Gli altri documenti devono richiamarla esplicitamente senza duplicarla in modo esteso.
+
+Documenti di governance:
+
+- 00_PROJECT_State
+- 00_PROJECT_Roadmap
+- 00_PROJECT_Gap_Register
+
+Funzione:
+
+- stato corrente
+- direzione
+- priorità
+- gap
+- debiti
+- decisioni di governance
+
+Non devono duplicare implementazioni tecniche lunghe.
+
+Documenti tecnici canonici:
+
+- 01_LOGOS_Input_System
+- 02_LOGOS_Match_Engine
+- 03_LOGOS_Event_Lifecycle
+- 04_LOGOS_Retool_Architecture
+- 05_LOGOS_Database_Schema
+- 06_LOGOS_View_Preview_System
+
+Funzione:
+
+- contenere il dettaglio completo delle logiche tecniche fondamentali
+- preservare ricostruibilità
+- evitare ricalcolo di decisioni consolidate
+- mantenere esempi, vincoli e limiti necessari
+
+Manifest runtime reali:
+
+- LOGOS_RETOOL_RUNTIME_REAL
+- LOGOS_SUPABASE_RUNTIME_REAL
+
+Funzione:
+
+- fotografare il runtime reale as-is
+- documentare ciò che esiste davvero nel sistema
+- non sostituire i documenti tecnici madre
+- non diventare Roadmap, Gap Register o State
+
+Regola futura:
+
+quando cambia una logica fondamentale,
+si aggiorna prima il documento canonico competente.
+
+Gli altri documenti ricevono solo:
+
+- richiamo esplicito
+- nota di impatto
+- aggiornamento di stato
+- eventuale changelog sintetico
+
+------------------------------------------------
+REGOLE DI UTILIZZO / SESSION BOOT MATRIX
+------------------------------------------------
+
+Per avviare una nuova sessione operativa servono sempre:
+
+Core Boot obbligatorio:
 
 - 00_PROJECT_State
 - 00_PROJECT_Roadmap
 - ultimo checkpoint rilevante
 
-A seconda del nodo, possono servire anche:
+Documenti da aggiungere in base al nodo:
 
-- 00_PROJECT_System
-- documento tecnico specifico
-- runtime reale Retool/Supabase
-- Gap Register
+Input / parser / command / input_analysis_result:
+
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture se coinvolge componenti Retool
+- LOGOS_RETOOL_RUNTIME_REAL se serve stato runtime reale
+
+Preview / hint / warning / Sintesi:
+
+- 06_LOGOS_View_Preview_System
+- 01_LOGOS_Input_System se coinvolge input_analysis_result
+- 04_LOGOS_Retool_Architecture se coinvolge Hidden/componenti
+- LOGOS_RETOOL_RUNTIME_REAL se serve runtime reale
+
+Matching project/entity:
+
+- 02_LOGOS_Match_Engine
+- 01_LOGOS_Input_System se coinvolge input flow
+- 06_LOGOS_View_Preview_System se coinvolge hint/preview
+- 04_LOGOS_Retool_Architecture se coinvolge select/componenti
+
+Retool UI / componenti / graph / Hidden:
+
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
+- 01_LOGOS_Input_System se coinvolge flow input
+
+DB / Supabase:
+
+- 05_LOGOS_Database_Schema
+- LOGOS_SUPABASE_RUNTIME_REAL
+- 03_LOGOS_Event_Lifecycle se coinvolge lifecycle evento
+
+Lifecycle evento / edit / no-op / processing:
+
+- 03_LOGOS_Event_Lifecycle
+- 04_LOGOS_Retool_Architecture se coinvolge query/componenti Retool
+- 05_LOGOS_Database_Schema se coinvolge campi persistiti
+- LOGOS_RETOOL_RUNTIME_REAL se serve runtime reale
+
+Gap / roadmap / pianificazione:
+
+- 00_PROJECT_State
+- 00_PROJECT_Roadmap
+- 00_PROJECT_Gap_Register
+
+Runtime manifest / verifica sistema reale:
+
+- LOGOS_RETOOL_RUNTIME_REAL per Retool
+- LOGOS_SUPABASE_RUNTIME_REAL per Supabase
+- documento tecnico canonico competente in base al layer analizzato
+
+Regola:
 
 Il Kernel Manifest non è sufficiente da solo per operare.
+Serve solo a dichiarare architettura documentale, fonti, gerarchia e boot.
+
+Il documento operativo vero va sempre scelto in base al nodo.
 
 ------------------------------------------------
 ARCHIVIO
@@ -240,3 +365,39 @@ v02 — 2026-04-30
 - aggiunto riferimento a 98_PROJECT_Session_Management_Protocol
 - chiarita distinzione tra kernel, runtime, tecnici, checkpoint e archivio
 - allineamento alla pulizia documentale post Normalization Layer Base
+
+v03 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- aggiornato Kernel Manifest da v02 a v03
+- aggiunto PRINCIPIO FONTI CANONICHE
+- recepita distinzione tra:
+  - documenti di governance
+  - documenti tecnici canonici
+  - manifest runtime reali
+- chiarito che una logica fondamentale deve essere completa in un solo documento madre
+- chiarito che State, Roadmap e Gap Register non devono duplicare implementazioni tecniche lunghe
+- chiarito che LOGOS_RETOOL_RUNTIME_REAL e LOGOS_SUPABASE_RUNTIME_REAL fotografano il runtime reale as-is
+- aggiunta Session Boot Matrix
+- chiarito il Core Boot obbligatorio:
+  - 00_PROJECT_State
+  - 00_PROJECT_Roadmap
+  - ultimo checkpoint rilevante
+- aggiunti criteri di caricamento documenti per nodo:
+  - input / parser / command / input_analysis_result
+  - preview / hint / warning / Sintesi
+  - matching project/entity
+  - Retool UI / componenti / graph / Hidden
+  - DB / Supabase
+  - lifecycle evento / edit / no-op / processing
+  - gap / roadmap / pianificazione
+  - runtime manifest / verifica sistema reale
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload

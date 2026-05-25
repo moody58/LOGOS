@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v13
+# 06_LOGOS_View_Preview_System_v14
 
-DATA: 2026-05-23
+DATA: 2026-05-25
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -73,8 +73,85 @@ Il documento descrive:
 ⚠ descrive lo stato reale attuale
 
 ------------------------------------------------
+RESPONSABILITÀ CANONICA DEL DOCUMENTO
+------------------------------------------------
+
+Questo documento è fonte canonica per:
+
+- Preview / Sintesi LOGOS
+- comportamento visuale della Sintesi
+- labelStyled
+- value builder visuale
+- formattazione amount/unit/date in preview
+- formattazione durata umana in preview
+- hint normalizzazione durata
+- hint durata ambigua
+- label cleaning visuale
+- highlight project/entity nella Sintesi
+- hint / warning / status visuali della Sintesi
+- card “Da verificare”
+- notice associazioni mancanti
+- micro-copy preview
+- micro-azioni visive “Cambia” / “Scegli”
+- relazione tra Sintesi e Dati evento
+- relazione tra Sintesi e create_suggestion_state
+- relazione tra Sintesi e container_command_intent
+- relazione tra preview_analysis_state e Sintesi
+- relazione tra input_analysis_result e visibilità della Sintesi
+- limiti della preview come layer ibrido
+- residui semantici visuali della preview
+- futuri nodi Preview / Hint / Status / Label Alignment
+
+Questo documento NON è fonte canonica completa per:
+
+- parser / normalization nel dettaglio algoritmico completo
+- Match Engine project/entity nel dettaglio algoritmico completo
+- wiring completo dei componenti Retool
+- lifecycle evento completo
+- schema DB completo
+- runtime Retool as-is completo
+- runtime Supabase as-is completo
+- roadmap / priorità / gap governance
+
+Fonti canoniche collegate:
+
+- 01_LOGOS_Input_System per input flow, parser, normalization, duration normalization, type classification base nel contesto input, Command Intent, create_suggestion_state e input_analysis_result.
+- 02_LOGOS_Match_Engine per project_state / entity_state / matches / isAmbiguous / singleMatch / moreSpecificMatches / confirm guard matching.
+- 03_LOGOS_Event_Lifecycle per lifecycle evento, edit, no-op, cancel, NEW / WRITTEN / ERROR e processing.
+- 04_LOGOS_Retool_Architecture per componenti, query, Hidden, Sintesi come componente Retool, input_analysis_result wiring e preview_analysis_state wiring.
+- 05_LOGOS_Database_Schema per schema DB, tabelle, campi e vincoli.
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+
+Nota post Pacchetto B:
+
+State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo della Preview/Sintesi.
+Il dettaglio completo del comportamento visuale e semantico della preview resta in questo documento e nei documenti canonici collegati.
+
+------------------------------------------------
 POSIZIONE NEL SISTEMA
 ------------------------------------------------
+
+Nota canonica:
+
+Questo documento descrive la posizione della Preview/Sintesi nel sistema e il suo comportamento visuale.
+
+Per la pipeline input/parser completa la fonte canonica è:
+
+- 01_LOGOS_Input_System
+
+Per il wiring Retool reale dei componenti coinvolti la fonte canonica è:
+
+- 04_LOGOS_Retool_Architecture
+
+Per il Match Engine project/entity la fonte canonica è:
+
+- 02_LOGOS_Match_Engine
+
+Regola:
+
+la Preview rappresenta e supporta.
+Non salva, non decide project/entity, non costruisce payload e non sostituisce Dati evento.
 
 Layer:
 
@@ -2022,6 +2099,24 @@ Aggiornamento Project / Entity Create Suggestion First Controlled Level:
 
 COMPORTAMENTO MATCHING IN PREVIEW
 
+Nota canonica:
+
+La fonte completa per la logica Match Engine project/entity è:
+
+- 02_LOGOS_Match_Engine
+
+Questo documento conserva il comportamento visuale della preview rispetto al matching:
+
+- highlight project/entity
+- hint ambiguità
+- hint match più specifici
+- separazione tra match visuale e decisione salvabile
+
+Regola:
+
+la preview rappresenta il match state.
+La decisione finale resta nelle select.
+
 La preview NON è fonte primaria di matching.
 
 Dopo Match Engine Unification First Controlled Level:
@@ -2104,6 +2199,24 @@ La preview continua comunque a non salvare direttamente project/entity.
 ------------------------------------------------
 RELAZIONE CON CREATE SUGGESTION
 ------------------------------------------------
+
+Nota canonica:
+
+La fonte completa per create_suggestion_state nel contesto input è:
+
+- 01_LOGOS_Input_System
+
+La fonte completa per il wiring Retool del container suggestion e delle azioni inline è:
+
+- 04_LOGOS_Retool_Architecture
+
+Questo documento conserva il rapporto visuale tra Preview/Sintesi, notice associazioni mancanti e suggestion container.
+
+Regola:
+
+la suggestion create non è preview pura,
+non è salvataggio evento
+e non sostituisce select_project / select_entity.
 
 La preview/sintesi convive con un container suggestion separato.
 
@@ -2244,6 +2357,22 @@ Non viene usato per labelStyled
 e non modifica raw_input.
 
 RELAZIONE CON PARSING
+
+Nota canonica:
+
+La fonte completa per parser, normalization base,
+duration normalization base e type classification base nel contesto input è:
+
+- 01_LOGOS_Input_System
+
+Questo documento conserva solo il rapporto tra dati parsati e rappresentazione visuale in preview.
+
+Regola:
+
+la Preview legge ui_state.parsed e select1.value,
+ma non esegue parsing,
+non normalizza il dato salvabile
+e non scrive nel payload.
 
 Parsing strutturato avviene ora in:
 
@@ -2557,6 +2686,27 @@ alfie mario rossi
 → Conferma disabilitata finché non viene scelta entity
 
 RELAZIONE CON INSERT / UPDATE
+
+Nota canonica:
+
+La fonte completa per il lifecycle evento, edit, no-op, cancel,
+WRITTEN / ERROR e processing è:
+
+- 03_LOGOS_Event_Lifecycle
+
+La fonte completa per lo schema DB e i campi persistiti è:
+
+- 05_LOGOS_Database_Schema
+
+La fonte completa per il wiring Retool di button_input_confirm,
+insert_event e update_event è:
+
+- 04_LOGOS_Retool_Architecture
+
+Regola:
+
+la Preview non salva direttamente.
+Il salvataggio avviene solo tramite button_input_confirm e le fonti salvabili finali.
 
 Dati salvati:
 
@@ -3293,263 +3443,95 @@ STATO ATTUALE
 ⚠ label “Importo” su durata ancora presente
 ⚠ flash residui digitazione/cambio schermata ancora presenti
 
-OBIETTIVO FUTURO IMMEDIATO
+STATO DOCUMENTALE / REGOLE DI AGGIORNAMENTO
 
-Nessun refactor preview globale attivo immediato.
+06_LOGOS_View_Preview_System è documento tecnico canonico.
 
-Preview Alignment Base è completato.
-Duration Normalization Base è completata.
-Type Classification Base è completata.
-Match Engine Unification First Controlled Level è completato.
-Project / Entity Create Suggestion First Controlled Level è completato.
-UX Mobile Coherence Pass è completato.
-Command Intent — Create Project / Entity è completato.
-UI Readiness / Visibility Aggregator — First Controlled Level è completato.
-Preview Analysis State — First Controlled Layer è completato.
-Input Analysis Result / Single Interpretation Layer Base — Read-only Diagnostic è completato.
-Input Analysis Result — Controlled UI Consumption Pass è completato.
-Input Analysis Result — Visibility Migration Completion è completato.
-Linting / Retool Query Safety Pass è completato.
+Questo documento non governa:
 
-La parte critica di allineamento preview/hint/highlight per project/entity
-è stata risolta a primo livello.
+- nodo attivo
+- roadmap
+- priorità operative
+- ordine dei prossimi nodi
 
-La logica hint/status della Sintesi è stata raccolta a primo livello in preview_analysis_state.
+Nodo attivo, priorità e sequenza sono governati da:
 
-input_analysis_result è ora layer compositivo raw / selection / effective
-e fonte UI controllata per gli Hidden principali del flow input:
+- 00_PROJECT_State
+- 00_PROJECT_Roadmap
+- 00_PROJECT_Gap_Register
+
+Questo documento va aggiornato solo quando cambia una logica dell’area Preview / Sintesi oppure quando serve registrare un impatto documentale diretto su:
 
 - Sintesi
-- Dati evento
-- select1
-- select_project
-- select_entity
-- command container
-- suggestion container
-- container_input
-- loading
-- cancel controls
-- button_input_confirm.Hidden
+- preview visuale
+- labelStyled
+- value builder
+- formattazione amount/unit/date
+- durata umana
+- hint normalizzazione durata
+- hint durata ambigua
+- label cleaning
+- highlight project/entity
+- card “Da verificare”
+- hint / warning / status visuali
+- notice associazioni mancanti
+- micro-copy preview
+- micro-azioni visive “Cambia” / “Scegli”
+- preview_analysis_state
+- relazione tra preview e input_analysis_result
+- relazione tra Sintesi, Dati evento, suggestion container e command container
 
-La parte suggestion create funziona
-e il container suggestion è stato rifinito a livello mobile base.
+Regola:
 
-Il Command Intent è stato separato dalla Sintesi evento:
+non usare questo documento come Roadmap.
+Non inserire qui “nodo corrente”, “prossimo nodo” o pacchetti documentali in corso.
 
-- i comandi puri non vengono renderizzati come eventi
-- container_command_intent sostituisce Sintesi / Dati evento quando l’input è comando puro
-- command_intent_state resta helper separato
-- command_intent_state non è fonte preview
-- command_intent_state non è fonte salvabile per events
-- insert_project / insert_entity restano azioni controllate
-- button_input_confirm resta dedicato agli eventi ordinari
+Le evoluzioni future collegate alla Preview devono restare in:
 
-La Sintesi è ora più coerente con il sistema mobile,
-ma resta un layer ibrido e non una view pura.
+- 00_PROJECT_Roadmap per sequenza e priorità
+- 00_PROJECT_Gap_Register per gap e debiti
+- checkpoint operativo solo durante il nodo attivo
 
-Durante il nodo Input Analysis Result Controlled UI Consumption sono stati stabilizzati:
+Stato tecnico attuale stabile:
 
-- edit mode + input vuoto
-- Home idle container durante edit mode
-- Dati evento nascosti con edit input vuoto
-- container suggestion vuoto
-- micro-copy notice associazioni mancanti
+- nessun refactor preview globale attivo immediato
+- Preview Alignment Base completato
+- Duration Normalization Base completata
+- Type Classification Base completata
+- Match Engine Unification First Controlled Level completato
+- Project / Entity Create Suggestion First Controlled Level completato
+- UX Mobile Coherence Pass completato
+- Command Intent — Create Project / Entity completato
+- UI Readiness / Visibility Aggregator — First Controlled Level completato
+- Preview Analysis State — First Controlled Layer completato
+- Input Analysis Result / Single Interpretation Layer Base — Read-only Diagnostic completato
+- Input Analysis Result — Controlled UI Consumption Pass completato
+- Input Analysis Result — Visibility Migration Completion completato
+- Linting / Retool Query Safety Pass completato
+- Documentation Architecture Audit / Redundancy Reduction completato
 
-Resta però un residuo Preview importante:
+Residui tecnici della Preview da non perdere:
 
-“Da verificare” resta interno alla Sintesi / card collegata
-e non è ancora un modello hint autonomo.
+- la Sintesi resta un layer ibrido, non ancora view pura
+- “Da verificare” resta interno alla Sintesi / card collegata
+- hint / warning / status non sono ancora un modello autonomo completo
+- button_input_confirm.Disabled non è migrato a input_analysis_result
+- save readiness completa non è centralizzata
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
+- cleanup obsolete UI guards / query reduction non ancora eseguito
+- label “Importo” su durata ancora presente
+- flash residui digitazione/cambio schermata ancora presenti
 
-Restano residui architetturali:
+Possibili futuri tecnici collegati alla Preview:
 
-ui_visibility_state resta presente come residuo tecnico deprecabile.
-button_input_confirm.Disabled non è migrato.
-save readiness non è centralizzata.
-cleanup obsolete UI guards / query reduction non è stato eseguito.
-
-Nodi futuri candidati coerenti:
-
-1. DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
-
-Obiettivo:
-
-- ridurre ridondanze documentali
-- definire fonti canoniche complete per ogni logica fondamentale
-- usare richiami espliciti negli altri documenti
-- creare una Session Boot Matrix
-- preservare ricostruibilità in caso di crash
-
----
-
-2. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
-
-Obiettivo:
-
-- correggere la label “Importo” quando il valore rappresenta una durata
-- euro → Importo
-- minuti / ore → Durata
-- nessuna unità → riga assente o label neutra
-- non modificare parser
-- non modificare duration normalization
-- non modificare DB
-- non modificare save flow
-
----
-
-3. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
-
-Obiettivo:
-
-- analizzare flash residui durante digitazione e cambio schermata
-- distinguere flash accettabili da regressioni UX
-- non modificare parser/matching/save flow
-- intervenire solo se locale e reversibile
-
----
-
-4. BUTTON CONFIRM READINESS ALIGNMENT
-
-Obiettivo:
-
-- distinguere visibility / disabled / readiness save
-- valutare solo button_input_confirm.Disabled
-- mantenere invariato il payload
-- non modificare insert_event / update_event
-
----
-
-5. PREVIEW MODEL / HINT STATE CONSOLIDATION
-
-Obiettivo:
-
-- consolidare ulteriormente hint/warning ancora embedded nella Sintesi
-- valutare se “Da verificare” debba diventare blocco autonomo
-- distinguere hint bloccanti, warning informativi e suggestion visuali
-- rendere la preview più vicina a una view pura
-- evitare divergenze tra ciò che l’utente legge e ciò che viene salvato
-
----
-
-6. STATUS SEMANTICS ALIGNMENT
-
-Obiettivo:
-
-- allineare il significato di OK / Verifica / Attenzione
-- evitare status OK con card Da verificare quando semanticamente incoerente
-- preservare distinzione tra warning bloccanti e non bloccanti
-
----
-
-7. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
-
-Obiettivo:
-
-- mostrare guidance quando command intent è soppresso in edit mode
-- valutare riconoscimento di modifica / correggi / cambia
-- non aprire edit flow automatici
-
----
-
-8. CAMBIA / SCEGLI ACTIONS
-
-Obiettivo:
-
-- trasformare le micro-azioni visive nella Sintesi in azioni reali
-- eventuale focus / scroll / highlight sui campi Dati evento
-- mantenere select_project / select_entity come decisione finale utente
-
----
-
-9. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
-
-Obiettivo:
-
-- valutare eliminazione ui_visibility_state
-- rimuovere guardie duplicate
-- non intervenire prima di audit documentale e graph aggiornato
-
-------------------------------------------------
-OBIETTIVO FUTURO NON ATTIVO
-------------------------------------------------
-
-Separazione layer:
-
-parsing
-normalization
-type classification
-command intent
-label
-matching
-suggestion
-preview
-
-Preview target:
-
-👉 funzione pura di rendering
-
-Input target:
-
-parsed data
-type già determinato
-selected project/entity
-hint state già calcolato
-match state già calcolato
-suggestion state già calcolato
-command intent già calcolato fuori dalla preview
-visibility state già calcolato fuori dalla preview
-preview_analysis_state già calcolato per hint/status
-input_analysis_result già calcolato parzialmente per readiness UI
-
-Output target:
-
-rendering leggibile
-nessuna logica decisionale
-nessuna trasformazione strutturale
-nessuna interpretazione command intent
-nessuna azione diretta su DB
-
-⚠ NON implementato attualmente
+- PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+- PREVIEW MODEL / HINT STATE CONSOLIDATION
+- BUTTON CONFIRM READINESS ALIGNMENT
 
 Nota:
 
-questo obiettivo resta non attivo.
-Preview Alignment Base ha migliorato la rappresentazione visuale,
-ma non ha separato architetturalmente la preview.
-
-Nota:
-
-la preview target futura resta una funzione pura di rendering,
-ma questo non è stato implementato.
-
-Anche il suggestion container futuro potrebbe essere separato in un modello dedicato,
-ma non è attivo ora.
-
-Anche command_intent_state potrebbe in futuro confluire in un modello unico di input analysis,
-ma non è attivo ora.
-input_analysis_result non legge più ui_visibility_state
-e governa gli Hidden principali del flow input.
-
-ui_visibility_state resta presente come residuo tecnico deprecabile,
-ma non governa più gli Hidden principali migrati.
-
-Il matching project/entity è stato però allineato
-sufficientemente da non essere più un blocco preview immediato.
-
-Il Command Intent è stato separato dalla Sintesi evento
-sufficientemente da evitare che i comandi puri vengano salvati o rappresentati come eventi.
-
-Restano invece aperti:
-
-- “Da verificare” interno alla Sintesi / card collegata
-- preview ancora ibrida
-- hint/warning non ancora separati in modello autonomo
-- input_analysis_result non è Input Analysis Model completo
-- button_input_confirm.Disabled non migrato
-- save readiness non centralizzata
-- cleanup obsolete UI guards / query reduction non eseguito
-- label “Importo” su durata non allineata semanticamente
-- “modifica” generico non riconosciuto come guida edit
-- micro-flash feedback project/entity esterno alla preview
+questi sono residui tecnici collegati al dominio Preview.
+La decisione se e quando aprirli resta in 00_PROJECT_State / 00_PROJECT_Roadmap / 00_PROJECT_Gap_Register.
 
 CHANGELOG
 
@@ -3737,10 +3719,10 @@ v11 — 2026-05-18
 - integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
 - documentato ui_visibility_mode come latch UI empty / event / command
 - documentato ui_visibility_state come aggregatore read-only di visibilità
-- documentato che ui_visibility_state governa la visibilità della Sintesi tramite showEventPreview
-- documentato che container_command_intent è governato da showCommandContainer
-- documentato che Dati evento è governato da showEventData
-- documentato che button_input_confirm è governato da showConfirm
+- documentato che in quella fase ui_visibility_state governava ancora la visibilità della Sintesi tramite showEventPreview; stato successivamente superato da Visibility Migration Completion, che ha migrato la visibilità Sintesi a input_analysis_result.readiness.canShowEventPreview
+- documentato che in quella fase container_command_intent era governato da showCommandContainer; stato successivamente superato dalla migrazione a input_analysis_result.readiness.canShowCommandContainer
+- documentato che in quella fase Dati evento era governato da showEventData; stato successivamente superato dalla migrazione a input_analysis_result.readiness.canShowEventData
+- documentato che in quella fase button_input_confirm era governato da showConfirm; stato successivamente superato dalla migrazione di button_input_confirm.Hidden a input_analysis_result.readiness.canShowConfirm
 - documentata distinzione tra visibilità preview e contenuto preview
 - documentato che ui_visibility_state non modifica labelStyled
 - documentato che ui_visibility_state non modifica hint, highlight, parser, matching o DB
@@ -3787,7 +3769,7 @@ v12 — 2026-05-20
 - documentato che container_command_intent legge input_analysis_result.readiness.canShowCommandContainer
 - documentato che container_association_suggestions legge input_analysis_result.readiness.canShowAssociationSuggestions
 - documentato che button_input_confirm resta fuori dalla migrazione corrente
-- documentato che ui_visibility_state resta operativo e non deprecato
+- documentato che in quella fase ui_visibility_state restava ancora operativo; stato successivamente superato da Visibility Migration Completion, che lo ha riclassificato come residuo tecnico deprecabile / rollback
 - documentato edit mode + input vuoto stabilizzato
 - documentato Home idle container nascosti durante edit mode
 - documentato Dati evento / Sintesi / Conferma nascosti con edit input vuoto
@@ -3842,3 +3824,40 @@ v13 — 2026-05-23
 - aggiornati limiti attuali
 - aggiornati nodi futuri candidati
 - prossimo nodo candidato prioritario: DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+
+v14 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto C — Documenti tecnici canonici su 06_LOGOS_View_Preview_System
+- documento aggiornato da v13 a v14
+- confermato 06_LOGOS_View_Preview_System come fonte canonica per Preview / Sintesi, labelStyled, value builder visuale, formattazione amount/unit/date, durata umana, hint normalizzazione, hint durata ambigua, label cleaning, highlight, hint/warning/status, card Da verificare, notice associazioni mancanti, micro-copy e limiti della preview come layer ibrido
+- aggiunta sezione RESPONSABILITÀ CANONICA DEL DOCUMENTO
+- chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo della Preview/Sintesi
+- chiarito che il dettaglio completo resta in questo documento e nei documenti canonici collegati
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per input flow, parser, normalization, duration normalization, type classification base nel contesto input, Command Intent, create_suggestion_state e input_analysis_result
+  - 02_LOGOS_Match_Engine per Match Engine project/entity
+  - 03_LOGOS_Event_Lifecycle per lifecycle evento
+  - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/Sintesi/input_analysis_result/preview_analysis_state wiring
+  - 05_LOGOS_Database_Schema per schema DB
+  - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+  - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
+- aggiunte note canoniche nelle sezioni:
+  - POSIZIONE NEL SISTEMA
+  - RELAZIONE CON PARSING
+  - COMPORTAMENTO MATCHING IN PREVIEW
+  - RELAZIONE CON CREATE SUGGESTION
+  - RELAZIONE CON INSERT / UPDATE
+- riallineati riferimenti storici nel changelog v11 su ui_visibility_state/showEventPreview/showCommandContainer/showEventData/showConfirm
+- riallineato riferimento storico nel changelog v12 su ui_visibility_state operativo/non deprecato
+- aggiornata sezione OBIETTIVO FUTURO IMMEDIATO con stato Pacchetto C
+- nessuna riduzione aggressiva applicata
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload

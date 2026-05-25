@@ -1,6 +1,6 @@
-# 03_LOGOS_Event_Lifecycle_v10
+# 03_LOGOS_Event_Lifecycle_v12
 
-DATA: 2026-05-18
+DATA: 2026-05-25
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -47,9 +47,13 @@ C (Completezza): 10/10
 - evento ordinario non regressivo dopo Command Intent documentato
 - edit flow non regressivo dopo Command Intent documentato
 - UI Readiness / Visibility Aggregator First Controlled Level documentato nel lifecycle come layer UI separato
+- Input Analysis Result / Single Interpretation Layer Base documentato come layer compositivo read-only non lifecycle
+- Input Analysis Result — Controlled UI Consumption Pass documentato come fonte UI controllata parziale
+- Input Analysis Result — Visibility Migration Completion documentato nel lifecycle come completamento visibility degli Hidden principali del flow input
 - ui_visibility_mode documentato come latch UI non persistente
-- ui_visibility_state documentato come aggregatore read-only di visibilità input flow
-- confermato che UI Readiness non introduce nuovi stati evento
+- input_analysis_result documentato come fonte UI controllata per gli Hidden principali del flow input
+- ui_visibility_state riclassificato come residuo tecnico deprecabile / rollback
+- confermato che UI Readiness / input_analysis_result non introducono nuovi stati evento
 - confermato che UI Readiness non modifica NEW / WRITTEN / ERROR
 - confermato che edit mode prevale su Command Intent
 - documentato text_edit_mode_notice come supporto UX al lifecycle edit
@@ -165,12 +169,67 @@ Il documento stabilisce:
 - feedback project_created / entity_created come feedback UI temporaneo
 - guida “modifica evento” come routing UI non operativo sul dato
 - UI Readiness / Visibility Aggregator come layer UI non persistente
+- Input Analysis Result come layer compositivo read-only non lifecycle
 - ui_visibility_mode come latch UI empty / event / command
-- ui_visibility_state come aggregatore read-only di visibilità input flow
-- conferma che UI Readiness non modifica lifecycle evento
+- input_analysis_result come fonte UI controllata per gli Hidden principali del flow input
+- ui_visibility_state come residuo tecnico deprecabile / rollback
+- conferma che UI Readiness / input_analysis_result non modificano lifecycle evento
 - conferma che edit mode prevale su Command Intent
 - text_edit_mode_notice come supporto UX alla modifica evento
 - micro-flash feedback project/entity come residuo UI non lifecycle
+
+------------------------------------------------
+RESPONSABILITÀ CANONICA DEL DOCUMENTO
+------------------------------------------------
+
+Questo documento è fonte canonica per:
+
+- lifecycle evento LOGOS
+- stati evento NEW / WRITTEN / ERROR
+- transizioni evento
+- create flow evento ordinario
+- edit flow evento NEW
+- update_event nel lifecycle
+- no-op edit
+- annulla modifica
+- cancel create/input
+- cancel edit
+- distinzione tra edit reale ed edit senza modifiche
+- rapporto tra evento ordinario e Command Intent
+- esclusione dei comandi puri dal lifecycle evento
+- routing post-save nel contesto lifecycle
+- feedback temporaneo nel contesto lifecycle
+- processing NEW / WRITTEN / ERROR
+- responsabilità utente nella validazione evento
+- limiti lifecycle attuali
+- lifecycle futuro non attivo
+- vincoli operativi sugli stati evento
+
+Questo documento NON è fonte canonica completa per:
+
+- input flow / parser / normalization nel dettaglio runtime frontend
+- Match Engine project/entity nel dettaglio completo
+- componenti / query / Hidden Retool nel dettaglio completo
+- schema DB completo
+- Preview / Sintesi / hint / warning completi
+- runtime Retool as-is completo
+- runtime Supabase as-is completo
+- roadmap / priorità / gap governance
+
+Fonti canoniche collegate:
+
+- 01_LOGOS_Input_System per input flow, parser, normalization, duration normalization, type classification base nel contesto input, Command Intent, create_suggestion_state e input_analysis_result.
+- 02_LOGOS_Match_Engine per project_state / entity_state / matches / isAmbiguous / singleMatch / moreSpecificMatches / confirm guard matching.
+- 04_LOGOS_Retool_Architecture per componenti, query, Hidden, edit_mode, editing_event, button_input_confirm, insert_event, update_event, insert_project, insert_entity e wiring Retool.
+- 05_LOGOS_Database_Schema per schema DB, tabelle, campi persistiti e comportamento Supabase passivo.
+- 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
+- LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+
+Nota post Pacchetto B:
+
+State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo del lifecycle evento.
+Il dettaglio completo del ciclo di vita evento resta in questo documento e nei documenti canonici collegati.
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -194,16 +253,25 @@ Esempi:
 Questi input vengono gestiti da Command Intent
 e non generano automaticamente eventi NEW.
 
-Nota post UI Readiness:
+Nota post Visibility Migration Completion:
 
 La distinzione visiva tra evento ordinario e command intent è ora supportata da:
 
 - ui_visibility_mode
-- ui_visibility_state
+- input_analysis_result
+
+ui_visibility_state resta presente come residuo tecnico deprecabile / rollback,
+ma non è più la fonte primaria degli Hidden principali del flow input.
 
 Questi helper non sono stati evento.
 Non generano eventi.
 Non modificano il lifecycle NEW / WRITTEN / ERROR.
+
+Fonte canonica per comportamento input_analysis_result / visibility / readiness:
+
+- 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
 
 ---
 
@@ -225,7 +293,8 @@ Gli eventi:
 - restano separati da project/entity creati tramite command intent
 - non vengono modificati da “modifica evento” scritto come command intent
 - non vengono modificati da ui_visibility_mode
-- non vengono modificati da ui_visibility_state
+- non vengono modificati da input_analysis_result
+- non vengono modificati da ui_visibility_state residuo
 - non cambiano lifecycle quando cambia la visibilità del flow input
 
 ---
@@ -262,9 +331,10 @@ Il sistema:
 - richiede conferma esplicita per creare project/entity da command
 - guida l’utente alla lista eventi se scrive “modifica evento”
 - non decide definitivamente
-- coordina la visibilità UI tramite ui_visibility_state
-- non considera ui_visibility_state una fonte dati
-- mantiene il lifecycle evento separato dal layer UI Readiness
+- coordina la visibilità UI tramite input_analysis_result per gli Hidden principali migrati
+- mantiene ui_visibility_state come residuo tecnico deprecabile / rollback
+- non considera input_analysis_result o ui_visibility_state fonti dati evento
+- mantiene il lifecycle evento separato dal layer UI Readiness / input_analysis_result
 
 ---
 
@@ -325,7 +395,9 @@ NEW
 - dopo no-op edit torna Lista eventi senza feedback
 - usa feedback_summary solo come riepilogo UI temporaneo
 - usa edit_mode / editing_event come helper tecnici del flow edit
-- può essere accompagnato da ui_visibility_state per mostrare/nascondere parti del flow input
+- può essere accompagnato da input_analysis_result per mostrare/nascondere gli Hidden principali del flow input
+- può mantenere ui_visibility_state come residuo tecnico deprecabile / rollback
+- input_analysis_result non modifica lo stato NEW
 - ui_visibility_state non modifica lo stato NEW
 - ui_visibility_mode non modifica lo stato NEW
 - text_edit_mode_notice può essere mostrato durante edit mode
@@ -375,7 +447,7 @@ SE COMANDO PURO
 
 SE EVENTO ORDINARIO  
 ↓  
-UI VISIBILITY STATE  
+INPUT ANALYSIS RESULT / UI READINESS  
 ↓  
 PARSE CONTROLLED  
 ↓  
@@ -434,8 +506,12 @@ e guida “modifica evento” sono stati/UI flow.
 
 Non sono stati evento.
 
-Anche ui_visibility_mode e ui_visibility_state sono stati/helper UI.
+Anche ui_visibility_mode, input_analysis_result e ui_visibility_state sono helper UI/runtime.
 Non sono stati evento.
+
+- ui_visibility_mode distingue empty / event / command
+- input_analysis_result governa gli Hidden principali del flow input migrati
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
 
 Non introducono transizioni lifecycle.
 
@@ -660,15 +736,16 @@ Non modifica:
 - processing WRITTEN / ERROR
 
 ------------------------------------------------
-UI READINESS / VISIBILITY NEL LIFECYCLE
+UI READINESS / INPUT ANALYSIS RESULT NEL LIFECYCLE
 ------------------------------------------------
 
 UI Readiness / Visibility Aggregator — First Controlled Level
 è un layer UI/runtime che coordina la visibilità del flow input.
 
-Componenti principali:
+Componenti / helper principali:
 
 - ui_visibility_mode
+- input_analysis_result
 - ui_visibility_state
 - text_input_analysis_loading
 - text_edit_mode_notice
@@ -701,11 +778,12 @@ ui_visibility_mode:
 
 ---
 
-ui_visibility_state:
+input_analysis_result:
 
-- Transformer Retool read-only
-- aggrega flag di visibilità
-- governa Hidden principali del flow input
+- Transformer Retool compositivo read-only
+- compone raw / selection / effective state
+- espone readiness del flow input
+- governa gli Hidden principali del flow input migrati
 - non salva dati
 - non modifica DB
 - non modifica parser
@@ -714,22 +792,34 @@ ui_visibility_state:
 - non modifica create_suggestion_state
 - non modifica insert_event / update_event
 - non modifica insert_project / insert_entity
+- non costruisce payload
+- non introduce nuovi stati evento
 
-Componenti governati a livello UI:
+Hidden principali migrati a input_analysis_result:
 
-- container_command_intent
+- container_input
+- text_input_analysis_loading
+- btn_cancel_edit
+- btn_cancel_input_home
+- button_input_confirm
 - sintesi
-- container_association_suggestions
 - text_event_data_title
 - select1
 - select_project
 - select_entity
-- button_input_confirm
-- btn_cancel_edit
-- btn_cancel_input_home
-- container_input
+- container_command_intent
+- container_association_suggestions
 
-Componenti non governati direttamente:
+ui_visibility_state:
+
+- Transformer Retool read-only legacy/residuo
+- residuo tecnico deprecabile / rollback
+- non è più letto da input_analysis_result
+- non governa più gli Hidden principali migrati
+- non va eliminato fuori da un nodo cleanup dedicato
+- non introduce nuovi stati evento
+
+Componenti non governati direttamente dal flow input:
 
 - container_home
 - container_feedback
@@ -746,6 +836,8 @@ Effetti sul lifecycle:
 - nessuna modifica al processing WRITTEN / ERROR
 - nessuna modifica al save flow
 - nessuna modifica alla validazione manuale
+- input_analysis_result modifica solo visibility/readiness UI
+- ui_visibility_state resta solo residuo tecnico / rollback
 
 Effetti sulla UX:
 
@@ -1254,7 +1346,8 @@ INPUT SYSTEM:
 - usa create_suggestion_state per suggestion project/entity
 - usa command_intent_state per distinguere comandi puri da eventi ordinari
 - usa ui_visibility_mode per distinguere visivamente empty / event / command
-- usa ui_visibility_state per governare gli Hidden principali del flow input
+- usa input_analysis_result per governare gli Hidden principali del flow input migrati
+- mantiene ui_visibility_state come residuo tecnico deprecabile / rollback
 - usa text_input_analysis_loading come micro-stato UX
 - usa text_edit_mode_notice per chiarire edit mode
 - usa insert_project / insert_entity solo su conferma utente
@@ -1279,7 +1372,7 @@ input_home
 → ui_state.parsed  
 → project_state / entity_state  
 → create_suggestion_state  
-→ ui_visibility_state  
+→ input_analysis_result  
 → eventuale insert_project / insert_entity inline su conferma utente  
 → select_project / select_entity  
 → select1  
@@ -1297,7 +1390,7 @@ input_home
 → trigger_parse_debounced  
 → ui_visibility_mode  
 → command_intent_state  
-→ ui_visibility_state  
+→ input_analysis_result  
 → se è comando puro  
 → container_command_intent  
 → eventuale btn_command_create_project / btn_command_create_entity / btn_command_go_events  
@@ -1468,14 +1561,18 @@ Command Intent:
 - non attiva update_event
 - btn_command_go_events fa solo routing alla lista eventi
 
-UI Readiness:
+UI Readiness / input_analysis_result:
 
 - legge edit_mode per determinare la visibilità del flow
 - mostra text_edit_mode_notice quando edit_mode è true
+- governa gli Hidden principali migrati del flow input
 - non modifica edit_mode
 - non modifica editing_event
 - non modifica update_event
+- non costruisce payload
 - non modifica lifecycle evento
+
+ui_visibility_state resta residuo tecnico deprecabile / rollback.
 
 Effetto:
 
@@ -1644,14 +1741,15 @@ Stato attuale:
 - preview resta layer ibrido
 - per i comandi puri la preview viene sostituita da container_command_intent
 
-Dopo UI Readiness:
+Dopo Input Analysis Result — Visibility Migration Completion:
 
-- la visibilità preview è governata da ui_visibility_state.showEventPreview
-- container_command_intent è governato da ui_visibility_state.showCommandContainer
-- Dati evento è governato da ui_visibility_state.showEventData
-- Conferma evento è governata da ui_visibility_state.showConfirm
+- la visibilità preview è governata da input_analysis_result.readiness.canShowEventPreview
+- container_command_intent è governato da input_analysis_result.readiness.canShowCommandContainer
+- Dati evento è governato da input_analysis_result.readiness.canShowEventData
+- Conferma evento è governata da input_analysis_result.readiness.canShowConfirm
 - la preview resta visuale e non salva
-- ui_visibility_state non è fonte lifecycle
+- input_analysis_result non è fonte lifecycle
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
 
 Limite attuale:
 
@@ -1717,8 +1815,10 @@ Il database NON:
 - interpreta command intent
 - crea eventi da comandi puri
 - conosce ui_visibility_mode
+- conosce input_analysis_result
 - conosce ui_visibility_state
 - salva ui_visibility_mode
+- salva input_analysis_result
 - salva ui_visibility_state
 - modifica eventi in base alla visibilità UI
 
@@ -1826,7 +1926,7 @@ Dopo command “modifica evento”:
 - nessun update_event
 - nessun evento modificato
 
-Dopo cambio ui_visibility_mode / ui_visibility_state:
+Dopo cambio ui_visibility_mode / input_analysis_result / ui_visibility_state:
 
 - nessun insert_event
 - nessun update_event
@@ -1930,12 +2030,14 @@ LIMITI ATTUALI
 - command intent implementato solo a primo livello controllato
 - command intent avanzato non implementato
 - input analysis model unico non implementato
-- ui_visibility_state implementato solo come aggregatore UI/readiness
+- input_analysis_result implementato come layer compositivo read-only e fonte UI controllata per gli Hidden principali del flow input
+- input_analysis_result non è Input Analysis Model completo
+- ui_visibility_state resta residuo tecnico deprecabile / rollback
 - ui_visibility_mode implementato solo come latch UI
-- UI Readiness non è Input Analysis Model completo
+- UI Readiness / input_analysis_result non sono Input Analysis Model completo
 - “modifica” generico non ancora riconosciuto come guida edit
 - micro-flash feedback project/entity ancora presente come residuo UI non lifecycle
-- 5 linting Retool residui ancora presenti
+- linting Retool azzerati dopo Linting / Retool Query Safety Pass
 - cleanup obsolete UI guards / query reduction non ancora eseguito
 - navigation dock non rappresenta stato evento
 
@@ -2073,10 +2175,10 @@ INPUT SYSTEM
 → gestisce feedback_mode per project/entity da command
 → non crea eventi da comandi puri
 → gestisce ui_visibility_mode
-→ gestisce ui_visibility_state
-→ coordina Hidden principali del flow input
+→ usa input_analysis_result come fonte UI controllata per gli Hidden principali del flow input
+→ mantiene ui_visibility_state come residuo tecnico deprecabile / rollback
 → mostra text_edit_mode_notice durante edit mode
-→ non modifica lifecycle tramite UI Readiness
+→ non modifica lifecycle tramite UI Readiness / input_analysis_result
 
 ---
 
@@ -2103,7 +2205,7 @@ PREVIEW
 → visualizza interpretazione  
 → non salva  
 → non valida  
-→ visibilità governata da ui_visibility_state.showEventPreview
+→ visibilità governata da input_analysis_result.readiness.canShowEventPreview
 
 ---
 
@@ -2121,14 +2223,16 @@ COMMAND INTENT
 
 ---
 
-UI READINESS / VISIBILITY
+UI READINESS / INPUT ANALYSIS RESULT
 
-→ distingue visivamente empty / event / command
-→ governa Hidden principali del flow input
+→ distingue visivamente empty / event / command tramite ui_visibility_mode
+→ governa gli Hidden principali del flow input tramite input_analysis_result
+→ mantiene ui_visibility_state come residuo tecnico deprecabile / rollback
 → non cambia stato evento
 → non valida evento
 → non crea eventi
 → non modifica eventi
+→ non costruisce payload
 → non sostituisce command_intent_state
 → non sostituisce parser/matching/suggestion
 → non sostituisce Input Analysis Model completo
@@ -2202,7 +2306,7 @@ Strategia:
 1B. non salvare automaticamente eventi dopo creazione project/entity
 1C. non salvare comandi puri come eventi
 1D. guidare comandi strutturali verso azioni controllate separate
-1E. coordinare visibilità input senza trasformarla in lifecycle evento
+1E. coordinare visibilità input tramite input_analysis_result senza trasformarla in lifecycle evento
 1F. mantenere edit mode prevalente su Command Intent
 2. correggere in NEW
 2A. evitare aggiornamenti inutili se l’edit non cambia il dato
@@ -2229,8 +2333,9 @@ VINCOLI OPERATIVI
 - non aprire edit flow automatico da “modifica evento”
 - non usare feedback project/entity come stato evento
 - non usare ui_visibility_mode come stato evento
+- non usare input_analysis_result come stato evento
 - non usare ui_visibility_state come stato evento
-- non confondere visibilità UI con transizione lifecycle
+- non confondere visibility/readiness UI con transizione lifecycle
 - non aprire Command Intent durante edit mode
 - non trasformare UI Readiness in Input Analysis Model completo senza nodo dedicato
 
@@ -2279,10 +2384,15 @@ Il lifecycle attuale è:
 ✔ evento ordinario non regressivo dopo Command Intent validato
 ✔ edit flow non regressivo dopo Command Intent validato
 ✔ UI Readiness / Visibility Aggregator First Controlled Level completato
+✔ Input Analysis Result / Single Interpretation Layer Base introdotto come layer compositivo read-only
+✔ Input Analysis Result — Controlled UI Consumption Pass completato
+✔ Input Analysis Result — Visibility Migration Completion completato
 ✔ ui_visibility_mode introdotto come latch UI empty / event / command
-✔ ui_visibility_state introdotto come aggregatore read-only di visibilità
-✔ UI Readiness non introduce nuovi stati evento
-✔ UI Readiness non modifica NEW / WRITTEN / ERROR
+✔ input_analysis_result consolidato come fonte UI controllata per gli Hidden principali del flow input
+✔ ui_visibility_state riclassificato come residuo tecnico deprecabile / rollback
+✔ input_analysis_result non legge più ui_visibility_state
+✔ UI Readiness / input_analysis_result non introducono nuovi stati evento
+✔ UI Readiness / input_analysis_result non modificano NEW / WRITTEN / ERROR
 ✔ container vuoto durante digitazione risolto
 ✔ flash input flow ridotto
 ✔ bottom bar flash risolto
@@ -2311,10 +2421,11 @@ Ma:
 ⚠ Command Intent è solo primo livello controllato
 ⚠ command intent avanzato non implementato
 ⚠ input analysis model unico non implementato
-⚠ UI Readiness è solo aggregatore UI/readiness
+⚠ input_analysis_result è layer compositivo read-only e non Input Analysis Model completo
+⚠ ui_visibility_state resta residuo tecnico deprecabile / rollback
 ⚠ “modifica” generico non ancora riconosciuto come guida edit
 ⚠ micro-flash feedback project/entity residuo UI non lifecycle
-⚠ 5 linting Retool residui
+✔ linting Retool azzerati dopo Linting / Retool Query Safety Pass
 
 ---
 
@@ -2337,11 +2448,14 @@ solo dopo stabilizzazione:
 13. UX Mobile Coherence Pass ✔
 14. Command Intent — Create Project / Entity ✔
 15. UI Readiness / Visibility Aggregator ✔
-16. preview / hint consolidation
-17. input analysis model / single interpretation layer
-18. data structure / project-entity evolution
-19. economic direction advanced
-20. output / dashboard base
+16. Preview Analysis State / Input Analysis Result First Controlled Layers ✔
+17. Input Analysis Result — Visibility Migration Completion ✔
+18. Linting / Retool Query Safety Pass ✔
+19. preview / hint consolidation
+20. input analysis model completo / single interpretation layer avanzato
+21. data structure / project-entity evolution
+22. economic direction advanced
+23. output / dashboard base
 
 ------------------------------------------------
 CHANGELOG
@@ -2554,3 +2668,82 @@ v10 — 2026-05-18
 - command_intent_state invariato
 - save flow evento ordinario invariato
 - nessun output/KPI anticipato
+
+v11 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicata normalizzazione controllata Pacchetto A — Allineamento alto / Lifecycle / Supabase
+- allineato il lifecycle allo stato post INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+- allineato il lifecycle allo stato post LINTING / RETOOL QUERY SAFETY PASS
+- aggiornato il documento da UI READINESS / VISIBILITY a UI READINESS / INPUT ANALYSIS RESULT dove necessario
+- introdotto input_analysis_result come layer compositivo read-only non lifecycle
+- documentato input_analysis_result come fonte UI controllata per gli Hidden principali del flow input
+- riclassificato ui_visibility_state come residuo tecnico deprecabile / rollback
+- chiarito che ui_visibility_state non è più letto da input_analysis_result
+- chiarito che ui_visibility_state non governa più gli Hidden principali migrati
+- chiarito che input_analysis_result non introduce nuovi stati evento
+- chiarito che input_analysis_result non modifica NEW / WRITTEN / ERROR
+- chiarito che input_analysis_result non salva dati, non costruisce payload e non modifica DB
+- aggiornata sezione UI READINESS / INPUT ANALYSIS RESULT NEL LIFECYCLE
+- aggiornati riferimenti in:
+  - Principi fondanti
+  - NEW
+  - Flusso attuale
+  - Integrazione con Input System
+  - Integrazione con Preview
+  - Integrazione con Database
+  - Integrazione con Processing
+  - Interazione con altri layer
+  - Note strategiche
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per input_analysis_result / raw / selection / effective / readiness
+  - 04_LOGOS_Retool_Architecture per wiring e Hidden Retool
+  - LOGOS_RETOOL_RUNTIME_REAL per stato runtime reale as-is
+- aggiornati limiti:
+  - input_analysis_result non è Input Analysis Model completo
+  - ui_visibility_state resta residuo tecnico deprecabile / rollback
+  - linting Retool azzerati dopo Linting / Retool Query Safety Pass
+- confermati stati evento invariati:
+  - NEW
+  - WRITTEN
+  - ERROR
+- confermato che Command Intent, feedback, navigation dock, ui_visibility_mode, input_analysis_result e ui_visibility_state non sono stati evento
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica lifecycle reale
+- nessuna anticipazione output / KPI / dashboard
+
+v12 — 2026-05-25
+
+- aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- applicato Pacchetto C — Documenti tecnici canonici su 03_LOGOS_Event_Lifecycle
+- documento aggiornato da v11 a v12
+- confermato 03_LOGOS_Event_Lifecycle come fonte canonica per lifecycle evento, stati NEW / WRITTEN / ERROR, create flow, edit flow, update_event, no-op edit, annulla modifica, cancel create/edit, processing e vincoli sugli stati evento
+- aggiunta sezione RESPONSABILITÀ CANONICA DEL DOCUMENTO
+- chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico lungo del lifecycle evento
+- chiarito che il dettaglio completo resta in questo documento e nei documenti canonici collegati
+- aggiunti richiami canonici a:
+  - 01_LOGOS_Input_System per input flow, parser, normalization, Command Intent, create_suggestion_state e input_analysis_result
+  - 02_LOGOS_Match_Engine per Match Engine project/entity
+  - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/edit_mode/editing_event/button_input_confirm/insert_event/update_event/wiring Retool
+  - 05_LOGOS_Database_Schema per schema DB e comportamento Supabase passivo
+  - 06_LOGOS_View_Preview_System per Sintesi, preview, hint e warning
+  - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
+  - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
+- nessuna riduzione aggressiva applicata
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica lifecycle reale
+- nessuna anticipazione output / KPI / dashboard
