@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v12
+# 00_PROJECT_Gap_Register_v13
 
-DATA: 2026-05-20
+DATA: 2026-05-23
 
 ------------------------------------------------
 SCOPO
@@ -140,7 +140,7 @@ input
 
 STATO REALE:
 
-Sono stati avviati e completati undici blocchi funzionali/base-operativi:
+Sono stati avviati e completati tredici blocchi funzionali/base-operativi:
 
 - Normalization Layer Base
 - Duration Normalization Base
@@ -153,6 +153,8 @@ Sono stati avviati e completati undici blocchi funzionali/base-operativi:
 - Preview Analysis State — First Controlled Layer
 - Input Analysis Result / Single Interpretation Layer Base — Read-only Diagnostic
 - Input Analysis Result — Controlled UI Consumption Pass
+- Input Analysis Result — Visibility Migration Completion
+- Linting / Retool Query Safety Pass
 
 Tuttavia non esiste ancora un Processor/Engine Flow completo.
 
@@ -182,10 +184,13 @@ ui_visibility_mode distingue empty / event / command
 ui_visibility_state aggrega la visibilità del flow input
 preview_analysis_state raccoglie hint/status/warning/Da verificare/associazioni mancanti della Sintesi
 input_analysis_result compone raw / selection / effective state
-input_analysis_result è ora fonte UI controllata parziale per Sintesi, Dati evento, Command container e Suggestion container
-ui_visibility_state resta ancora operativo e non deprecato
-container_input, loading, cancel controls e button_input_confirm restano fuori dalla migrazione corrente
-Hidden principali sono stati centralizzati a primo livello
+input_analysis_result è ora fonte UI controllata per gli Hidden principali del flow input
+container_input, loading, cancel controls e button_input_confirm.Hidden sono stati migrati a input_analysis_result
+button_input_confirm.Disabled resta guard funzionale separata
+button_input_confirm payload resta invariato
+ui_visibility_state non è più letto da input_analysis_result
+ui_visibility_state resta presente come residuo tecnico deprecabile
+Hidden principali del flow input sono ora governati da input_analysis_result
 container_input è stato stabilizzato
 container vuoto durante digitazione risolto
 bottom bar flash risolto
@@ -216,8 +221,9 @@ Micro-nodi UX post Match Engine già completati:
 
 Nodi residui candidati:
 
-- Input Analysis Result — Visibility Migration Completion
-- Linting / Retool Query Safety Pass
+- Documentation Architecture Audit / Redundancy Reduction
+- Preview / Event Data Label Semantic Alignment
+- Input Flow / Transition Micro-flash Stabilization
 - Button Confirm Readiness Alignment
 - Preview Model / Hint State Consolidation
 - Command Intent — Edit Mode Guidance / Generic Alias
@@ -363,9 +369,10 @@ RISCHIO RESIDUO:
 - resta da verificare consistenza suggestion create/edit
 - filtro select su match ambigui non implementato
 - command intent create project/entity implementato a primo livello controllato
-- resta da coordinare eventuale evoluzione futura con input_analysis_result
 - suggestion operativa resta fonte create_suggestion_state
-- input_analysis_result può governare la visibilità del container suggestion, ma non deve inventare contenuti se create_suggestion_state non li produce
+- input_analysis_result governa la visibilità del container suggestion tramite readiness UI
+- input_analysis_result non deve inventare contenuti se create_suggestion_state non li produce
+- la migrazione visibility è completata per gli Hidden principali senza modificare create_suggestion_state
 - missing association notice e suggestion operativa restano concetti distinti
 - gerarchie project/entity non implementate
 - alias non implementati
@@ -381,7 +388,6 @@ Non riaprire come Project / Entity Create Suggestion base.
 
 Eventuali evoluzioni devono diventare gap/nodi dedicati:
 
-- Input Analysis Result — Visibility Migration Completion
 - Suggestion Create vs Edit Consistency
 - Data Structure / Entity Hierarchy
 - Select Options Filtering — Ambiguity UX
@@ -484,11 +490,13 @@ tramite ui_visibility_mode e ui_visibility_state.
 Questo non equivale a una modalità guidata completa,
 ma riduce il rendering progressivo e migliora la stabilità del flow input.
 
-Dopo Input Analysis Result — Controlled UI Consumption Pass:
+Dopo Input Analysis Result — Visibility Migration Completion:
 
-- input_analysis_result è diventato fonte UI controllata parziale
-- Sintesi, Dati evento, Command container e Suggestion container leggono ora readiness da input_analysis_result
-- ui_visibility_state resta comunque operativo per parti strutturali residue
+- input_analysis_result è diventato fonte UI controllata per gli Hidden principali del flow input
+- Sintesi, Dati evento, Command container, Suggestion container, container_input, loading, cancel controls e button_input_confirm.Hidden leggono ora readiness/visibility da input_analysis_result
+- ui_visibility_state non è più letto da input_analysis_result
+- ui_visibility_state resta residuo tecnico deprecabile
+- button_input_confirm.Disabled e payload restano separati
 - questo non equivale ancora a modalità guidata completa
 - questo non equivale a Input Analysis Model completo
 
@@ -505,7 +513,7 @@ Da rivalutare dopo:
 
 Command Intent implementato a primo livello controllato
 UI Readiness / Visibility Aggregator completato a primo livello controllato
-Input Analysis Result — Visibility Migration Completion
+Input Analysis Result — Visibility Migration Completion completato
 Button Confirm Readiness Alignment
 Preview / Hint State eventualmente consolidati
 Data Structure / Entity Hierarchy valutata
@@ -691,6 +699,22 @@ Restano validi:
 - Preview Model / Hint State Consolidation
 - Status Semantics Alignment
 - eventuale separazione futura del blocco “Da verificare”
+
+Nota post Visibility Migration Completion:
+
+La migrazione degli Hidden principali a input_analysis_result ha stabilizzato quando la Sintesi viene mostrata,
+ma non modifica il contenuto interno della preview.
+
+Resta valido il gap preview perché:
+
+- la Sintesi resta layer ibrido
+- label cleaning / highlight / micro-copy restano nel rendering
+- status e “Da verificare” richiedono ancora allineamento semantico
+- la label “Importo” viene ancora usata anche quando il valore rappresenta una durata
+
+Nuovo nodo candidato specifico:
+
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
 ID: G08
 
@@ -1035,6 +1059,10 @@ RISCHIO RESIDUO:
 - input_analysis_result introdotto come layer compositivo raw / selection / effective
 - input_analysis_result non sostituisce project_state / entity_state
 - project_state / entity_state restano fonte minima matching
+- Visibility Migration Completion non ha modificato il Match Engine
+- project_state / entity_state restano fonte minima matching
+- il caso match più specifico resta policy non bloccante
+- esempio: Mario selezionato automaticamente con warning “entità più specifiche” e Conferma attiva
 - resta assente Match Engine avanzato separato
 - ui_visibility_state legge il match state solo per visibilità/hint, non sostituisce il matching
 - deduplicazione project/entity avanzata non implementata
@@ -1050,10 +1078,10 @@ Eventuali evoluzioni devono essere nodi dedicati:
 
 - ALIAS / SYNONYMS CONTROLLED MATCHING
 - DATA STRUCTURE / ENTITY HIERARCHY
-- INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 - MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
 - SELECT OPTIONS FILTERING — AMBIGUITY UX
 - MATCH CONFIDENCE / RANKING ADVANCED
+- MATCH ENGINE — MORE SPECIFIC MATCH POLICY
 
 ID: G11
 
@@ -1432,12 +1460,14 @@ Nessun rischio operativo rilevato dopo i test.
 Eventuali ulteriori warning Retool dovranno essere trattati solo se reali,
 riproducibili e collegati a regressioni runtime.
 
-Nota post Input Analysis Result:
+Nota post Linting / Retool Query Safety Pass:
 
 Dopo i nodi preview_analysis_state / input_analysis_result / controlled UI consumption,
-il pannello Linting Retool mostra 19 segnalazioni.
+il pannello Linting Retool mostrava 19 segnalazioni.
 
-Tipologie principali osservate:
+Il nodo LINTING / RETOOL QUERY SAFETY PASS è stato completato.
+
+Risolti:
 
 - “Misleading line break before ?” in:
   - command_intent_state
@@ -1445,37 +1475,31 @@ Tipologie principali osservate:
   - input_analysis_result
   - preview_analysis_state
 
-- variabili non definite nei body query:
-  - insert_event.body: raw_input is not defined
-  - update_event.body: raw_input is not defined
-  - update_error.body: id is not defined
-  - update_written.body: id is not defined
+Intervento:
 
-Valutazione:
+- sostituzione ternari multilinea ambigui con if / else equivalenti
+- nessuna modifica funzionale intenzionale
+- test post-fix superati
 
-I test funzionali risultano superati,
-quindi non risultano regressioni operative immediate.
-Il numero di linting è però aumentato e rappresenta debito tecnico.
+Sono state inoltre eliminate due query legacy unused:
 
-Nuovo nodo futuro consigliato:
+- typing_state
+- handle_event_success
 
-LINTING / RETOOL QUERY SAFETY PASS
+Esito:
 
-Vincoli:
-
-- distinguere falsi positivi statici da rischi runtime reali
-- non modificare parser
-- non modificare matching
-- non modificare save flow
-- non modificare DB
-- non aprire refactor
-- trattare solo warning identificati e riproducibili
+- linting Retool azzerati
+- Performance unused query risolta
+- nessuna regressione osservata nei test
 
 AZIONE:
 
 Gap integrato.
 
 Non riaprire come micro-nodo base.
+
+Eventuali ulteriori warning Retool dovranno essere trattati solo se reali,
+riproducibili o fonte di rumore tecnico rilevante.
 
 ---
 
@@ -1761,7 +1785,11 @@ Nota post Input Analysis Result:
 input_analysis_result legge preview_analysis_state e lo compone nel proprio stato preview/readiness.
 Il nodo Controlled UI Consumption Pass ha reso coerente il testo della notice associazioni mancanti con la presenza reale del container suggerimenti.
 
-Il gap resta valido, ma non è più un’urgenza primaria rispetto alla chiusura della Visibility Migration.
+Il gap resta valido.
+
+La Visibility Migration degli Hidden principali è stata completata,
+quindi questo gap non riguarda più “quando mostrare” la Sintesi,
+ma “cosa contiene” la Sintesi e come sono organizzati hint, warning, status e label.
 
 RISCHIO:
 
@@ -1770,8 +1798,12 @@ in un layer UX già stabilizzato.
 
 AZIONE:
 
-Candidato futuro importante, ma non primo nodo consigliato dopo Input Analysis Result.
-La priorità immediata è chiudere la visibility migration o verificare i linting.
+Candidato futuro importante.
+
+Non è il primo nodo consigliato se si decide di aprire prima
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
+
+Resta comunque tra i nodi tecnici più rilevanti dopo il riordino documentale.
 
 Non aprire come “Hint / Preview State Alignment” generico.
 
@@ -2111,6 +2143,8 @@ Sono già consolidate:
 - preview_analysis_state first controlled layer
 - input_analysis_result read-only diagnostic base
 - input_analysis_result controlled UI consumption pass
+- input_analysis_result visibility migration completion
+- linting / retool query safety pass
 - navigation dock Home / Eventi / Dashboard predisposta
 - feedback post-save contestuale
 - cancel create/edit contestuale
@@ -2160,8 +2194,9 @@ Sequenza corretta:
 4. introdurre command intent guidato
 5. consolidare UI readiness / visibility del flow input
 6. consolidare preview / hint / input analysis
-6.1 completare la visibility migration da ui_visibility_state a input_analysis_result
+6.1 visibility migration degli Hidden principali completata
 6.2 mantenere architettura modulare coordinata, non motore monolitico
+6.3 semplificare la documentazione con fonti canoniche e richiami espliciti
 7. consolidare data structure / qualità dati
 8. solo dopo aprire dashboard operative, viste, istanze o moduli verticali
 
@@ -2192,6 +2227,21 @@ Obiettivo:
 massimo controllo,
 massima flessibilità,
 riduzione delle verità parallele.
+
+Principio documentale futuro:
+
+La documentazione deve essere semplificata senza perdere ricostruibilità.
+
+Regola:
+
+- ogni logica fondamentale deve essere completa in un solo documento canonico
+- gli altri documenti devono richiamarla esplicitamente
+- evitare duplicazioni lunghe tra State / Roadmap / Input System / Retool Architecture / View Preview / Runtime
+- creare una Session Boot Matrix per caricare i documenti corretti a inizio sessione
+
+Nodo futuro candidato:
+
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 
 ID: G21
 
@@ -2633,7 +2683,11 @@ Regole consolidate:
 
 Evoluzione successiva:
 
-Il nodo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS ha migrato una parte degli Hidden da ui_visibility_state a input_analysis_result:
+Il nodo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS ha migrato una prima parte degli Hidden da ui_visibility_state a input_analysis_result.
+
+Il nodo INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION ha completato la migrazione degli Hidden principali del flow input.
+
+Componenti ora migrati a input_analysis_result:
 
 - sintesi.Hidden
 - text_event_data_title.Hidden
@@ -2642,6 +2696,11 @@ Il nodo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS ha migrato una 
 - select_entity.Hidden
 - container_command_intent.Hidden
 - container_association_suggestions.Hidden
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
+- btn_cancel_edit.Hidden
+- btn_cancel_input_home.Hidden
+- button_input_confirm.Hidden
 
 Sono stati inoltre corretti:
 
@@ -2673,11 +2732,12 @@ TEST VALIDATI:
 RISCHIO RESIDUO:
 
 - micro-flash feedback project/entity ancora presente
-- 19 linting Retool attualmente presenti
-- Full Visibility Migration non ancora completata
-- ui_visibility_state ancora operativo e non deprecato
-- container_input / loading / cancel / confirm ancora legati a ui_visibility_state
-- button_input_confirm non ancora migrato
+- flash residui durante digitazione/cambio schermata ancora presenti
+- linting Retool azzerati
+- Full Visibility Migration degli Hidden principali completata
+- ui_visibility_state ancora presente fisicamente come residuo tecnico deprecabile
+- button_input_confirm.Hidden migrato
+- button_input_confirm.Disabled non ancora migrato
 - cleanup obsolete guards / query reduction non ancora eseguito
 - Input Analysis Model completo non implementato
 - “modifica” generico non ancora riconosciuto come guida edit
@@ -2691,11 +2751,10 @@ Non riaprire come Input Rendering Stability / Container Structure.
 Eventuali evoluzioni future devono diventare gap/nodi dedicati:
 
 - Feedback Micro-flash Cleanup
-- Linting / Minor Cleanup
 - Cleanup Obsolete UI Guards / Query Reduction
-- Input Analysis Result — Visibility Migration Completion
 - Button Confirm Readiness Alignment
 - Preview Model / Hint State Consolidation
+- Input Flow / Transition Micro-flash Stabilization
 
 ID: G28
 
@@ -2706,7 +2765,7 @@ FONTE:
 Command Intent Session + Match Engine Unification + osservazioni utente su fonti parallele
 
 STATO:
-INTEGRATO PARZIALE — CONTROLLED UI CONSUMPTION
+INTEGRATO PARZIALE — VISIBILITY MIGRATION COMPLETION
 
 DESCRIZIONE:
 
@@ -2730,11 +2789,12 @@ ma resta distribuita.
 
 STATO REALE:
 
-Implementato parzialmente attraverso tre nodi:
+Implementato parzialmente attraverso quattro nodi:
 
 1. PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
 2. INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC
 3. INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
+4. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 
 Stato attuale:
 
@@ -2759,7 +2819,7 @@ input_analysis_result:
 - non costruisce payload save
 - non modifica DB
 
-Controlled UI consumption completata su:
+Controlled UI consumption / visibility migration completata su:
 
 - sintesi.Hidden
 - text_event_data_title.Hidden
@@ -2769,24 +2829,34 @@ Controlled UI consumption completata su:
 - container_command_intent.Hidden
 - container_association_suggestions.Hidden
 - micro-copy notice associazioni mancanti nella Sintesi
-
-Componenti ancora fuori:
-
 - container_input.Hidden
 - text_input_analysis_loading.Hidden
-- btn_cancel_edit
-- btn_cancel_input_home
+- btn_cancel_edit.Hidden
+- btn_cancel_input_home.Hidden
 - button_input_confirm.Hidden
+
+Componenti / logiche ancora fuori intenzionalmente:
+
 - button_input_confirm.Disabled
 - button_input_confirm payload
 - insert_event / update_event
+- save readiness completa
+- container_home.Hidden
+- container_feedback.Hidden
+- container_events_list.Hidden
+
+Nota:
+
+container_home / feedback / events_list restano correttamente su ui_state.view
+perché appartengono al routing principale dell’app,
+non alla visibility interna del flow input.
 
 ui_visibility_state:
 
-- resta operativo
-- non è deprecato
-- viene ancora letto da input_analysis_result come raw diagnostic
-- non deve ancora leggere input_analysis_result per evitare loop
+- non è più letto da input_analysis_result
+- non governa più gli Hidden principali migrati
+- resta presente come residuo tecnico deprecabile
+- non va eliminato fuori da nodo cleanup dedicato
 
 RISCHIO:
 
@@ -2794,11 +2864,11 @@ Il sistema è in una fase intermedia.
 
 Rischi principali:
 
-- visibility ancora divisa tra ui_visibility_state e input_analysis_result
-- button_input_confirm mantiene logica autonoma
+- button_input_confirm.Disabled mantiene logica autonoma
 - save readiness non centralizzata
-- possibili doppie verità se si migra senza controllo
-- rischio loop se ui_visibility_state legge input_analysis_result mentre input_analysis_result legge ancora ui_visibility_state
+- ui_visibility_state resta presente fisicamente come residuo tecnico
+- cleanup obsolete guards non ancora eseguito
+- rischio di trasformare input_analysis_result in motore monolitico se si migra oltre il suo ruolo compositivo
 
 Non completare la migrazione può mantenere:
 
@@ -2810,13 +2880,14 @@ AZIONE:
 
 Mantenere il gap aperto come INTEGRATO PARZIALE.
 
-Nodo futuro prioritario:
+La Visibility Migration degli Hidden principali è completata.
 
-INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+Nodi futuri collegati:
 
-Sotto-nodo delicato:
-
-BUTTON CONFIRM READINESS ALIGNMENT
+- BUTTON CONFIRM READINESS ALIGNMENT
+- CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+- PREVIEW MODEL / HINT STATE CONSOLIDATION
+- INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER solo se emerge necessità reale
 
 Vincoli:
 
@@ -2890,6 +2961,15 @@ AZIONE:
 Non prioritario.
 
 Da aprire solo come micro-nodo dedicato se il flash diventa fastidioso o identificabile.
+
+Nota post Linting / Retool Query Safety Pass:
+
+Restano osservati anche flash residui durante digitazione e cambio schermata.
+Questi non sono stati trattati nel nodo linting perché non derivano dai warning statici.
+
+Nodo futuro possibile:
+
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Vincoli:
 
@@ -2969,7 +3049,7 @@ FONTE:
 UI Readiness / Visibility Aggregator Session + Retool linting panel
 
 STATO:
-IDENTIFICATO — RESIDUO TECNICO MINORE
+INTEGRATO
 
 DESCRIZIONE:
 
@@ -2990,11 +3070,9 @@ Questi linting non hanno impedito:
 
 STATO REALE:
 
-STATO REALE:
+Il nodo LINTING / RETOOL QUERY SAFETY PASS è stato completato.
 
-Non trattati nel nodo Input Analysis Result — Controlled UI Consumption Pass.
-
-Tipologie principali osservate:
+Risolti:
 
 - “Misleading line break before ?” in:
   - command_intent_state
@@ -3002,34 +3080,51 @@ Tipologie principali osservate:
   - input_analysis_result
   - preview_analysis_state
 
-- variabili non definite nei body query:
-  - insert_event.body: raw_input is not defined
-  - update_event.body: raw_input is not defined
-  - update_error.body: id is not defined
-  - update_written.body: id is not defined
+Intervento:
 
-I test funzionali risultano superati,
-quindi al momento non risultano regressioni operative immediate.
+- sostituiti ternari multilinea ambigui con if / else equivalenti
+- nessuna modifica funzionale intenzionale
+- nessuna modifica DB
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica command intent nella logica funzionale
+- nessuna modifica suggestion nella logica funzionale
+- nessuna modifica save flow
+- nessuna modifica payload
 
-Il numero di linting è però aumentato e va trattato come debito tecnico.
+Sono state eliminate due query legacy unused:
 
-RISCHIO:
+- typing_state
+- handle_event_success
 
-Correggere linting senza test mirati può introdurre regressioni runtime.
+TEST VALIDATI:
+
+- evento normale
+- command flow
+- edit flow
+- feedback/routing post-save
+- no regressione visibility
+- no regressione confirm
+- no regressione command intent
+
+ESITO:
+
+- linting Retool azzerati
+- Performance unused query risolta
+- nessuna regressione osservata
+
+RISCHIO RESIDUO:
+
+- eventuali nuovi linting futuri
+- cleanup query/componenti più ampio rimandato a nodo dedicato
+- flash durante digitazione/cambio schermata non trattato in questo nodo
 
 AZIONE:
 
-Da valutare come nodo tecnico dedicato e abbastanza prioritario,
-soprattutto prima di refactor più profondi su visibility, readiness o button confirm.
+Gap integrato.
 
-Vincoli:
-
-- non modificare parser
-- non modificare matching
-- non modificare save flow
-- non modificare DB
-- non aprire refactor
-- trattare solo warning identificati e riproducibili
+Non riaprire come Linting / Retool Query Safety Pass base.
+Eventuali warning futuri vanno trattati solo se reali, riproducibili o fonte di rumore tecnico rilevante.
 
 ID: G32
 
@@ -3060,9 +3155,9 @@ STATO REALE:
 
 Non è stato eseguito cleanup/rimozione nel nodo UI Readiness.
 
-Dopo Input Analysis Result Controlled UI Consumption:
+Dopo Input Analysis Result — Visibility Migration Completion:
 
-Alcuni componenti non leggono più ui_visibility_state ma input_analysis_result:
+Gli Hidden principali del flow input leggono input_analysis_result:
 
 - Sintesi
 - Dati evento
@@ -3071,14 +3166,20 @@ Alcuni componenti non leggono più ui_visibility_state ma input_analysis_result:
 - select_entity
 - Command container
 - Association suggestion container
-
-Restano ancora su ui_visibility_state:
-
 - container_input
-- loading
+- loading state
 - cancel controls
-- button_input_confirm
-- altri controlli strutturali residui
+- button_input_confirm.Hidden
+
+Restano fuori intenzionalmente:
+
+- button_input_confirm.Disabled
+- button_input_confirm payload
+- insert_event / update_event
+- container_home / container_feedback / container_events_list, perché sono routing principale su ui_state.view
+
+ui_visibility_state non è più letto da input_analysis_result,
+ma resta ancora presente come residuo tecnico.
 
 Motivo:
 
@@ -3116,9 +3217,14 @@ Vincoli:
 
 Non aprire cleanup prima di:
 
-- completamento Visibility Migration
-- verifica button_input_confirm
-- verifica linting Retool principali
+- completamento aggiornamento documentale corrente
+- eventuale audit documentale
+- decisione esplicita su eliminazione ui_visibility_state
+- test regressione dedicati
+
+Nota:
+
+Visibility Migration degli Hidden principali e Linting / Retool Query Safety Pass sono completati.
 
 ID: G33
 
@@ -3129,11 +3235,12 @@ FONTE:
 Input Analysis Result Controlled UI Consumption Pass + Retool graph
 
 STATO:
-IDENTIFICATO — NODO DELICATO FUTURO
+INTEGRATO PARZIALE — HIDDEN MIGRATO / DISABLED NON MIGRATO
 
 DESCRIZIONE:
 
-button_input_confirm resta fuori dalla migrazione corrente a input_analysis_result.
+button_input_confirm.Hidden è stato migrato a input_analysis_result.
+button_input_confirm.Disabled e payload restano fuori dalla migrazione corrente.
 
 Il bottone Conferma è un punto delicato perché unisce:
 
@@ -3148,13 +3255,30 @@ Il bottone Conferma è un punto delicato perché unisce:
 
 STATO REALE:
 
-Non migrato.
+Parzialmente migrato.
 
-button_input_confirm conserva ancora logiche autonome e non deve essere spostato senza analisi dedicata.
+Migrato:
+
+- button_input_confirm.Hidden
+- nuovo flag input_analysis_result.readiness.canShowConfirm
+
+Non migrati:
+
+- button_input_confirm.Disabled
+- button_input_confirm payload
+- no-op edit guard
+- insert/update logic
+
+Regola consolidata:
+
+- canShowConfirm = visibilità del bottone
+- canConfirm = readiness funzionale
+- Disabled resta guard funzionale separata
+- payload resta invariato
 
 RISCHIO:
 
-Migrare il bottone in modo superficiale può causare:
+Migrare Disabled/readiness in modo superficiale può causare:
 
 - bottone nascosto quando dovrebbe essere visibile ma disabilitato
 - bottone visibile quando dovrebbe essere nascosto
@@ -3165,7 +3289,7 @@ Migrare il bottone in modo superficiale può causare:
 
 AZIONE:
 
-Aprire solo come nodo dedicato:
+Aprire eventuale nodo dedicato solo per la parte non migrata:
 
 BUTTON CONFIRM READINESS ALIGNMENT
 
@@ -3187,29 +3311,28 @@ FONTE:
 Input Analysis Result Controlled UI Consumption Pass + Retool graph
 
 STATO:
-IDENTIFICATO — CONSEGUENZA FUTURA DELLA VISIBILITY MIGRATION
+IDENTIFICATO — RESIDUO TECNICO POST VISIBILITY MIGRATION
 
 DESCRIZIONE:
 
 ui_visibility_state è stato introdotto come aggregatore read-only di visibilità.
 
-Dopo il Controlled UI Consumption Pass,
-alcune responsabilità sono state migrate a input_analysis_result.
+Dopo Visibility Migration Completion,
+gli Hidden principali sono stati migrati a input_analysis_result.
 
-Tuttavia ui_visibility_state resta ancora operativo per:
+ui_visibility_state non è più letto da input_analysis_result
+e non governa più gli Hidden principali del flow input.
 
-- container_input
-- loading
-- cancel controls
-- button_input_confirm
-- controlli strutturali residui
+Resta però ancora presente nel progetto come residuo tecnico / rollback.
 
 STATO REALE:
 
-Non deprecato.
+Deprecabile, ma non eliminato.
 
-Non è ancora possibile eliminarlo perché input_analysis_result lo legge ancora come raw diagnostic
-e perché alcuni componenti strutturali dipendono ancora da ui_visibility_state.
+La dipendenza input_analysis_result → ui_visibility_state è stata rimossa.
+
+Non eliminarlo fuori da nodo dedicato perché potrebbe servire come riferimento storico/rollback
+fino a cleanup controllato.
 
 RISCHIO:
 
@@ -3226,16 +3349,20 @@ AZIONE:
 
 Da valutare solo dopo:
 
-- Input Analysis Result — Visibility Migration Completion
-- Button Confirm Readiness Alignment
-- verifica assenza loop
-- test regressione completo
+- completamento aggiornamento documentale corrente
+- eventuale audit documentale
+- verifica graph Retool aggiornata
+- test regressione dedicati
 
 Possibile esito futuro:
 
-1. ui_visibility_state resta wrapper minimo
-2. ui_visibility_state viene gradualmente deprecato
-3. ui_visibility_state resta solo diagnostico
+1. ui_visibility_state eliminato
+2. ui_visibility_state archiviato come riferimento storico
+3. ui_visibility_state mantenuto temporaneamente come rollback tecnico
+
+Vincolo:
+
+non eliminarlo in sessioni non dedicate.
 
 ID: G35
 
@@ -3295,38 +3422,183 @@ Vincoli:
 - non trasformare warning non bloccanti in blocchi
 - preservare chiarezza utente
 
+ID: G36
+
+NOME:
+Preview / Event Data Label Semantic Alignment
+
+FONTE:
+Test Visibility Migration + osservazione runtime su durata normalizzata
+
+STATO:
+IDENTIFICATO — MICRO-NODO UX/SEMANTICO
+
+DESCRIZIONE:
+
+Durante i test post Visibility Migration è stato osservato che,
+in caso di durata normalizzata, la UI mostra ancora la label:
+
+Importo
+
+anche quando il valore rappresenta una durata.
+
+Caso osservato:
+
+2h30 rendering lavoro
+
+Comportamento attuale:
+
+- type Tempo
+- durata riconosciuta correttamente
+- normalizzazione 150 minuti corretta
+- visibility corretta
+- Dati evento mostrano però “Importo” con valore durata
+
+Problema:
+
+La label è semanticamente fuorviante.
+
+STATO REALE:
+
+Non corretto nel nodo Visibility Migration perché fuori scope.
+
+La logica dati è corretta.
+Il problema riguarda la label visuale / semantica dei Dati evento e/o Sintesi.
+
+RISCHIO:
+
+Correggere la label senza nodo dedicato può riaprire preview/layout già validati.
+
+AZIONE:
+
+Da valutare in micro-nodo dedicato:
+
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+
+Vincoli:
+
+- non modificare parser
+- non modificare duration normalization
+- non modificare DB
+- non modificare save flow
+- non modificare amount/unit salvati
+- modificare solo label/rappresentazione visuale
+
+Possibile regola futura:
+
+- euro → Importo
+- minuti / ore → Durata
+- nessuna unità → riga assente o label neutra
+
+ID: G37
+
+NOME:
+Documentation Architecture Audit / Redundancy Reduction
+
+FONTE:
+Discussione post Visibility Migration + costo aggiornamenti documentali
+
+STATO:
+VALIDATO — NODO FUTURO PRIORITARIO
+
+DESCRIZIONE:
+
+La documentazione LOGOS ha protetto il progetto da deriva e regressioni,
+ma è diventata molto ridondante.
+
+Problema osservato:
+
+- State, Roadmap, Gap Register, Input System, Retool Architecture, View Preview e Runtime ripetono molte logiche
+- ogni micro-sessione richiede aggiornamenti lunghi su troppi documenti
+- il costo documentale sta rallentando lo sviluppo reale
+- la ridondanza può generare deriva se una logica viene aggiornata in un documento ma non negli altri
+
+Obiettivo:
+
+Ridurre ridondanze senza perdere ricostruibilità.
+
+Principio:
+
+Una logica fondamentale deve essere completa in un solo documento canonico.
+Gli altri documenti devono richiamarla esplicitamente senza duplicarla.
+
+STATO REALE:
+
+Non ancora eseguito.
+
+È candidato come prossimo nodo dopo l’aggiornamento documentale cumulativo corrente.
+
+AZIONE:
+
+Aprire nodo dedicato:
+
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+
+Output atteso:
+
+- mappa responsabilità documentale
+- fonte canonica per ogni logica
+- contenuti duplicati da ridurre
+- contenuti da mantenere completi
+- contenuti da richiamare invece che ripetere
+- Session Boot Matrix
+- regola di aggiornamento futuro
+
+Vincoli:
+
+- non cancellare contenuti critici
+- non rendere i documenti troppo astratti
+- preservare ricostruibilità in caso di crash
+- non alterare logiche runtime
+- procedere prima con mappa, poi con semplificazione progressiva
+
+Core Boot futuro consigliato:
+
+- 00_PROJECT_State
+- 00_PROJECT_Roadmap
+- ultimo checkpoint rilevante
+
+Documenti tecnici da aggiungere in base al nodo:
+
+- Input / parser / command / input_analysis_result → 01_LOGOS_Input_System
+- UI Retool / componenti / Hidden / graph → 04_LOGOS_Retool_Architecture + LOGOS_RETOOL_RUNTIME_REAL
+- Preview / hint / warning / Sintesi → 06_LOGOS_View_Preview_System
+- Matching project/entity → 02_LOGOS_Match_Engine
+- Gap / nodi futuri / debiti → 00_PROJECT_Gap_Register
+
 ORDINE CONSIGLIATO GAP / NODI
 
-Ordine attuale consigliato dopo Input Analysis Result Controlled UI Consumption:
+Ordine attuale consigliato dopo Visibility Migration + Linting Safety Pass:
 
 NODI STRUTTURALI / OPERATIVI FUTURI:
 
-1. G28 — Input Analysis Result / Single Interpretation Layer
-   → prossimo sotto-nodo: Input Analysis Result — Visibility Migration Completion
+1. G37 — Documentation Architecture Audit / Redundancy Reduction
 
-2. G31 — Linting / Retool Query Safety Pass
+2. G36 — Preview / Event Data Label Semantic Alignment
 
-3. G33 — Button Confirm Readiness Alignment
+3. G29 — Feedback / Input Flow Micro-flash Cleanup
+   → possibile nodo: INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
-4. G17 — Preview Model / Hint State Consolidation
+4. G33 — Button Confirm Readiness Alignment
+   → solo Disabled / readiness funzionale, Hidden già migrato
 
-5. G35 — Status Semantics Alignment
+5. G17 — Preview Model / Hint State Consolidation
 
-6. G30 — Command Intent — Edit Guide Generic Alias
+6. G35 — Status Semantics Alignment
 
-7. G21 — Suggestion Create vs Edit Consistency
+7. G30 — Command Intent — Edit Guide Generic Alias
 
-8. G22 — Project Create Suggestion — Match Present / User Override
+8. G21 — Suggestion Create vs Edit Consistency
 
-9. G10A — Match Engine Evolution Advanced / Partial Ambiguity
+9. G22 — Project Create Suggestion — Match Present / User Override
 
-10. G11 — Data Structure / Entity Hierarchy
+10. G10A — Match Engine Evolution Advanced / Partial Ambiguity
 
-11. G13 — Economic Direction Advanced
+11. G11 — Data Structure / Entity Hierarchy
 
-12. G08A — Duration Advanced / Giorni-Settimane
+12. G13 — Economic Direction Advanced
 
-13. G29 — Feedback Micro-flash Cleanup
+13. G08A — Duration Advanced / Giorni-Settimane
 
 14. G32 — Cleanup Obsolete UI Guards / Query Reduction
 
@@ -3367,12 +3639,18 @@ G18 — UX Mobile Coherence Pass
 G19 — Command Intent — Create Project / Entity
 G26 — Mobile Safari Font Baseline
 G27 — Input Rendering Stability / Container Structure
+G31 — Linting / Retool Query Safety Pass
 
 Gap integrati parziali / evolutivi:
 
 G01 — Normalization Model
 G02 — Processor / Engine Flow
 G28 — Input Analysis Result / Single Interpretation Layer
+G33 — Button Confirm Readiness Alignment
+
+Gap residui tecnici:
+
+G34 — UI Visibility State Decommission / Wrapper Reduction
 
 Nota:
 
@@ -3706,3 +3984,45 @@ confermato nodo tecnico candidato:
 
 confermato blocco verso Output / Dashboard / KPI
 confermata direzione LOGOS Core modulare e non monolitica
+
+v13 — 2026-05-23
+
+aggiornato Gap Register dopo INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+aggiornato Gap Register dopo LINTING / RETOOL QUERY SAFETY PASS
+
+aggiornato G02 Processor / Engine Flow con:
+- Visibility Migration Completion
+- Linting / Retool Query Safety Pass
+- input_analysis_result come fonte UI controllata per Hidden principali
+- ui_visibility_state residuo tecnico deprecabile
+
+aggiornato G03 Project / Entity Create Suggestion con visibility suggestion governata da input_analysis_result senza modificare create_suggestion_state
+aggiornato G05 Input Modes dopo Visibility Migration Completion
+aggiornato G07 Preview Alignment con residuo label “Importo” su durata
+aggiornato G10 Match Engine Unification con policy match più specifici non bloccante
+aggiornato G14 Linting / State Helper Cleanup con linting Retool azzerati
+aggiornato G17 Preview Model / Hint State Consolidation dopo chiusura Visibility Migration
+aggiornato G20 Core Event System / Modular Instances con nodo documentale futuro
+aggiornato G27 Input Rendering Stability / Container Structure dopo Full Visibility Migration Hidden principali
+aggiornato G28 Input Analysis Result / Single Interpretation Layer a INTEGRATO PARZIALE — VISIBILITY MIGRATION COMPLETION
+aggiornato G29 Feedback Micro-flash Cleanup con flash residui digitazione/cambio schermata
+aggiornato G31 Linting / Retool Query Safety Pass a INTEGRATO
+aggiornato G32 Cleanup Obsolete UI Guards / Query Reduction dopo completion visibility/linting
+aggiornato G33 Button Confirm Readiness Alignment a INTEGRATO PARZIALE — HIDDEN MIGRATO / DISABLED NON MIGRATO
+aggiornato G34 UI Visibility State Decommission come residuo tecnico post migration
+
+aggiunti nuovi gap:
+- G36 Preview / Event Data Label Semantic Alignment
+- G37 Documentation Architecture Audit / Redundancy Reduction
+
+aggiornato ordine consigliato gap/nodi post Visibility Migration + Linting Safety Pass
+
+prossimo nodo candidato prioritario:
+- Documentation Architecture Audit / Redundancy Reduction
+
+confermato:
+- output/KPI non attivi
+- Dashboard non attiva
+- istanze verticali non attive
+- LOGOS resta Core Event System modulare
+- input_analysis_result non deve diventare motore monolitico

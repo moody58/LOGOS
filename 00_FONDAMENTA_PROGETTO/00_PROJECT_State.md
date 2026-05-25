@@ -1,12 +1,13 @@
-# 00_PROJECT_State_v21
+# 00_PROJECT_State_v22
 
-DATA: 2026-05-20
+DATA: 2026-05-23
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS — COMPLETATO
+INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION — COMPLETATO
+LINTING / RETOOL QUERY SAFETY PASS — COMPLETATO
 
 ------------------------------------------------
 FASE:
@@ -28,7 +29,9 @@ UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL (COMPLETATO)
 PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER (COMPLETATO)
 INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC (COMPLETATO)
 INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS (COMPLETATO)
-TRANSIZIONE → AGGIORNAMENTO DOCUMENTALE POST INPUT ANALYSIS RESULT CONTROLLED UI CONSUMPTION
+INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION — COMPLETATO
+LINTING / RETOOL QUERY SAFETY PASS — COMPLETATO
+TRANSIZIONE → AGGIORNAMENTO DOCUMENTALE CUMULATIVO POST VISIBILITY MIGRATION + LINTING SAFETY PASS
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -96,6 +99,23 @@ C (Completezza): 10/10
 - feedback project/entity allineato nel timing, con micro-flash residuo documentato
 - test obbligatori 1–16 superati dopo UI Readiness
 - residuo “modifica” generico non riconosciuto come guida edit documentato
+- INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION documentato
+- container_input.Hidden migrato a input_analysis_result
+- text_input_analysis_loading.Hidden migrato a input_analysis_result
+- btn_cancel_edit / btn_cancel_input_home Hidden migrati a input_analysis_result
+- button_input_confirm.Hidden migrato a input_analysis_result.readiness.canShowConfirm
+- button_input_confirm.Disabled preservato invariato
+- button_input_confirm payload preservato invariato
+- rimossa dipendenza input_analysis_result → ui_visibility_state
+- ui_visibility_state mantenuto come residuo tecnico deprecabile, non cancellato
+- ui_visibility_mode confermato come latch leggero empty / event / command
+- routing principale container_home / feedback / events_list confermato su ui_state.view
+- LINTING / RETOOL QUERY SAFETY PASS documentato
+- linting Retool azzerati
+- typing_state eliminato come query legacy unused
+- handle_event_success eliminato come query legacy unused
+- test post-rimozione query unused superati
+- flash residui digitazione/cambio schermata documentati come nodo futuro
 
 Q (Qualità): 9.5/10  
 - stato coerente con sistema reale  
@@ -131,6 +151,14 @@ Q (Qualità): 9.5/10
 - Command Intent preservato senza trasformarlo in intent engine globale
 - Input Analysis Model completo non implementato, ma direzione futura chiarita
 - readiness UI consolidata senza creare nuove fonti salvabili
+- ridotta ulteriore duplicazione visibility tra ui_visibility_state e input_analysis_result
+- input_analysis_result ora fonte UI controllata per gli Hidden principali del flow input
+- separazione tra visibilità Conferma e readiness funzionale consolidata
+- canShowConfirm distinto da canConfirm
+- routing app e flow input separati più chiaramente
+- rumore tecnico Retool ridotto con linting azzerati
+- rimosse query legacy inutilizzate senza regressioni
+- confermato approccio modulare: moduli specializzati calcolano, input_analysis_result compone
 
 D (Deployabilità): 10/10  
 - pronto per Regia  
@@ -171,6 +199,17 @@ D (Deployabilità): 10/10
 - Command Intent preservato senza trasformarlo in intent engine globale
 - Input Analysis Model completo non implementato, ma direzione futura chiarita
 - readiness UI consolidata senza creare nuove fonti salvabili
+- visibility migration principale validata con test evento / command / edit / suggestion / confirm
+- button_input_confirm.Disabled non modificato
+- save flow non modificato
+- DB invariato
+- parser invariato
+- matching invariato
+- command intent invariato nella logica funzionale
+- suggestion invariata nella logica funzionale
+- linting Retool portati a 0
+- Performance unused query risolta per typing_state e handle_event_success
+- test post-eliminazione query unused superati
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -331,8 +370,27 @@ INPUT
 ✔ edit mode + input vuoto stabilizzato
 ✔ Home idle container nascosti correttamente durante edit mode
 ✔ Dati evento / Conferma / Sintesi nascosti correttamente quando edit mode ha input vuoto
-✔ ui_visibility_state resta operativo e NON deprecato
-✔ ui_visibility_state ancora usato per container_input, loading, cancel, confirm e controlli strutturali residui
+✔ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION completato
+✔ container_input.Hidden migrato a input_analysis_result.mode.effectiveIsInputFlow
+✔ text_input_analysis_loading.Hidden migrato a input_analysis_result
+✔ btn_cancel_edit.Hidden migrato a input_analysis_result
+✔ btn_cancel_input_home.Hidden migrato a input_analysis_result
+✔ button_input_confirm.Hidden migrato a input_analysis_result.readiness.canShowConfirm
+✔ canShowConfirm introdotto come flag visibility-only
+✔ canConfirm preservato come readiness funzionale distinta
+✔ button_input_confirm.Disabled invariato
+✔ button_input_confirm payload invariato
+✔ input_analysis_result non legge più ui_visibility_state
+✔ nessun loop tra ui_visibility_state e input_analysis_result
+✔ ui_visibility_mode confermato come latch leggero empty / event / command
+✔ ui_visibility_state non più fonte degli Hidden principali migrati
+✔ ui_visibility_state mantenuto come residuo tecnico deprecabile, non cancellato
+✔ routing principale Home / Feedback / Events List confermato su ui_state.view
+✔ LINTING / RETOOL QUERY SAFETY PASS completato
+✔ linting Retool azzerati
+✔ typing_state eliminato come query legacy unused
+✔ handle_event_success eliminato come query legacy unused
+✔ test post-eliminazione query unused superati
 
 ⚠ accoppiamento input / processing / UI ancora presente  
 ⚠ matching unificato solo a primo livello controllato  
@@ -344,13 +402,16 @@ INPUT
 ⚠ command intent implementato solo a primo livello controllato per create project/entity e guida edit evento
 ⚠ command intent non è ancora engine intent globale
 ✔ input_analysis_result introdotto come primo layer compositivo interrogabile
-⚠ input_analysis_result non è ancora fonte completa di tutta la UI/readiness
-✔ rendering progressivo input flow ridotto tramite ui_visibility_state / ui_visibility_mode
+✔ input_analysis_result è ora fonte UI controllata per gli Hidden principali del flow input
+✔ rendering progressivo input flow ridotto tramite input_analysis_result / ui_visibility_mode
 ⚠ Single Interpretation Layer completo non ancora completato
-⚠ input_analysis_result è operativo solo come controlled partial UI consumption
+⚠ input_analysis_result resta layer compositivo, non motore monolitico
 ⚠ ui_visibility_mode è solo latch UI, non fonte interpretativa completa
+⚠ ui_visibility_state resta residuo tecnico deprecabile, da non cancellare fuori nodo cleanup
 ⚠ micro-flash feedback project/entity ancora presente
-⚠ 19 linting Retool attualmente presenti dopo i nodi preview_analysis_state / input_analysis_result / consumption pass
+⚠ flash residui durante digitazione/cambio schermata ancora presenti
+✔ linting Retool azzerati
+✔ query legacy unused typing_state / handle_event_success eliminate
 ⚠ comando generico “modifica” non ancora riconosciuto come guida edit; “modifica evento” funziona correttamente
 ⚠ select options non filtrate in caso di ambiguità
 ⚠ istanze verticali ASPRI / ADEXIMA / MaurizioLab non ancora attive  
@@ -363,7 +424,7 @@ INPUT
 AGGIORNAMENTO CRITICO (COMPLETATO)
 ------------------------------------------------
 
-Il sistema è stabilizzato su diciassette layer fondamentali:
+Il sistema è stabilizzato su diciannove layer fondamentali:
 
 1. INPUT RELIABILITY — PARSING  
 2. MATCHING BASE  
@@ -382,6 +443,8 @@ Il sistema è stabilizzato su diciassette layer fondamentali:
 15. PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
 16. INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC
 17. INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
+18. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+19. LINTING / RETOOL QUERY SAFETY PASS
 
 ---
 
@@ -796,9 +859,19 @@ input_home
 → ui_state.parsed
 → project_state / entity_state
 → create_suggestion_state
-→ ui_visibility_state
-→ select_project / select_entity
-→ preview / command intent / suggestion container / dati evento / confirm guard / save / edit
+→ preview_analysis_state
+→ input_analysis_result
+→ Sintesi / Command container / Suggestion container / Dati evento / Hidden principali flow input
+→ select_project / select_entity / select1
+→ button_input_confirm Hidden / Disabled / payload
+→ insert_event / update_event
+
+Nota:
+
+ui_visibility_state non è più letto da input_analysis_result e non governa più gli Hidden principali migrati.
+Resta presente solo come residuo tecnico deprecabile fino a eventuale cleanup dedicato.
+
+ui_visibility_mode resta attivo perché distingue il flow visivo empty / event / command.
 
 ---
 
@@ -961,6 +1034,71 @@ UI
 ✔ command_intent_state resta fonte command raw
 ✔ select_project / select_entity restano decisione utente e fonte salvabile
 ✔ ui_visibility_state resta operativo per i controlli strutturali residui
+
+PRINCIPIO VISIBILITY MIGRATION COMPLETION INTRODOTTO:
+
+→ INPUT ANALYSIS RESULT = fonte UI controllata per gli Hidden principali del flow input
+
+Completata la migrazione visibility principale da ui_visibility_state a input_analysis_result.
+
+Componenti migrati:
+
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
+- btn_cancel_edit.Hidden
+- btn_cancel_input_home.Hidden
+- button_input_confirm.Hidden
+
+Regole consolidate:
+
+- canShowConfirm = visibilità del bottone Conferma
+- canConfirm = readiness funzionale
+- button_input_confirm.Disabled resta separato
+- button_input_confirm payload resta invariato
+- input_analysis_result non legge più ui_visibility_state
+- ui_visibility_state non deve leggere input_analysis_result
+- ui_visibility_mode resta latch leggero empty / event / command
+- ui_state.view resta fonte del routing principale app
+
+Routing principale non migrato:
+
+- container_home.Hidden
+- container_feedback.Hidden
+- container_events_list.Hidden
+
+Motivo:
+
+questi componenti appartengono al routing principale dell’app, non alla visibility interna del flow input.
+
+✔ ridotta doppia fonte visibility
+✔ nessun loop tra ui_visibility_state e input_analysis_result
+✔ edit flow preservato
+✔ command flow preservato
+✔ event flow preservato
+✔ confirm flow preservato
+✔ save flow invariato
+
+PRINCIPIO LINTING / QUERY SAFETY INTRODOTTO:
+
+→ linting Retool = 0
+
+Interventi eseguiti:
+
+- sostituiti ternari multilinea ambigui con if / else
+- corretti linting in input_analysis_result
+- corretti linting in preview_analysis_state
+- corretti linting in create_suggestion_state
+- corretti linting in command_intent_state
+- eliminata query legacy typing_state
+- eliminata query legacy handle_event_success
+
+Regola:
+
+I fix linting non hanno modificato intenzionalmente la logica funzionale.
+
+✔ rumore tecnico Retool ridotto
+✔ query unused rimosse
+✔ test post-fix superati
 
 ------------------------------------------------
 AGGIORNAMENTO CRITICO — NORMALIZATION LAYER BASE
@@ -1622,9 +1760,10 @@ Principi:
 UI READINESS / VISIBILITY LAYER
 
 - ui_visibility_mode
-- ui_visibility_state
+- input_analysis_result
 - text_input_analysis_loading
 - text_edit_mode_notice
+- ui_visibility_state residuo tecnico deprecabile
 
 Principi:
 
@@ -1633,40 +1772,42 @@ Principi:
   - empty
   - event
   - command
-- ui_visibility_state è un aggregatore read-only di visibilità
-- ui_visibility_state governa solo cosa mostrare/nascondere nel flow input
-- non interpreta dati salvabili
-- non sostituisce command_intent_state
-- non sostituisce parser / matching / suggestion
-- non genera preview
-- non costruisce payload
-- non salva dati
+- input_analysis_result compone la visibility/readiness effettiva del flow input
+- input_analysis_result governa gli Hidden principali migrati
+- input_analysis_result non salva dati
+- input_analysis_result non costruisce payload
+- input_analysis_result non sostituisce parser / matching / suggestion / command
+- input_analysis_result non è un motore monolitico
+- ui_visibility_state non è più letto da input_analysis_result
+- ui_visibility_state non governa più gli Hidden principali migrati
+- ui_visibility_state resta residuo tecnico da non cancellare fuori nodo cleanup
 
-Componenti ancora governati direttamente da ui_visibility_state:
+Componenti governati da input_analysis_result:
 
-- container_input
-- text_input_analysis_loading
-- button_input_confirm
-- btn_cancel_edit
-- btn_cancel_input_home
-- altri controlli strutturali residui visibili nel graph Retool
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
+- button_input_confirm.Hidden
+- btn_cancel_edit.Hidden
+- btn_cancel_input_home.Hidden
+- container_command_intent.Hidden
+- sintesi.Hidden
+- container_association_suggestions.Hidden
+- text_event_data_title.Hidden
+- select1.Hidden
+- select_project.Hidden
+- select_entity.Hidden
 
-Componenti migrati a input_analysis_result:
+Componenti NON migrati perché routing principale app:
 
-- container_command_intent
-- sintesi
-- container_association_suggestions
-- text_event_data_title
-- select1
-- select_project
-- select_entity
+- container_home.Hidden
+- container_feedback.Hidden
+- container_events_list.Hidden
 
-Componenti non governati direttamente:
+Regola:
 
-- container_home
-- container_feedback
-- container_events_list
-- list_events
+ui_state.view = routing principale app
+input_analysis_result = readiness / visibility flow input
+ui_visibility_mode = latch empty / event / command
 
 Nota:
 
@@ -1740,21 +1881,38 @@ Componenti già governati parzialmente da input_analysis_result:
 - container_association_suggestions.Hidden
 - micro-copy notice associazioni mancanti nella Sintesi
 
-Componenti ancora NON migrati:
+Componenti ora migrati:
 
 - container_input.Hidden
 - text_input_analysis_loading.Hidden
-- btn_cancel_edit
-- btn_cancel_input_home
+- btn_cancel_edit.Hidden
+- btn_cancel_input_home.Hidden
 - button_input_confirm.Hidden
+
+Componenti ora migrati:
+
+- container_input.Hidden
+- text_input_analysis_loading.Hidden
+- btn_cancel_edit.Hidden
+- btn_cancel_input_home.Hidden
+- button_input_confirm.Hidden
+
+Componenti NON migrati intenzionalmente:
+
 - button_input_confirm.Disabled
 - button_input_confirm payload
 - insert_event / update_event
+- container_home.Hidden
+- container_feedback.Hidden
+- container_events_list.Hidden
 
 Nota:
 
-input_analysis_result legge ancora ui_visibility_state come raw diagnostic.
-ui_visibility_state non deve ancora leggere input_analysis_result per evitare loop.
+input_analysis_result non legge più ui_visibility_state.
+La dipendenza raw diagnostica è stata rimossa.
+Non esiste più loop tra ui_visibility_state e input_analysis_result.
+
+ui_visibility_state resta presente come residuo tecnico deprecabile fino a cleanup dedicato.
 
 ---
 
@@ -1876,29 +2034,36 @@ ui_visibility_mode:
 
 ui_visibility_state:
 
-- Transformer Retool
-- aggrega flag di visibilità
-- legge ui_visibility_mode, input, edit_mode, suggestion state e match state
-- espone flag:
-  - hasInput
-  - isInputFlow
-  - isCommand
-  - isPureCommand
-  - isEventFlow
-  - isEditMode
-  - showCommandContainer
-  - showEventPreview
-  - showAssociationSuggestions
-  - showEventData
-  - showConfirm
-  - showCancelEdit
-  - showCancelInputHome
-- non salva dati
-- non modifica DB
-- non modifica parser
-- non modifica matching
-- non modifica preview content
-- non modifica payload
+- Transformer Retool legacy/residuo
+- precedentemente aggregava flag di visibilità del flow input
+- non è più letto da input_analysis_result
+- non governa più gli Hidden principali migrati
+- resta presente come residuo tecnico / rollback fino a cleanup dedicato
+- non va cancellato fuori da nodo CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+
+Stato:
+
+- deprecabile
+- non fonte canonica della visibility flow input
+- non fonte business
+- non fonte salvabile
+
+input_analysis_result readiness:
+
+- canShowEventPreview
+- canShowCommandContainer
+- canShowEventData
+- canShowAssociationSuggestions
+- canShowConfirm
+- canConfirm
+- hasBlockingIssue
+- hasNonBlockingWarnings
+
+Regola:
+
+canShowConfirm governa la visibilità del bottone Conferma.
+canConfirm governa la possibilità funzionale di confermare.
+button_input_confirm.Disabled resta guard separata.
 
 ---
 
@@ -1907,7 +2072,7 @@ FEEDBACK SYSTEM
 ✔ feedback stabilizzato
 ✔ feedback_summary introdotto
 ✔ gestione centralizzata in button_input_confirm
-✔ handle_event_success disabilitato come gestore UI
+✔ handle_event_success prima disabilitato come gestore UI, poi eliminato come query legacy unused
 ✔ success handler UI rimossi da insert_event / update_event
 ✔ feedback breve e non bloccante
 ✔ auto-return consolidato a 1800 ms
@@ -2865,6 +3030,19 @@ FUNZIONALITÀ IMPLEMENTATE
 ✔ notice associazioni mancanti coerente con presenza suggerimenti operativi
 ✔ edit mode + input vuoto stabilizzato
 ✔ Home idle container nascosti durante edit mode
+✔ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION completato
+✔ container_input.Hidden migrato a input_analysis_result
+✔ text_input_analysis_loading.Hidden migrato a input_analysis_result
+✔ btn_cancel_edit / btn_cancel_input_home Hidden migrati a input_analysis_result
+✔ button_input_confirm.Hidden migrato a input_analysis_result.readiness.canShowConfirm
+✔ button_input_confirm.Disabled preservato separato
+✔ button_input_confirm payload invariato
+✔ input_analysis_result non legge più ui_visibility_state
+✔ ui_visibility_state reso residuo tecnico deprecabile
+✔ linting Retool azzerati
+✔ typing_state eliminato
+✔ handle_event_success eliminato
+✔ Performance unused query risolta
 
 ------------------------------------------------
 FUNZIONALITÀ NON IMPLEMENTATE
@@ -2974,13 +3152,13 @@ Implementato:
 
 Non implementato:
 
-- Full Visibility Migration
-- decommission di ui_visibility_state
-- migrazione container_input a input_analysis_result
-- migrazione loading state a input_analysis_result
-- migrazione cancel controls a input_analysis_result
-- migrazione button_input_confirm a input_analysis_result
+- decommission finale di ui_visibility_state
+- cleanup obsolete UI guards / query reduction
 - centralizzazione save readiness completa
+- migrazione eventuale button_input_confirm.Disabled solo dopo nodo dedicato
+- Input Analysis Model completo
+- Event Interpretation Engine
+- Multi-source Input
 - Input Analysis Model completo
 - Event Interpretation Engine
 - Multi-source Input
@@ -3174,23 +3352,23 @@ Limiti residui:
 
 ---
 
-14. INPUT ANALYSIS RESULT — CONTROLLED PARTIAL CONSUMPTION
+14. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 
-- input_analysis_result ora esiste come layer compositivo
-- raw / selection / effective state implementati
-- una parte della UI legge input_analysis_result
-- ui_visibility_state resta ancora operativo
-- visibility migration non ancora completata
-- button_input_confirm non ancora migrato
-- save readiness non ancora centralizzata
+- input_analysis_result ora governa gli Hidden principali del flow input
+- container_input / loading / cancel / confirm Hidden migrati
+- button_input_confirm.Hidden migrato a canShowConfirm
+- button_input_confirm.Disabled resta guard funzionale autonoma
+- button_input_confirm payload resta invariato
+- input_analysis_result non legge più ui_visibility_state
+- ui_visibility_state resta residuo tecnico deprecabile
 
 Limiti residui:
 
-- possibile doppia lettura visibility tra ui_visibility_state e input_analysis_result
-- button_input_confirm conserva logica autonoma
-- container_input resta legato a ui_visibility_state
-- loading/cancel controls restano legati a ui_visibility_state
-- input_analysis_result legge ancora ui_visibility_state come raw diagnostic
+- save readiness completa non ancora centralizzata
+- button_input_confirm.Disabled non ancora migrato
+- ui_visibility_state non ancora eliminato fisicamente
+- flash residui digitazione/cambio schermata ancora presenti
+- input_analysis_result resta layer compositivo, non Single Interpretation Layer completo
 
 ---
 
@@ -3215,6 +3393,22 @@ Esito:
 Regola:
 
 I campi editabili e le select principali devono mantenere font-size minimo 16px su mobile Safari.
+
+---
+
+16. LINTING / RETOOL QUERY SAFETY PASS
+
+- linting Retool azzerati
+- ternari multilinea ambigui sostituiti con if / else
+- query legacy typing_state eliminata
+- query legacy handle_event_success eliminata
+- test post-fix superati
+- Performance unused query risolta per le query eliminate
+
+Limiti residui:
+
+- eventuali nuovi linting futuri da trattare solo se legati a rischi reali o rumore tecnico bloccante
+- cleanup più ampio query/componenti obsolete rimandato a nodo dedicato
 
 ------------------------------------------------
 PROBLEMI RISOLTI
@@ -3315,6 +3509,15 @@ PROBLEMI RISOLTI
 ✔ flow event / command instabile → RIDOTTO
 ✔ edit mode non chiaramente distinguibile → RISOLTO con notice compatta
 ✔ Command Intent durante edit mode potenzialmente ambiguo → CHIARITO
+✔ Full Visibility Migration degli Hidden principali → COMPLETATA
+✔ container_input ancora su ui_visibility_state → RISOLTO
+✔ loading/cancel controls ancora su ui_visibility_state → RISOLTO
+✔ button_input_confirm.Hidden ancora su ui_visibility_state → RISOLTO
+✔ input_analysis_result leggeva ui_visibility_state come raw diagnostic → RISOLTO
+✔ rischio loop ui_visibility_state / input_analysis_result → RISOLTO
+✔ linting Retool 19 → RISOLTO / AZZERATO
+✔ Performance unused query typing_state → RISOLTO con eliminazione query
+✔ Performance unused query handle_event_success → RISOLTO con eliminazione query
 
 ------------------------------------------------
 STATO LAYER SISTEMA
@@ -3326,8 +3529,8 @@ Layer 2 — Matching / Suggestion: ~92%
 Layer 3 — View / Preview: ~95%
 Layer HINT SYSTEM: ~93%
 Layer UX Mobile: ~96%
-Layer UI Readiness / Visibility: ~88%
-Layer Input Analysis / Composition: ~55%
+Layer UI Readiness / Visibility: ~94%
+Layer Input Analysis / Composition: ~68%
 Layer 4 — Data Structure: ~32%
 Layer 5 — Engine: ~48%
 Layer 6 — Output: 0%
@@ -3336,7 +3539,7 @@ Layer 6 — Output: 0%
 
 STATO COMPLESSIVO:
 
-~92%
+~93%
 
 ------------------------------------------------
 FASE ATTUALE
@@ -3361,12 +3564,17 @@ FASE ATTUALE
 ✔ PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER — COMPLETATO
 ✔ INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC — COMPLETATO
 ✔ INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS — COMPLETATO
+✔ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION — COMPLETATO
+✔ LINTING / RETOOL QUERY SAFETY PASS — COMPLETATO
 
 ---
 
 TRANSIZIONE:
 
 → AGGIORNAMENTO DOCUMENTALE POST INPUT ANALYSIS RESULT CONTROLLED UI CONSUMPTION
+TRANSIZIONE:
+
+→ AGGIORNAMENTO DOCUMENTALE CUMULATIVO POST VISIBILITY MIGRATION + LINTING SAFETY PASS
 
 ------------------------------------------------
 OBIETTIVO IMMEDIATO
@@ -3374,8 +3582,12 @@ OBIETTIVO IMMEDIATO
 
 Dopo il completamento di Project / Entity Create Suggestion First Controlled Level,
 UX Mobile Coherence Pass,
-Command Intent — Create Project / Entity
-e UI Readiness / Visibility Aggregator — First Controlled Level,
+Command Intent — Create Project / Entity,
+UI Readiness / Visibility Aggregator — First Controlled Level,
+Preview Analysis State,
+Input Analysis Result Controlled UI Consumption,
+Input Analysis Result Visibility Migration Completion
+e Linting / Retool Query Safety Pass,
 
 Catene principali attuali:
 
@@ -3445,8 +3657,8 @@ UI readiness / visibility:
 input_home / input_raw
 → trigger_parse_debounced
 → ui_visibility_mode
-→ ui_visibility_state
-→ container_command_intent / sintesi / suggestion / dati evento / conferma / cancel
+→ input_analysis_result
+→ container_command_intent / sintesi / suggestion / dati evento / conferma Hidden / cancel / input container
 
 preview / hint:
 ui_state.parsed / project_state / entity_state / select / type
@@ -3541,7 +3753,9 @@ Sequenza corretta futura:
 3. introdurre command intent guidato ✔
 4. UX mobile base rifinita e completata ✔
 5. consolidare preview / hint / input analysis
-5.1 completare la visibility migration da ui_visibility_state a input_analysis_result senza creare un motore monolitico
+5.1 visibility migration degli Hidden principali completata
+5.2 consolidare preview / label / hint residui
+5.3 semplificare architettura documentale per ridurre ridondanza senza perdere ricostruibilità
 6. introdurre data structure / logiche avanzate
 7. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
 
@@ -3571,11 +3785,13 @@ Priorità aggiornata:
 11. UX mobile coherence pass ✔
 12. command intent create project/entity ✔
 13. UI readiness / visibility aggregator ✔
-14. preview model / hint state consolidation
-15. input analysis model / single interpretation layer
-16. data structure / entity relations
-17. economic direction advanced
-18. output            
+14. documentation architecture audit / redundancy reduction
+15. preview / event data label semantic alignment
+16. preview model / hint state consolidation
+17. input analysis model / single interpretation layer
+18. data structure / entity relations
+19. economic direction advanced
+20. output            
 
 ---
 
@@ -3642,56 +3858,113 @@ massima flessibilità,
 riduzione delle verità parallele,
 senza eliminare i moduli specializzati che funzionano.
 
+Nota strategica post Visibility Migration Completion:
+
+La migrazione visibility degli Hidden principali è stata completata senza trasformare input_analysis_result in motore monolitico.
+
+Stato consolidato:
+
+- moduli specializzati continuano a calcolare
+- input_analysis_result compone
+- UI legge contratti più stabili
+- ui_state.view governa il routing principale app
+- ui_visibility_mode resta latch leggero
+- ui_visibility_state resta residuo tecnico deprecabile
+
+Regola:
+
+Non migrare tutto dentro input_analysis_result.
+Usare input_analysis_result per composizione/readiness/visibility,
+non per sostituire parser, matching, suggestion, command, preview hint o save flow.
+
+Nota strategica post aggiornamento documentale:
+
+Dopo il presente aggiornamento cumulativo è candidato un nodo dedicato:
+
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+
+Obiettivo:
+
+- ridurre ridondanze nei documenti
+- mantenere una logica completa in un solo documento canonico
+- usare richiami espliciti negli altri documenti
+- preservare ricostruibilità in caso di crash
+- ridurre il numero di documenti da aggiornare a ogni micro-sessione
+- creare una Session Boot Matrix
+
+Principio:
+
+Ogni logica fondamentale deve essere completa in un solo documento canonico.
+Gli altri documenti devono richiamarla esplicitamente, senza duplicarla.
+
 ------------------------------------------------
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+1. DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 
 Scopo:
 
-- completare in modo controllato la migrazione visibility ancora rimasta su ui_visibility_state
-- valutare container_input.Hidden
-- valutare text_input_analysis_loading.Hidden
-- valutare btn_cancel_edit / btn_cancel_input_home
-- valutare button_input_confirm.Hidden senza toccare payload
-- distinguere visibilità bottone Conferma da disabled/readiness logica
-- evitare dipendenze circolari tra ui_visibility_state e input_analysis_result
-- decidere se ui_visibility_state resta wrapper minimo o viene deprecato gradualmente
-- non modificare parser, matching, suggestion, command, select value, save flow o DB
+- ridurre ridondanze nei documenti LOGOS
+- evitare ripetizioni lunghe tra State, Roadmap, Input System, Retool Architecture, View Preview e Runtime
+- definire una fonte canonica completa per ogni logica fondamentale
+- negli altri documenti usare richiami espliciti invece di duplicazioni
+- preservare la ricostruibilità del sistema
+- ridurre il costo documentale dopo ogni micro-sessione
+- creare una mappa responsabilità documentale
+- creare una Session Boot Matrix
 
 Motivo priorità:
 
-Il sistema è ora in una fase intermedia:
-input_analysis_result governa già una parte della UI,
-ma ui_visibility_state resta ancora operativo su elementi strutturali.
-Chiudere questo ciclo riduce il rischio di doppie verità.
+La documentazione ha protetto il progetto da deriva e regressioni,
+ma ora l’aggiornamento di troppi documenti rallenta lo sviluppo.
+Serve semplificare senza perdere controllo.
+
+Regola:
+
+non cancellare contenuti critici.
+prima mappare responsabilità e fonti canoniche,
+poi semplificare progressivamente.
 
 ---
 
-2. LINTING / RETOOL QUERY SAFETY PASS
+2. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
 Scopo:
 
-- analizzare e ridurre le 19 segnalazioni linting Retool attuali
-- verificare misleading line break before "?"
-- verificare raw_input / id non definiti nei body query
-- distinguere falsi positivi statici da rischi runtime reali
-- ridurre rumore tecnico prima di ulteriori refactor
-- non modificare logiche funzionali se non necessario
+- correggere la label “Importo” quando il valore rappresenta una durata
+- usare label coerenti:
+  - euro → Importo
+  - minuti / ore → Durata
+  - nessuna unità → riga assente o label neutra
+- non modificare parser
+- non modificare DB
+- non modificare save flow
+- non modificare duration normalization
 
-Motivo priorità:
+Motivo:
 
-Il sistema funziona, ma il numero di linting è aumentato.
-Prima di avanzare su nodi più profondi conviene separare falsi positivi e rischi reali.
+Il test 2h30 rendering lavoro ha confermato che la visibility è corretta,
+ma la UI mostra ancora una label fuorviante.
 
 ---
 
-3. BUTTON CONFIRM READINESS ALIGNMENT
+3. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Scopo:
 
-- analizzare button_input_confirm.Hidden
+- analizzare flash residui durante digitazione e cambio schermata
+- distinguere flash accettabili da regressioni UX
+- non modificare parser/matching/save flow
+- non introdurre routing alternativo
+- intervenire solo se il fix è locale e reversibile
+
+---
+
+4. BUTTON CONFIRM READINESS ALIGNMENT
+
+Scopo:
+
 - analizzare button_input_confirm.Disabled
 - distinguere:
   - visibilità bottone
@@ -3706,12 +3979,12 @@ Scopo:
 
 Motivo:
 
-Il bottone Conferma è l’ultimo punto delicato tra UI readiness e save flow.
-Non va migrato insieme agli Hidden generici.
+button_input_confirm.Hidden è stato migrato.
+button_input_confirm.Disabled resta separato e va trattato solo con nodo dedicato.
 
 ---
 
-4. PREVIEW MODEL / HINT STATE CONSOLIDATION
+5. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
@@ -3720,70 +3993,43 @@ Scopo:
 - separare meglio hint bloccanti / warning informativi / suggerimenti
 - valutare se “Da verificare” debba diventare blocco autonomo
 - preparare la Sintesi come view più pura
-- evitare che l’utente legga una cosa diversa da ciò che verrà salvato
-
-Nota:
-
-preview_analysis_state è già operativo a primo livello.
-Questo nodo non deve duplicare input_analysis_result,
-ma rifinire il rapporto tra Sintesi, hint e stato preview.
 
 ---
 
-5. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
+6. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+
+Scopo:
+
+- decidere la policy sui match più specifici
+- esempio: Mario selezionato automaticamente con warning “entità più specifiche”
+- valutare se il warning debba restare non bloccante o richiedere scelta manuale
+- non modificare matching avanzato senza decisione esplicita
+
+---
+
+7. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+
+Scopo:
+
+- valutare eliminazione ui_visibility_state
+- rimuovere guardie duplicate ormai sostituite da input_analysis_result
+- eliminare componenti/query obsolete solo dopo stabilità documentata
+- non modificare parser/matching/save flow
+- non fare cleanup prima della conclusione documentale
+
+---
+
+8. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
 
 Scopo:
 
 - migliorare la guida quando l’utente scrive comandi durante edit mode
-- esempio: edit mode + “crea”
-- valutare messaggio tipo:
-  “Se vuoi creare qualcosa, annulla prima la modifica evento.”
 - valutare riconoscimento di comandi guida generici:
   - modifica
   - correggi
   - cambia
 - evitare che “modifica” da solo venga trattato come evento ordinario
-- non confondere frasi operative reali come “modifica preventivo villa”
 - non aprire edit flow automatici
-- non modificare save flow
-
----
-
-6. SUGGESTION CREATE VS EDIT CONSISTENCY
-
-Scopo:
-
-- verificare differenze suggestion tra create flow e edit flow
-- chiarire quando create_suggestion_state deve produrre contenuti operativi in edit mode
-- mantenere distinta la notice “Manca progetto/entità” dalla suggestion operativa
-- evitare container vuoti
-- mantenere invariati matching e DB finché non serve
-- non introdurre override aggressivi
-
----
-
-7. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
-
-Scopo:
-
-- valutare creazione progetto anche quando esiste un match generico
-- esempio: input “villa sierri” con match Villa e progetti più specifici Villa Sierri 6 / 7 / 14 / 15
-- permettere eventuale scelta esplicita utente
-- evitare creazioni automatiche silenziose
-- non modificare il Match Engine senza nodo dedicato
-
----
-
-8. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
-
-Scopo:
-
-- valutare casi di ambiguità parziale oggi non rilevati
-- esempi:
-  - “cucciolata marzo” rispetto a Cucciolata Marzo 2025 / 2026
-  - “rossi” rispetto a Mario Rossi / Mario Rossi Alfredo / Marco Rossi
-- valutare alias, fuzzy leggero, ranking o token strategy
-- non introdurre deduplicazione o gerarchie senza decisione dedicata
 
 ---
 
@@ -3795,7 +4041,6 @@ Scopo:
 - valutare alias
 - valutare deduplicazione
 - valutare relazioni entity-project
-- valutare differenza tra persona, azienda, fornitore, cliente, animale, progetto
 - non introdurre prima di nodo dedicato
 
 ---
@@ -3807,7 +4052,6 @@ Scopo:
 - valutare amount firmato
 - valutare direction field
 - valutare regole contabili per Spesa/Incasso
-- valutare automatismi più forti solo dopo stabilità data quality
 - non attivo finché matching/data quality/report readiness non saranno stabilizzati
 
 ---
@@ -3820,53 +4064,36 @@ Scopo:
 - valutare giornata lavorativa
 - valutare mezza giornata
 - evitare conversioni automatiche ambigue
-- non rompere la normalizzazione ore/minuti già stabile
 
 ---
 
-12. FEEDBACK CONSISTENCY / MICRO-FLASH CLEANUP
+12. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Scopo:
 
-- analizzare micro-flash residuo su feedback project/entity
-- allineare feedback command create e suggestion inline create, se necessario
-- non modificare save flow evento
-- non modificare insert_project / insert_entity se non strettamente necessario
-- intervenire solo se il flash o la differenza feedback risultano fastidiosi
+- verificare differenze suggestion tra create flow e edit flow
+- chiarire quando create_suggestion_state deve produrre contenuti operativi in edit mode
+- mantenere distinta la notice “Manca progetto/entità” dalla suggestion operativa
 
 ---
 
-13. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
-
-Scopo:
-
-- rimuovere guardie duplicate ormai sostituite da input_analysis_result o ui_visibility_state
-- eliminare componenti/query obsolete solo dopo stabilità documentata
-- semplificare manutenzione
-- non modificare parser/matching/save flow
-- non fare cleanup prima della conclusione della visibility migration
-
----
-
-14. AZIONI RAPIDE OPERATIVE
+13. AZIONI RAPIDE OPERATIVE
 
 Scopo:
 
 - rendere operative le Azioni rapide oggi solo predisposte
 - collegarle a flow già stabili
 - evitare scorciatoie che bypassino input_analysis_result, parser, matching o conferma utente
-- non anticipare Dashboard/KPI
 
 ---
 
-15. DASHBOARD BASE
+14. DASHBOARD BASE
 
 Scopo:
 
 - attivare la voce Dashboard solo quando Core Event System e data quality saranno sufficientemente consolidati
 - definire prime viste aggregate
 - evitare KPI prematuri
-- non attivare istanze verticali prima del consolidamento Core
 
 ------------------------------------------------
 CHANGELOG
@@ -4305,3 +4532,55 @@ DB invariato
 linting Retool attuali saliti a 19 e registrati come debito tecnico
 prossimo nodo consigliato: INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 nodo parallelo consigliato: LINTING / RETOOL QUERY SAFETY PASS
+
+v22 — 2026-05-23
+completamento INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+container_input.Hidden migrato a input_analysis_result.mode.effectiveIsInputFlow
+text_input_analysis_loading.Hidden migrato a input_analysis_result
+btn_cancel_edit.Hidden migrato a input_analysis_result
+btn_cancel_input_home.Hidden migrato a input_analysis_result
+button_input_confirm.Hidden migrato a input_analysis_result.readiness.canShowConfirm
+introdotto canShowConfirm come flag visibility-only
+canConfirm preservato come readiness funzionale distinta
+button_input_confirm.Disabled invariato
+button_input_confirm payload invariato
+rimossa dipendenza input_analysis_result → ui_visibility_state
+input_analysis_result non legge più ui_visibility_state
+nessun loop tra ui_visibility_state e input_analysis_result
+ui_visibility_mode confermato come latch leggero empty / event / command
+ui_visibility_state mantenuto come residuo tecnico deprecabile, non cancellato
+routing principale container_home / container_feedback / container_events_list confermato su ui_state.view
+test visibility migration superati:
+- home vuota
+- evento normale
+- durata normalizzata
+- command crea
+- command crea progetto Nome Test
+- match più specifici
+- suggestion project
+- edit input pieno
+- edit input vuoto
+
+completamento LINTING / RETOOL QUERY SAFETY PASS
+linting Retool azzerati
+risolti misleading line break before "?" in:
+- input_analysis_result
+- preview_analysis_state
+- create_suggestion_state
+- command_intent_state
+sostituiti ternari multilinea ambigui con if / else
+eliminata query legacy typing_state
+eliminata query legacy handle_event_success
+Performance unused query risolta
+test post-rimozione query superati
+DB invariato
+parser invariato
+matching invariato
+command intent invariato nella logica funzionale
+suggestion invariata nella logica funzionale
+save flow invariato
+payload invariato
+flash residui digitazione/cambio schermata documentati come nodo futuro
+label “Importo” su durata documentata come nodo futuro
+policy match più specifici documentata come nodo futuro
+prossimo nodo candidato prioritario: DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION

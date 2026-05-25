@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v09
+# 02_LOGOS_Match_Engine_v10
 
-DATA: 2026-05-20
+DATA: 2026-05-23
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -46,6 +46,16 @@ C (Completezza): 10/10
 - chiarito che input_analysis_result non modifica select_project / select_entity
 - chiarito che input_analysis_result non modifica confirm guard funzionale o payload
 - documentato che il Match Engine resta invariato dopo Controlled UI Consumption Pass
+- documentato che il Match Engine resta invariato dopo Input Analysis Result — Visibility Migration Completion
+- documentato che input_analysis_result ora governa gli Hidden principali del flow input senza modificare project_state / entity_state
+- documentato che ui_visibility_state non è più letto da input_analysis_result
+- documentato che ui_visibility_state resta residuo tecnico deprecabile e non fonte matching
+- documentato che button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm
+- documentato che button_input_confirm.Disabled resta guard funzionale separata
+- documentato che button_input_confirm payload resta invariato
+- documentato che Linting / Retool Query Safety Pass non ha modificato il Match Engine
+- documentato linting Retool azzerato come debito tecnico risolto fuori dal matching
+- documentato caso match più specifico come policy non bloccante invariata
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -71,6 +81,13 @@ Q (Qualità): 9.5/10
 - preservata separazione tra matching, selection, suggestion, command e UI readiness
 - evitata confusione tra raw match e dato effettivamente usabile nel flow corrente
 - mantenuto il principio select = decisione finale salvabile
+- confermato che la Visibility Migration non ha alterato la responsabilità del Match Engine
+- confermato che project_state / entity_state restano fonte minima matching
+- confermato che input_analysis_result compone raw / selection / effective senza calcolare matches
+- chiarita separazione tra visibility del flow input e matching project/entity
+- chiarita separazione tra button_input_confirm.Hidden e confirm guard funzionale
+- confermato che la policy match più specifici resta informativa e non bloccante
+- confermato che il nodo linting ha ridotto rumore tecnico senza modificare logica matching
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -105,6 +122,18 @@ D (Deployabilità): 10/10
 - create_suggestion_state invariato
 - command_intent_state invariato
 - button_input_confirm payload invariato
+- Visibility Migration Completion validata senza regressione matching
+- project_state invariato
+- entity_state invariato
+- select_project invariato
+- select_entity invariato
+- create_suggestion_state invariato nella logica funzionale
+- command_intent_state invariato nella logica funzionale
+- button_input_confirm.Hidden migrato senza modificare Disabled / payload
+- Linting / Retool Query Safety Pass validato senza regressione matching
+- linting Retool azzerati
+- typing_state eliminato senza impatto matching
+- handle_event_success eliminato senza impatto matching
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -134,6 +163,11 @@ Il documento guida:
 - chiarimento che input_analysis_result non è Match Engine
 - chiarimento che input_analysis_result compone raw / selection / effective state ma non calcola matches
 - chiarimento che il Controlled UI Consumption Pass non ha modificato il matching
+- chiarimento che Input Analysis Result — Visibility Migration Completion non ha modificato il matching
+- chiarimento che la migrazione degli Hidden principali a input_analysis_result non modifica project_state / entity_state
+- chiarimento che button_input_confirm.Hidden migrato non modifica confirm guard funzionale
+- chiarimento che Linting / Retool Query Safety Pass non modifica il Match Engine
+- chiarimento che la policy match più specifici resta invariata
 
 ------------------------------------------------
 PRINCIPI FONDANTI
@@ -250,23 +284,28 @@ UI Readiness / Visibility Aggregator governa solo la visibilità del flow input.
 Componenti UI Readiness:
 
 - ui_visibility_mode
-- ui_visibility_state
+- input_analysis_result
+- ui_visibility_state residuo tecnico deprecabile
 
 Regole:
 
-- ui_visibility_state può leggere project_state / entity_state
-- ui_visibility_state può usare isAmbiguous / select valorizzate per decidere cosa mostrare
-- ui_visibility_state NON calcola matches
-- ui_visibility_state NON calcola count
-- ui_visibility_state NON calcola singleMatch
-- ui_visibility_state NON calcola moreSpecificMatches
-- ui_visibility_state NON sostituisce project_state
-- ui_visibility_state NON sostituisce entity_state
-- ui_visibility_state NON modifica select_project / select_entity
-- ui_visibility_state NON modifica button_input_confirm payload
-- ui_visibility_state NON modifica confirm guard funzionale
-- ui_visibility_state NON salva dati
-- ui_visibility_state NON scrive DB
+- input_analysis_result può leggere project_state / entity_state
+- input_analysis_result può leggere select_project / select_entity
+- input_analysis_result può usare isAmbiguous / select valorizzate per calcolare readiness/effective usability
+- input_analysis_result NON calcola matches
+- input_analysis_result NON calcola count
+- input_analysis_result NON calcola singleMatch
+- input_analysis_result NON calcola moreSpecificMatches
+- input_analysis_result NON sostituisce project_state
+- input_analysis_result NON sostituisce entity_state
+- input_analysis_result NON modifica select_project / select_entity
+- input_analysis_result NON modifica button_input_confirm payload
+- input_analysis_result NON modifica confirm guard funzionale
+- input_analysis_result NON salva dati
+- input_analysis_result NON scrive DB
+- ui_visibility_state non è più fonte degli Hidden principali del flow input
+- ui_visibility_state non è più letto da input_analysis_result
+- ui_visibility_state resta residuo tecnico deprecabile
 
 ui_visibility_mode distingue solo:
 
@@ -339,6 +378,34 @@ Regole:
 Il suo ruolo è compositivo/readiness UI,
 non matching.
 
+Nota post Visibility Migration Completion:
+
+input_analysis_result governa ora anche gli Hidden principali del flow input.
+
+Questo non cambia il suo rapporto con il Match Engine.
+
+input_analysis_result continua a:
+
+- leggere project_state / entity_state
+- leggere select_project / select_entity
+- comporre raw / selection / effective usability
+- distinguere event / command / edit flow
+- governare visibility/readiness UI
+
+ma continua a NON:
+
+- calcolare matches
+- selezionare project/entity
+- modificare project_state / entity_state
+- modificare select_project / select_entity
+- cambiare confirm guard funzionale
+- costruire payload
+- salvare dati
+
+button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm.
+
+button_input_confirm.Disabled resta separato e continua a leggere ambiguità/select secondo la guard funzionale esistente.
+
 ------------------------------------------------
 ENTITÀ COINVOLTE
 ------------------------------------------------
@@ -370,12 +437,10 @@ input_home
 → ui_state.parsed  
 → project_state / entity_state  
 → create_suggestion_state  
-→ ui_visibility_state  
-→ select_project / select_entity  
 → preview_analysis_state  
 → input_analysis_result  
-→ preview / hint / highlight / suggestion container  
-→ oppure container_command_intent  
+→ preview / hint / highlight / suggestion container / Dati evento / Confirm Hidden  
+→ select_project / select_entity  
 → button_input_confirm oppure command action  
 
 ---
@@ -456,23 +521,50 @@ Dopo INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS:
 - input_analysis_result non modifica button_input_confirm payload
 - input_analysis_result non salva dati
 
+Dopo INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION:
+
+- input_analysis_result governa gli Hidden principali del flow input
+- container_input.Hidden legge input_analysis_result
+- text_input_analysis_loading.Hidden legge input_analysis_result
+- btn_cancel_edit.Hidden legge input_analysis_result
+- btn_cancel_input_home.Hidden legge input_analysis_result
+- button_input_confirm.Hidden legge input_analysis_result.readiness.canShowConfirm
+- canShowConfirm governa solo la visibilità del bottone Conferma
+- button_input_confirm.Disabled resta guard funzionale separata
+- button_input_confirm payload resta invariato
+- input_analysis_result non legge più ui_visibility_state
+- ui_visibility_state resta residuo tecnico deprecabile
+- Match Engine invariato
+- project_state / entity_state invariati
+- select_project / select_entity invariati
+- create_suggestion_state invariato nella logica funzionale
+- command_intent_state invariato nella logica funzionale
+
+Dopo LINTING / RETOOL QUERY SAFETY PASS:
+
+- linting Retool azzerati
+- typing_state eliminato come query legacy unused
+- handle_event_success eliminato come query legacy unused
+- nessuna modifica a project_state / entity_state
+- nessuna modifica a select_project / select_entity
+- nessuna modifica al Match Engine
+
 ------------------------------------------------
 PIPELINE MATCH
 ------------------------------------------------
 
-Pipeline match attuale post INPUT ANALYSIS RESULT CONTROLLED UI CONSUMPTION:
+Pipeline match attuale post INPUT ANALYSIS RESULT VISIBILITY MIGRATION COMPLETION:
 
 input_raw  
 → project_state / entity_state  
 → matches / count / isAmbiguous / singleMatch  
 → create_suggestion_state  
-→ ui_visibility_state legge stato matching per visibilità strutturale residua  
 → select_project / select_entity  
 → preview_analysis_state legge stato matching per hint/status preview  
 → input_analysis_result legge raw match + selection + effective usability  
-→ preview hint / highlight / suggestion container  
-→ button_input_confirm guard  
-→ project_id / entity_id salvati solo se selezionati    
+→ preview hint / highlight / suggestion container / Dati evento / Confirm Hidden  
+→ button_input_confirm guard funzionale separata  
+→ project_id / entity_id salvati solo se selezionati      
 
 Pipeline command separata:
 
@@ -531,11 +623,15 @@ Legge ambiguità non risolta.
 
 command_intent_state NON modifica questa regola.
 
-ui_visibility_state NON modifica questa regola.
+ui_visibility_state NON modifica questa regola ed è ora residuo tecnico deprecabile.
 
 preview_analysis_state NON modifica questa regola.
 
 input_analysis_result NON modifica questa regola.
+
+Visibility Migration Completion NON modifica questa regola.
+
+Il fatto che input_analysis_result governi più Hidden UI non lo rende Match Engine.
 
 input_analysis_result può comporre lo stato effettivo del flow,
 ma non cambia la fonte minima matching:
@@ -895,6 +991,7 @@ entity_state.data.singleMatch
 Nota post UI Readiness:
 
 ui_visibility_state non partecipa all’auto-select.
+input_analysis_result non partecipa all’auto-select.
 
 Non può valorizzare:
 
@@ -918,6 +1015,12 @@ Non può sostituire:
 - entity_state.data.singleMatch
 
 La selezione automatica resta limitata a singleMatch prodotto da project_state / entity_state.
+
+Nota post Visibility Migration Completion:
+
+la migrazione degli Hidden principali a input_analysis_result non cambia l’auto-select.
+
+select_project / select_entity restano alimentate da singleMatch.
 
 ---
 
@@ -1068,11 +1171,11 @@ Il command intent non cambia il confirm guard degli eventi ordinari.
 
 Nota post UI Readiness:
 
-ui_visibility_state può leggere lo stato di ambiguità per decidere la visibilità di:
+input_analysis_result può leggere lo stato di ambiguità per decidere readiness/visibility di:
 
 - suggestion container
 - Dati evento
-- Conferma evento
+- Conferma Hidden
 
 ma non modifica la regola di ambiguità.
 
@@ -1081,9 +1184,11 @@ Il blocco funzionale resta:
 - project ambiguo + select_project vuoto
 - entity ambigua + select_entity vuoto
 
-ui_visibility_state non risolve ambiguità.
-ui_visibility_state non seleziona project/entity.
-ui_visibility_state non cambia il confirm guard logico.
+input_analysis_result non risolve ambiguità.
+input_analysis_result non seleziona project/entity.
+input_analysis_result non cambia il confirm guard logico.
+
+ui_visibility_state resta residuo tecnico deprecabile e non è fonte matching.
 
 Nota post Input Analysis Result:
 
@@ -1093,6 +1198,17 @@ ma non risolve ambiguità.
 input_analysis_result non seleziona project/entity.
 input_analysis_result non cambia il confirm guard funzionale.
 input_analysis_result non modifica button_input_confirm payload.
+
+Dopo Visibility Migration Completion:
+
+button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm.
+
+Questo non modifica la guard funzionale Disabled.
+
+La regola di blocco resta:
+
+- project ambiguo + select_project vuoto
+- entity ambigua + select_entity vuoto
 
 Il blocco funzionale resta:
 
@@ -1167,7 +1283,7 @@ Questi non sono stati separati in un hint engine globale.
 
 Nota post UI Readiness:
 
-ui_visibility_state può governare la visibilità del container che ospita hint/suggestion,
+input_analysis_result governa la visibilità del container che ospita hint/suggestion,
 ma non è un hint engine.
 
 Non separa:
@@ -1191,6 +1307,19 @@ Restano comunque demandati a nodi futuri:
 
 - PREVIEW MODEL / HINT STATE CONSOLIDATION
 - STATUS SEMANTICS ALIGNMENT
+
+Nota post Visibility Migration Completion:
+
+il caso “mario sopralluogo villa 2” conferma la policy corrente:
+
+- match specifico/auto-selezione valida se singleMatch esiste
+- warning “entità/progetti più specifici” resta informativo
+- Conferma può restare attiva se esiste selezione effettiva
+- il warning non è bloccante nella policy attuale
+
+Nodo futuro eventuale:
+
+MATCH ENGINE — MORE SPECIFIC MATCH POLICY
 
 ---
 
@@ -1325,8 +1454,9 @@ Dopo Input Analysis Result Controlled UI Consumption:
 - container_command_intent è governato da input_analysis_result.readiness.canShowCommandContainer
 - container_association_suggestions è governato da input_analysis_result.readiness.canShowAssociationSuggestions
 - Dati evento sono governati da input_analysis_result.readiness.canShowEventData
-- Conferma evento non è ancora migrata completamente a input_analysis_result
-- ui_visibility_state resta operativo per componenti strutturali residui
+- button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm
+- button_input_confirm.Disabled resta guard funzionale separata
+- ui_visibility_state resta residuo tecnico deprecabile
 
 Nota:
 
@@ -1335,9 +1465,20 @@ questo non modifica il matching.
 La preview continua a leggere project_state / entity_state per hint e highlight.
 input_analysis_result decide ora parte della visibility/readiness UI.
 
-ui_visibility_state resta operativo per componenti strutturali residui.
+ui_visibility_state non governa più gli Hidden principali migrati.
 
 Nessuno dei due modifica il matching.
+
+La Visibility Migration Completion non modifica il contenuto della preview,
+ma stabilizza quando i blocchi del flow input vengono mostrati.
+
+Residuo osservato ma fuori Match Engine:
+
+- label “Importo” ancora usata per valori durata
+
+Nodo futuro:
+
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
 ------------------------------------------------
 RELAZIONE CON CREATE SUGGESTION
@@ -1439,6 +1580,15 @@ Dopo Input Analysis Result Controlled UI Consumption:
 container_association_suggestions è ora visibile/nascosto tramite:
 
 input_analysis_result.readiness.canShowAssociationSuggestions.
+
+Dopo Visibility Migration Completion:
+
+questa relazione resta invariata.
+
+input_analysis_result governa la visibility del container,
+ma create_suggestion_state resta fonte del contenuto operativo.
+
+La migrazione visibility non modifica le regole suggestion.
 
 Questo non modifica create_suggestion_state.
 
@@ -1547,9 +1697,9 @@ UI Readiness / Input Analysis Result è una linea separata dal Match Engine.
 Componenti:
 
 - ui_visibility_mode
-- ui_visibility_state
 - preview_analysis_state
 - input_analysis_result
+- ui_visibility_state residuo tecnico deprecabile
 
 ---
 
@@ -1566,12 +1716,13 @@ ui_visibility_mode:
 
 ui_visibility_state:
 
-- aggrega flag di visibilità
-- può leggere project_state / entity_state
-- può leggere select_project / select_entity
-- può leggere create_suggestion_state
-- può leggere command_intent_state / ui_visibility_mode
-- decide solo cosa mostrare/nascondere
+- era aggregatore di visibilità del flow input
+- dopo Visibility Migration Completion non è più letto da input_analysis_result
+- non governa più gli Hidden principali migrati
+- resta residuo tecnico deprecabile / rollback
+- non è fonte matching
+- non decide project/entity
+- non salva dati
 
 Non produce:
 
@@ -1622,9 +1773,15 @@ input_analysis_result:
 - non modifica il matching
 - non modifica confirm payload
 - non salva dati
+- governa gli Hidden principali del flow input
+- espone canShowConfirm per la visibilità del bottone Conferma
+- non governa Disabled come decisione funzionale finale
 
-UI Readiness / Input Analysis Result è coordinamento visivo e compositivo,
+UI Readiness / Input Analysis Result è coordinamento visivo/compositivo,
 non matching.
+
+Visibility Migration Completion aumenta il consumo UI di input_analysis_result,
+ma non cambia la responsabilità del Match Engine.
 
 Risultato post UI Readiness:
 
@@ -1695,9 +1852,8 @@ CASI NON SUPPORTATI
 - modifica project/entity da command
 - dashboard/report intent
 - Input Analysis Model completo
-- Full Visibility Migration completa
 - decommission di ui_visibility_state
-- button_input_confirm migrato a input_analysis_result
+- button_input_confirm.Disabled/readiness migrato a input_analysis_result
 - creazione automatica silenziosa project/entity
 
 ---
@@ -1721,13 +1877,15 @@ LIMITI ATTUALI
 - creazione guidata project/entity implementata solo a primo livello controllato
 - command intent create project/entity implementato a primo livello controllato
 - command intent avanzato non implementato
-- input_analysis_result implementato come layer compositivo parziale
+- input_analysis_result implementato come layer compositivo per Hidden principali del flow input
 - Input Analysis Model completo non implementato
-- ui_visibility_state ancora operativo e non deprecato
+- ui_visibility_state ancora presente come residuo tecnico deprecabile
 - ui_visibility_mode implementato solo come latch UI
 - UI Readiness / Input Analysis Result non è Match Engine
-- Full Visibility Migration non completata
-- button_input_confirm non migrato
+- Linting / Retool Query Safety Pass completato senza modificare matching
+- Full Visibility Migration degli Hidden principali completata
+- button_input_confirm.Hidden migrato
+- button_input_confirm.Disabled non migrato
 - save readiness non centralizzata
 - cleanup obsolete UI guards / query reduction non ancora eseguito
 - nessuna creazione automatica silenziosa project/entity
@@ -1765,6 +1923,14 @@ Risolto a primo livello:
 ✔ raw / selection / effective state introdotti
 ✔ Controlled UI Consumption Pass completato senza regressione matching
 ✔ visibility preview/data/command/suggestion migrata parzialmente a input_analysis_result
+✔ Visibility Migration degli Hidden principali completata
+✔ container_input.Hidden migrato a input_analysis_result
+✔ text_input_analysis_loading.Hidden migrato a input_analysis_result
+✔ btn_cancel_edit.Hidden migrato a input_analysis_result
+✔ btn_cancel_input_home.Hidden migrato a input_analysis_result
+✔ button_input_confirm.Hidden migrato a input_analysis_result
+✔ input_analysis_result non legge più ui_visibility_state
+✔ linting Retool azzerati senza modificare matching
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
@@ -1898,6 +2064,27 @@ Nota:
 Input Analysis Result non risolve il problema strutturale del Match Engine avanzato.
 Aggiunge un layer compositivo sopra i moduli specializzati.
 
+STATO DOPO VISIBILITY MIGRATION COMPLETION / LINTING SAFETY PASS:
+
+✔ Hidden principali del flow input migrati a input_analysis_result
+✔ button_input_confirm.Hidden migrato a canShowConfirm
+✔ button_input_confirm.Disabled resta separato
+✔ button_input_confirm payload invariato
+✔ input_analysis_result non legge più ui_visibility_state
+✔ ui_visibility_state residuo tecnico deprecabile
+✔ linting Retool azzerati
+✔ query legacy unused typing_state / handle_event_success eliminate
+✔ Match Engine invariato
+✔ project_state / entity_state invariati
+✔ select_project / select_entity invariati
+✔ create_suggestion_state invariato nella logica funzionale
+✔ command_intent_state invariato nella logica funzionale
+
+Nota:
+
+Questo nodo non risolve il Match Engine avanzato.
+Stabilizza solo il consumo UI/readiness intorno all’input flow.
+
 ------------------------------------------------
 TARGET FUTURO — MATCH ENGINE EVOLUTION
 ------------------------------------------------
@@ -1926,25 +2113,16 @@ Evoluzioni future possibili solo come nodi dedicati:
 - relazioni entity-project
 - deduplicazione
 
-3. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+3. BUTTON CONFIRM READINESS ALIGNMENT
 
-- completare la migrazione visibility ancora rimasta su ui_visibility_state
-- mantenere project_state / entity_state come fonte matching
-- mantenere select_project / select_entity come decisione finale salvabile
-- evitare dipendenze circolari tra ui_visibility_state e input_analysis_result
-- decidere se ui_visibility_state resta wrapper minimo o viene deprecato gradualmente
-- non modificare matching, suggestion, command, select value, save flow o DB
-
-4. BUTTON CONFIRM READINESS ALIGNMENT
-
-- valutare button_input_confirm.Hidden
+- button_input_confirm.Hidden già migrato
 - valutare button_input_confirm.Disabled
 - distinguere visibility / disabled / save readiness
 - mantenere payload invariato
 - non modificare project_state / entity_state
 - non modificare insert_event / update_event
 
-5. MATCH CONFIDENCE / RANKING ADVANCED
+4. MATCH CONFIDENCE / RANKING ADVANCED
 
 - ranking più evoluto
 - confidence controllata
@@ -1960,19 +2138,26 @@ Vincoli futuri:
 - utente sempre in controllo
 - output/KPI non anticipati
 
-6. SELECT OPTIONS FILTERING — AMBIGUITY UX
+5. SELECT OPTIONS FILTERING — AMBIGUITY UX
 
 - filtrare opzioni select sui match ambigui
 - migliorare risoluzione ambiguità
 - non ridurre possibilità di selezione manuale libera senza nodo dedicato
 
-7. ADVANCED COMMAND INTENT
+6. ADVANCED COMMAND INTENT
 
 - modifica project/entity da command
 - dashboard/report intent
 - eventuale routing avanzato
 - nessun edit automatico senza conferma
 - nessun output/KPI anticipato
+
+7. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+
+- valutare se warning “match più specifici” resta sempre non bloccante
+- esempio: Mario selezionato automaticamente con warning entità più specifiche
+- decidere se richiedere scelta manuale nei casi più delicati
+- non modificare matching senza nodo dedicato
 
 ------------------------------------------------
 EVOLUZIONE FUTURA NON ATTIVA
@@ -1988,9 +2173,9 @@ EVOLUZIONE FUTURA NON ATTIVA
 - deduplicazione
 - command intent avanzato oltre create project/entity
 - Input Analysis Model completo
-- Full Visibility Migration completa
 - eventuale decommission di ui_visibility_state
-- button_input_confirm readiness alignment
+- button_input_confirm Disabled / readiness alignment
+- Match Engine — More Specific Match Policy
 - creazione automatica silenziosa project/entity
 - filtro select su match ambigui
 - pending state avanzato per nuovi project/entity
@@ -2049,9 +2234,13 @@ Il successivo Preview Analysis State
 ha aggiunto un layer separato per hint/status della Sintesi,
 senza trasformare il Match Engine in un sistema preview.
 
-Il successivo Input Analysis Result
-ha aggiunto un layer compositivo raw / selection / effective,
-senza trasformare il Match Engine in un motore monolitico.
+Il successivo Input Analysis Result — Visibility Migration Completion
+ha aumentato il consumo UI di input_analysis_result per gli Hidden principali del flow input,
+senza modificare il Match Engine.
+
+Il successivo Linting / Retool Query Safety Pass
+ha azzerato i linting Retool e rimosso query legacy unused,
+senza modificare il Match Engine.
 
 Il Match Engine resta invariato.
 
@@ -2110,6 +2299,11 @@ STATO ATTUALE
 ✔ input_analysis_result legge select_project / select_entity ma non li valorizza
 ✔ project_state / entity_state restano fonte minima matching
 ✔ select_project / select_entity restano fonti salvabili
+✔ Visibility Migration Completion completata senza regressione matching
+✔ input_analysis_result governa Hidden principali senza calcolare matching
+✔ button_input_confirm.Hidden migrato senza modificare Disabled / payload
+✔ ui_visibility_state residuo tecnico deprecabile
+✔ linting Retool azzerati senza modificare matching
 
 ---
 
@@ -2121,14 +2315,15 @@ STATO ATTUALE
 ⚠ nessuna deduplicazione  
 ✔ creazione guidata project/entity implementata a primo livello controllato
 ⚠ command intent avanzato non implementato
-✔ input_analysis_result implementato come layer compositivo parziale
+✔ input_analysis_result implementato come layer compositivo per Hidden principali del flow input
 ⚠ Input Analysis Model completo non implementato
-⚠ ui_visibility_state ancora operativo e non deprecato
-⚠ Full Visibility Migration non completata
-⚠ button_input_confirm non migrato
+⚠ ui_visibility_state ancora presente fisicamente come residuo tecnico deprecabile
+✔ Full Visibility Migration degli Hidden principali completata
+✔ button_input_confirm.Hidden migrato
+⚠ button_input_confirm.Disabled non migrato
 ⚠ save readiness non centralizzata
 ⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
-⚠ 19 linting Retool attualmente presenti
+✔ linting Retool azzerati
 ⚠ filtro select su match ambigui non implementato
 ⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
@@ -2314,3 +2509,43 @@ v09 — 2026-05-20
 - confermato DB invariato
 - confermato parser invariato
 - documentato aumento linting Retool a 19 come debito tecnico generale
+
+v10 — 2026-05-23
+
+- aggiornamento post INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
+- confermato Match Engine invariato
+- confermato project_state / entity_state invariati
+- confermato select_project / select_entity invariati
+- confermato create_suggestion_state invariato nella logica funzionale
+- confermato command_intent_state invariato nella logica funzionale
+- documentato input_analysis_result come fonte UI controllata per Hidden principali del flow input senza diventare Match Engine
+- documentata migrazione container_input.Hidden a input_analysis_result
+- documentata migrazione text_input_analysis_loading.Hidden a input_analysis_result
+- documentata migrazione btn_cancel_edit.Hidden a input_analysis_result
+- documentata migrazione btn_cancel_input_home.Hidden a input_analysis_result
+- documentata migrazione button_input_confirm.Hidden a input_analysis_result.readiness.canShowConfirm
+- documentato canShowConfirm come visibility-only
+- documentato button_input_confirm.Disabled come guard funzionale separata
+- documentato button_input_confirm payload invariato
+- documentata rimozione dipendenza input_analysis_result → ui_visibility_state
+- documentato ui_visibility_state come residuo tecnico deprecabile
+- documentato che ui_visibility_state non è fonte matching
+- aggiornata pipeline match post Visibility Migration Completion
+- aggiornata relazione con UI Readiness / Input Analysis Result
+- aggiornata relazione con preview
+- aggiornata relazione con create_suggestion_state
+- documentata policy match più specifici come invariata e non bloccante
+- aggiunto nodo futuro MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+- aggiornati limiti attuali
+- aggiornato target futuro Match Engine Evolution
+- aggiornato stato attuale
+
+- aggiornamento post LINTING / RETOOL QUERY SAFETY PASS
+- documentato linting Retool azzerato
+- documentato che i fix linting non hanno modificato matching
+- documentata eliminazione typing_state senza impatto matching
+- documentata eliminazione handle_event_success senza impatto matching
+- confermato DB invariato
+- confermato parser invariato
+- confermato save flow invariato
+- confermato payload invariato
