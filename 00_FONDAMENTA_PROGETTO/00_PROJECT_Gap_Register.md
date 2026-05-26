@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v15
+# 00_PROJECT_Gap_Register_v16
 
-DATA: 2026-05-25
+DATA: 2026-05-26
 
 ------------------------------------------------
 SCOPO
@@ -74,73 +74,34 @@ Questo registro mantiene:
 GAP ATTIVO DEL NODO CORRENTE
 ------------------------------------------------
 
-Nessun gap documentale attivo.
+Nessun gap attivo del nodo corrente.
 
-Il nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION è completato.
+Il nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT è completato.
+
+G36 è stato integrato come micro-correzione UX / semantica della Sintesi.
 
 Prossimo gap operativo consigliato:
 
-ID: G36
+ID: G29
 
 NOME:
-Preview / Event Data Label Semantic Alignment
+Feedback / Input Flow Micro-flash Cleanup
 
 Motivo:
 
-- micro-nodo UX/semantico
-- scope chiaro
-- rischio contenuto
-- corregge la label “Importo” quando il valore rappresenta una durata
-- non richiede modifiche parser
-- non richiede modifiche DB
-- non richiede modifiche save flow
-- non richiede modifiche duration normalization
+- residuo UX minore già identificato
+- candidato successivo coerente con State / Roadmap
+- intervento da aprire solo se riproducibile in modo chiaro
+- scope limitato a visibility/timing UI
+- non deve modificare parser, DB, save flow, matching o payload
 
 Fonte canonica:
-- 06_LOGOS_View_Preview_System
-- 04_LOGOS_Retool_Architecture se coinvolge componenti Retool
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
 
 ------------------------------------------------
 GAP RESIDUI PRIORITARI
 ------------------------------------------------
-
-ID: G36
-
-NOME:
-Preview / Event Data Label Semantic Alignment
-
-STATO:
-IDENTIFICATO — MICRO-NODO UX/SEMANTICO
-
-DESCRIZIONE:
-
-La UI usa ancora la label “Importo” anche quando il valore rappresenta una durata.
-
-Caso noto:
-
-2h30 rendering lavoro
-→ type Tempo
-→ amount 150
-→ unit minuti
-→ label visuale ancora “Importo”
-
-Azione:
-
-valutare micro-nodo dedicato.
-
-Vincoli:
-
-- non modificare parser
-- non modificare duration normalization
-- non modificare DB
-- non modificare save flow
-- modificare solo label/rappresentazione visuale
-
-Fonte canonica:
-- 06_LOGOS_View_Preview_System
-- 04_LOGOS_Retool_Architecture se coinvolge componenti Retool
-
----
 
 ID: G29
 
@@ -748,6 +709,37 @@ I gap seguenti sono integrati o integrati a livello base.
 Non devono essere riaperti come nodo base.
 Eventuali evoluzioni devono diventare sotto-gap o nodi dedicati.
 
+G36 — Preview / Event Data Label Semantic Alignment
+STATO: INTEGRATO
+
+Fonte canonica:
+- 06_LOGOS_View_Preview_System per comportamento visuale della Sintesi, label valore e micro-copy.
+- LOGOS_RETOOL_RUNTIME_REAL per runtime reale Retool as-is.
+
+Esito:
+
+- risolto residuo semantico label “Importo” su valori durata
+- riga valore della Sintesi allineata semanticamente:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- modifica limitata a micro-copy visuale
+- parser invariato
+- duration normalization invariata
+- type classification invariata
+- matching invariato
+- input_analysis_result invariato
+- preview_analysis_state invariato
+- button_input_confirm invariato
+- payload invariato
+- save flow invariato
+- DB invariato
+
+Regola:
+
+G36 non deve essere riaperto come nodo base.
+Eventuali evoluzioni future della Sintesi devono confluire in G17 Preview Model / Hint State Consolidation o in gap specifici.
+
 G37 — Documentation Architecture Audit / Redundancy Reduction
 STATO: COMPLETATO / INTEGRATO COME REGOLA DOCUMENTALE
 Fonte canonica:
@@ -842,26 +834,25 @@ Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
-Ordine attuale consigliato post Documentation Architecture Audit:
+Ordine attuale consigliato post Preview / Event Data Label Semantic Alignment:
 
-1. G36 — Preview / Event Data Label Semantic Alignment
-2. G29 — Input Flow / Transition Micro-flash Stabilization
-3. G33 — Button Confirm Readiness Alignment
-4. G17 — Preview Model / Hint State Consolidation
-5. G35 — Status Semantics Alignment
-6. G30 — Command Intent — Edit Guide Generic Alias
-7. G21 — Suggestion Create vs Edit Consistency
-8. G22 — Project Create Suggestion — Match Present / User Override
-9. G10A — Match Engine Evolution Advanced / Partial Ambiguity
-10. G11 — Data Structure / Entity Hierarchy
-11. G13 — Economic Direction Advanced
-12. G08A — Duration Advanced / Giorni-Settimane
-13. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
-14. G23 — Azioni Rapide Operative
-15. G24 — Dashboard Base
-16. G04 — Logging / Versioning
-17. G05 — Input Modes
-18. G06 — Multi-source Input
+1. G29 — Input Flow / Transition Micro-flash Stabilization
+2. G33 — Button Confirm Readiness Alignment
+3. G17 — Preview Model / Hint State Consolidation
+4. G35 — Status Semantics Alignment
+5. G30 — Command Intent — Edit Guide Generic Alias
+6. G21 — Suggestion Create vs Edit Consistency
+7. G22 — Project Create Suggestion — Match Present / User Override
+8. G10A — Match Engine Evolution Advanced / Partial Ambiguity
+9.  G11 — Data Structure / Entity Hierarchy
+10. G13 — Economic Direction Advanced
+11. G08A — Duration Advanced / Giorni-Settimane
+12. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
+13. G23 — Azioni Rapide Operative
+14. G24 — Dashboard Base
+15. G04 — Logging / Versioning
+16. G05 — Input Modes
+17. G06 — Multi-source Input
 
 Vincoli strategici permanenti:
 
@@ -876,6 +867,14 @@ e non resta nodo candidato attivo.
 Le regole documentali permanenti sono ora nel Kernel Manifest.
 Il checkpoint finale del nodo resta riferimento storico-operativo,
 ma i checkpoint non devono essere l’unica fonte di regole permanenti.
+
+Nota:
+
+G36 — Preview / Event Data Label Semantic Alignment è completato
+e non resta nodo candidato attivo.
+
+Il residuo label “Importo” su durata è stato risolto.
+La Sintesi resta comunque layer ibrido: eventuali interventi più ampi restano nel perimetro di G17.
 
 ------------------------------------------------
 REGOLA GAP REGISTER
@@ -1333,4 +1332,33 @@ v15 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard
+
+v16 — 2026-05-26
+
+- aggiornamento post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+- Gap Register aggiornato da v15 a v16
+- G36 Preview / Event Data Label Semantic Alignment aggiornato da IDENTIFICATO a INTEGRATO
+- G36 spostato da GAP RESIDUI PRIORITARI a GAP INTEGRATI / ARCHIVIO COMPATTO
+- registrata risoluzione del residuo label “Importo” su durata
+- registrata riga valore Sintesi semanticamente allineata:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- confermato che la modifica è solo visuale / micro-copy
+- confermato parser invariato
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato
+- confermato input_analysis_result invariato
+- confermato preview_analysis_state invariato
+- confermato button_input_confirm invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermato DB invariato
+- aggiornato prossimo gap operativo consigliato a G29 Feedback / Input Flow Micro-flash Cleanup
+- confermato che G36 non va riaperto come nodo base
+- confermato che eventuali evoluzioni più ampie della Sintesi restano in G17 Preview Model / Hint State Consolidation
+- nessuna anticipazione Button Confirm Readiness Alignment
+- nessuna anticipazione cleanup ui_visibility_state
 - nessuna anticipazione output / KPI / dashboard

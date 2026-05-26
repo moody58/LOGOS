@@ -1,6 +1,6 @@
-# 06_LOGOS_View_Preview_System_v14
+# 06_LOGOS_View_Preview_System_v15
 
-DATA: 2026-05-25
+DATA: 2026-05-26
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -65,7 +65,7 @@ Il documento descrive:
 - come la Sintesi resta ibrida nel contenuto, anche se la sua visibilità è più stabile
 - come il micro-flash feedback project/entity resta esterno alla preview
 - come “modifica” generico resta residuo Command Intent, non preview
-- come la label “Importo” su valori durata è stata rilevata come residuo semantico visuale
+- come la label visuale della riga valore è stata allineata semanticamente a Importo / Durata / Valore
 - come i linting Retool sono stati azzerati nel nodo Linting / Retool Query Safety Pass
 - come typing_state e handle_event_success sono stati eliminati come query legacy unused
 
@@ -92,6 +92,7 @@ Questo documento è fonte canonica per:
 - card “Da verificare”
 - notice associazioni mancanti
 - micro-copy preview
+- label semantica della riga valore nella Sintesi: Importo / Durata / Valore
 - micro-azioni visive “Cambia” / “Scegli”
 - relazione tra Sintesi e Dati evento
 - relazione tra Sintesi e create_suggestion_state
@@ -465,6 +466,7 @@ Mostra:
 
 ✔ dati parsati  
 ✔ dati normalizzati base 
+✔ label semantica della riga valore: Importo per euro, Durata per ore/minuti, Valore per fallback non riconosciuti
 ✔ durate normalizzate in minuti  
 ✔ durata in forma umana  
 ✔ hint normalizzazione durata  
@@ -617,7 +619,9 @@ Ma:
 ⚠ ui_visibility_state resta presente come residuo tecnico deprecabile
 ⚠ button_input_confirm.Disabled resta fuori da input_analysis_result
 ⚠ save readiness completa non è centralizzata
-⚠ label “Importo” ancora usata anche per valori durata
+✔ label “Importo” non viene più usata per valori durata
+✔ la riga valore mostra “Durata” per unità temporali ore/minuti
+✔ la riga valore usa “Valore” come fallback per unità non riconosciute
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
@@ -802,7 +806,10 @@ Output UI composto da:
 - righe dati:
   - Tipo
   - Data
-  - Importo
+  - riga valore con label semantica:
+    - Importo per euro
+    - Durata per ore/minuti
+    - Valore per fallback non riconosciuti
   - Progetto
   - Entità
 - micro-azioni visive:
@@ -1456,6 +1463,29 @@ hint:
 
 Normalizzato: 150 minuti
 
+Nota post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT:
+
+La riga valore della card Sintesi usa ora una label derivata da parsed.unit.
+
+Regola runtime:
+
+```js
+const valueRowLabel =
+  parsedUnit === "euro"
+    ? "Importo"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "Durata"
+      : value
+        ? "Valore"
+        : "Valore";
+
+const valueRowIcon =
+  parsedUnit === "euro"
+    ? "€"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "⏱️"
+      : "🔢";
+
 DATE FORMATTER
 converte YYYY-MM-DD → formato breve leggibile
 mesi localizzati
@@ -1747,7 +1777,7 @@ Struttura:
 - righe dati:
   - Tipo
   - Data
-  - Importo
+  - Importo / Durata / Valore in base all’unità rilevata
   - Progetto
   - Entità
 - micro-azioni visive:
@@ -1768,6 +1798,31 @@ Le fonti salvabili restano:
 - ui_state.parsed
 
 La Sintesi non è una form.
+
+Nota post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT:
+
+La riga valore della Sintesi non usa più una label fissa “Importo”.
+
+Comportamento consolidato:
+
+- parsed.unit = euro → label Importo, icona €
+- parsed.unit = ore / minuti → label Durata, icona temporale
+- altro valore non riconosciuto → label Valore, icona neutra
+
+La modifica è solo visuale / micro-copy.
+
+Non modifica:
+
+- parser
+- duration normalization
+- type classification
+- matching
+- input_analysis_result
+- preview_analysis_state
+- button_input_confirm
+- payload
+- insert_event / update_event
+- DB
 
 ------------------------------------------------
 CARD “DA VERIFICARE”
@@ -3440,7 +3495,8 @@ STATO ATTUALE
 ✔ button_input_confirm.Hidden migrato
 ⚠ button_input_confirm.Disabled non migrato
 ⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
-⚠ label “Importo” su durata ancora presente
+✔ label “Importo” su durata risolta
+✔ riga valore semanticamente allineata a Importo / Durata / Valore
 ⚠ flash residui digitazione/cambio schermata ancora presenti
 
 STATO DOCUMENTALE / REGOLE DI AGGIORNAMENTO
@@ -3519,12 +3575,11 @@ Residui tecnici della Preview da non perdere:
 - save readiness completa non è centralizzata
 - ui_visibility_state resta residuo tecnico deprecabile / rollback
 - cleanup obsolete UI guards / query reduction non ancora eseguito
-- label “Importo” su durata ancora presente
+- label “Importo” su durata risolta tramite micro-copy semantica della riga valore
 - flash residui digitazione/cambio schermata ancora presenti
 
 Possibili futuri tecnici collegati alla Preview:
 
-- PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 - PREVIEW MODEL / HINT STATE CONSOLIDATION
 - BUTTON CONFIRM READINESS ALIGNMENT
 
@@ -3861,3 +3916,36 @@ v14 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+
+v15 — 2026-05-26
+
+- completamento PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+- risolto residuo semantico visuale della label “Importo” su valori durata
+- documentata label semantica della riga valore nella Sintesi
+- introdotta distinzione visuale:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- documentata icona dinamica della riga valore:
+  - € per dati economici
+  - ⏱️ per dati temporali
+  - 🔢 per fallback valore
+- aggiornata documentazione della riga valore nella card Sintesi
+- confermato che la modifica è solo visuale / micro-copy
+- confermato parser invariato
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato
+- confermato input_analysis_result invariato
+- confermato preview_analysis_state invariato
+- confermato button_input_confirm invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermato DB invariato
+- test runtime superati:
+  - 20 euro materiale → Importo
+  - 2h30 rendering lavoro → Durata
+  - 1 ora lavoro → Durata
+  - villa 2 mario → nessuna falsa durata/importo con amount null
+  - Command Intent non regressivo
+  - edit flow non regressivo

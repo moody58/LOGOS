@@ -1,58 +1,74 @@
-# 00_PROJECT_State_v24
+# 00_PROJECT_State_v25
 
-DATA: 2026-05-25
+DATA: 2026-05-26
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION — COMPLETATO
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
 
-Stato nodo documentale:
+Stato nodo:
 
-- Fase 1 completata: mappa responsabilità documentale definita
-- STP decisionale completato
-- Pacchetto A completato come ALLINEAMENTO, non come riduzione
-- Pacchetto B — Core Governance completato
-- Pacchetto C — Documenti tecnici canonici completato
-- Pacchetto D — LOGOS_RETOOL_RUNTIME_REAL / Runtime Manifest Normalization completato
-- 00_PROJECT_KERNEL_MANIFEST aggiornato a v03
-- controllo finale / stress test documentale completato
+- micro-nodo UX / semantico completato
+- codice reale della Sintesi acquisito prima della modifica
+- modifica runtime applicata solo alla riga valore della Sintesi
+- label fissa “Importo” sostituita con label semantica dinamica
+- test runtime superati
 
 Esito:
 
-- fonti canoniche definite
-- documenti core alleggeriti
-- documenti tecnici canonici preservati come fonti madri
-- manifest runtime distinti dai documenti tecnici canonici
-- Kernel Manifest aggiornato con Principio Fonti Canoniche e Session Boot Matrix
-- regola aggiornamenti futuri consolidata
-- ridotto rischio di aggiornare troppi documenti a ogni micro-sessione
-- ridotto rischio di divergenze tra State / Roadmap / Gap / documenti tecnici
-- preservata o migliorata la ricostruibilità del sistema
+- euro → label Importo, icona €
+- ore / minuti → label Durata, icona temporale
+- fallback valore non riconosciuto → label Valore, icona neutra
+- caso 20 euro materiale validato con label Importo
+- caso 2h30 rendering lavoro validato con label Durata
+- caso 1 ora lavoro validato con label Durata
+- caso villa 2 mario validato senza falso importo/durata
+- Command Intent non regressivo
+- edit flow non regressivo
+- payload invariato
+- save flow invariato
 
-Checkpoint finale del nodo:
+Impatto:
 
-CHECKPOINT — DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- solo visuale / micro-copy
+- nessuna modifica parser
+- nessuna modifica duration normalization
+- nessuna modifica type classification
+- nessuna modifica matching
+- nessuna modifica input_analysis_result
+- nessuna modifica preview_analysis_state
+- nessuna modifica button_input_confirm
+- nessuna modifica payload
+- nessuna modifica insert_event / update_event
+- nessuna modifica DB
+- nessuna modifica Supabase
 
-Checkpoint precedenti archiviabili dopo consolidamento:
+Documenti aggiornati nel nodo:
 
-- CHECKPOINT - INPUT ANALYSIS RESULT - VISIBILITY MIGRATION COMPLETION
-- CHECKPOINT — LINTING RETOOL QUERY SAFETY PASS
-- CHECKPOINT — DOCUMENTATION ARCHITECTURE MAP
+- 06_LOGOS_View_Preview_System
+- LOGOS_RETOOL_RUNTIME_REAL
+
+Documenti da aggiornare ancora:
+
+- 00_PROJECT_Gap_Register
+
+Checkpoint:
+
+Non necessario checkpoint esteso.
+La modifica è micro-runtime, locale, testata e documentata nei documenti canonici competenti.
 
 Prossimo nodo operativo consigliato:
 
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Motivo:
 
-- nodo piccolo
-- scope chiaro
-- rischio contenuto
-- già tracciato come G36
-- corregge la label “Importo” quando il valore rappresenta una durata
-- non richiede modifiche parser, DB, save flow o duration normalization
+- candidato successivo già presente in Roadmap / backlog
+- rischio contenuto se trattato come micro-nodo UX
+- riguarda residui visuali minori post input_analysis_result
+- non deve modificare parser, DB, save flow, matching o payload
 
 ------------------------------------------------
 FASE:
@@ -77,7 +93,8 @@ INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS (COMPLETATO)
 INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION — COMPLETATO
 LINTING / RETOOL QUERY SAFETY PASS — COMPLETATO
 DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION — COMPLETATO
-TRANSIZIONE → PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
+TRANSIZIONE → INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Nota:
 
@@ -99,7 +116,9 @@ Risultato:
 
 Transizione operativa:
 
-Il prossimo nodo consigliato è PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT.
+Il nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT è completato.
+
+Il prossimo nodo consigliato è INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION, salvo diversa decisione in Regia.
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -121,6 +140,10 @@ C (Completezza): 10/10
 - prossimi nodi candidati mantenuti
 - changelog aggiornato a v24
 - richiami canonici inseriti per le logiche complete
+- nodo Preview / Event Data Label Semantic Alignment registrato come completato
+- label semantica Importo / Durata / Valore registrata nello stato sintetico
+- impatto runtime limitato a micro-copy Sintesi documentato
+- prossimo nodo consigliato aggiornato
 
 Q (Qualità): 9.5/10
 
@@ -131,6 +154,9 @@ Q (Qualità): 9.5/10
 - ridotto rischio di versioni divergenti tra State e documenti tecnici
 - nessuna decisione runtime ricalcolata
 - nessuna roadmap operativa anticipata
+- preservata funzione leggera dello State
+- dettaglio tecnico completo rimandato a 06_LOGOS_View_Preview_System e LOGOS_RETOOL_RUNTIME_REAL
+- nessuna duplicazione lunga del codice Sintesi
 
 D (Deployabilità): 10/10
 
@@ -147,6 +173,9 @@ D (Deployabilità): 10/10
 - fonti canoniche richiamate per ricostruzione completa
 - pronto come documento core di boot post documentation audit
 - prossimo nodo operativo consigliato chiarito
+- modifica runtime testata
+- nessuna regressione parser / matching / save flow / DB
+- G36 pronto per chiusura in Gap Register
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -191,6 +220,7 @@ Stato consolidato:
 ✔ Command Intent create project/entity completato a primo livello controllato  
 ✔ UX mobile rifinita  
 ✔ preview/hint migliorati ma ancora ibridi  
+✔ label riga valore Sintesi semanticamente allineata a Importo / Durata / Valore  
 ✔ input_analysis_result consolidato come fonte UI controllata per gli Hidden principali del flow input  
 ✔ ui_visibility_state riclassificato come residuo tecnico deprecabile / rollback  
 ✔ linting Retool azzerati  
@@ -227,7 +257,7 @@ Fonte completa:
 SNAPSHOT FUNZIONALE CONSOLIDATO
 ------------------------------------------------
 
-Il sistema LOGOS è stabilizzato su diciannove layer fondamentali.
+Il sistema LOGOS è stabilizzato su ventuno layer fondamentali.
 
 Layer completati:
 
@@ -251,6 +281,7 @@ Layer completati:
 18. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 19. LINTING / RETOOL QUERY SAFETY PASS
 20. DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+21. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
 ------------------------------------------------
 CATENE RUNTIME ATTUALI — SINTESI NON INTERPRETATIVA
@@ -411,6 +442,10 @@ Regole consolidate:
 - preview non valida evento
 - preview non è fonte del payload
 - preview resta layer ibrido, non view pura
+- riga valore Sintesi allineata semanticamente:
+  - euro → Importo
+  - ore/minuti → Durata
+  - fallback → Valore
 
 ------------------------------------------------
 RISULTATI FUNZIONALI CONSOLIDATI
@@ -434,6 +469,8 @@ Sistema:
 ✔ query legacy typing_state / handle_event_success eliminate
 ✔ DB invariato
 ✔ parser/matching/save flow preservati dopo gli ultimi nodi
+✔ label “Importo” su durata risolta
+✔ riga valore della Sintesi semanticamente coerente con unità rilevata
 
 ------------------------------------------------
 DEBITI TECNICI / FUNZIONALI RESIDUI
@@ -471,7 +508,7 @@ Preview / hint:
 - preview ancora layer ibrido
 - “Da verificare” ancora embedded nella Sintesi
 - micro-azioni Cambia / Scegli non cliccabili
-- label “Importo” ancora da allineare semanticamente quando il valore rappresenta durata
+- label “Importo” su durata risolta tramite micro-copy semantica della riga valore
 
 Fonte canonica:
 - 06_LOGOS_View_Preview_System
@@ -581,7 +618,7 @@ STATO LAYER SISTEMA
 Layer 1 — Input: ~99%
 Layer Command Intent: ~72%
 Layer 2 — Matching / Suggestion: ~92%
-Layer 3 — View / Preview: ~95%
+Layer 3 — View / Preview: ~96%
 Layer HINT SYSTEM: ~93%
 Layer UX Mobile: ~96%
 Layer UI Readiness / Visibility: ~94%
@@ -621,12 +658,14 @@ FASE ATTUALE
 ✔ INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS — COMPLETATO
 ✔ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION — COMPLETATO
 ✔ LINTING / RETOOL QUERY SAFETY PASS — COMPLETATO
+✔ DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION — COMPLETATO
+✔ PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
 
 ---
 
 TRANSIZIONE:
 
-→ PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+→ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Nota:
 
@@ -638,33 +677,45 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Nodo documentale appena completato:
-
-DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
-
-Esito:
-
-- ridondanze documentali ridotte
-- ricostruibilità totale preservata
-- fonti canoniche complete consolidate
-- duplicazioni tecniche nei documenti non canonici sostituite con richiami espliciti
-- costo documentale futuro ridotto
-- rischio loop documentale ridotto
-
-Prossimo nodo operativo consigliato:
+Nodo appena completato:
 
 PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
+Esito:
+
+- label “Importo” su durata risolta
+- riga valore della Sintesi resa semanticamente coerente
+- euro → Importo
+- ore / minuti → Durata
+- fallback non riconosciuto → Valore
+- modifica limitata a micro-copy visuale
+- parser invariato
+- duration normalization invariata
+- type classification invariata
+- matching invariato
+- input_analysis_result invariato
+- preview_analysis_state invariato
+- button_input_confirm invariato
+- payload invariato
+- save flow invariato
+- DB invariato
+
+Prossimo nodo operativo consigliato:
+
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+
 Obiettivo:
 
-- correggere la label “Importo” quando il valore rappresenta una durata
-- usare una label coerente per i valori tempo/durata
+- analizzare eventuali flash residui durante digitazione / cambio schermata
+- distinguere micro-flash accettabili da regressioni UX
+- intervenire solo se il fix è locale, reversibile e documentabile
 - non modificare parser
-- non modificare duration normalization
+- non modificare matching
 - non modificare DB
 - non modificare save flow
 - non modificare payload
-- non modificare matching
+- non anticipare cleanup ui_visibility_state
+- non aprire Preview Model / Hint State Consolidation
 
 Documenti da caricare per il prossimo nodo:
 
@@ -672,19 +723,19 @@ Core Boot:
 
 - 00_PROJECT_State
 - 00_PROJECT_Roadmap
-- CHECKPOINT — DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- ultimo checkpoint rilevante
 
 Documenti tecnici:
 
-- 06_LOGOS_View_Preview_System
 - 04_LOGOS_Retool_Architecture
-- LOGOS_RETOOL_RUNTIME_REAL se serve verificare il runtime reale Retool
+- LOGOS_RETOOL_RUNTIME_REAL
 - 01_LOGOS_Input_System solo se emerge impatto su input_analysis_result
+- 06_LOGOS_View_Preview_System solo se emerge impatto sulla Sintesi
 
 Regola:
 
-il prossimo nodo deve restare micro-nodo UX/semantico.
-Non deve diventare refactor preview globale.
+il prossimo nodo deve restare micro-nodo UX/visibility.
+Non deve diventare cleanup globale, refactor input_analysis_result o decommission ui_visibility_state.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -740,8 +791,8 @@ Sequenza corretta futura:
 5.1 visibility migration degli Hidden principali completata
 5.2 consolidare preview / label / hint residui
 5.3 semplificare architettura documentale per ridurre ridondanza senza perdere ricostruibilità
-6. introdurre data structure / logiche avanzate
-7. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
+1. introdurre data structure / logiche avanzate
+2. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
 
 ---
 
@@ -774,12 +825,13 @@ Priorità aggiornata:
 16. input analysis result visibility migration ✔
 17. linting / Retool query safety pass ✔
 18. documentation architecture audit / redundancy reduction ✔
-19. preview / event data label semantic alignment — prossimo nodo consigliato
-20. preview model / hint state consolidation
-21. input analysis model completo / single interpretation layer avanzato
-22. data structure / entity relations
-23. economic direction advanced
-24. output         
+19. preview / event data label semantic alignment ✔
+20. input flow / transition micro-flash stabilization — prossimo nodo consigliato
+21. preview model / hint state consolidation
+22. input analysis model completo / single interpretation layer avanzato
+23. data structure / entity relations
+24. economic direction advanced
+25. output         
 
 ---
 
@@ -892,28 +944,7 @@ Pacchetti completati:
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
-
-Scopo:
-
-- correggere la label “Importo” quando il valore rappresenta una durata
-- usare label coerenti:
-  - euro → Importo
-  - minuti / ore → Durata
-  - nessuna unità → riga assente o label neutra
-- non modificare parser
-- non modificare DB
-- non modificare save flow
-- non modificare duration normalization
-
-Motivo:
-
-Il test 2h30 rendering lavoro ha confermato che la visibility è corretta,
-ma la UI mostra ancora una label fuorviante.
-
----
-
-2. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+1. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Scopo:
 
@@ -925,7 +956,7 @@ Scopo:
 
 ---
 
-3. BUTTON CONFIRM READINESS ALIGNMENT
+2. BUTTON CONFIRM READINESS ALIGNMENT
 
 Scopo:
 
@@ -948,7 +979,7 @@ button_input_confirm.Disabled resta separato e va trattato solo con nodo dedicat
 
 ---
 
-4. PREVIEW MODEL / HINT STATE CONSOLIDATION
+3. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
@@ -960,7 +991,7 @@ Scopo:
 
 ---
 
-5. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+4. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
 
 Scopo:
 
@@ -971,7 +1002,7 @@ Scopo:
 
 ---
 
-6. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+5. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 
 Scopo:
 
@@ -983,7 +1014,7 @@ Scopo:
 
 ---
 
-7. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
+6. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
 
 Scopo:
 
@@ -997,7 +1028,7 @@ Scopo:
 
 ---
 
-8. DATA STRUCTURE / ENTITY HIERARCHY
+7. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -1009,7 +1040,7 @@ Scopo:
 
 ---
 
-9. ECONOMIC DIRECTION ADVANCED
+8. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -1020,7 +1051,7 @@ Scopo:
 
 ---
 
-10. DURATION ADVANCED — GIORNI / SETTIMANE
+9. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -1031,7 +1062,7 @@ Scopo:
 
 ---
 
-11. SUGGESTION CREATE VS EDIT CONSISTENCY
+10. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Scopo:
 
@@ -1041,7 +1072,7 @@ Scopo:
 
 ---
 
-12. AZIONI RAPIDE OPERATIVE
+11. AZIONI RAPIDE OPERATIVE
 
 Scopo:
 
@@ -1051,7 +1082,7 @@ Scopo:
 
 ---
 
-13. DASHBOARD BASE
+12. DASHBOARD BASE
 
 Scopo:
 
@@ -1620,4 +1651,38 @@ aggiornamento finale post DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTIO
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard
+
+v25 — 2026-05-26
+
+aggiornamento post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+
+- State aggiornato da v24 a v25
+- nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT registrato come COMPLETATO
+- registrata risoluzione G36 lato runtime
+- registrata correzione label “Importo” su durata
+- registrata riga valore Sintesi semanticamente allineata:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- confermato che la modifica è solo visuale / micro-copy
+- confermato codice reale Sintesi acquisito prima della modifica
+- confermati test runtime superati
+- confermato parser invariato
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato
+- confermato input_analysis_result invariato
+- confermato preview_analysis_state invariato
+- confermato button_input_confirm invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermato DB invariato
+- documenti tecnici aggiornati:
+  - 06_LOGOS_View_Preview_System
+  - LOGOS_RETOOL_RUNTIME_REAL
+- prossimo nodo operativo consigliato aggiornato a INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+- nessuna anticipazione Preview Model / Hint State Consolidation
+- nessuna anticipazione Button Confirm Readiness Alignment
+- nessuna anticipazione cleanup ui_visibility_state
 - nessuna anticipazione output / KPI / dashboard

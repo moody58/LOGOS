@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v18
+# 00_PROJECT_Roadmap_v19
 
-DATA: 2026-05-25
+DATA: 2026-05-26
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -167,12 +167,13 @@ FASE COMPLETATA:
 ✔ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION (COMPLETATO)
 ✔ LINTING / RETOOL QUERY SAFETY PASS (COMPLETATO)
 ✔ DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION (COMPLETATO)
+✔ PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT (COMPLETATO)
 
 ---
 
 FASE ATTIVA / TRANSIZIONE:
 
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — PROSSIMO NODO CONSIGLIATO
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION — PROSSIMO NODO CONSIGLIATO
 
 Stato post audit documentale:
 
@@ -200,23 +201,43 @@ Nota:
 Il nodo documentale completato non ha modificato runtime LOGOS,
 Retool, Supabase, DB, parser, matching, preview, payload o save flow.
 
+Stato post Preview / Event Data Label Semantic Alignment:
+
+- PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT completato
+- G36 integrato
+- label “Importo” su durata risolta
+- riga valore della Sintesi allineata semanticamente:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- modifica limitata a micro-copy visuale
+- parser invariato
+- duration normalization invariata
+- type classification invariata
+- matching invariato
+- input_analysis_result invariato
+- preview_analysis_state invariato
+- button_input_confirm invariato
+- payload invariato
+- save flow invariato
+- DB invariato
+
 Candidati principali residui ordinati:
 
-1. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
-2. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
-3. BUTTON CONFIRM READINESS ALIGNMENT
-4. PREVIEW MODEL / HINT STATE CONSOLIDATION
-5. COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
-6. SUGGESTION CREATE VS EDIT CONSISTENCY
-7. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
-8. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
-9. DATA STRUCTURE / ENTITY HIERARCHY
-10. ECONOMIC DIRECTION ADVANCED
-11. DURATION ADVANCED — GIORNI / SETTIMANE
-12. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
-13. AZIONI RAPIDE OPERATIVE
-14. DASHBOARD BASE
-15. ICON SYSTEM / MOBILE POLISH FINALE
+1. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+2. BUTTON CONFIRM READINESS ALIGNMENT
+3. PREVIEW MODEL / HINT STATE CONSOLIDATION
+4. COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
+5. SUGGESTION CREATE VS EDIT CONSISTENCY
+6. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+7. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
+8. DATA STRUCTURE / ENTITY HIERARCHY
+9. ECONOMIC DIRECTION ADVANCED
+10. DURATION ADVANCED — GIORNI / SETTIMANE
+11. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
+12. AZIONI RAPIDE OPERATIVE
+13. DASHBOARD BASE
+14. ICON SYSTEM / MOBILE POLISH FINALE
 
 Candidati non immediati:
 
@@ -636,6 +657,51 @@ Fonte canonica:
 - 04_LOGOS_Retool_Architecture
 - LOGOS_RETOOL_RUNTIME_REAL
 
+---
+
+DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+
+Stato:
+
+COMPLETATO
+
+Risultato:
+
+- fonti canoniche definite
+- documenti core alleggeriti
+- documenti tecnici canonici preservati
+- runtime manifest normalizzati
+- Kernel Manifest aggiornato
+- Session Boot Matrix consolidata
+- regola aggiornamenti futuri consolidata
+
+Fonte canonica:
+- 00_PROJECT_KERNEL_MANIFEST
+- 00_PROJECT_State
+- 00_PROJECT_Gap_Register
+
+---
+
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+
+Stato:
+
+COMPLETATO
+
+Risultato:
+
+- label “Importo” su durata risolta
+- riga valore della Sintesi allineata semanticamente
+- euro → Importo
+- ore / minuti → Durata
+- fallback non riconosciuto → Valore
+- modifica limitata a micro-copy visuale
+- parser, DB, payload e save flow invariati
+
+Fonte canonica:
+- 06_LOGOS_View_Preview_System
+- LOGOS_RETOOL_RUNTIME_REAL
+
 ------------------------------------------------
 STEP NON ATTIVI / FUTURI
 ------------------------------------------------
@@ -720,28 +786,28 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Stato:
 
-PROSSIMO NODO CONSIGLIATO POST DOCUMENTATION AUDIT
+PROSSIMO NODO CONSIGLIATO POST PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
 Motivo:
 
-- nodo piccolo
-- scope chiaro
-- rischio contenuto
-- già tracciato come G36
-- corregge una incoerenza semantica visuale reale
+- residuo UX minore già tracciato
+- candidato successivo coerente con State e Gap Register
+- rischio contenuto se trattato come micro-nodo
+- utile per stabilizzare ulteriormente le transizioni del flow input
 - non richiede modifiche parser
 - non richiede modifiche DB
 - non richiede modifiche save flow
-- non richiede modifiche duration normalization
+- non richiede modifiche matching
+- non richiede modifiche payload
 
 Obiettivo:
 
-correggere la label “Importo” quando il valore rappresenta una durata,
-mantenendo invariati parsing, normalization, salvataggio e payload.
+analizzare eventuali flash residui durante digitazione / cambio schermata,
+distinguendo micro-flash accettabili da regressioni UX reali.
 
 Documenti da usare:
 
@@ -749,32 +815,27 @@ Core Boot:
 
 - 00_PROJECT_State
 - 00_PROJECT_Roadmap
-- CHECKPOINT — DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
+- ultimo checkpoint rilevante
 
 Documenti tecnici:
 
-- 06_LOGOS_View_Preview_System
 - 04_LOGOS_Retool_Architecture
-- LOGOS_RETOOL_RUNTIME_REAL se serve verificare runtime reale
+- LOGOS_RETOOL_RUNTIME_REAL
 - 01_LOGOS_Input_System solo se emerge impatto su input_analysis_result
+- 06_LOGOS_View_Preview_System solo se emerge impatto sulla Sintesi
 
 Vincolo:
 
-non trasformare questo nodo in refactor preview globale.
+non trasformare questo nodo in cleanup globale,
+refactor input_analysis_result,
+decommission ui_visibility_state
+o Preview Model / Hint State Consolidation.
+
 ------------------------------------------------
-NODI CANDIDATI POST DOCUMENTATION AUDIT
+NODI CANDIDATI POST PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 ------------------------------------------------
 
-1. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
-
-Obiettivo:
-
-- correggere label “Importo” quando il valore rappresenta una durata
-- non modificare parser, DB, save flow o duration normalization
-
----
-
-2. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+1. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Obiettivo:
 
@@ -783,7 +844,7 @@ Obiettivo:
 
 ---
 
-3. BUTTON CONFIRM READINESS ALIGNMENT
+2. BUTTON CONFIRM READINESS ALIGNMENT
 
 Obiettivo:
 
@@ -793,7 +854,7 @@ Obiettivo:
 
 ---
 
-4. PREVIEW MODEL / HINT STATE CONSOLIDATION
+3. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Obiettivo:
 
@@ -803,7 +864,7 @@ Obiettivo:
 
 ---
 
-5. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+4. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
 
 Obiettivo:
 
@@ -812,7 +873,7 @@ Obiettivo:
 
 ---
 
-6. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+5. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 
 Obiettivo:
 
@@ -822,7 +883,7 @@ Obiettivo:
 
 ---
 
-7. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
+6. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
 
 Obiettivo:
 
@@ -832,7 +893,7 @@ Obiettivo:
 
 ---
 
-8. SUGGESTION CREATE VS EDIT CONSISTENCY
+7. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Obiettivo:
 
@@ -841,7 +902,7 @@ Obiettivo:
 
 ---
 
-9. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+8. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
 
 Obiettivo:
 
@@ -850,7 +911,7 @@ Obiettivo:
 
 ---
 
-10. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
+9. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
 
 Obiettivo:
 
@@ -859,7 +920,7 @@ Obiettivo:
 
 ---
 
-11. DATA STRUCTURE / ENTITY HIERARCHY
+10. DATA STRUCTURE / ENTITY HIERARCHY
 
 Obiettivo:
 
@@ -868,7 +929,7 @@ Obiettivo:
 
 ---
 
-12. ECONOMIC DIRECTION ADVANCED
+11. ECONOMIC DIRECTION ADVANCED
 
 Obiettivo:
 
@@ -877,7 +938,7 @@ Obiettivo:
 
 ---
 
-13. DURATION ADVANCED — GIORNI / SETTIMANE
+12. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Obiettivo:
 
@@ -886,7 +947,7 @@ Obiettivo:
 
 ---
 
-14. AZIONI RAPIDE OPERATIVE
+13. AZIONI RAPIDE OPERATIVE
 
 Obiettivo:
 
@@ -895,7 +956,7 @@ Obiettivo:
 
 ---
 
-15. DASHBOARD BASE
+14. DASHBOARD BASE
 
 Obiettivo:
 
@@ -903,7 +964,7 @@ Obiettivo:
 
 ---
 
-16. ICON SYSTEM / MOBILE POLISH FINALE
+15. ICON SYSTEM / MOBILE POLISH FINALE
 
 Obiettivo:
 
@@ -912,7 +973,7 @@ Obiettivo:
 
 ---
 
-17. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
+16. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
 
 Stato:
 
@@ -1055,7 +1116,7 @@ Stato attuale:
 Residui non bloccanti ma rilevanti:
 
 - preview ancora layer ibrido
-- label “Importo” ancora usata anche per durata
+- label “Importo” su durata risolta
 - flash residui digitazione/cambio schermata
 - button_input_confirm.Disabled non migrato
 - save readiness completa non centralizzata
@@ -1598,4 +1659,34 @@ v18 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+- nessuna anticipazione output / KPI / dashboard
+
+v19 — 2026-05-26
+
+- aggiornamento post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+- Roadmap aggiornata da v18 a v19
+- nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT registrato come COMPLETATO
+- G36 registrato come integrato
+- rimossa PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT dai nodi candidati attivi
+- registrata risoluzione della label “Importo” su durata
+- registrata riga valore Sintesi semanticamente allineata:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- confermato che la modifica è solo visuale / micro-copy
+- confermato parser invariato
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato
+- confermato input_analysis_result invariato
+- confermato preview_analysis_state invariato
+- confermato button_input_confirm invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermato DB invariato
+- aggiornato prossimo nodo operativo consigliato a INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+- confermato che il prossimo nodo deve restare micro-nodo UX / visibility
+- nessuna anticipazione Button Confirm Readiness Alignment
+- nessuna anticipazione Preview Model / Hint State Consolidation
+- nessuna anticipazione cleanup ui_visibility_state
 - nessuna anticipazione output / KPI / dashboard

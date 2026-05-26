@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v16
+# LOGOS_RETOOL_RUNTIME_REAL_v17
 
-DATA: 2026-05-25
+DATA: 2026-05-26
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -104,7 +104,8 @@ C (Completezza): 10/10
 - typing_state eliminato come query legacy unused documentato
 - handle_event_success eliminato come query legacy unused documentato
 - Performance unused query risolta documentata
-- residuo label “Importo” su durata documentato
+- label semantica della riga valore Sintesi documentata
+- residuo label “Importo” su durata risolto
 - flash residui digitazione/cambio schermata documentati
 
 Q (Qualità): 9.5/10  
@@ -267,6 +268,7 @@ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 LINTING / RETOOL QUERY SAFETY PASS
 DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 PACCHETTO D — LOGOS_RETOOL_RUNTIME_REAL / RUNTIME MANIFEST NORMALIZATION
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
 Nota documentale:
 
@@ -391,6 +393,10 @@ INPUT
 ✔ Spesa / Incasso / Tempo / Evento persistiti nel DB   
 ✔ preview visualmente allineata a ui_state.parsed  
 ✔ amount/unit/date mostrati in formato leggibile italiano  
+✔ riga valore della Sintesi semanticamente allineata a Importo / Durata / Valore
+✔ label Importo usata solo per euro
+✔ label Durata usata per ore/minuti
+✔ label Valore usata come fallback visuale
 ✔ update visibile in lista senza refresh pagina 
 ✔ Match Engine Unification First Controlled Level completato  
 ✔ project_state / entity_state come fonte minima matching project/entity  
@@ -2692,6 +2698,8 @@ Caratteristiche:
 ✔ legge amount/unit/event_date da ui_state.parsed
 ✔ visualizza amount/unit in formato italiano
 ✔ visualizza durata normalizzata in forma umana
+✔ mostra label valore semantica: Importo per euro, Durata per ore/minuti, Valore come fallback
+✔ usa icona valore dinamica: € per euro, ⏱️ per durata, 🔢 per fallback
 ✔ mostra hint “Normalizzato: X minuti”
 ✔ mostra hint durata ambigua per giorni/settimane
 ✔ separa correttamente data e descrizione
@@ -2728,6 +2736,17 @@ formatAmountIT
 formatUnitIT
 formatDurationHumanIT
 formatDurationMinutesIT
+
+Label runtime riga valore:
+
+valueRowLabel
+valueRowIcon
+
+Regola:
+
+- parsedUnit = euro → label Importo, icona €
+- parsedUnit = ore / minuti → label Durata, icona ⏱️
+- altro valore non riconosciuto → label Valore, icona 🔢
 
 Comportamento:
 
@@ -2805,6 +2824,29 @@ preview:
 DB:
 amount 1500.5
 unit euro
+
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — CODICE RUNTIME
+
+La riga valore della Sintesi non usa più la label fissa “Importo”.
+
+Codice runtime aggiunto:
+
+```js
+const valueRowLabel =
+  parsedUnit === "euro"
+    ? "Importo"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "Durata"
+      : value
+        ? "Valore"
+        : "Valore";
+
+const valueRowIcon =
+  parsedUnit === "euro"
+    ? "€"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "⏱️"
+      : "🔢";
 
 MATCH ENGINE UNIFICATION — ESEMPI:
 
@@ -4174,7 +4216,7 @@ Full Visibility Migration degli Hidden principali completata
 button_input_confirm.Hidden migrato a input_analysis_result
 button_input_confirm.Disabled non migrato a input_analysis_result
 flash residui durante digitazione/cambio schermata ancora presenti
-label “Importo” ancora usata anche per valori durata
+label “Importo” su valori durata risolta tramite label semantica della riga valore
 status OK + card Da verificare da riallineare semanticamente
 
 ARCHITETTURA:
@@ -4390,7 +4432,8 @@ Debiti:
 ✔ button_input_confirm.Hidden migrato
 ⚠ button_input_confirm.Disabled non migrato
 ⚠ flash residui durante digitazione/cambio schermata ancora presenti
-⚠ label “Importo” su durata ancora presente
+✔ label “Importo” su durata risolta
+✔ riga valore Sintesi semanticamente allineata a Importo / Durata / Valore
 ⚠ save readiness non centralizzata
 ⚠ “modifica” generico non ancora riconosciuto come guida edit
 ⚠ cleanup obsolete UI guards / query reduction non ancora eseguito
@@ -5907,6 +5950,250 @@ Esito:
 ✔ save flow invariato
 ✔ payload invariato
 
+------------------------------------------------
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — TEST VALIDATI
+------------------------------------------------
+
+Input:
+
+20 euro materiale
+
+Risultato:
+
+- valore visualizzato: 20,00 €
+- label riga valore: Importo
+- icona riga valore: €
+- parser invariato
+- payload invariato
+- save flow invariato
+
+Esito: OK
+
+---
+
+Input:
+
+2h30 rendering lavoro
+
+Risultato:
+
+- parsed.amount = 150
+- parsed.unit = minuti
+- valore visualizzato in forma umana
+- label riga valore: Durata
+- icona riga valore: ⏱️
+- hint normalizzazione invariato, se previsto
+- parser invariato
+- duration normalization invariata
+
+Esito: OK
+
+---
+
+Input:
+
+1 ora lavoro
+
+Risultato:
+
+- parsed.unit = minuti
+- type Tempo
+- label riga valore: Durata
+- icona riga valore: ⏱️
+- save flow invariato
+
+Esito: OK
+
+---
+
+Input:
+
+villa 2 mario
+
+Risultato:
+
+- amount null
+- unit null
+- nessuna falsa durata
+- nessun falso importo
+- matching/highlight invariati
+
+Esito: OK
+
+---
+
+Input:
+
+crea progetto test
+
+Risultato:
+
+- command intent preservato
+- Sintesi evento nascosta
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Edit evento NEW con durata:
+
+Risultato:
+
+- label riga valore: Durata
+- edit flow non regressivo
+- update_event invariato
+
+Esito: OK
+
+---
+
+Save evento normale:
+
+Risultato:
+
+- payload invariato
+- insert_event / update_event invariati
+- DB invariato
+
+Esito: OK
+
+Regressioni:
+
+- DB invariato
+- parser invariato
+- duration normalization invariata
+- type classification invariata
+- matching invariato
+- command intent invariato
+- preview_analysis_state invariato
+- input_analysis_result invariato
+- button_input_confirm invariato
+- payload invariato
+- save flow invariato
+
+------------------------------------------------
+PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — TEST VALIDATI
+------------------------------------------------
+
+Input:
+
+20 euro materiale
+
+Risultato:
+
+- valore visualizzato: 20,00 €
+- label riga valore: Importo
+- icona riga valore: €
+- parser invariato
+- payload invariato
+- save flow invariato
+
+Esito: OK
+
+---
+
+Input:
+
+2h30 rendering lavoro
+
+Risultato:
+
+- parsed.amount = 150
+- parsed.unit = minuti
+- valore visualizzato in forma umana
+- label riga valore: Durata
+- icona riga valore: ⏱️
+- hint normalizzazione invariato, se previsto
+- parser invariato
+- duration normalization invariata
+
+Esito: OK
+
+---
+
+Input:
+
+1 ora lavoro
+
+Risultato:
+
+- parsed.unit = minuti
+- type Tempo
+- label riga valore: Durata
+- icona riga valore: ⏱️
+- save flow invariato
+
+Esito: OK
+
+---
+
+Input:
+
+villa 2 mario
+
+Risultato:
+
+- amount null
+- unit null
+- nessuna falsa durata
+- nessun falso importo
+- matching/highlight invariati
+
+Esito: OK
+
+---
+
+Input:
+
+crea progetto test
+
+Risultato:
+
+- command intent preservato
+- Sintesi evento nascosta
+- nessun evento salvato
+
+Esito: OK
+
+---
+
+Edit evento NEW con durata:
+
+Risultato:
+
+- label riga valore: Durata
+- edit flow non regressivo
+- update_event invariato
+
+Esito: OK
+
+---
+
+Save evento normale:
+
+Risultato:
+
+- payload invariato
+- insert_event / update_event invariati
+- DB invariato
+
+Esito: OK
+
+Regressioni:
+
+- DB invariato
+- parser invariato
+- duration normalization invariata
+- type classification invariata
+- matching invariato
+- command intent invariato
+- preview_analysis_state invariato
+- input_analysis_result invariato
+- button_input_confirm invariato
+- payload invariato
+- save flow invariato
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -6395,3 +6682,39 @@ v16 — 2026-05-25
 - nessuna modifica save flow
 - nessuna modifica payload
 - nessuna anticipazione output / KPI / dashboard
+
+v17 — 2026-05-26
+
+- completamento PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+- aggiornato runtime reale della Sintesi Retool
+- risolto residuo label “Importo” su valori durata
+- introdotta label semantica della riga valore:
+  - euro → Importo
+  - ore / minuti → Durata
+  - fallback non riconosciuto → Valore
+- introdotta icona dinamica della riga valore:
+  - € per dati economici
+  - ⏱️ per dati temporali
+  - 🔢 per fallback valore
+- sostituita riga runtime fissa row("€", "Importo", amountLabel)
+- nuova riga runtime row(valueRowIcon, valueRowLabel, amountLabel)
+- confermato che la modifica è solo visuale / micro-copy
+- confermato parser invariato
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato
+- confermato command intent invariato
+- confermato preview_analysis_state invariato
+- confermato input_analysis_result invariato
+- confermato button_input_confirm invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermato DB invariato
+- test runtime superati:
+  - 20 euro materiale → Importo
+  - 2h30 rendering lavoro → Durata
+  - 1 ora lavoro → Durata
+  - villa 2 mario → nessuna falsa durata/importo
+  - crea progetto test → command intent non regressivo
+  - edit evento NEW con durata → non regressivo
+  - save evento normale → payload invariato
