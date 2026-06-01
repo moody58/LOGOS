@@ -1,74 +1,126 @@
-# 00_PROJECT_State_v25
+# 00_PROJECT_State_v26
 
-DATA: 2026-05-26
+DATA: 2026-06-01
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION — CHIUSO COME RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
 
 Stato nodo:
 
-- micro-nodo UX / semantico completato
-- codice reale della Sintesi acquisito prima della modifica
-- modifica runtime applicata solo alla riga valore della Sintesi
-- label fissa “Importo” sostituita con label semantica dinamica
-- test runtime superati
+- micro-nodo UX / visibility / timing UI completato
+- G29 analizzato su sistema reale Retool
+- flash/riga vuota del flow input osservato durante transizioni input / command / empty
+- comportamento riproducibile ma non bloccante
+- console Retool senza errori
+- nessuna regressione funzionale rilevata
+- nessuna modifica runtime mantenuta
 
 Esito:
 
-- euro → label Importo, icona €
-- ore / minuti → label Durata, icona temporale
-- fallback valore non riconosciuto → label Valore, icona neutra
-- caso 20 euro materiale validato con label Importo
-- caso 2h30 rendering lavoro validato con label Durata
-- caso 1 ora lavoro validato con label Durata
-- caso villa 2 mario validato senza falso importo/durata
-- Command Intent non regressivo
-- edit flow non regressivo
-- payload invariato
-- save flow invariato
+- identificato flash visivo legato a container_input / timing rendering Retool
+- verificato che il comportamento non dipende da parser
+- verificato che il comportamento non dipende da matching
+- verificato che il comportamento non dipende da DB
+- verificato che il comportamento non dipende da payload o save flow
+- testati Hidden del container padre e dei figli principali
+- testati layout/stile di container_input
+- testati container_home e wrapper come possibili cause layout
+- testato micro-latch input_shell_visible come ultimo tentativo controllato
+- micro-latch non mantenuto perché non risolutivo
+- rollback effettuato alla base stabile
+
+Base runtime mantenuta:
+
+container_input.Hidden:
+
+{{ !input_analysis_result.value?.mode?.effectiveIsInputFlow }}
+
+input_home → Change:
+
+const value = input_home.value || "";
+
+// Se l’utente sta scrivendo un nuovo input,
+// la lista eventi deve sparire e deve tornare visibile il flow input.
+if (value.trim()) {
+  ui_state.setValue({
+    ...ui_state.value,
+    view: "home"
+  });
+
+  container_events_list.setHidden(true);
+  container_feedback.setHidden(true);
+  container_home.setHidden(false);
+  container_input.setHidden(false);
+}
+
+await input_raw.setValue(value);
+trigger_parse_debounced.trigger();
+
+Classificazione:
+
+- residuo UX minore
+- accettabile
+- non bloccante
+- da mantenere in osservazione
+- da non inseguire oltre senza nodo/refactor dedicato
 
 Impatto:
 
-- solo visuale / micro-copy
 - nessuna modifica parser
+- nessuna modifica parse_input_controlled
 - nessuna modifica duration normalization
 - nessuna modifica type classification
 - nessuna modifica matching
-- nessuna modifica input_analysis_result
-- nessuna modifica preview_analysis_state
-- nessuna modifica button_input_confirm
-- nessuna modifica payload
-- nessuna modifica insert_event / update_event
+- nessuna modifica project_state/entity_state
 - nessuna modifica DB
 - nessuna modifica Supabase
+- nessuna modifica insert_event/update_event
+- nessuna modifica payload
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica canConfirm
+- nessuna modifica Command Intent
+- nessuna modifica create_suggestion_state
+- nessuna modifica preview_analysis_state
+- nessuna modifica input_analysis_result mantenuta
+- nessuna eliminazione di ui_visibility_state
+- nessun cleanup globale
 
-Documenti aggiornati nel nodo:
+Documenti da aggiornare nel nodo:
 
-- 06_LOGOS_View_Preview_System
-- LOGOS_RETOOL_RUNTIME_REAL
-
-Documenti da aggiornare ancora:
-
+- 00_PROJECT_State
 - 00_PROJECT_Gap_Register
+- LOGOS_RETOOL_RUNTIME_REAL
+- 04_LOGOS_Retool_Architecture solo se si vuole registrare nota breve di runtime/rollback
+
+Documenti da non aggiornare:
+
+- 04_LOGOS_Database_Schema
+- LOGOS_SUPABASE_RUNTIME_REAL
+- 02_LOGOS_Match_Engine
+- 03_LOGOS_Event_Lifecycle
+- 06_LOGOS_View_Preview_System
+- 00_PROJECT_KERNEL_MANIFEST
 
 Checkpoint:
 
 Non necessario checkpoint esteso.
-La modifica è micro-runtime, locale, testata e documentata nei documenti canonici competenti.
+Il nodo non ha prodotto modifiche runtime definitive.
+Il risultato è una classificazione controllata del residuo UX.
 
 Prossimo nodo operativo consigliato:
 
-INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+BUTTON CONFIRM READINESS ALIGNMENT
 
 Motivo:
 
 - candidato successivo già presente in Roadmap / backlog
-- rischio contenuto se trattato come micro-nodo UX
-- riguarda residui visuali minori post input_analysis_result
-- non deve modificare parser, DB, save flow, matching o payload
+- button_input_confirm.Hidden è già migrato a input_analysis_result
+- button_input_confirm.Disabled resta separato
+- nodo utile per distinguere visibilità, abilitazione, blocchi reali e readiness funzionale
+- deve mantenere payload, insert/update, parser, matching, select e DB invariati
 
 ------------------------------------------------
 FASE:
@@ -94,7 +146,8 @@ INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION — COMPLETATO
 LINTING / RETOOL QUERY SAFETY PASS — COMPLETATO
 DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION — COMPLETATO
 PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
-TRANSIZIONE → INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION — CHIUSO COME RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
+TRANSIZIONE → BUTTON CONFIRM READINESS ALIGNMENT
 
 Nota:
 
@@ -145,7 +198,7 @@ C (Completezza): 10/10
 - impatto runtime limitato a micro-copy Sintesi documentato
 - prossimo nodo consigliato aggiornato
 
-Q (Qualità): 9.5/10
+Q (Qualità): 9.4/10
 
 - documento riportato alla funzione di State
 - ridotte duplicazioni tecniche lunghe
@@ -230,6 +283,9 @@ Stato consolidato:
 ✔ fonti canoniche consolidate
 ✔ Session Boot Matrix consolidata nel Kernel Manifest
 ✔ regola aggiornamenti futuri consolidata 
+✔ G29 analizzato e classificato come residuo UX minore non bloccante
+✔ micro-flash input/command transition mantenuto in osservazione
+✔ nessuna modifica runtime definitiva mantenuta dopo il nodo G29
 
 Debiti principali:
 
@@ -240,6 +296,7 @@ Debiti principali:
 ⚠ save readiness completa non centralizzata  
 ⚠ data structure / entity hierarchy non implementata  
 ⚠ output / dashboard / KPI non attivi  
+⚠ micro-flash input/command transition residuo non bloccante, da non inseguire fuori nodo dedicato
 
 Fonte completa:
 
@@ -248,7 +305,7 @@ Fonte completa:
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
 - 04_LOGOS_Retool_Architecture per componenti/query/Hidden
-- 05_LOGOS_Database_Schema per schema DB
+- 04_LOGOS_Database_Schema per schema DB
 - 06_LOGOS_View_Preview_System per preview/hint
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
 - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
@@ -265,7 +322,7 @@ Layer completati:
 2. MATCHING BASE
 3. LABEL QUALITY
 4. ENGINE BASE — NORMALIZATION LAYER BASE
-5. PREVIEW ALIGNMENT BASE
+4. PREVIEW ALIGNMENT BASE
 6. ENGINE BASE — DURATION NORMALIZATION
 7. ENGINE BASE — TYPE CLASSIFICATION BASE
 8. MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL
@@ -275,7 +332,7 @@ Layer completati:
 12. UX MOBILE COHERENCE PASS
 13. COMMAND INTENT — CREATE PROJECT / ENTITY
 14. UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
-15. PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
+14. PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
 16. INPUT ANALYSIS RESULT / SINGLE INTERPRETATION LAYER BASE — READ-ONLY DIAGNOSTIC
 17. INPUT ANALYSIS RESULT — CONTROLLED UI CONSUMPTION PASS
 18. INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
@@ -315,7 +372,7 @@ ui_state.parsed
 Fonti canoniche:
 - 01_LOGOS_Input_System per origine dei dati salvabili lato input.
 - 03_LOGOS_Event_Lifecycle per lifecycle evento, edit, no-op, cancel, WRITTEN / ERROR.
-- 05_LOGOS_Database_Schema per struttura DB e campi persistiti.
+- 04_LOGOS_Database_Schema per struttura DB e campi persistiti.
 - LOGOS_SUPABASE_RUNTIME_REAL per comportamento Supabase as-is.
 
 Nota:
@@ -331,7 +388,7 @@ ui_state.parsed.unit
 
 Fonte canonica:
 - 01_LOGOS_Input_System per Type Classification Base.
-- 05_LOGOS_Database_Schema per persistenza di events.type.
+- 04_LOGOS_Database_Schema per persistenza di events.type.
 
 Regola consolidata:
 type attuali = Evento / Tempo / Spesa / Incasso.
@@ -371,7 +428,7 @@ create_suggestion_state
 Fonte canonica:
 - 01_LOGOS_Input_System per create_suggestion_state e flow input.
 - 04_LOGOS_Retool_Architecture per componenti/query.
-- 05_LOGOS_Database_Schema per impatto DB.
+- 04_LOGOS_Database_Schema per impatto DB.
 
 Regole consolidate:
 - nessuna creazione automatica project/entity
@@ -552,7 +609,7 @@ DB / Supabase:
 - nessun audit trail dedicato
 
 Fonte canonica:
-- 05_LOGOS_Database_Schema
+- 04_LOGOS_Database_Schema
 - LOGOS_SUPABASE_RUNTIME_REAL
 
 ---
@@ -621,10 +678,10 @@ Layer 2 — Matching / Suggestion: ~92%
 Layer 3 — View / Preview: ~96%
 Layer HINT SYSTEM: ~93%
 Layer UX Mobile: ~96%
-Layer UI Readiness / Visibility: ~94%
+Layer UI Readiness / Visibility: ~94% — residuo micro-flash G29 in osservazione
 Layer Input Analysis / Composition: ~68%
 Layer 4 — Data Structure: ~32%
-Layer 5 — Engine: ~48%
+Layer 4 — Engine: ~48%
 Layer 6 — Output: 0%
 
 ---
@@ -679,41 +736,46 @@ OBIETTIVO IMMEDIATO
 
 Nodo appena completato:
 
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
 Esito:
 
-- label “Importo” su durata risolta
-- riga valore della Sintesi resa semanticamente coerente
-- euro → Importo
-- ore / minuti → Durata
-- fallback non riconosciuto → Valore
-- modifica limitata a micro-copy visuale
-- parser invariato
-- duration normalization invariata
-- type classification invariata
-- matching invariato
-- input_analysis_result invariato
-- preview_analysis_state invariato
-- button_input_confirm invariato
-- payload invariato
-- save flow invariato
-- DB invariato
+- G29 analizzato su runtime Retool reale
+- flash/riga container_input osservato durante transizioni input / command / empty
+- comportamento riproducibile ma non bloccante
+- console Retool senza errori
+- testati Hidden padre/figli, layout container, wrapper e micro-latch
+- nessun tentativo ha risolto stabilmente il comportamento
+- nessuna modifica runtime definitiva mantenuta
+- rollback alla base stabile effettuato
+- classificazione finale: residuo UX minore accettabile / in osservazione
+
+Base mantenuta:
+
+- container_input.Hidden resta governato da input_analysis_result.value?.mode?.effectiveIsInputFlow
+- input_home Change handler resta nella versione pre-latch
+- input_shell_visible non mantenuto
 
 Prossimo nodo operativo consigliato:
 
-INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+BUTTON CONFIRM READINESS ALIGNMENT
 
 Obiettivo:
 
-- analizzare eventuali flash residui durante digitazione / cambio schermata
-- distinguere micro-flash accettabili da regressioni UX
-- intervenire solo se il fix è locale, reversibile e documentabile
+- analizzare button_input_confirm.Disabled
+- distinguere:
+  - visibilità bottone
+  - abilitazione bottone
+  - blocchi reali
+  - warning non bloccanti
+  - readiness save
+- valutare solo se una parte della readiness funzionale può leggere input_analysis_result
+- mantenere invariato il payload di salvataggio
+- non modificare insert_event / update_event
 - non modificare parser
 - non modificare matching
+- non modificare select_project / select_entity / select1 come fonti salvabili
 - non modificare DB
-- non modificare save flow
-- non modificare payload
 - non anticipare cleanup ui_visibility_state
 - non aprire Preview Model / Hint State Consolidation
 
@@ -723,19 +785,19 @@ Core Boot:
 
 - 00_PROJECT_State
 - 00_PROJECT_Roadmap
-- ultimo checkpoint rilevante
+- 00_PROJECT_Gap_Register
 
 Documenti tecnici:
 
 - 04_LOGOS_Retool_Architecture
 - LOGOS_RETOOL_RUNTIME_REAL
-- 01_LOGOS_Input_System solo se emerge impatto su input_analysis_result
-- 06_LOGOS_View_Preview_System solo se emerge impatto sulla Sintesi
+- 01_LOGOS_Input_System solo se emerge impatto su input_analysis_result / readiness
+- 03_LOGOS_Event_Lifecycle solo se emerge impatto su create/edit/no-op/cancel lifecycle
 
 Regola:
 
-il prossimo nodo deve restare micro-nodo UX/visibility.
-Non deve diventare cleanup globale, refactor input_analysis_result o decommission ui_visibility_state.
+il prossimo nodo deve restare limitato a button_input_confirm.Disabled / readiness funzionale.
+Non deve modificare payload, save flow, DB, parser, matching o visibility globale.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -787,10 +849,10 @@ Sequenza corretta futura:
 2. consolidare gestione project/entity
 3. introdurre command intent guidato ✔
 4. UX mobile base rifinita e completata ✔
-5. consolidare preview / hint / input analysis
-5.1 visibility migration degli Hidden principali completata
-5.2 consolidare preview / label / hint residui
-5.3 semplificare architettura documentale per ridurre ridondanza senza perdere ricostruibilità
+4. consolidare preview / hint / input analysis
+4.1 visibility migration degli Hidden principali completata
+4.2 consolidare preview / label / hint residui
+4.3 semplificare architettura documentale per ridurre ridondanza senza perdere ricostruibilità
 1. introdurre data structure / logiche avanzate
 2. solo dopo aprire viste, dashboard operative, istanze o moduli verticali
 
@@ -811,7 +873,7 @@ Priorità aggiornata:
 2. label quality ✔
 3. normalization layer base ✔
 4. preview alignment ✔
-5. duration normalization ✔
+4. duration normalization ✔
 6. type classification base ✔
 7. match engine unification first controlled level ✔
 8. UX / cleanup post match engine ✔
@@ -821,7 +883,7 @@ Priorità aggiornata:
 12. command intent create project/entity ✔
 13. UI readiness / visibility aggregator ✔
 14. preview analysis state ✔
-15. input analysis result controlled layers ✔
+14. input analysis result controlled layers ✔
 16. input analysis result visibility migration ✔
 17. linting / Retool query safety pass ✔
 18. documentation architecture audit / redundancy reduction ✔
@@ -831,7 +893,7 @@ Priorità aggiornata:
 22. input analysis model completo / single interpretation layer avanzato
 23. data structure / entity relations
 24. economic direction advanced
-25. output         
+24. output         
 
 ---
 
@@ -850,7 +912,7 @@ PRIORITÀ FUTURE:
 2. input analysis model / single interpretation layer
 3. data structure / entity relations
 4. data structure / entity relations
-5. economic direction advanced
+4. economic direction advanced
 6. duration advanced — giorni / settimane
 7. dashboard / KPI base
 
@@ -944,19 +1006,7 @@ Pacchetti completati:
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
-1. INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
-
-Scopo:
-
-- analizzare flash residui durante digitazione e cambio schermata
-- distinguere flash accettabili da regressioni UX
-- non modificare parser/matching/save flow
-- non introdurre routing alternativo
-- intervenire solo se il fix è locale e reversibile
-
----
-
-2. BUTTON CONFIRM READINESS ALIGNMENT
+1. BUTTON CONFIRM READINESS ALIGNMENT
 
 Scopo:
 
@@ -979,7 +1029,7 @@ button_input_confirm.Disabled resta separato e va trattato solo con nodo dedicat
 
 ---
 
-3. PREVIEW MODEL / HINT STATE CONSOLIDATION
+2. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Scopo:
 
@@ -991,7 +1041,7 @@ Scopo:
 
 ---
 
-4. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+3. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
 
 Scopo:
 
@@ -1002,7 +1052,7 @@ Scopo:
 
 ---
 
-5. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+4. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
 
 Scopo:
 
@@ -1014,7 +1064,7 @@ Scopo:
 
 ---
 
-6. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
+5. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
 
 Scopo:
 
@@ -1028,7 +1078,7 @@ Scopo:
 
 ---
 
-7. DATA STRUCTURE / ENTITY HIERARCHY
+6. DATA STRUCTURE / ENTITY HIERARCHY
 
 Scopo:
 
@@ -1040,7 +1090,7 @@ Scopo:
 
 ---
 
-8. ECONOMIC DIRECTION ADVANCED
+7. ECONOMIC DIRECTION ADVANCED
 
 Scopo:
 
@@ -1051,7 +1101,7 @@ Scopo:
 
 ---
 
-9. DURATION ADVANCED — GIORNI / SETTIMANE
+8. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Scopo:
 
@@ -1062,7 +1112,7 @@ Scopo:
 
 ---
 
-10. SUGGESTION CREATE VS EDIT CONSISTENCY
+9. SUGGESTION CREATE VS EDIT CONSISTENCY
 
 Scopo:
 
@@ -1072,7 +1122,7 @@ Scopo:
 
 ---
 
-11. AZIONI RAPIDE OPERATIVE
+10. AZIONI RAPIDE OPERATIVE
 
 Scopo:
 
@@ -1082,13 +1132,30 @@ Scopo:
 
 ---
 
-12. DASHBOARD BASE
+11. DASHBOARD BASE
 
 Scopo:
 
 - attivare la voce Dashboard solo quando Core Event System e data quality saranno sufficientemente consolidati
 - definire prime viste aggregate
 - evitare KPI prematuri
+
+---
+
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+
+Stato:
+
+CHIUSO COME RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
+
+Nota:
+
+Il flash/riga container_input durante transizioni input / command / empty è stato analizzato.
+Non è bloccante.
+Non genera errori console.
+Non modifica dati.
+Non impatta parser, matching, payload, save flow o DB.
+Non va riaperto salvo peggioramento UX evidente o refactor dedicato della visibility/rendering.
 
 ------------------------------------------------
 CHANGELOG
@@ -1106,7 +1173,7 @@ matching retrofit
 v04 — 2026-04-03  
 fix insert pipeline  
 
-v05 — 2026-04-04  
+v04 — 2026-04-04  
 introduzione label layer  
 implementazione label pipeline  
 miglioramento UX hint  
@@ -1151,7 +1218,7 @@ rimozione parsing legacy da button_input_confirm
 validazione insert con dati normalizzati  
 validazione update con dati normalizzati  
 fix refresh lista eventi dopo update  
-aggiornamento stato Engine da 0% a 15%  
+aggiornamento stato Engine da 0% a 14%  
 apertura transizione verso Preview Alignment Base  
 
 v11 — 2026-04-30  
@@ -1177,10 +1244,10 @@ completamento ENGINE BASE — DURATION NORMALIZATION
 definita unità canonica durata in minuti  
 durate certe ore/minuti convertite in minuti  
 1 ora → 60 minuti  
-1,5 ore → 90 minuti  
-1 ora e 15 minuti → 75 minuti  
-2h30 → 150 minuti  
-2 ore 30 → 150 minuti  
+1,4 ore → 90 minuti  
+1 ora e 14 minuti → 74 minuti  
+2h30 → 140 minuti  
+2 ore 30 → 140 minuti  
 aggiornato parse_input_controlled  
 aggiornata preview durata con forma umana  
 aggiunto hint “Normalizzato: X minuti”  
@@ -1195,7 +1262,7 @@ nessuna type classification
 insert/update validati runtime con amount/unit normalizzati  
 transizione verso STEP 6.3 — TYPE CLASSIFICATION BASE  
 
-v13 — 2026-05-01  
+v13 — 2026-04-01  
 completamento ENGINE BASE — TYPE CLASSIFICATION BASE  
 select1 allineato a ui_state.parsed.unit  
 parsed.unit = minuti → Tempo  
@@ -1219,7 +1286,7 @@ linting Retool residuo registrato come anomalia non bloccante
 matching non unificato confermato come prossimo nodo logico  
 transizione verso STEP 6.4 — MATCH ENGINE UNIFICATION  
 
-v14 — 2026-05-02  
+v14 — 2026-04-02  
 completamento MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL  
 project_state aggiornato come fonte minima matching project  
 entity_state aggiornato come fonte minima matching entity  
@@ -1243,7 +1310,7 @@ villa 2 → Villa 2
 hint informativo match più specifici introdotto  
 mario → Mario + hint entità più specifiche  
 villa → Villa + hint progetti più specifici  
-bug €500 nella label preview risolto  
+bug €400 nella label preview risolto  
 linting project_state/entity_state ripuliti  
 linting residui edit_mode/editing_event mantenuti come nodo futuro  
 nessuna modifica DB  
@@ -1253,7 +1320,7 @@ nessuna modifica duration normalization
 nessun output/KPI anticipato  
 transizione verso NEXT NODE da definire in Roadmap
 
-v15 — 2026-05-02  
+v14 — 2026-04-02  
 completamento UX / CLEANUP MICRO-BATCH POST MATCH ENGINE  
 aggiunto btn_cancel_edit in edit mode  
 Annulla modifica resetta edit_mode / editing_event / input / select / ui_state.parsed  
@@ -1285,7 +1352,7 @@ Duration Normalization invariata
 nessun output/KPI anticipato  
 transizione verso NEXT NODE da definire in Roadmap
 
-v16 — 2026-05-03  
+v16 — 2026-04-03  
 completamento LINTING / STATE HELPER CLEANUP  
 risolto linting Retool edit_mode: 'value' is not defined  
 risolto linting Retool editing_event: 'value' is not defined  
@@ -1317,7 +1384,7 @@ lista eventi invariata
 nessun output/KPI anticipato  
 transizione verso NEXT NODE da definire in Roadmap
 
-v17 — 2026-05-07
+v17 — 2026-04-07
 completamento PROJECT / ENTITY CREATE SUGGESTION — FIRST CONTROLLED LEVEL
 introdotto create_suggestion_state
 introdotte variabili project_create_inline_open / project_create_suggestion_dismissed
@@ -1354,7 +1421,7 @@ direzione LOGOS Core modulare riconfermata
 istanze ASPRI / ADEXIMA / MaurizioLab confermate come derivate future del core
 transizione verso NEXT NODE da definire in Roadmap
 
-v18 — 2026-05-09
+v18 — 2026-04-09
 completamento UX MOBILE COHERENCE PASS
 Home mobile rifinita
 card Esempi resa coerente
@@ -1389,7 +1456,7 @@ duration normalization invariata
 nessun output/KPI anticipato
 transizione verso NEXT NODE da definire in Roadmap
 
-v19 — 2026-05-13
+v19 — 2026-04-13
 completamento COMMAND INTENT — CREATE PROJECT / ENTITY
 introdotto command_intent_state come query Retool page-level
 command_intent_state riconosce comandi puri senza salvare dati
@@ -1433,7 +1500,7 @@ residuo rendering progressivo input evento normale documentato
 direzione futura Input Analysis Model / Single Interpretation Layer documentata
 transizione verso NEXT NODE da definire in Roadmap
 
-v20 — 2026-05-18
+v20 — 2026-04-18
 completamento UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
 integrato esito CHECKPOINT — INPUT RENDERING STABILITY / PRIORITY REVIEW
 integrato esito CHECKPOINT — UI READINESS / VISIBILITY AGGREGATOR — FIRST CONTROLLED LEVEL
@@ -1481,10 +1548,10 @@ Input Analysis Model completo non implementato
 Event Interpretation Engine non implementato
 residuo “modifica” generico non riconosciuto come guida edit documentato
 residuo micro-flash feedback project/entity documentato
-5 linting Retool residui documentati
+4 linting Retool residui documentati
 transizione verso aggiornamento documentale post UI Readiness
 
-v21 — 2026-05-20
+v21 — 2026-04-20
 completamento PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
 introdotto preview_analysis_state come Transformer read-only
 preview_analysis_state raccoglie hint / warning / status / Da verificare / associazioni mancanti della Sintesi
@@ -1528,7 +1595,7 @@ linting Retool attuali saliti a 19 e registrati come debito tecnico
 prossimo nodo consigliato: INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 nodo parallelo consigliato: LINTING / RETOOL QUERY SAFETY PASS
 
-v22 — 2026-05-23
+v22 — 2026-04-23
 completamento INPUT ANALYSIS RESULT — VISIBILITY MIGRATION COMPLETION
 container_input.Hidden migrato a input_analysis_result.mode.effectiveIsInputFlow
 text_input_analysis_loading.Hidden migrato a input_analysis_result
@@ -1580,7 +1647,7 @@ label “Importo” su durata documentata come nodo futuro
 policy match più specifici documentata come nodo futuro
 prossimo nodo candidato prioritario: DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 
-v23 — 2026-05-25
+v23 — 2026-04-24
 
 aggiornamento documentale nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 
@@ -1596,7 +1663,7 @@ aggiunti richiami canonici a:
 - 02_LOGOS_Match_Engine per matching project/entity
 - 03_LOGOS_Event_Lifecycle per stati evento, edit, no-op, cancel e processing
 - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/wiring Retool
-- 05_LOGOS_Database_Schema per schema DB
+- 04_LOGOS_Database_Schema per schema DB
 - 06_LOGOS_View_Preview_System per Sintesi, preview, hint e label visuali
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
 - LOGOS_SUPABASE_RUNTIME_REAL per comportamento Supabase as-is
@@ -1619,7 +1686,7 @@ nessuna modifica save flow
 nessuna modifica payload
 nessuna anticipazione output / KPI / dashboard
 
-v24 — 2026-05-25
+v24 — 2026-04-24
 
 aggiornamento finale post DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 
@@ -1653,11 +1720,11 @@ aggiornamento finale post DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTIO
 - nessuna modifica payload
 - nessuna anticipazione output / KPI / dashboard
 
-v25 — 2026-05-26
+v24 — 2026-04-26
 
 aggiornamento post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 
-- State aggiornato da v24 a v25
+- State aggiornato da v24 a v24
 - nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT registrato come COMPLETATO
 - registrata risoluzione G36 lato runtime
 - registrata correzione label “Importo” su durata
@@ -1684,5 +1751,52 @@ aggiornamento post PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 - prossimo nodo operativo consigliato aggiornato a INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 - nessuna anticipazione Preview Model / Hint State Consolidation
 - nessuna anticipazione Button Confirm Readiness Alignment
+- nessuna anticipazione cleanup ui_visibility_state
+- nessuna anticipazione output / KPI / dashboard
+
+v26 — 2026-06-01
+
+aggiornamento post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+
+- State aggiornato da v25 a v26
+- nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION chiuso come RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
+- G29 analizzato su runtime Retool reale
+- osservato flash/riga container_input durante transizioni input / command / empty
+- confermato comportamento riproducibile ma non bloccante
+- confermata console Retool senza errori
+- testati Hidden di container_input
+- testati Hidden dei figli principali:
+  - text_input_analysis_loading
+  - text_edit_mode_notice
+  - btn_cancel_input_home
+  - container_command_intent
+- testati layout/stile di container_input
+- verificati container_home e wrapper come possibili cause layout
+- testata Strada B con micro-latch input_shell_visible
+- micro-latch non risolutivo e non mantenuto
+- rollback effettuato alla base stabile
+- confermato container_input.Hidden basato su input_analysis_result.value?.mode?.effectiveIsInputFlow
+- confermato input_home Change handler pre-latch
+- nessuna modifica runtime definitiva mantenuta
+- nessuna modifica parser
+- nessuna modifica parse_input_controlled
+- nessuna modifica duration normalization
+- nessuna modifica type classification
+- nessuna modifica matching
+- nessuna modifica project_state/entity_state
+- nessuna modifica command_intent_state mantenuta
+- nessuna modifica create_suggestion_state
+- nessuna modifica input_analysis_result mantenuta
+- nessuna modifica preview_analysis_state
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica payload
+- nessuna modifica save flow
+- nessuna modifica insert_event / update_event
+- nessuna modifica DB
+- nessuna modifica Supabase
+- nessuna eliminazione ui_visibility_state
+- nessun cleanup globale
+- prossimo nodo operativo consigliato aggiornato a BUTTON CONFIRM READINESS ALIGNMENT
+- nessuna anticipazione Preview Model / Hint State Consolidation
 - nessuna anticipazione cleanup ui_visibility_state
 - nessuna anticipazione output / KPI / dashboard

@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v16
+# 00_PROJECT_Gap_Register_v17
 
-DATA: 2026-05-26
+DATA: 2026-06-01
 
 ------------------------------------------------
 SCOPO
@@ -76,26 +76,59 @@ GAP ATTIVO DEL NODO CORRENTE
 
 Nessun gap attivo del nodo corrente.
 
-Il nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT è completato.
+Il nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION è stato chiuso.
 
-G36 è stato integrato come micro-correzione UX / semantica della Sintesi.
+G29 è stato analizzato su runtime Retool reale e classificato come:
+
+RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
+
+Esito:
+
+- flash/riga container_input osservato durante transizioni input / command / empty
+- comportamento riproducibile ma non bloccante
+- console Retool senza errori
+- nessuna regressione funzionale rilevata
+- testati Hidden del container padre
+- testati Hidden dei figli principali
+- testati layout/stile di container_input
+- verificati container_home e wrapper come possibili cause layout
+- testata Strada B con micro-latch input_shell_visible
+- micro-latch non risolutivo e non mantenuto
+- rollback effettuato alla base stabile
+- nessuna modifica runtime definitiva mantenuta
+
+Classificazione:
+
+- non blocca input
+- non blocca Command Intent
+- non blocca Sintesi
+- non blocca Dati evento
+- non blocca Conferma
+- non impatta payload
+- non impatta save flow
+- non impatta DB
+
+Regola:
+
+G29 non va riaperto salvo peggioramento UX evidente o nodo/refactor dedicato alla visibility/rendering del flow input.
 
 Prossimo gap operativo consigliato:
 
-ID: G29
+ID: G33
 
 NOME:
-Feedback / Input Flow Micro-flash Cleanup
+Button Confirm Readiness Alignment
 
 Motivo:
 
-- residuo UX minore già identificato
-- candidato successivo coerente con State / Roadmap
-- intervento da aprire solo se riproducibile in modo chiaro
-- scope limitato a visibility/timing UI
-- non deve modificare parser, DB, save flow, matching o payload
+- button_input_confirm.Hidden è già migrato a input_analysis_result
+- button_input_confirm.Disabled resta separato
+- readiness funzionale non ancora centralizzata
+- nodo coerente con State / Roadmap
+- richiede confine rigoroso tra visibilità, abilitazione, payload e save flow
 
 Fonte canonica:
+- 01_LOGOS_Input_System
 - 04_LOGOS_Retool_Architecture
 - LOGOS_RETOOL_RUNTIME_REAL
 
@@ -109,22 +142,61 @@ NOME:
 Feedback / Input Flow Micro-flash Cleanup
 
 STATO:
-IDENTIFICATO — RESIDUO MINORE
+IN OSSERVAZIONE — RESIDUO UX MINORE ACCETTABILE
 
 DESCRIZIONE:
 
-Persistono micro-flash visivi in feedback project/entity e transizioni input/cambio schermata.
+Il nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION ha analizzato il flash/riga container_input durante transizioni input / command / empty.
+
+Il comportamento è risultato:
+
+- riproducibile
+- visivo
+- non bloccante
+- privo di errori console
+- non collegato a parser
+- non collegato a matching
+- non collegato a DB
+- non collegato a payload
+- non collegato a save flow
+
+Sono stati testati senza soluzione stabile definitiva:
+
+- Hidden di container_input
+- Hidden dei figli principali
+- layout/stile di container_input
+- container_home
+- wrapper
+- micro-latch input_shell_visible
+
+Esito:
+
+- nessuna modifica runtime definitiva mantenuta
+- rollback effettuato alla base stabile
+- residuo classificato come accettabile e da mantenere in osservazione
 
 Azione:
 
-aprire solo se il flash diventa fastidioso o riproducibile in modo chiaro.
+non riaprire come micro-fix ordinario.
+
+Riaprire solo se:
+
+- il flash peggiora sensibilmente
+- diventa bloccante
+- genera regressioni UX reali
+- viene aperto un nodo dedicato/refactor sulla visibility/rendering del flow input
 
 Vincoli:
 
-- non inseguire micro-flash senza identificazione precisa
-- non modificare save flow
+- non inseguire ulteriormente micro-flash non bloccanti
+- non modificare parser
+- non modificare matching
+- non modificare DB
 - non modificare insert/update
-- intervenire solo su timing/visibility UI
+- non modificare payload
+- non modificare save flow
+- non introdurre latch paralleli senza nodo dedicato
+- non eliminare ui_visibility_state fuori cleanup dedicato
 
 Fonte canonica:
 - 04_LOGOS_Retool_Architecture
@@ -834,25 +906,24 @@ Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
-Ordine attuale consigliato post Preview / Event Data Label Semantic Alignment:
+Ordine attuale consigliato post Input Flow / Transition Micro-flash Stabilization:
 
-1. G29 — Input Flow / Transition Micro-flash Stabilization
-2. G33 — Button Confirm Readiness Alignment
-3. G17 — Preview Model / Hint State Consolidation
-4. G35 — Status Semantics Alignment
-5. G30 — Command Intent — Edit Guide Generic Alias
-6. G21 — Suggestion Create vs Edit Consistency
-7. G22 — Project Create Suggestion — Match Present / User Override
-8. G10A — Match Engine Evolution Advanced / Partial Ambiguity
-9.  G11 — Data Structure / Entity Hierarchy
-10. G13 — Economic Direction Advanced
-11. G08A — Duration Advanced / Giorni-Settimane
-12. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
-13. G23 — Azioni Rapide Operative
-14. G24 — Dashboard Base
-15. G04 — Logging / Versioning
-16. G05 — Input Modes
-17. G06 — Multi-source Input
+1. G33 — Button Confirm Readiness Alignment
+2. G17 — Preview Model / Hint State Consolidation
+3. G35 — Status Semantics Alignment
+4. G30 — Command Intent — Edit Guide Generic Alias
+5. G21 — Suggestion Create vs Edit Consistency
+6. G22 — Project Create Suggestion — Match Present / User Override
+7. G10A — Match Engine Evolution Advanced / Partial Ambiguity
+8. G11 — Data Structure / Entity Hierarchy
+9. G13 — Economic Direction Advanced
+10. G08A — Duration Advanced / Giorni-Settimane
+11. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
+12. G23 — Azioni Rapide Operative
+13. G24 — Dashboard Base
+14. G04 — Logging / Versioning
+15. G05 — Input Modes
+16. G06 — Multi-source Input
 
 Vincoli strategici permanenti:
 
@@ -861,8 +932,11 @@ Vincoli strategici permanenti:
 
 Nota:
 
-G37 — Documentation Architecture Audit / Redundancy Reduction è completato
-e non resta nodo candidato attivo.
+G29 — Feedback / Input Flow Micro-flash Cleanup è stato analizzato e resta in osservazione come residuo UX minore accettabile.
+
+Non è più nodo operativo immediato.
+
+Non deve essere riaperto salvo peggioramento UX evidente o nodo dedicato/refactor sulla visibility/rendering del flow input.
 
 Le regole documentali permanenti sono ora nel Kernel Manifest.
 Il checkpoint finale del nodo resta riferimento storico-operativo,
@@ -1360,5 +1434,44 @@ v16 — 2026-05-26
 - confermato che G36 non va riaperto come nodo base
 - confermato che eventuali evoluzioni più ampie della Sintesi restano in G17 Preview Model / Hint State Consolidation
 - nessuna anticipazione Button Confirm Readiness Alignment
+- nessuna anticipazione cleanup ui_visibility_state
+- nessuna anticipazione output / KPI / dashboard
+
+v17 — 2026-06-01
+
+- aggiornamento post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+- Gap Register aggiornato da v16 a v17
+- G29 Feedback / Input Flow Micro-flash Cleanup aggiornato da IDENTIFICATO — RESIDUO MINORE a IN OSSERVAZIONE — RESIDUO UX MINORE ACCETTABILE
+- registrata analisi runtime Retool reale su flash/riga container_input
+- confermato comportamento riproducibile ma non bloccante
+- confermata console Retool senza errori
+- testati Hidden di container_input
+- testati Hidden dei figli principali:
+  - text_input_analysis_loading
+  - text_edit_mode_notice
+  - btn_cancel_input_home
+  - container_command_intent
+- testati layout/stile di container_input
+- verificati container_home e wrapper come possibili cause layout
+- testata Strada B con micro-latch input_shell_visible
+- micro-latch non risolutivo e non mantenuto
+- rollback effettuato alla base stabile
+- nessuna modifica runtime definitiva mantenuta
+- confermato che G29 non impatta parser
+- confermato che G29 non impatta matching
+- confermato che G29 non impatta input_analysis_result in modo definitivo
+- confermato che G29 non impatta command_intent_state in modo definitivo
+- confermato che G29 non impatta preview_analysis_state
+- confermato che G29 non impatta button_input_confirm.Disabled
+- confermato che G29 non impatta payload
+- confermato che G29 non impatta save flow
+- confermato che G29 non impatta insert_event / update_event
+- confermato che G29 non impatta DB
+- confermato che G29 non impatta Supabase
+- chiarito che G29 non va riaperto come micro-fix ordinario
+- chiarito che G29 va riaperto solo in caso di peggioramento UX evidente o nodo dedicato/refactor visibility/rendering
+- aggiornato prossimo gap operativo consigliato a G33 Button Confirm Readiness Alignment
+- aggiornato ordine consigliato gap/nodi post G29
+- nessuna anticipazione Preview Model / Hint State Consolidation
 - nessuna anticipazione cleanup ui_visibility_state
 - nessuna anticipazione output / KPI / dashboard

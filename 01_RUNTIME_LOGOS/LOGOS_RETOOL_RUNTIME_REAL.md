@@ -1,6 +1,6 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v17
+# LOGOS_RETOOL_RUNTIME_REAL_v18
 
-DATA: 2026-05-26
+DATA: 2026-06-01
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -107,6 +107,10 @@ C (Completezza): 10/10
 - label semantica della riga valore Sintesi documentata
 - residuo label “Importo” su durata risolto
 - flash residui digitazione/cambio schermata documentati
+- INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION documentato come nodo analizzato e chiuso senza modifiche runtime definitive
+- G29 documentato come residuo UX minore accettabile / in osservazione
+- test Hidden / layout / micro-latch documentati in forma sintetica
+- rollback alla base stabile documentato
 
 Q (Qualità): 9.5/10  
 - runtime reale aggiornato  
@@ -161,6 +165,9 @@ Q (Qualità): 9.5/10
 - rumore tecnico Retool ridotto con linting azzerati
 - query legacy unused rimosse senza regressioni
 - approccio modulare confermato: moduli specializzati calcolano, input_analysis_result compone
+- chiarito che il micro-flash container_input è residuo di rendering/timing Retool non bloccante
+- evitata documentazione di modifiche non mantenute come runtime attivo
+- preservata distinzione tra runtime reale e tentativi non consolidati
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -241,6 +248,10 @@ D (Deployabilità): 10/10
 - suggestion invariata nella logica funzionale
 - save flow invariato
 - payload invariato
+- confermato che nessuna modifica runtime definitiva è stata mantenuta dopo G29
+- confermato rollback a container_input.Hidden basato su input_analysis_result.value?.mode?.effectiveIsInputFlow
+- confermato input_home Change handler pre-latch
+- confermato che input_shell_visible non è parte del runtime attivo
 
 ------------------------------------------------
 STATO
@@ -269,6 +280,27 @@ LINTING / RETOOL QUERY SAFETY PASS
 DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION
 PACCHETTO D — LOGOS_RETOOL_RUNTIME_REAL / RUNTIME MANIFEST NORMALIZATION
 PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+
+Nota post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION:
+
+Il nodo G29 è stato analizzato su runtime Retool reale.
+
+Esito:
+
+- flash/riga container_input osservato durante transizioni input / command / empty
+- comportamento riproducibile ma non bloccante
+- console Retool senza errori
+- nessuna regressione funzionale rilevata
+- nessuna modifica runtime definitiva mantenuta
+- rollback alla base stabile effettuato
+
+Classificazione:
+
+G29 resta residuo UX minore accettabile / in osservazione.
+
+Non è stato introdotto alcun nuovo helper runtime attivo.
+La variabile sperimentale input_shell_visible non è stata mantenuta.
 
 Nota documentale:
 
@@ -522,6 +554,11 @@ INPUT
 ✔ typing_state eliminato
 ✔ handle_event_success eliminato
 ✔ Performance unused query risolta
+✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION analizzato
+✔ G29 classificato come residuo UX minore accettabile / in osservazione
+✔ nessuna modifica runtime definitiva mantenuta dopo G29
+✔ rollback alla base stabile confermato
+⚠ micro-flash container_input durante transizioni input / command / empty ancora presente come residuo non bloccante
 
 ------------------------------------------------
 1. INPUT UTENTE
@@ -550,6 +587,36 @@ input_home
 → input_raw
 
 input_raw è l’adapter tecnico nascosto.
+
+Nota post G29:
+
+Il Change handler di input_home è stato verificato durante il nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION.
+
+Base runtime mantenuta:
+
+const value = input_home.value || "";
+
+// Se l’utente sta scrivendo un nuovo input,
+// la lista eventi deve sparire e deve tornare visibile il flow input.
+if (value.trim()) {
+  ui_state.setValue({
+    ...ui_state.value,
+    view: "home"
+  });
+
+  container_events_list.setHidden(true);
+  container_feedback.setHidden(true);
+  container_home.setHidden(false);
+  container_input.setHidden(false);
+}
+
+await input_raw.setValue(value);
+trigger_parse_debounced.trigger();
+
+Nota:
+
+La Strada B con micro-latch input_shell_visible è stata testata ma non mantenuta,
+perché non ha risolto il flash in modo stabile.
 
 ------------------------------------------------
 2. INPUT_RAW
@@ -1120,6 +1187,38 @@ Componenti già migrati:
 - btn_cancel_input_home.Hidden
 - button_input_confirm.Hidden
 
+Nota post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION:
+
+container_input.Hidden resta governato da:
+
+{{ !input_analysis_result.value?.mode?.effectiveIsInputFlow }}
+
+Durante G29 sono stati testati:
+
+- Hidden di container_input
+- Hidden dei figli principali
+- layout/stile di container_input
+- container_home
+- wrapper
+- micro-latch input_shell_visible
+
+Nessun tentativo ha eliminato stabilmente il micro-flash/riga container_input durante transizioni input / command / empty.
+
+Esito:
+
+- nessuna modifica definitiva mantenuta
+- input_analysis_result invariato
+- command_intent_state invariato
+- preview_analysis_state invariato
+- button_input_confirm invariato
+- payload invariato
+- save flow invariato
+- DB invariato
+
+Classificazione runtime:
+
+residuo UX minore accettabile / in osservazione.
+
 Componenti / logiche non migrate intenzionalmente:
 
 - button_input_confirm.Disabled
@@ -1275,6 +1374,21 @@ Risultato:
 ✔ container vuoto durante digitazione risolto
 ✔ bottom bar flash risolto tramite micro-fix dedicato
 ✔ edit mode più chiaro con notice dedicata
+
+Nota post G29:
+
+Il container vuoto “storico” durante digitazione era stato ridotto/risolto nei nodi precedenti.
+
+Resta però un micro-flash/riga container_input durante specifiche transizioni input / command / empty.
+
+Questo residuo è stato analizzato nel nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION e classificato come:
+
+RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
+
+Non è bloccante.
+Non genera errori console.
+Non modifica dati.
+Non impatta parser, matching, payload, save flow o DB.
 
 Nota:
 
@@ -4241,6 +4355,7 @@ button_input_confirm.Hidden migrato
 button_input_confirm.Disabled non migrato
 save readiness non centralizzata
 cleanup obsolete UI guards / query reduction non ancora eseguito
+⚠ G29 analizzato: nessun micro-fix Hidden/layout/latch ha risolto stabilmente il residuo container_input
 
 PRINCIPI RUNTIME
 
@@ -4300,6 +4415,9 @@ PRINCIPI RUNTIME
 ✔ canConfirm = readiness funzionale
 ✔ button_input_confirm.Disabled = guard funzionale separata
 ✔ button_input_confirm payload = invariato
+✔ micro-flash non bloccanti non vanno inseguiti oltre senza nodo/refactor dedicato
+✔ input_shell_visible non è parte del runtime attivo
+✔ G29 resta residuo UX minore accettabile / in osservazione
 
 STATO RUNTIME
 
@@ -4404,6 +4522,9 @@ Runtime attuale:
 ✔ edit mode + input vuoto stabilizzato
 ✔ Home idle container nascosti durante edit mode
 ✔ notice associazioni mancanti coerente con presenza suggerimenti
+✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION completato come analisi runtime
+✔ nessuna modifica runtime definitiva mantenuta dopo G29
+✔ rollback alla base stabile confermato
 
 Debiti:
 
@@ -4431,7 +4552,7 @@ Debiti:
 ✔ Full Visibility Migration degli Hidden principali completata
 ✔ button_input_confirm.Hidden migrato
 ⚠ button_input_confirm.Disabled non migrato
-⚠ flash residui durante digitazione/cambio schermata ancora presenti
+⚠ micro-flash container_input durante transizioni input / command / empty ancora presente come residuo UX minore accettabile / in osservazione
 ✔ label “Importo” su durata risolta
 ✔ riga valore Sintesi semanticamente allineata a Importo / Durata / Valore
 ⚠ save readiness non centralizzata
@@ -6073,126 +6194,91 @@ Regressioni:
 - save flow invariato
 
 ------------------------------------------------
-PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — TEST VALIDATI
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION — TEST / ANALISI
 ------------------------------------------------
 
-Input:
+Nodo:
 
-20 euro materiale
+INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
 
-Risultato:
+Gap collegato:
 
-- valore visualizzato: 20,00 €
-- label riga valore: Importo
-- icona riga valore: €
-- parser invariato
-- payload invariato
-- save flow invariato
+G29 — Feedback / Input Flow Micro-flash Cleanup
 
-Esito: OK
+Obiettivo:
 
----
+analizzare flash residui durante digitazione, cambio stato input e transizioni command / event / empty.
 
-Input:
+Esito osservato:
 
-2h30 rendering lavoro
+- flash/riga container_input visibile per pochi istanti
+- comportamento riproducibile soprattutto durante transizioni command → event → empty
+- comportamento non bloccante
+- console Retool senza errori
+- nessuna regressione funzionale rilevata
 
-Risultato:
+Test / tentativi eseguiti:
 
-- parsed.amount = 150
-- parsed.unit = minuti
-- valore visualizzato in forma umana
-- label riga valore: Durata
-- icona riga valore: ⏱️
-- hint normalizzazione invariato, se previsto
-- parser invariato
-- duration normalization invariata
+1. Verifica Hidden container_command_intent
+2. Verifica Hidden btn_cancel_input_home
+3. Verifica Hidden btn_cancel_edit
+4. Verifica Hidden text_input_analysis_loading
+5. Verifica Hidden container_input
+6. Verifica Hidden txt_command_intent_title / description
+7. Test forzato container_input.Hidden = true
+8. Test layout/stile container_input:
+   - Height
+   - Padding
+   - Margin
+   - Show body
+   - Show border
+9. Verifica container_home
+10. Verifica wrapper
+11. Test Strada B:
+   - Variable input_shell_visible
+   - micro-latch sul Change handler di input_home
+   - container_input.Hidden basato su input_shell_visible
 
-Esito: OK
+Risultato Strada B:
 
----
+- input_shell_visible non ha risolto stabilmente il comportamento
+- comportamento visibile sostanzialmente invariato
+- input_shell_visible non mantenuto nel runtime attivo
 
-Input:
+Rollback:
 
-1 ora lavoro
+container_input.Hidden mantenuto / ripristinato su:
 
-Risultato:
+{{ !input_analysis_result.value?.mode?.effectiveIsInputFlow }}
 
-- parsed.unit = minuti
-- type Tempo
-- label riga valore: Durata
-- icona riga valore: ⏱️
-- save flow invariato
+input_home Change handler mantenuto / ripristinato nella versione pre-latch.
 
-Esito: OK
+Classificazione finale:
 
----
+G29 resta:
 
-Input:
-
-villa 2 mario
-
-Risultato:
-
-- amount null
-- unit null
-- nessuna falsa durata
-- nessun falso importo
-- matching/highlight invariati
-
-Esito: OK
-
----
-
-Input:
-
-crea progetto test
-
-Risultato:
-
-- command intent preservato
-- Sintesi evento nascosta
-- nessun evento salvato
-
-Esito: OK
-
----
-
-Edit evento NEW con durata:
-
-Risultato:
-
-- label riga valore: Durata
-- edit flow non regressivo
-- update_event invariato
-
-Esito: OK
-
----
-
-Save evento normale:
-
-Risultato:
-
-- payload invariato
-- insert_event / update_event invariati
-- DB invariato
-
-Esito: OK
+RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
 
 Regressioni:
 
-- DB invariato
 - parser invariato
+- parse_input_controlled invariato
 - duration normalization invariata
 - type classification invariata
 - matching invariato
-- command intent invariato
-- preview_analysis_state invariato
+- project_state/entity_state invariati
+- command_intent_state invariato
+- create_suggestion_state invariato
 - input_analysis_result invariato
-- button_input_confirm invariato
+- preview_analysis_state invariato
+- button_input_confirm.Disabled invariato
 - payload invariato
 - save flow invariato
+- insert_event / update_event invariati
+- DB invariato
+- Supabase invariato
+- ui_visibility_state non eliminato
+- nessun cleanup globale eseguito
 
 CHANGELOG
 
@@ -6718,3 +6804,54 @@ v17 — 2026-05-26
   - crea progetto test → command intent non regressivo
   - edit evento NEW con durata → non regressivo
   - save evento normale → payload invariato
+
+  v18 — 2026-06-01
+
+- aggiornamento post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+- documento aggiornato da v17 a v18
+- G29 Feedback / Input Flow Micro-flash Cleanup analizzato su runtime Retool reale
+- osservato flash/riga container_input durante transizioni input / command / empty
+- confermato comportamento riproducibile ma non bloccante
+- confermata console Retool senza errori
+- testati Hidden di container_input
+- testati Hidden dei figli principali:
+  - text_input_analysis_loading
+  - text_edit_mode_notice
+  - btn_cancel_input_home
+  - container_command_intent
+- testati layout/stile di container_input:
+  - Height
+  - Padding
+  - Margin
+  - Show body
+  - Show border
+- verificati container_home e wrapper come possibili cause layout
+- testata Strada B con micro-latch input_shell_visible
+- input_shell_visible non risolutivo e non mantenuto
+- rollback effettuato alla base stabile
+- confermato container_input.Hidden basato su input_analysis_result.value?.mode?.effectiveIsInputFlow
+- confermato input_home Change handler pre-latch
+- nessuna modifica runtime definitiva mantenuta
+- confermato parser invariato
+- confermato parse_input_controlled invariato
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato
+- confermati project_state/entity_state invariati
+- confermato command_intent_state invariato
+- confermato create_suggestion_state invariato
+- confermato input_analysis_result invariato
+- confermato preview_analysis_state invariato
+- confermato button_input_confirm.Disabled invariato
+- confermato button_input_confirm payload invariato
+- confermato save flow invariato
+- confermati insert_event / update_event invariati
+- confermato DB invariato
+- confermato Supabase invariato
+- confermata nessuna eliminazione di ui_visibility_state
+- confermato nessun cleanup globale
+- G29 classificato come residuo UX minore accettabile / in osservazione
+- prossimo nodo operativo consigliato: BUTTON CONFIRM READINESS ALIGNMENT
+- nessuna anticipazione Preview Model / Hint State Consolidation
+- nessuna anticipazione cleanup ui_visibility_state
+- nessuna anticipazione output / KPI / dashboard

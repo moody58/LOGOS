@@ -1,6 +1,6 @@
-# 04_LOGOS_Retool_Architecture_v19
+# 04_LOGOS_Retool_Architecture_v20
 
-DATA: 2026-05-25
+DATA: 2026-06-01
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -117,6 +117,10 @@ C (Completezza): 10/10
 - chiarito che State, Roadmap e Gap Register richiamano l’architettura Retool senza duplicarne il dettaglio tecnico completo
 - aggiunti richiami canonici ai documenti tecnici collegati
 - riallineati residui documentali su ui_visibility_state come stato storico / residuo tecnico deprecabile
+- INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION documentato come analisi Retool senza modifiche definitive di wiring
+- G29 registrato come residuo UX minore accettabile / in osservazione
+- confermato container_input.Hidden invariato su input_analysis_result.value?.mode?.effectiveIsInputFlow
+- confermato che input_shell_visible non è parte dell’architettura Retool attiva
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
@@ -176,6 +180,9 @@ Q (Qualità): 9.5/10
 - rafforzato il ruolo del documento come fonte madre per componenti, query, Hidden e wiring Retool
 - ridotto rischio di ricalcolo futuro della struttura Retool reale
 - chiariti i confini tra Retool Architecture e documenti canonici collegati
+- chiarito che il micro-flash container_input non ha prodotto nuovo wiring stabile
+- evitata introduzione documentale di helper sperimentali non mantenuti
+- mantenuta distinzione tra architettura attiva e tentativi di debug
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -255,6 +262,8 @@ D (Deployabilità): 10/10
 - save flow invariato
 - documento coerente con la Documentation Architecture Audit / Redundancy Reduction
 - pronto come fonte canonica per future sessioni su Retool UI / componenti / query / Hidden
+- confermato rollback alla base stabile dopo G29
+- confermato nessun impatto su parser, matching, command intent, preview, confirm flow, save flow, payload o DB
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -360,6 +369,9 @@ Il documento descrive:
 - linting Retool azzerati
 - typing_state eliminato come query legacy unused
 - handle_event_success eliminato come query legacy unused
+- Input Flow / Transition Micro-flash Stabilization
+- classificazione G29 come residuo UX minore accettabile / in osservazione
+- conferma che nessun nuovo helper o wiring Retool è stato mantenuto dopo G29
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -1189,6 +1201,35 @@ gli Hidden principali del container input leggono input_analysis_result.
 ui_visibility_state resta presente come helper legacy/residuo,
 ma non governa più gli Hidden principali migrati.
 
+Nota post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION:
+
+Durante G29 è stato analizzato un micro-flash/riga container_input durante transizioni input / command / empty.
+
+Esito:
+
+- comportamento riproducibile ma non bloccante
+- nessun errore console
+- nessuna regressione funzionale
+- nessuna modifica definitiva mantenuta
+
+Wiring attivo confermato:
+
+container_input.Hidden:
+
+{{ !input_analysis_result.value?.mode?.effectiveIsInputFlow }}
+
+Tentativi non mantenuti:
+
+- modifiche alternative a container_input.Hidden
+- modifiche layout/stile come soluzione definitiva
+- micro-latch input_shell_visible
+
+Decisione:
+
+input_shell_visible non fa parte dell’architettura Retool attiva.
+G29 resta residuo UX minore accettabile / in osservazione.
+Non riaprire salvo peggioramento UX evidente o nodo dedicato/refactor visibility/rendering.
+
 Funzione:
 
 preview dati
@@ -1642,6 +1683,35 @@ Motivo:
 
 evitare doppia visibilità tra sintesi/input e lista eventi.
 
+Nota post G29:
+
+Il Change handler di input_home è stato verificato nel nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION.
+
+La versione attiva resta quella pre-latch:
+
+const value = input_home.value || "";
+
+// Se l’utente sta scrivendo un nuovo input,
+// la lista eventi deve sparire e deve tornare visibile il flow input.
+if (value.trim()) {
+  ui_state.setValue({
+    ...ui_state.value,
+    view: "home"
+  });
+
+  container_events_list.setHidden(true);
+  container_feedback.setHidden(true);
+  container_home.setHidden(false);
+  container_input.setHidden(false);
+}
+
+await input_raw.setValue(value);
+trigger_parse_debounced.trigger();
+
+Nota:
+
+La soluzione sperimentale con input_shell_visible non è stata mantenuta.
+
 input_raw:
 
 adapter tecnico
@@ -1953,6 +2023,26 @@ Risultato:
 ✔ edit empty state stabilizzato
 ✔ nessun loop input_analysis_result / ui_visibility_state
 ✔ save flow invariato
+
+Nota post G29:
+
+Il nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION ha verificato il residuo micro-flash container_input.
+
+Non sono state mantenute modifiche a:
+
+- input_analysis_result
+- ui_visibility_mode
+- ui_visibility_state
+- command_intent_state
+- preview_analysis_state
+- button_input_confirm
+- container_input.Hidden
+
+La base stabile resta:
+
+{{ !input_analysis_result.value?.mode?.effectiveIsInputFlow }}
+
+Il residuo è classificato come UX minore accettabile / in osservazione.
 
 Nota:
 
@@ -4643,6 +4733,12 @@ PATTERN ARCHITETTURALI
 ✔ Retool Linting Safety Pass Pattern
 ✔ Legacy Unused Query Removal Pattern
 ✔ Documentation Canonical Source Principle — applicato nel nodo Documentation Architecture Audit / Redundancy Reduction
+✔ Micro-flash Residual Observation Pattern
+
+Nota:
+
+Micro-flash Residual Observation Pattern indica che un residuo visuale non bloccante è stato analizzato,
+classificato e lasciato in osservazione senza introdurre refactor o helper paralleli non risolutivi.
 
 PROBLEMI NOTI
 
@@ -4771,8 +4867,8 @@ UI:
 ✔ Full Visibility Migration degli Hidden principali completata
 ✔ button_input_confirm.Hidden migrato a input_analysis_result
 ⚠ button_input_confirm.Disabled non migrato a input_analysis_result
-⚠ flash residui digitazione/cambio schermata ancora presenti
-⚠ label “Importo” usata anche su valore durata
+⚠ micro-flash container_input durante transizioni input / command / empty presente come residuo UX minore accettabile / in osservazione
+✔ label “Importo” su valore durata risolta tramite label semantica Importo / Durata / Valore
 ⚠ status OK + card Da verificare da riallineare semanticamente
 
 ✔ formattazione italiana amount allineata nella sintesi
@@ -4816,6 +4912,7 @@ ARCHITETTURA:
 ⚠ Azioni rapide non operative
 ⚠ Dashboard predisposta ma non implementata
 ⚠ mobile polish finale font/spaziature rimandato 
+⚠ G29 analizzato: nessun micro-fix Hidden/layout/latch ha prodotto wiring stabile migliorativo
 
 STATO ARCHITETTURA
 
@@ -4926,6 +5023,10 @@ STATO ARCHITETTURA
 ✔ edit mode + input vuoto stabilizzato
 ✔ Home idle container nascosti durante edit mode
 ✔ notice associazioni mancanti coerente con presenza suggerimenti
+✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION completato come analisi architetturale Retool
+✔ G29 classificato come residuo UX minore accettabile / in osservazione
+✔ nessun nuovo helper/wiring Retool mantenuto dopo G29
+✔ container_input.Hidden confermato su input_analysis_result.value?.mode?.effectiveIsInputFlow
 
 ⚠ non completamente stabile nei layer evolutivi
 ⚠ preview ancora ibrida
@@ -4944,8 +5045,8 @@ STATO ARCHITETTURA
 ✔ button_input_confirm.Hidden migrato
 ⚠ button_input_confirm.Disabled non migrato
 ⚠ save readiness non centralizzata
-⚠ flash residui digitazione/cambio schermata ancora presenti
-⚠ label “Importo” su durata ancora presente
+⚠ micro-flash container_input durante transizioni input / command / empty in osservazione come residuo UX minore accettabile
+✔ label “Importo” su durata risolta
 ⚠ “modifica” generico non ancora riconosciuto come guida edit
 ⚠ suggestion create vs edit consistency da verificare
 ⚠ project creation override con match generico non implementato
@@ -5528,3 +5629,33 @@ v19 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+
+v20 — 2026-06-01
+
+- aggiornamento post INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION
+- documento aggiornato da v19 a v20
+- G29 Feedback / Input Flow Micro-flash Cleanup analizzato dal punto di vista Retool Architecture
+- osservato micro-flash/riga container_input durante transizioni input / command / empty
+- confermato comportamento riproducibile ma non bloccante
+- confermata console Retool senza errori
+- confermato che non sono state mantenute modifiche definitive al wiring
+- confermato container_input.Hidden su input_analysis_result.value?.mode?.effectiveIsInputFlow
+- confermato input_home Change handler nella versione pre-latch
+- confermato che input_shell_visible non è parte dell’architettura Retool attiva
+- confermato input_analysis_result invariato
+- confermato ui_visibility_mode invariato
+- confermato ui_visibility_state invariato come residuo tecnico deprecabile / rollback
+- confermato command_intent_state invariato
+- confermato preview_analysis_state invariato
+- confermato button_input_confirm invariato
+- confermato button_input_confirm.Disabled invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermati insert_event / update_event invariati
+- confermato DB invariato
+- confermato Supabase invariato
+- G29 classificato come residuo UX minore accettabile / in osservazione
+- aggiunto Micro-flash Residual Observation Pattern
+- nessuna anticipazione Preview Model / Hint State Consolidation
+- nessuna anticipazione cleanup ui_visibility_state
+- nessuna anticipazione output / KPI / dashboard
