@@ -1,4 +1,4 @@
-# 00_PROJECT_Gap_Register_v17
+# 00_PROJECT_Gap_Register_v18
 
 DATA: 2026-06-01
 
@@ -76,59 +76,79 @@ GAP ATTIVO DEL NODO CORRENTE
 
 Nessun gap attivo del nodo corrente.
 
-Il nodo INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION è stato chiuso.
+Il nodo BUTTON CONFIRM READINESS ALIGNMENT è stato completato.
 
-G29 è stato analizzato su runtime Retool reale e classificato come:
+G33 è stato analizzato su runtime Retool reale e classificato come:
 
-RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
+INTEGRATO — DISABLED ALLINEATO A isAmbiguous
 
 Esito:
 
-- flash/riga container_input osservato durante transizioni input / command / empty
-- comportamento riproducibile ma non bloccante
-- console Retool senza errori
-- nessuna regressione funzionale rilevata
-- testati Hidden del container padre
-- testati Hidden dei figli principali
-- testati layout/stile di container_input
-- verificati container_home e wrapper come possibili cause layout
-- testata Strada B con micro-latch input_shell_visible
-- micro-latch non risolutivo e non mantenuto
-- rollback effettuato alla base stabile
-- nessuna modifica runtime definitiva mantenuta
+- button_input_confirm.Disabled verificato sul sistema reale Retool
+- distinzione Hidden / Disabled confermata
+- canShowConfirm confermato come visibility-only
+- canConfirm confermato come readiness funzionale distinta
+- button_input_confirm.Disabled mantenuto come guard funzionale separata
+- Disabled aggiornato per leggere solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous
+- rimosso fallback grezzo matches.length > 1
+- payload invariato
+- insert_event / update_event invariati
+- save flow invariato
+- parser invariato
+- matching invariato nella logica funzionale
+- input_analysis_result invariato
+- DB invariato
+- Supabase invariato
 
 Classificazione:
 
-- non blocca input
-- non blocca Command Intent
-- non blocca Sintesi
-- non blocca Dati evento
-- non blocca Conferma
-- non impatta payload
-- non impatta save flow
-- non impatta DB
+- G33 completato
+- non resta nodo operativo aperto su Disabled
+- button_input_confirm.Disabled non è migrato dentro input_analysis_result
+- save readiness completa resta non centralizzata
+- warning informativi e match più specifici restano non bloccanti
 
-Regola:
+Test post-fix validati:
 
-G29 non va riaperto salvo peggioramento UX evidente o nodo/refactor dedicato alla visibility/rendering del flow input.
+- 20 euro materiale → Conferma visibile e attiva
+- 20 euro villa → Conferma attiva con warning non bloccante
+- 20 euro villa sierri → Conferma attiva; rischio match generico osservato fuori nodo
+- crea progetto test → container command visibile, Conferma evento non mostrata
+
+Nota fuori nodo:
+
+Durante i test G33 è emerso il caso:
+
+20 euro villa sierri
+→ select_project = Villa
+→ suggestion: possibile nuovo progetto Villa Sierri
+→ Conferma attiva
+
+Questo non è problema di Disabled, payload o save flow.
+
+Il tema viene assorbito in:
+
+G22 — Project Create Suggestion — Match Present / User Override
+
+senza creare nuovo gap autonomo.
 
 Prossimo gap operativo consigliato:
 
-ID: G33
+ID: G22
 
 NOME:
-Button Confirm Readiness Alignment
+Project Create Suggestion — Match Present / User Override
 
 Motivo:
 
-- button_input_confirm.Hidden è già migrato a input_analysis_result
-- button_input_confirm.Disabled resta separato
-- readiness funzionale non ancora centralizzata
-- nodo coerente con State / Roadmap
-- richiede confine rigoroso tra visibilità, abilitazione, payload e save flow
+- è il gap già presente più coerente con il rischio emerso
+- evita duplicazioni con Match Engine Advanced
+- permette di decidere se basta un micro-nodo di user override / auto-select confidence
+- evita loop tra G22, G10A, select filtering e Input Analysis Model
 
 Fonte canonica:
 - 01_LOGOS_Input_System
+- 02_LOGOS_Match_Engine
 - 04_LOGOS_Retool_Architecture
 - LOGOS_RETOOL_RUNTIME_REAL
 
@@ -210,24 +230,44 @@ NOME:
 Button Confirm Readiness Alignment
 
 STATO:
-INTEGRATO PARZIALE — HIDDEN MIGRATO / DISABLED NON MIGRATO
+INTEGRATO
 
 DESCRIZIONE:
 
-button_input_confirm.Hidden è migrato a input_analysis_result.
-button_input_confirm.Disabled e payload restano separati.
+button_input_confirm.Hidden era già migrato a input_analysis_result.readiness.canShowConfirm.
 
-Azione:
+Nel nodo BUTTON CONFIRM READINESS ALIGNMENT è stato verificato e aggiornato button_input_confirm.Disabled.
 
-eventuale nodo dedicato per readiness funzionale / Disabled.
+Esito:
 
-Vincoli:
+- Hidden resta governato da input_analysis_result.readiness.canShowConfirm
+- canShowConfirm resta visibility-only
+- canConfirm resta readiness funzionale distinta
+- Disabled resta guard funzionale separata
+- Disabled ora legge solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous
+- rimosso fallback grezzo matches.length > 1
+- payload invariato
+- insert_event / update_event invariati
+- parser invariato
+- matching invariato nella logica funzionale
+- input_analysis_result invariato
+- DB invariato
 
-- distinguere Hidden da Disabled
-- non modificare payload
-- non modificare insert_event / update_event
-- non modificare parser/matching/select
-- testare create/edit/no-op/command/ambiguity/empty input
+Decisione:
+
+G33 è chiuso.
+Non resta nodo operativo aperto su button_input_confirm.Disabled.
+
+Residui collegati ma fuori G33:
+
+- save readiness completa non centralizzata
+- button_input_confirm.Disabled non migrato dentro input_analysis_result
+- match generico salvabile / auto-select confidence da assorbire in G22
+
+Regola:
+
+Non riaprire G33 salvo regressione reale del bottone Conferma.
+Eventuali evoluzioni future della save readiness devono essere nodo separato.
 
 Fonte canonica:
 - 01_LOGOS_Input_System
@@ -361,35 +401,72 @@ Fonte canonica:
 ID: G22
 
 NOME:
-Project Create Suggestion — Match Present / User Override
+Project Create Suggestion — Match Present / User Override / Auto-select Confidence
 
 STATO:
-IDENTIFICATO
+IDENTIFICATO — CANDIDATO PROSSIMO NODO
 
 DESCRIZIONE:
 
-In presenza di match generico esistente, il sistema non propone creazione nuovo progetto.
+In presenza di match generico esistente, il sistema può valorizzare automaticamente una select salvabile e mostrare solo un hint/suggestion informativo.
 
-Esempio:
+Esempio storico:
 
 input “villa”
 → match Villa
 → hint progetti più specifici
 → nessuna opzione “crea comunque nuovo progetto”
 
+Evidenza post G33:
+
+20 euro villa sierri
+→ select_project = Villa
+→ suggestion: possibile nuovo progetto Villa Sierri
+→ Conferma attiva
+
+Rischio:
+
+l’utente può salvare un’associazione non corretta se non nota l’hint,
+soprattutto in prospettiva futura con input vocale, import o input meno controllati.
+
+Il problema non è button_input_confirm.Disabled.
+
+Il problema è nella policy di:
+
+- match generico salvabile
+- auto-select confidence
+- user override
+- suggerimento create quando esiste già un match generico
+- eventuale priorità/filtro contestuale delle select_project/select_entity
+
 Azione:
 
-valutare opzione esplicita di override utente.
+valutare un micro-nodo dedicato prima di Match Engine Advanced.
+
+Obiettivo del micro-nodo:
+
+- decidere se il match generico salvabile richiede una conferma/override più esplicita
+- evitare salvataggi inconsapevoli con project/entity deboli
+- preservare il principio non bloccante del sistema
+- non trasformare automaticamente tutti i warning in blocchi
+- non introdurre un refactor globale del Match Engine
 
 Vincoli:
 
 - evitare duplicati
 - nessuna creazione automatica
-- conferma forte se implementato
+- nessun blocco generalizzato dei warning informativi
+- nessuna modifica payload/save flow se non strettamente necessaria
+- nessuna modifica DB
+- nessuna anticipazione Input Analysis Model completo
+- nessun filtro select globale senza nodo dedicato
+- coordinare con G10A Match Engine Evolution Advanced / Partial Ambiguity
+- evitare loop tra G22, G10A e select contextual filtering
 
 Fonte canonica:
 - 02_LOGOS_Match_Engine
 - 01_LOGOS_Input_System
+- 04_LOGOS_Retool_Architecture
 
 ---
 
@@ -567,6 +644,12 @@ Evoluzione futura del matching:
 Azione:
 
 non introdurre senza nodo dedicato.
+
+Nota post G33:
+
+il tema auto-select confidence / match generico salvabile emerso durante G33 viene assorbito prima in G22.
+G10A resta macro-gap futuro per evoluzione più ampia del Match Engine.
+Non duplicare G22 dentro G10A.
 
 Fonte canonica:
 - 02_LOGOS_Match_Engine
@@ -837,6 +920,42 @@ Regola:
 G37 non deve essere riaperto come nodo documentale generico.
 Eventuali futuri interventi documentali devono essere aperti solo se emerge un problema reale di ridondanza, perdita ricostruibilità o incoerenza tra fonti canoniche.
 
+G33 — Button Confirm Readiness Alignment
+STATO: INTEGRATO
+
+Fonte canonica:
+- 01_LOGOS_Input_System per relazione input flow / button_input_confirm / readiness
+- 04_LOGOS_Retool_Architecture per wiring Retool
+- LOGOS_RETOOL_RUNTIME_REAL per runtime reale as-is
+
+Esito:
+
+- button_input_confirm.Disabled aggiornato
+- Disabled ora legge solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous
+- rimosso fallback grezzo matches.length > 1
+- button_input_confirm.Hidden invariato
+- canShowConfirm resta visibility-only
+- canConfirm resta readiness funzionale distinta
+- button_input_confirm.Disabled resta guard funzionale separata
+- button_input_confirm.Disabled non migrato dentro input_analysis_result
+- payload invariato
+- insert_event / update_event invariati
+- save flow invariato
+- parser invariato
+- matching invariato nella logica funzionale
+- input_analysis_result invariato
+- DB invariato
+- Supabase invariato
+
+Regola:
+
+G33 non deve essere riaperto come nodo base.
+Eventuali evoluzioni future della save readiness o della centralizzazione canConfirm devono essere nodo separato.
+
+Nota fuori nodo:
+
+Il rischio match generico / auto-select confidence osservato durante G33 è assorbito in G22.
+
 
 G01 — Normalization Model
 STATO: INTEGRATO PARZIALE
@@ -906,24 +1025,35 @@ Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
-Ordine attuale consigliato post Input Flow / Transition Micro-flash Stabilization:
+Ordine attuale consigliato post Button Confirm Readiness Alignment:
 
-1. G33 — Button Confirm Readiness Alignment
-2. G17 — Preview Model / Hint State Consolidation
-3. G35 — Status Semantics Alignment
-4. G30 — Command Intent — Edit Guide Generic Alias
-5. G21 — Suggestion Create vs Edit Consistency
-6. G22 — Project Create Suggestion — Match Present / User Override
-7. G10A — Match Engine Evolution Advanced / Partial Ambiguity
-8. G11 — Data Structure / Entity Hierarchy
-9. G13 — Economic Direction Advanced
-10. G08A — Duration Advanced / Giorni-Settimane
-11. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
-12. G23 — Azioni Rapide Operative
-13. G24 — Dashboard Base
-14. G04 — Logging / Versioning
-15. G05 — Input Modes
-16. G06 — Multi-source Input
+1. G22 — Project Create Suggestion — Match Present / User Override / Auto-select Confidence
+2. G10A — Match Engine Evolution Advanced / Partial Ambiguity — solo dopo decisione G22 o se G22 richiede evoluzione ampia
+3. G17 — Preview Model / Hint State Consolidation
+4. G35 — Status Semantics Alignment
+5. G30 — Command Intent — Edit Guide Generic Alias
+6. G21 — Suggestion Create vs Edit Consistency
+7. G11 — Data Structure / Entity Hierarchy
+8. G13 — Economic Direction Advanced
+9. G08A — Duration Advanced / Giorni-Settimane
+10. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
+11. G23 — Azioni Rapide Operative
+12. G24 — Dashboard Base
+13. G04 — Logging / Versioning
+14. G05 — Input Modes
+15. G06 — Multi-source Input
+
+Nota sequenza post G33:
+
+G22 viene portato davanti a G17 non perché la preview sia meno importante,
+ma perché i test G33 hanno evidenziato un rischio concreto di associazione salvabile debole.
+
+La sequenza deve evitare loop:
+
+- G22 affronta il caso concreto match generico / user override
+- G10A resta macro-gap per evoluzioni Match Engine più ampie
+- select contextual filtering non viene aperto come gap autonomo finché non si decide se assorbirlo in G22 o G10A
+- Input Analysis Model non viene anticipato per risolvere un problema di matching/user override
 
 Vincoli strategici permanenti:
 
@@ -949,6 +1079,15 @@ e non resta nodo candidato attivo.
 
 Il residuo label “Importo” su durata è stato risolto.
 La Sintesi resta comunque layer ibrido: eventuali interventi più ampi restano nel perimetro di G17.
+
+Nota:
+
+G33 — Button Confirm Readiness Alignment è stato completato e integrato.
+
+Non è più nodo operativo immediato.
+Non deve essere riaperto salvo regressione reale del bottone Conferma.
+
+Il prossimo tema concreto emerso è G22, non una nuova variante di G33.
 
 ------------------------------------------------
 REGOLA GAP REGISTER
@@ -1475,3 +1614,53 @@ v17 — 2026-06-01
 - nessuna anticipazione Preview Model / Hint State Consolidation
 - nessuna anticipazione cleanup ui_visibility_state
 - nessuna anticipazione output / KPI / dashboard
+
+v18 — 2026-06-01
+
+- aggiornamento post BUTTON CONFIRM READINESS ALIGNMENT
+- Gap Register aggiornato da v17 a v18
+- G33 Button Confirm Readiness Alignment aggiornato a INTEGRATO
+- registrato completamento G33 su runtime Retool reale
+- registrato aggiornamento button_input_confirm.Disabled
+- Disabled ora legge solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous
+- rimosso fallback grezzo matches.length > 1 dalla guard Disabled
+- confermato button_input_confirm.Hidden invariato
+- confermato canShowConfirm come visibility-only
+- confermato canConfirm come readiness funzionale distinta
+- confermato button_input_confirm.Disabled come guard funzionale separata
+- confermato button_input_confirm.Disabled non migrato dentro input_analysis_result
+- confermato input_analysis_result invariato
+- confermato button_input_confirm payload invariato
+- confermati insert_event / update_event invariati
+- confermato save flow invariato
+- confermato parser invariato
+- confermata normalization invariata
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato nella logica funzionale
+- confermati project_state/entity_state come fonti matching
+- confermati select_project/select_entity come fonti salvabili finali
+- confermato command_intent_state invariato
+- confermato create_suggestion_state invariato
+- confermato preview_analysis_state invariato
+- confermato DB invariato
+- confermato Supabase invariato
+- test AS-IS eseguiti su evento normale, spesa, durata, no-match, match univoco, warning più specifici, command intent, edit flow
+- test mirati eseguiti su dati reali projects/entities
+- test post-fix superati:
+  - 20 euro materiale
+  - 20 euro villa
+  - 20 euro villa sierri
+  - crea progetto test
+- confermato che warning “progetti più specifici” e “entità più specifiche” restano non bloccanti
+- rilevato fuori nodo rischio match generico / auto-select confidence
+- caso osservato: 20 euro villa sierri → select_project = Villa + suggerimento nuovo progetto Villa Sierri
+- deciso di assorbire il tema in G22 Project Create Suggestion — Match Present / User Override / Auto-select Confidence
+- G22 aggiornato come candidato prossimo nodo
+- G10A mantenuto come macro-gap futuro, senza duplicare G22
+- nessun nuovo gap autonomo creato per evitare ridondanza e loop documentali
+- aggiornato ordine consigliato gap/nodi post G33
+- nessuna anticipazione Match Engine Advanced
+- nessuna modifica select options / candidate filtering
+- nessuna modifica save readiness centralizzata
+- nessuna anticipazione dashboard / KPI / output

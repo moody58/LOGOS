@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v17
+# 01_LOGOS_Input_System_v18
 
-DATA: 2026-05-25
+DATA: 2026-06-01
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -78,7 +78,7 @@ Il documento è utilizzato per:
 - btn_cancel_edit / btn_cancel_input_home Hidden migrati a input_analysis_result
 - button_input_confirm.Hidden migrato a input_analysis_result.readiness.canShowConfirm
 - canShowConfirm distinto da canConfirm
-- button_input_confirm.Disabled preservato come guard funzionale separata
+- button_input_confirm.Disabled preservato come guard funzionale separata e allineato localmente a isAmbiguous
 - button_input_confirm payload invariato
 - input_analysis_result non legge più ui_visibility_state
 - ui_visibility_state residuo tecnico deprecabile, non cancellato
@@ -96,6 +96,9 @@ Il documento è utilizzato per:
 - edit mode prevalente su Command Intent
 - feedback project/entity timing alignment
 - residui UI Readiness documentati
+- Button Confirm Readiness Alignment
+- button_input_confirm.Disabled aggiornato senza modificare parser, input_analysis_result, payload o save flow
+- distinzione confermata tra canShowConfirm, canConfirm e Disabled
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -116,6 +119,7 @@ Questo documento è fonte canonica per:
 - input_analysis_result nel contesto input
 - relazione tra input_analysis_result, ui_visibility_mode e ui_visibility_state
 - relazione tra input flow e button_input_confirm
+- relazione tra canShowConfirm, canConfirm e button_input_confirm.Disabled
 - fonti controllate usate dal payload evento
 
 Questo documento NON è fonte canonica completa per:
@@ -219,6 +223,12 @@ Regole:
 - match ambiguo non risolto → conferma bloccata
 - match ambiguo risolto manualmente → conferma consentita
 - nessun match → conferma consentita
+- match generico con hint più specifici → conferma consentita
+
+Nota post G33:
+
+la guard funzionale button_input_confirm.Disabled blocca solo su isAmbiguous non risolto.
+Non usa più matches.length > 1 come criterio grezzo di blocco.
 
 ---
 
@@ -367,9 +377,11 @@ Regole:
 - input_analysis_result non è Event Interpretation Engine
 - ui_visibility_state è deprecabile ma non eliminato
 - button_input_confirm.Hidden è migrato a input_analysis_result
-- button_input_confirm.Disabled non è ancora migrato
+- button_input_confirm.Disabled non è migrato dentro input_analysis_result
+- button_input_confirm.Disabled resta guard funzionale separata
+- dopo G33, button_input_confirm.Disabled legge solo project_state/entity_state isAmbiguous
 - button_input_confirm payload resta invariato
-- save readiness non è ancora centralizzata
+- save readiness completa non è ancora centralizzata
 - non esiste più dipendenza input_analysis_result → ui_visibility_state
 - resta vietato creare dipendenze inverse o loop tra visibility helper
 
@@ -533,6 +545,8 @@ input_analysis_result
 → fonte UI controllata per gli Hidden principali del flow input
 → governa readiness/visibility per Sintesi, Dati evento, Command, Suggestion, Input container, Loading, Cancel e Conferma Hidden
 → espone canShowConfirm come flag visibility-only
+→ mantiene distinta la readiness funzionale canConfirm
+→ non governa button_input_confirm.Disabled
 → non alimenta select_project / select_entity
 → non costruisce payload save
 → non modifica DB
@@ -677,6 +691,7 @@ input_home
 → Sintesi / Command container / Suggestion container / Dati evento / Input container / Loading / Cancel / Confirm Hidden
 → select_project / select_entity
 → select1 / type classification base
+→ confirm guard tramite button_input_confirm.Disabled se input evento ordinario
 → eventuale creazione inline project/entity previa conferma utente
 → eventuale creazione project/entity da command previa conferma utente
 → conferma evento manuale se input evento ordinario
@@ -727,12 +742,17 @@ Migrati:
 
 Non migrati intenzionalmente:
 
-- button_input_confirm.Disabled
-- button_input_confirm payload
 - insert_event / update_event
 - container_home.Hidden
 - container_feedback.Hidden
 - container_events_list.Hidden
+- button_input_confirm.Disabled, che resta guard funzionale separata anche dopo G33
+- button_input_confirm payload
+
+Nota post G33:
+
+button_input_confirm.Disabled non è stato migrato dentro input_analysis_result.
+È stato solo allineato localmente a project_state/entity_state isAmbiguous.
 
 Regola:
 
@@ -1810,6 +1830,8 @@ input_analysis_result:
 - fonte UI controllata per gli Hidden principali del flow input
 - espone canShowConfirm come flag visibility-only
 - mantiene canConfirm come readiness funzionale distinta
+- non governa ancora button_input_confirm.Disabled
+- non centralizza la save readiness completa
 
 Relazione con input system:
 
@@ -1843,6 +1865,35 @@ Regola anti-loop:
 input_analysis_result non legge più ui_visibility_state.
 ui_visibility_state non deve leggere input_analysis_result.
 Non introdurre dipendenze circolari tra helper visibility/readiness.
+
+Nota post Button Confirm Readiness Alignment:
+
+G33 non ha modificato input_analysis_result.
+
+La visibilità del bottone Conferma resta governata da:
+
+input_analysis_result.readiness.canShowConfirm
+
+La readiness funzionale del componente resta locale in:
+
+button_input_confirm.Disabled
+
+Dopo G33, Disabled legge solo:
+
+- project_state.data?.isAmbiguous
+- entity_state.data?.isAmbiguous
+
+Non sono stati modificati:
+
+- parser
+- matching
+- command_intent_state
+- create_suggestion_state
+- preview_analysis_state
+- input_analysis_result
+- payload
+- insert_event / update_event
+- DB
 
 ------------------------------------------------
 HELPER EDIT STATE
@@ -3292,6 +3343,11 @@ nessun match:
 → nessun hint ambiguità
 → conferma abilitata
 
+match generico con match più specifici:
+→ singleMatch valorizzato
+→ hint informativo
+→ conferma abilitata
+
 ---
 
 REGOLE:
@@ -3311,6 +3367,8 @@ RISOLTO A PRIMO LIVELLO:
 ✔ preview non usa detection locale come fonte decisionale
 ✔ hint ambiguità da isAmbiguous
 ✔ confirm guard da ambiguità non risolta
+✔ button_input_confirm.Disabled allineato a isAmbiguous dopo G33
+✔ rimosso uso di matches.length > 1 come blocco grezzo
 ✔ match state live in create flow
 ✔ match state live in edit flow
 ✔ priority match minimo implementato
@@ -3329,6 +3387,8 @@ NON IMPLEMENTATO:
 - command intent avanzato oltre create project/entity
 - filtro select su match ambigui
 - ranking avanzato
+- auto-select confidence avanzata
+- filtro/priorità contestuale delle options select_project/select_entity
 - match engine separato come modulo autonomo
 
 ------------------------------------------------
@@ -3368,6 +3428,7 @@ Regole:
 - evento non salvato automaticamente dopo creazione project/entity
 - project/entity mancanti non bloccano salvataggio
 - project/entity ambigui bloccano salvataggio
+- match generici con suggerimenti più specifici restano warning non bloccanti
 - suggestion ignorata non blocca salvataggio
 - una sola creazione guidata aperta alla volta
 - select_project / select_entity restano decisione utente finale
@@ -3390,6 +3451,30 @@ Comportamento:
 - projects_list viene aggiornata
 - select_project viene valorizzata
 - evento resta da confermare manualmente
+
+Nota post G33:
+
+Durante i test Button Confirm Readiness Alignment è stato osservato il caso:
+
+20 euro villa sierri
+→ select_project = Villa
+→ suggestion: possibile nuovo progetto Villa Sierri
+→ Conferma attiva
+
+Classificazione:
+
+- non è problema di parser
+- non è problema di input_analysis_result
+- non è problema di button_input_confirm.Disabled
+- non è bug del payload o del save flow
+- è tema futuro da assorbire in G22 Project Create Suggestion — Match Present / User Override
+
+Possibile evoluzione futura:
+
+- auto-select confidence
+- gestione match generico salvabile
+- user override più esplicito
+- priorità/filtro contestuale delle select project/entity
 
 ---
 
@@ -3707,12 +3792,14 @@ REGOLE:
 - input non vuoto
 - nessun match project/entity
 - match univoco project/entity
+- match generico con warning non bloccante
+- match più specifici segnalati come hint informativo
 - ambiguità project/entity risolta manualmente
 
 ✔ conferma bloccata se:
 
-- project_state.isAmbiguous = true e select_project vuoto
-- entity_state.isAmbiguous = true e select_entity vuoto
+- project_state.data?.isAmbiguous = true e select_project vuoto
+- entity_state.data?.isAmbiguous = true e select_entity vuoto
 
 ✔ input comunque sempre modificabile
 ✔ scelta manuale utente preservata
@@ -3722,7 +3809,8 @@ REGOLE:
 ✔ comando puro riconosciuto da command_intent_state non deve arrivare al save flow evento
 ✔ container_command_intent sostituisce Sintesi/Dati evento per command puri
 ✔ button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm
-⚠ button_input_confirm.Disabled non è ancora migrato a input_analysis_result
+✔ button_input_confirm.Disabled è allineato localmente a project_state/entity_state isAmbiguous
+⚠ button_input_confirm.Disabled non è migrato dentro input_analysis_result
 ⚠ button_input_confirm payload resta invariato e fuori dalla migrazione
 
 Nota:
@@ -3744,9 +3832,17 @@ Dopo Visibility Migration Completion, la visibilità del bottone è stata separa
 - canConfirm = readiness funzionale
 - Disabled = guard funzionale autonoma ancora nel componente
 
-Nodo futuro dedicato:
+Nodo completato:
 
 BUTTON CONFIRM READINESS ALIGNMENT
+
+Esito:
+
+- button_input_confirm.Disabled aggiornato
+- rimosso fallback grezzo matches.length > 1
+- payload invariato
+- save flow invariato
+- input_analysis_result invariato
 
 ✔ gestione edit_mode:
 
@@ -3821,21 +3917,49 @@ ma il payload evento legge sempre e solo:
 - select_project.value
 - select_entity.value
 
-Disabled logic:
+Disabled logic post G33:
 
 button_input_confirm non ricalcola matching.
 
 Legge:
 
-- project_state.data.isAmbiguous
-- entity_state.data.isAmbiguous
+- input_raw.value
+- project_state.data?.isAmbiguous
+- entity_state.data?.isAmbiguous
 - select_project.value
 - select_entity.value
 
 Regola:
 
-ambiguità non risolta → blocco
-ambiguità risolta manualmente → conferma consentita
+- input vuoto → blocco / bottone non utilizzabile
+- ambiguità non risolta → blocco
+- ambiguità risolta manualmente → conferma consentita
+- nessun match → conferma consentita
+- match univoco → conferma consentita
+- match generico con hint più specifici → conferma consentita
+- warning non bloccanti → conferma consentita
+
+Codice Disabled validato:
+
+{{
+  (() => {
+    const projectAmbiguous =
+      Boolean(project_state.data?.isAmbiguous);
+
+    const entityAmbiguous =
+      Boolean(entity_state.data?.isAmbiguous);
+
+    return (
+      !input_raw.value ||
+      (projectAmbiguous && !select_project.value) ||
+      (entityAmbiguous && !select_entity.value)
+    );
+  })()
+}}
+
+Nota:
+
+button_input_confirm.Disabled non usa più matches.length > 1.
 
 BUTTON_INPUT_CONFIRM — FLOW FINALE
 
@@ -5637,6 +5761,129 @@ edit evento esistente senza modifiche
 → updated_at invariato
 → suggestion non regressiva
 
+BUTTON CONFIRM READINESS ALIGNMENT — TEST VALIDATI:
+
+Obiettivo:
+
+verificare e allineare la readiness funzionale del bottone Conferma,
+distinguendo:
+
+- visibilità del bottone
+- abilitazione / disabilitazione
+- blocchi reali
+- warning non bloccanti
+- command intent esclusi dal save flow evento
+
+Modifica applicata:
+
+button_input_confirm.Disabled è stato aggiornato per leggere solo:
+
+- project_state.data?.isAmbiguous
+- entity_state.data?.isAmbiguous
+
+È stato rimosso il fallback grezzo:
+
+- matches.length > 1
+
+Test AS-IS pre-fix:
+
+20 euro materiale
+→ Conferma attiva
+
+20 euro spesa materiale
+→ Conferma attiva
+
+2h30 rendering lavoro
+→ Conferma attiva
+
+20 euro attività generica
+→ Conferma attiva
+→ rilevato possibile falso positivo matching GENERIC fuori nodo
+
+20 euro villa
+→ Conferma attiva
+→ hint progetti più specifici non bloccante
+
+20 euro mario
+→ Conferma attiva
+→ hint entità più specifiche non bloccante
+
+crea
+→ Conferma evento nascosta
+
+crea progetto test
+→ Conferma evento nascosta
+
+crea entità test
+→ Conferma evento nascosta
+
+edit evento NEW con input pieno
+→ Conferma attiva
+
+edit evento NEW con input vuoto
+→ Conferma non mostrata
+
+edit no-op
+→ nessun update_event
+→ comportamento invariato
+
+Test mirati su dati reali:
+
+20 euro villa sierri
+→ select_project valorizzata su Villa
+→ suggestion: possibile nuovo progetto Villa Sierri
+→ Conferma attiva
+
+20 euro cucciolata marzo
+→ nessun blocco
+→ Conferma attiva
+
+20 euro tecnico
+→ nessun blocco
+→ Conferma attiva
+
+20 euro cliente
+→ nessun blocco
+→ Conferma attiva
+
+Test post-fix:
+
+20 euro materiale
+→ Conferma visibile e attiva
+
+20 euro villa
+→ Conferma attiva con warning non bloccante
+
+20 euro villa sierri
+→ Conferma attiva
+→ rischio match generico osservato fuori nodo
+
+crea progetto test
+→ container command visibile
+→ Conferma evento non mostrata
+
+Esito:
+
+- nessuna regressione evento ordinario
+- nessuna regressione warning non bloccanti
+- nessuna regressione match più specifici
+- nessuna regressione command intent
+- nessuna regressione edit flow osservata
+- payload invariato
+- insert_event invariato
+- update_event invariato
+- DB invariato
+- Supabase invariato
+
+Classificazione:
+
+G33 completato.
+
+Nota fuori nodo:
+
+Il rischio match generico / auto-select confidence non appartiene a G33.
+Va assorbito in G22 Project Create Suggestion — Match Present / User Override.
+
 LIMITI ATTUALI
 
 INPUT / PARSING:
@@ -5687,6 +5934,9 @@ creazione guidata project/entity implementata a primo livello controllato
 command intent base implementato
 no filtro select su match ambigui
 no ranking avanzato
+auto-select confidence avanzata non implementata
+select_project/select_entity non filtrano né prioritizzano ancora i candidati contestuali
+match generico salvabile da assorbire in G22
 
 PREVIEW:
 
@@ -5720,9 +5970,10 @@ ui_visibility_state non è più letto da input_analysis_result
 ui_visibility_state resta residuo tecnico deprecabile
 Full Visibility Migration degli Hidden principali completata
 button_input_confirm.Hidden migrato
-button_input_confirm.Disabled non migrato
+button_input_confirm.Disabled allineato localmente a isAmbiguous
+button_input_confirm.Disabled non migrato dentro input_analysis_result
 button_input_confirm payload invariato
-save readiness non centralizzata
+save readiness completa non centralizzata
 rendering progressivo input evento normale ridotto tramite UI Readiness e input_analysis_result
 micro-flash feedback project/entity ancora presente
 flash residui digitazione/cambio schermata ancora presenti
@@ -5779,6 +6030,8 @@ capace di assistere la creazione project/entity senza automatismi nascosti
 capace di distinguere comandi strutturali puri da eventi ordinari a primo livello controllato
 capace di coordinare la visibilità del flow input tramite input_analysis_result e ui_visibility_mode
 capace di comporre raw / selection / effective state tramite input_analysis_result
+capace di mantenere separata la visibilità del bottone Conferma dalla sua readiness funzionale
+capace di bloccare solo ambiguità reali non risolte senza trasformare warning informativi in blocchi
 capace di alimentare gli Hidden principali del flow input senza diventare un motore monolitico
 
 NON:
@@ -6312,3 +6565,48 @@ v17 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+
+v18 — 2026-06-01
+
+- aggiornamento post BUTTON CONFIRM READINESS ALIGNMENT
+- documento aggiornato da v17 a v18
+- documentato aggiornamento button_input_confirm.Disabled nel contesto input
+- Disabled ora legge solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous
+- rimosso fallback grezzo matches.length > 1 dalla guard Disabled
+- confermato button_input_confirm.Hidden invariato
+- confermato canShowConfirm come visibility-only
+- confermato canConfirm come readiness funzionale distinta
+- confermato button_input_confirm.Disabled come guard funzionale separata
+- confermato button_input_confirm.Disabled non migrato dentro input_analysis_result
+- confermato input_analysis_result invariato
+- confermato button_input_confirm payload invariato
+- confermati insert_event / update_event invariati
+- confermato save flow invariato
+- confermato parser invariato
+- confermata normalization invariata
+- confermata duration normalization invariata
+- confermata type classification invariata
+- confermato matching invariato nella logica funzionale
+- confermati project_state/entity_state come fonti matching
+- confermati select_project/select_entity come fonti salvabili finali
+- confermato command_intent_state invariato
+- confermato create_suggestion_state invariato
+- confermato preview_analysis_state invariato
+- confermato DB invariato
+- confermato Supabase invariato
+- test AS-IS eseguiti su evento normale, spesa, durata, no-match, match univoco, warning più specifici, command intent, edit flow
+- test mirati eseguiti su dati reali projects/entities
+- test post-fix superati:
+  - 20 euro materiale
+  - 20 euro villa
+  - 20 euro villa sierri
+  - crea progetto test
+- confermato che warning “progetti più specifici” e “entità più specifiche” restano non bloccanti
+- rilevato fuori nodo rischio match generico / auto-select confidence
+- caso osservato: 20 euro villa sierri → select_project = Villa + suggerimento nuovo progetto Villa Sierri
+- deciso di assorbire il tema nel gap G22 Project Create Suggestion — Match Present / User Override
+- nessun nuovo gap autonomo creato per evitare ridondanza e loop documentali
+- nessuna anticipazione Match Engine Advanced
+- nessuna modifica select options / candidate filtering
+- nessuna modifica save readiness centralizzata
+- nessuna anticipazione dashboard / KPI / output
