@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v18
+# 00_PROJECT_Gap_Register_v19
 
-DATA: 2026-06-01
+DATA: 2026-06-04
 
 ------------------------------------------------
 SCOPO
@@ -76,80 +76,96 @@ GAP ATTIVO DEL NODO CORRENTE
 
 Nessun gap attivo del nodo corrente.
 
-Il nodo BUTTON CONFIRM READINESS ALIGNMENT è stato completato.
+Il nodo PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE è stato completato.
 
-G33 è stato analizzato su runtime Retool reale e classificato come:
+G22 è stato analizzato su runtime Retool reale e classificato come:
 
-INTEGRATO — DISABLED ALLINEATO A isAmbiguous
+INTEGRATO BASE — MATCH PRESENT + SUGGESTION EXTENSION GESTITO
 
 Esito:
 
-- button_input_confirm.Disabled verificato sul sistema reale Retool
-- distinzione Hidden / Disabled confermata
-- canShowConfirm confermato come visibility-only
-- canConfirm confermato come readiness funzionale distinta
-- button_input_confirm.Disabled mantenuto come guard funzionale separata
-- Disabled aggiornato per leggere solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous
-- rimosso fallback grezzo matches.length > 1
-- payload invariato
-- insert_event / update_event invariati
-- save flow invariato
-- parser invariato
-- matching invariato nella logica funzionale
-- input_analysis_result invariato
-- DB invariato
-- Supabase invariato
+- caso guida “20 euro villa sierri” risolto
+- match presente + suggestion extension classificato
+- create_suggestion_state aggiornato con requiresUserOverride
+- requiresUserOverride esposto quando:
+  - esiste un singleMatch già selezionato
+  - esiste una candidate più specifica proposta da create_suggestion_state
+  - reason = extension
+- preview_analysis_state aggiornato per leggere create_suggestion_state.data.project/entity
+- card Da verificare aggiornata con warning mirato:
+  - Associazione progetto da controllare
+  - Associazione entità da controllare
+- micro-copy consolidata:
+  - [baseName] selezionato · testo letto: [candidateName]
+  - [baseName] selezionata · testo letto: [candidateName]
+- create_suggestion_hint rifinito per mostrare solo la suggestion operativa
+- rimossa duplicazione della selezione corrente dal container Suggerimenti associazione
+- warning generici “Esistono progetti più specifici” / “Esistono entità più specifiche” non usati più come segnale principale nei casi G22
+- Da verificare e Suggerimenti associazione separati semanticamente
+- Conferma resta attiva
+- suggestion ignorata resta non bloccante
 
 Classificazione:
 
-- G33 completato
-- non resta nodo operativo aperto su Disabled
-- button_input_confirm.Disabled non è migrato dentro input_analysis_result
-- save readiness completa resta non centralizzata
-- warning informativi e match più specifici restano non bloccanti
+- G22 completato
+- G10A non necessario per il caso G22
+- non resta nodo operativo aperto su match presente + suggestion extension
+- non è stato introdotto Match Engine Advanced
+- non è stato introdotto Input Analysis Model completo
+- non è stato introdotto filtro contestuale globale delle select
 
-Test post-fix validati:
+Test validati:
 
-- 20 euro materiale → Conferma visibile e attiva
-- 20 euro villa → Conferma attiva con warning non bloccante
-- 20 euro villa sierri → Conferma attiva; rischio match generico osservato fuori nodo
+- 20 euro villa → Progetto Villa, nessun warning G22 project, Conferma attiva
+- 20 euro villa sierri → warning G22 project, suggestion project, Conferma attiva
+- 20 euro villa sierri 6 → Progetto Villa Sierri 6, nessun warning G22 project, Conferma attiva
+- 20 euro tecnico mario → Entità Mario, nessun warning G22 entity, Conferma attiva
 - crea progetto test → container command visibile, Conferma evento non mostrata
+- 20 euro mario rossi → Entità Mario Rossi, nessun warning G22 entity, Conferma attiva
+- 20 euro mario giordano → warning G22 entity, suggestion entity, Conferma attiva
 
-Nota fuori nodo:
+Non modificati:
 
-Durante i test G33 è emerso il caso:
+- parser
+- parse_input_controlled
+- duration normalization
+- type classification
+- project_state / entity_state nella logica funzionale
+- select_project / select_entity
+- select1
+- command_intent_state
+- input_analysis_result
+- button_input_confirm.Disabled
+- button_input_confirm.Hidden
+- button_input_confirm payload
+- insert_event / update_event
+- save flow
+- DB
+- Supabase
 
-20 euro villa sierri
-→ select_project = Villa
-→ suggestion: possibile nuovo progetto Villa Sierri
-→ Conferma attiva
+Residui emersi fuori nodo:
 
-Questo non è problema di Disabled, payload o save flow.
+1. G35 — Status Semantics Alignment
 
-Il tema viene assorbito in:
+Il badge OK nella Sintesi può risultare semanticamente debole quando esiste una card Da verificare.
 
-G22 — Project Create Suggestion — Match Present / User Override
+2. Preview / Missing Association Notice Cleanup
 
-senza creare nuovo gap autonomo.
+Il balloon blu “Manca progetto / Manca entità” può risultare ridondante rispetto al container Suggerimenti associazione in alcuni casi.
 
-Prossimo gap operativo consigliato:
+3. G25 — Icon System / Mobile Polish Finale
 
-ID: G22
+Residui puramente grafici/mobile polish da trattare più avanti o in sessioni brevi.
 
-NOME:
-Project Create Suggestion — Match Present / User Override
+Prossimo gap operativo:
 
-Motivo:
-
-- è il gap già presente più coerente con il rischio emerso
-- evita duplicazioni con Match Engine Advanced
-- permette di decidere se basta un micro-nodo di user override / auto-select confidence
-- evita loop tra G22, G10A, select filtering e Input Analysis Model
+da definire in Roadmap dopo chiusura documentale G22.
 
 Fonte canonica:
-- 01_LOGOS_Input_System
 - 02_LOGOS_Match_Engine
+- 01_LOGOS_Input_System
 - 04_LOGOS_Retool_Architecture
+- 06_LOGOS_View_Preview_System
 - LOGOS_RETOOL_RUNTIME_REAL
 
 ------------------------------------------------
@@ -313,24 +329,101 @@ NOME:
 Status Semantics Alignment
 
 STATO:
-IDENTIFICATO — RESIDUO UX/SEMANTICO
+IDENTIFICATO — RESIDUO UX/SEMANTICO POST G22
 
 DESCRIZIONE:
 
 In alcuni casi la Sintesi può mostrare status OK insieme a card “Da verificare”.
 
+Il nodo G22 ha reso più evidente il residuo:
+
+- la card Da verificare può mostrare un warning decisionale non bloccante
+- il badge OK può restare semanticamente debole se l’utente legge dall’alto verso il basso
+- il problema è visuale/semantico, non funzionale
+
+Esempio:
+
+Da verificare:
+Associazione progetto da controllare
+Villa selezionato · testo letto: Villa Sierri
+
+ma status Sintesi ancora OK.
+
 Azione:
 
-da trattare dentro Preview Model / Hint State Consolidation o nodo dedicato.
+valutare nodo dedicato STATUS SEMANTICS ALIGNMENT.
+
+Obiettivo:
+
+- riallineare OK / Verifica / Attenzione alla presenza reale di warning significativi
+- migliorare comprensione mobile
+- non modificare save flow
+- non modificare button_input_confirm.Disabled
+- non trasformare warning non bloccanti in blocchi
 
 Vincoli:
 
-- non trasformare warning non bloccanti in blocchi
-- non modificare save flow
-- preservare chiarezza utente
+- non modificare payload
+- non modificare DB
+- non modificare Supabase
+- non modificare matching
+- non riaprire G22 salvo regressione reale
+- non anticipare Input Analysis Model completo
 
 Fonte canonica:
 - 06_LOGOS_View_Preview_System
+- 04_LOGOS_Retool_Architecture
+
+---
+
+ID: G38
+
+NOME:
+Preview / Missing Association Notice Cleanup
+
+STATO:
+IDENTIFICATO — RESIDUO UX/SEMANTICO POST G22
+
+DESCRIZIONE:
+
+Il balloon blu “Manca progetto / Manca entità” può risultare ridondante rispetto al container Suggerimenti associazione in alcuni casi.
+
+Durante G22 è emerso che l’utente legge la UI dall’alto verso il basso:
+
+- Sintesi
+- Da verificare
+- notice associazioni mancanti
+- Suggerimenti associazione
+- Dati evento
+
+Il notice resta utile perché informa che manca un’associazione anche quando non esiste una suggestion operativa.
+
+Tuttavia può creare rumore se nella stessa schermata sono già presenti suggerimenti operativi chiari.
+
+Azione:
+
+valutare nodo dedicato Preview/UX.
+
+Obiettivo:
+
+- decidere se mantenere il notice nella Sintesi
+- decidere se spostarlo, ridurlo o renderlo più contestuale
+- mantenere distinta la notice informativa dalla suggestion operativa
+- migliorare leggibilità mobile
+
+Vincoli:
+
+- nessuna modifica DB
+- nessuna modifica payload
+- nessuna modifica save flow
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica create_suggestion_state salvo necessità esplicita
+- nessuna modifica G22 salvo regressione reale
+
+Fonte canonica:
+- 06_LOGOS_View_Preview_System
+- 04_LOGOS_Retool_Architecture
+- 01_LOGOS_Input_System
 
 ---
 
@@ -394,78 +487,6 @@ Vincoli:
 Fonte canonica:
 - 01_LOGOS_Input_System
 - 02_LOGOS_Match_Engine
-- 04_LOGOS_Retool_Architecture
-
----
-
-ID: G22
-
-NOME:
-Project Create Suggestion — Match Present / User Override / Auto-select Confidence
-
-STATO:
-IDENTIFICATO — CANDIDATO PROSSIMO NODO
-
-DESCRIZIONE:
-
-In presenza di match generico esistente, il sistema può valorizzare automaticamente una select salvabile e mostrare solo un hint/suggestion informativo.
-
-Esempio storico:
-
-input “villa”
-→ match Villa
-→ hint progetti più specifici
-→ nessuna opzione “crea comunque nuovo progetto”
-
-Evidenza post G33:
-
-20 euro villa sierri
-→ select_project = Villa
-→ suggestion: possibile nuovo progetto Villa Sierri
-→ Conferma attiva
-
-Rischio:
-
-l’utente può salvare un’associazione non corretta se non nota l’hint,
-soprattutto in prospettiva futura con input vocale, import o input meno controllati.
-
-Il problema non è button_input_confirm.Disabled.
-
-Il problema è nella policy di:
-
-- match generico salvabile
-- auto-select confidence
-- user override
-- suggerimento create quando esiste già un match generico
-- eventuale priorità/filtro contestuale delle select_project/select_entity
-
-Azione:
-
-valutare un micro-nodo dedicato prima di Match Engine Advanced.
-
-Obiettivo del micro-nodo:
-
-- decidere se il match generico salvabile richiede una conferma/override più esplicita
-- evitare salvataggi inconsapevoli con project/entity deboli
-- preservare il principio non bloccante del sistema
-- non trasformare automaticamente tutti i warning in blocchi
-- non introdurre un refactor globale del Match Engine
-
-Vincoli:
-
-- evitare duplicati
-- nessuna creazione automatica
-- nessun blocco generalizzato dei warning informativi
-- nessuna modifica payload/save flow se non strettamente necessaria
-- nessuna modifica DB
-- nessuna anticipazione Input Analysis Model completo
-- nessun filtro select globale senza nodo dedicato
-- coordinare con G10A Match Engine Evolution Advanced / Partial Ambiguity
-- evitare loop tra G22, G10A e select contextual filtering
-
-Fonte canonica:
-- 02_LOGOS_Match_Engine
-- 01_LOGOS_Input_System
 - 04_LOGOS_Retool_Architecture
 
 ---
@@ -645,11 +666,24 @@ Azione:
 
 non introdurre senza nodo dedicato.
 
-Nota post G33:
+Nota post G22:
 
-il tema auto-select confidence / match generico salvabile emerso durante G33 viene assorbito prima in G22.
-G10A resta macro-gap futuro per evoluzione più ampia del Match Engine.
-Non duplicare G22 dentro G10A.
+il tema match presente + suggestion extension emerso durante G33 è stato risolto in G22 a primo livello controllato.
+
+G10A resta macro-gap futuro solo per evoluzioni più ampie del Match Engine:
+
+- ranking globale
+- fuzzy matching
+- alias
+- confidence score strutturale
+- gerarchie
+- deduplicazione
+- partial ambiguity avanzata
+- filtering contestuale delle select
+
+Non riaprire G22 dentro G10A salvo regressione reale.
+
+Il caso “20 euro villa sierri” non richiede G10A.
 
 Fonte canonica:
 - 02_LOGOS_Match_Engine
@@ -796,6 +830,13 @@ Sistema icone misto:
 - Icon add-ons Retool nei componenti reali
 - emoji/HTML in Sintesi e Feedback
 
+Nota post G22:
+
+durante G22 sono emersi piccoli residui grafici/mobile polish legati a gerarchia visiva, hint/warning e leggibilità.
+
+Questi residui sono puramente visuali e non bloccanti.
+Vanno trattati più avanti o in sessioni brevi, senza riaprire logiche funzionali già consolidate.
+
 Azione:
 
 rivalutare solo in polish finale.
@@ -863,6 +904,64 @@ I gap seguenti sono integrati o integrati a livello base.
 
 Non devono essere riaperti come nodo base.
 Eventuali evoluzioni devono diventare sotto-gap o nodi dedicati.
+
+G22 — Project Create Suggestion — Match Present / User Override / Auto-select Confidence
+STATO: INTEGRATO BASE
+
+Fonte canonica:
+- 02_LOGOS_Match_Engine per policy match presente + suggestion extension
+- 01_LOGOS_Input_System per create_suggestion_state / preview_analysis_state nel contesto input
+- 04_LOGOS_Retool_Architecture per wiring Retool
+- 06_LOGOS_View_Preview_System per warning Da verificare e micro-copy preview
+- LOGOS_RETOOL_RUNTIME_REAL per runtime reale as-is
+
+Esito:
+
+- caso guida “20 euro villa sierri” risolto
+- match presente + suggestion extension classificato
+- create_suggestion_state espone requiresUserOverride
+- requiresUserOverride segnala che esiste una select già valorizzata ma l’input suggerisce una candidate più specifica
+- preview_analysis_state consuma requiresUserOverride
+- card Da verificare mostra warning mirato:
+  - Associazione progetto da controllare
+  - Associazione entità da controllare
+- micro-copy consolidata:
+  - [baseName] selezionato · testo letto: [candidateName]
+  - [baseName] selezionata · testo letto: [candidateName]
+- container Suggerimenti associazione mostra solo l’azione disponibile:
+  - Possibile nuovo progetto
+  - Possibile nuova entità
+- rimossa duplicazione della selezione corrente dal container Suggerimenti associazione
+- warning generici “Esistono progetti più specifici” / “Esistono entità più specifiche” non usati più come segnale principale nei casi G22
+- Conferma resta attiva
+- suggestion ignorata non blocca salvataggio
+- select_project / select_entity restano decisione finale salvabile
+- button_input_confirm.Disabled invariato
+- payload invariato
+- save flow invariato
+- DB invariato
+- Supabase invariato
+- G10A non necessario per questo caso
+
+Regola:
+
+G22 non deve essere riaperto come nodo base.
+
+Riaprire solo se:
+
+- compare regressione reale nel caso match presente + suggestion extension
+- requiresUserOverride non viene generato quando necessario
+- la UI torna a permettere salvataggio inconsapevole senza warning mirato
+- si decide esplicitamente di aprire G10A per ranking/fuzzy/alias/confidence avanzata
+
+Residui collegati ma fuori G22:
+
+- G35 Status Semantics Alignment
+- G38 Preview / Missing Association Notice Cleanup
+- G25 Icon System / Mobile Polish Finale
+- G10A Match Engine Evolution Advanced solo per casi realmente avanzati
+
+---
 
 G36 — Preview / Event Data Label Semantic Alignment
 STATO: INTEGRATO
@@ -952,9 +1051,11 @@ Regola:
 G33 non deve essere riaperto come nodo base.
 Eventuali evoluzioni future della save readiness o della centralizzazione canConfirm devono essere nodo separato.
 
-Nota fuori nodo:
+Nota post G22:
 
-Il rischio match generico / auto-select confidence osservato durante G33 è assorbito in G22.
+Il rischio match generico / auto-select confidence osservato durante G33 è stato assorbito e risolto in G22 a primo livello controllato.
+
+G33 non deve essere riaperto per questo tema.
 
 
 G01 — Normalization Model
@@ -968,6 +1069,10 @@ Fonte canonica: 01_LOGOS_Input_System, 04_LOGOS_Retool_Architecture, LOGOS_RETOO
 G03 — Project / Entity Create Suggestion
 STATO: INTEGRATO BASE
 Fonte canonica: 01_LOGOS_Input_System, 02_LOGOS_Match_Engine, 04_LOGOS_Retool_Architecture, 05_LOGOS_Database_Schema
+
+Nota:
+il comportamento base di creazione project/entity resta in G03.
+La policy match presente + suggestion extension è stata completata in G22.
 
 G07 — Preview Alignment
 STATO: INTEGRATO
@@ -1025,14 +1130,14 @@ Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
-Ordine attuale consigliato post Button Confirm Readiness Alignment:
+Ordine attuale consigliato post G22:
 
-1. G22 — Project Create Suggestion — Match Present / User Override / Auto-select Confidence
-2. G10A — Match Engine Evolution Advanced / Partial Ambiguity — solo dopo decisione G22 o se G22 richiede evoluzione ampia
+1. G35 — Status Semantics Alignment
+2. G38 — Preview / Missing Association Notice Cleanup
 3. G17 — Preview Model / Hint State Consolidation
-4. G35 — Status Semantics Alignment
-5. G30 — Command Intent — Edit Guide Generic Alias
-6. G21 — Suggestion Create vs Edit Consistency
+4. G30 — Command Intent — Edit Guide Generic Alias
+5. G21 — Suggestion Create vs Edit Consistency
+6. G10A — Match Engine Evolution Advanced / Partial Ambiguity — solo per ranking/fuzzy/alias/confidence avanzata reale
 7. G11 — Data Structure / Entity Hierarchy
 8. G13 — Economic Direction Advanced
 9. G08A — Duration Advanced / Giorni-Settimane
@@ -1043,17 +1148,24 @@ Ordine attuale consigliato post Button Confirm Readiness Alignment:
 14. G05 — Input Modes
 15. G06 — Multi-source Input
 
-Nota sequenza post G33:
+Nota sequenza post G22:
 
-G22 viene portato davanti a G17 non perché la preview sia meno importante,
-ma perché i test G33 hanno evidenziato un rischio concreto di associazione salvabile debole.
+G22 è completato e non è più nodo operativo immediato.
+
+I residui emersi sono prevalentemente Preview/UX:
+
+- status OK / Verifica / Attenzione da riallineare semanticamente
+- balloon blu “Manca progetto / Manca entità” da rivalutare
+- polish grafico/mobile non bloccante
+
+G10A resta futuro e non va anticipato per il caso G22 già risolto.
 
 La sequenza deve evitare loop:
 
-- G22 affronta il caso concreto match generico / user override
-- G10A resta macro-gap per evoluzioni Match Engine più ampie
-- select contextual filtering non viene aperto come gap autonomo finché non si decide se assorbirlo in G22 o G10A
-- Input Analysis Model non viene anticipato per risolvere un problema di matching/user override
+- non riaprire G22 salvo regressione reale
+- non usare G10A per rifinire micro-copy o status preview
+- non anticipare Input Analysis Model completo per residui visuali
+- non aprire select contextual filtering come gap autonomo se non emerge un problema reale
 
 Vincoli strategici permanenti:
 
@@ -1067,10 +1179,6 @@ G29 — Feedback / Input Flow Micro-flash Cleanup è stato analizzato e resta in
 Non è più nodo operativo immediato.
 
 Non deve essere riaperto salvo peggioramento UX evidente o nodo dedicato/refactor sulla visibility/rendering del flow input.
-
-Le regole documentali permanenti sono ora nel Kernel Manifest.
-Il checkpoint finale del nodo resta riferimento storico-operativo,
-ma i checkpoint non devono essere l’unica fonte di regole permanenti.
 
 Nota:
 
@@ -1087,7 +1195,12 @@ G33 — Button Confirm Readiness Alignment è stato completato e integrato.
 Non è più nodo operativo immediato.
 Non deve essere riaperto salvo regressione reale del bottone Conferma.
 
-Il prossimo tema concreto emerso è G22, non una nuova variante di G33.
+Nota:
+
+G22 — Project Create Suggestion / Match Present / User Override è stato completato e integrato base.
+
+Non è più nodo operativo immediato.
+Non deve essere riaperto salvo regressione reale del caso match presente + suggestion extension.
 
 ------------------------------------------------
 REGOLA GAP REGISTER
@@ -1663,4 +1776,49 @@ v18 — 2026-06-01
 - nessuna anticipazione Match Engine Advanced
 - nessuna modifica select options / candidate filtering
 - nessuna modifica save readiness centralizzata
+- nessuna anticipazione dashboard / KPI / output
+
+v19 — 2026-06-04
+
+- aggiornamento post PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+- Gap Register aggiornato da v18 a v19
+- G22 Project Create Suggestion — Match Present / User Override aggiornato da IDENTIFICATO a INTEGRATO BASE
+- caso guida 20 euro villa sierri risolto
+- match presente + suggestion extension classificato
+- create_suggestion_state aggiornato con requiresUserOverride
+- requiresUserOverride registrato come flag UI derivato da create_suggestion_state
+- preview_analysis_state aggiornato per warning mirato G22
+- card Da verificare aggiornata con:
+  - Associazione progetto da controllare
+  - Associazione entità da controllare
+- micro-copy consolidata:
+  - [baseName] selezionato · testo letto: [candidateName]
+  - [baseName] selezionata · testo letto: [candidateName]
+- create_suggestion_hint rifinito come area azione
+- rimossa duplicazione della selezione corrente dal container Suggerimenti associazione
+- separazione semantica consolidata:
+  - Da verificare = rischio decisionale
+  - Suggerimenti associazione = azione disponibile
+- confermato che G22 non blocca Conferma
+- confermato che suggestion ignorata non blocca salvataggio
+- confermato button_input_confirm.Disabled invariato
+- confermato button_input_confirm.Hidden invariato
+- confermato payload invariato
+- confermati insert_event / update_event invariati
+- confermato save flow invariato
+- confermato parser invariato
+- confermato matching primario invariato
+- confermato input_analysis_result invariato
+- confermato DB invariato
+- confermato Supabase invariato
+- confermato che G10A non è necessario per il caso G22
+- G22 spostato in GAP INTEGRATI / ARCHIVIO COMPATTO
+- G35 Status Semantics Alignment aggiornato come residuo UX/semantico post G22
+- aggiunto G38 Preview / Missing Association Notice Cleanup
+- aggiornato G10A per chiarire che non va usato per riaprire G22
+- aggiornato G25 con nota sui residui grafici/mobile polish emersi durante G22
+- aggiornato ordine consigliato gap/nodi post G22
+- prossimo nodo operativo da decidere in Roadmap
+- nessuna anticipazione Match Engine Advanced
+- nessuna anticipazione Input Analysis Model completo
 - nessuna anticipazione dashboard / KPI / output

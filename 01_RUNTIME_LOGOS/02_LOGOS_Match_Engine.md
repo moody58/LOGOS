@@ -1,6 +1,6 @@
-# 02_LOGOS_Match_Engine_v11
+# 02_LOGOS_Match_Engine_v12
 
-DATA: 2026-05-25
+DATA: 2026-06-04
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -59,6 +59,14 @@ C (Completezza): 10/10
 - documentata responsabilità canonica del documento nel modello post Pacchetto B
 - chiarito che State, Roadmap e Gap Register richiamano il Match Engine senza duplicarne il dettaglio tecnico completo
 - aggiunti richiami canonici ai documenti tecnici collegati
+- documentato completamento G22 Project Create Suggestion — Match Present / User Override / Auto-select Confidence
+- documentata distinzione tra match sicuro, match generico, match presente + suggestion extension e ambiguità reale
+- documentato requiresUserOverride come flag UI derivato da create_suggestion_state
+- chiarito che match presente + suggestion extension non blocca Conferma
+- chiarito che match presente + suggestion extension non svuota select_project / select_entity
+- chiarito che il warning generico da moreSpecificMatches non viene più usato per il caso G22
+- documentato che Da verificare segnala il rischio decisionale mentre Suggerimenti associazione propone l’azione
+- confermato che G22 non richiede G10A Match Engine Evolution Advanced
 
 Q (Qualità): 9.5/10  
 - logica matching ora più coerente  
@@ -94,6 +102,12 @@ Q (Qualità): 9.5/10
 - rafforzato il ruolo del documento come fonte madre del matching
 - ridotto rischio di ricalcolo futuro delle decisioni consolidate sul matching
 - chiariti i confini tra Match Engine e documenti canonici collegati
+- ridotto il rischio di salvataggio inconsapevole su match generico auto-selezionato
+- migliorata la distinzione semantica tra warning, hint e suggestion operativa
+- evitato ritorno a warning generici “Esistono progetti più specifici” / “Esistono entità più specifiche” nei casi non realmente richiesti dall’input
+- mantenuto il principio non bloccante del sistema
+- preservata la separazione tra Match Engine, create_suggestion_state e preview_analysis_state
+- evitata apertura anticipata di G10A per un caso risolvibile localmente
 
 D (Deployabilità): 10/10  
 - direttamente utilizzabile come riferimento runtime  
@@ -142,6 +156,21 @@ D (Deployabilità): 10/10
 - handle_event_success eliminato senza impatto matching
 - documento coerente con la Documentation Architecture Audit / Redundancy Reduction
 - pronto come fonte canonica per future sessioni su matching project/entity
+- G22 validato su runtime Retool reale
+- test 20 euro villa validato senza warning project non necessario
+- test 20 euro villa sierri validato con warning mirato “Associazione progetto da controllare”
+- test 20 euro villa sierri 6 validato con selezione specifica diretta
+- test 20 euro tecnico mario validato senza warning entity non necessario
+- test crea progetto test validato senza regressione Command Intent
+- test 20 euro mario rossi validato con match specifico diretto
+- test 20 euro mario giordano validato con warning mirato “Associazione entità da controllare”
+- button_input_confirm.Disabled invariato
+- button_input_confirm.Hidden invariato
+- payload invariato
+- insert_event / update_event invariati
+- DB invariato
+- Supabase invariato
+- G10A non necessario per il caso G22
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -176,6 +205,10 @@ Il documento guida:
 - chiarimento che button_input_confirm.Hidden migrato non modifica confirm guard funzionale
 - chiarimento che Linting / Retool Query Safety Pass non modifica il Match Engine
 - chiarimento che la policy match più specifici resta invariata
+- chiarimento della policy G22 su match presente + suggestion extension
+- distinzione tra auto-select sicuro e auto-select da controllare
+- rapporto tra warning mirato Da verificare e suggestion operativa
+- conferma che requiresUserOverride è policy UI derivata e non modifica il Match Engine
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -201,6 +234,9 @@ Questo documento è fonte canonica per:
 - rapporto tra matching e Command Intent
 - rapporto tra matching e input_analysis_result
 - limiti futuri del Match Engine
+- policy Match Present / User Override / Auto-select Confidence
+- distinzione tra moreSpecificMatches informativo e suggestion extension contestuale
+- confine tra auto-select del Match Engine e warning G22 derivato da create_suggestion_state
 
 Questo documento NON è fonte canonica completa per:
 
@@ -309,7 +345,50 @@ non è presente nel raw_input.
 
 ---
 
-9. MATCHING ≠ COMMAND INTENT
+9. AUTO-SELECT ≠ CERTEZZA ASSOLUTA
+
+La presenza di singleMatch consente l’auto-valorizzazione della select,
+ma non significa sempre che l’associazione sia semanticamente definitiva.
+
+Caso G22:
+
+input:
+20 euro villa sierri
+
+project_state:
+singleMatch = Villa
+
+create_suggestion_state:
+candidateName = Villa Sierri
+reason = extension
+requiresUserOverride = true
+
+Interpretazione:
+
+- Villa è un match reale
+- Villa Sierri è una possibile nuova associazione più specifica
+- la select resta valorizzata su Villa
+- Conferma resta attiva
+- il sistema segnala il controllo nella card Da verificare
+- il container Suggerimenti associazione propone l’azione di creazione
+
+Regole:
+
+- non svuotare select_project / select_entity
+- non trasformare il caso in ambiguità bloccante
+- non modificare button_input_confirm.Disabled
+- non modificare payload
+- non modificare save flow
+- non modificare DB
+- non aprire G10A se il caso è risolvibile con policy locale G22
+
+Il Match Engine continua a suggerire.
+La UI esplicita il rischio decisionale.
+L’utente decide.
+
+---
+
+10. MATCHING ≠ COMMAND INTENT
 
 Il Match Engine riconosce project/entity dentro input evento ordinario.
 
@@ -335,7 +414,7 @@ Regole:
 - i comandi puri vengono esclusi dal save flow evento
 - select_project / select_entity restano la decisione finale salvabile per eventi ordinari
 
-10. MATCHING ≠ UI READINESS / VISIBILITY
+11. MATCHING ≠ UI READINESS / VISIBILITY
 
 Il Match Engine calcola project/entity matching per eventi ordinari.
 
@@ -377,7 +456,7 @@ Non riconosce project/entity.
 Non è Match Engine.
 Non è Input Analysis Model completo.
 
-11. MATCHING ≠ INPUT_ANALYSIS_RESULT
+12. MATCHING ≠ INPUT_ANALYSIS_RESULT
 
 input_analysis_result non è il Match Engine.
 
@@ -1308,15 +1387,43 @@ e select_project vuoto
 
 ---
 
-HINT MATCH PIÙ SPECIFICI:
+HINT MATCH PIÙ SPECIFICI — STATO AGGIORNATO POST G22:
 
-entity_state.hasMoreSpecificMatches = true
-e singleMatch selezionato
-→ "Esistono entità più specifiche"
+entity_state.hasMoreSpecificMatches / project_state.hasMoreSpecificMatches
+restano segnali disponibili nel Match Engine.
 
-project_state.hasMoreSpecificMatches = true
-e singleMatch selezionato
-→ "Esistono progetti più specifici"
+Tuttavia, dopo G22, il warning generico:
+
+- "Esistono entità più specifiche"
+- "Esistono progetti più specifici"
+
+non deve essere usato come warning principale nella card Da verificare
+quando il problema reale è una suggestion extension.
+
+Motivo:
+
+hasMoreSpecificMatches indica che nel DB esistono record più specifici
+rispetto al singleMatch selezionato.
+
+Non indica necessariamente che l’input corrente stia chiedendo proprio
+quella associazione più specifica.
+
+Per i casi G22 il warning corretto deriva da create_suggestion_state:
+
+- project.requiresUserOverride = true
+- entity.requiresUserOverride = true
+
+Output preview consolidato:
+
+- "Associazione progetto da controllare"
+- "Associazione entità da controllare"
+
+con action testuale:
+
+- "[baseName] selezionato · testo letto: [candidateName]"
+- "[baseName] selezionata · testo letto: [candidateName]"
+
+Questo warning è non bloccante.
 
 ---
 
@@ -1601,6 +1708,94 @@ Regole:
 - suggestion ignorata non blocca conferma
 - creazione project/entity richiede conferma utente
 - evento resta non salvato dopo creazione project/entity
+
+---
+
+G22 — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+
+create_suggestion_state può individuare una candidate più specifica anche quando project_state / entity_state hanno già prodotto un singleMatch.
+
+Questo caso non è no-match e non è ambiguità reale.
+
+È classificato come:
+
+MATCH PRESENT + SUGGESTION EXTENSION
+
+Esempio project:
+
+input:
+20 euro villa sierri
+
+project_state:
+singleMatch = Villa
+
+create_suggestion_state:
+candidateName = Villa Sierri
+baseName = Villa
+reason = extension
+requiresUserOverride = true
+
+Comportamento consolidato:
+
+- select_project resta valorizzata su Villa
+- Conferma evento resta attiva
+- button_input_confirm.Disabled non cambia
+- payload non cambia
+- insert_event / update_event non cambiano
+- DB non cambia
+- Da verificare mostra:
+  Associazione progetto da controllare
+  Villa selezionato · testo letto: Villa Sierri
+- Suggerimenti associazione mostra:
+  Possibile nuovo progetto: Villa Sierri
+  pulsante Crea progetto
+
+Esempio entity:
+
+input:
+20 euro mario giordano
+
+entity_state:
+singleMatch = Mario
+
+create_suggestion_state:
+candidateName = Mario Giordano
+baseName = Mario
+reason = extension
+requiresUserOverride = true
+
+Comportamento consolidato:
+
+- select_entity resta valorizzata su Mario
+- Conferma evento resta attiva
+- Da verificare mostra:
+  Associazione entità da controllare
+  Mario selezionata · testo letto: Mario Giordano
+- Suggerimenti associazione mostra:
+  Possibile nuova entità: Mario Giordano
+  pulsante Crea entità
+
+Regola semantica:
+
+Da verificare segnala il rischio decisionale.
+Suggerimenti associazione propone l’azione disponibile.
+
+Non duplicare nella suggestion container il dato già mostrato in Da verificare.
+
+---
+
+moreSpecificMatches resta segnale interno/informativo del Match Engine.
+
+Non deve più produrre da solo warning generico nei casi G22.
+
+Motivo:
+
+“esistono record più specifici nel DB”
+non equivale a
+“l’input corrente richiede una nuova associazione più specifica”.
+
+I warning G22 devono derivare da create_suggestion_state.requiresUserOverride,
+non da hasMoreSpecificMatches.
 
 ---
 
@@ -2001,6 +2196,9 @@ LIMITI ATTUALI
 - preview ancora layer ibrido
 - hint duration/type ancora embedded nella preview
 - match engine avanzato separato non implementato
+- Status Semantics Alignment ancora aperto: badge OK può risultare semanticamente debole quando esiste una card Da verificare
+- Missing Association Notice Cleanup ancora aperto: balloon blu “Manca progetto / Manca entità” da rivalutare in nodo Preview/UX futuro
+- residui grafici/mobile polish da trattare in nodi UX dedicati o sessioni brevi
 
 ---
 
@@ -2038,6 +2236,11 @@ Risolto a primo livello:
 ✔ button_input_confirm.Hidden migrato a input_analysis_result
 ✔ input_analysis_result non legge più ui_visibility_state
 ✔ linting Retool azzerati senza modificare matching
+✔ G22 Project Create Suggestion — Match Present / User Override risolto a primo livello controllato
+✔ match presente + suggestion extension gestito con warning mirato non bloccante
+✔ requiresUserOverride introdotto come flag UI derivato da create_suggestion_state
+✔ warning generici moreSpecificMatches rimossi dal caso G22
+✔ Da verificare e Suggerimenti associazione separati semanticamente
 
 ------------------------------------------------
 PROBLEMA STRUTTURALE CRITICO — STATO AGGIORNATO
@@ -2235,6 +2438,22 @@ Evoluzioni future possibili solo come nodi dedicati:
 - confidence controllata
 - audit ambiguità
 
+Nota post G22:
+
+Il caso match presente + suggestion extension non richiede da solo G10A.
+
+G10A resta futuro solo per casi realmente avanzati:
+
+- ranking globale
+- fuzzy matching
+- alias
+- confidence score strutturale
+- gerarchie
+- deduplicazione
+- relazioni project/entity
+
+G22 è stato risolto con policy locale e warning mirato non bloccante.
+
 ---
 
 Vincoli futuri:
@@ -2411,6 +2630,13 @@ STATO ATTUALE
 ✔ button_input_confirm.Hidden migrato senza modificare Disabled / payload
 ✔ ui_visibility_state residuo tecnico deprecabile
 ✔ linting Retool azzerati senza modificare matching
+✔ G22 Project Create Suggestion — Match Present / User Override / Auto-select Confidence completato
+✔ match presente + suggestion extension gestito senza bloccare Conferma
+✔ warning mirato “Associazione progetto/entità da controllare” introdotto in Da verificare
+✔ container Suggerimenti associazione mantenuto come area azione
+✔ button_input_confirm.Disabled invariato
+✔ payload e save flow invariati
+✔ G10A non necessario per questo caso
 
 ---
 
@@ -2689,3 +2915,38 @@ v11 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+
+v12 — 2026-06-04
+
+- aggiornamento post PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+- G22 completato come micro-policy locale
+- documentata distinzione tra match sicuro, match generico, match presente + suggestion extension e ambiguità reale
+- introdotto requiresUserOverride come flag UI derivato da create_suggestion_state
+- chiarito che requiresUserOverride non modifica project_state / entity_state
+- chiarito che requiresUserOverride non modifica select_project / select_entity
+- chiarito che requiresUserOverride non modifica button_input_confirm.Disabled
+- chiarito che requiresUserOverride non modifica payload o save flow
+- documentato comportamento project:
+  - input 20 euro villa sierri
+  - select_project = Villa
+  - candidateName = Villa Sierri
+  - warning Da verificare: Associazione progetto da controllare
+  - suggestion: Possibile nuovo progetto Villa Sierri
+- documentato comportamento entity:
+  - input 20 euro mario giordano
+  - select_entity = Mario
+  - candidateName = Mario Giordano
+  - warning Da verificare: Associazione entità da controllare
+  - suggestion: Possibile nuova entità Mario Giordano
+- chiarito che moreSpecificMatches resta segnale interno/informativo ma non genera warning generico nel caso G22
+- confermata separazione semantica:
+  - Da verificare = rischio decisionale
+  - Suggerimenti associazione = azione disponibile
+- confermato che la suggestion ignorata non blocca il salvataggio
+- confermato che Conferma resta attiva
+- confermato che G22 non richiede G10A Match Engine Evolution Advanced
+- confermato DB invariato
+- confermato Supabase invariato
+- confermato parser invariato
+- confermato save flow invariato
+- confermato payload invariato

@@ -1,6 +1,6 @@
-# 01_LOGOS_Input_System_v18
+# 01_LOGOS_Input_System_v19
 
-DATA: 2026-06-01
+DATA: 2026-06-04
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -99,6 +99,12 @@ Il documento è utilizzato per:
 - Button Confirm Readiness Alignment
 - button_input_confirm.Disabled aggiornato senza modificare parser, input_analysis_result, payload o save flow
 - distinzione confermata tra canShowConfirm, canConfirm e Disabled
+- Project Create Suggestion — Match Present / User Override / Auto-select Confidence
+- gestione G22 di match presente + suggestion extension
+- requiresUserOverride in create_suggestion_state
+- warning mirato in preview_analysis_state per associazione project/entity da controllare
+- separazione semantica tra Da verificare e Suggerimenti associazione
+- conferma che G22 non modifica parser, matching primario, select, Disabled, payload, save flow o DB
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -121,6 +127,9 @@ Questo documento è fonte canonica per:
 - relazione tra input flow e button_input_confirm
 - relazione tra canShowConfirm, canConfirm e button_input_confirm.Disabled
 - fonti controllate usate dal payload evento
+- create_suggestion_state.requiresUserOverride nel contesto input
+- relazione tra create_suggestion_state e preview_analysis_state per G22
+- comportamento input flow in caso di match presente + suggestion extension
 
 Questo documento NON è fonte canonica completa per:
 
@@ -255,6 +264,40 @@ Regole:
 - suggestion ignorata non blocca il salvataggio
 - project/entity mancanti non bloccano il salvataggio
 - project/entity ambigui bloccano il salvataggio finché non risolti manualmente
+
+Nota post G22 — Match Present / User Override:
+
+Una suggestion può esistere anche quando project_state / entity_state hanno già prodotto un singleMatch.
+
+Esempio:
+
+20 euro villa sierri
+→ project_state.singleMatch = Villa
+→ create_suggestion_state.candidateName = Villa Sierri
+→ create_suggestion_state.requiresUserOverride = true
+
+Questo non è no-match.
+Questo non è ambiguità reale.
+Questo non blocca Conferma.
+
+Regole:
+
+- la select resta valorizzata sul singleMatch esistente
+- Conferma evento resta attiva
+- la suggestion non salva automaticamente
+- l’utente può creare il nuovo project/entity oppure confermare quello selezionato
+- il rischio decisionale viene mostrato in Da verificare
+- l’azione disponibile viene mostrata in Suggerimenti associazione
+
+Separazione semantica:
+
+Da verificare:
+segnala il controllo decisionale.
+
+Suggerimenti associazione:
+propone l’azione di creazione.
+
+Non duplicare nella suggestion container la stessa informazione già mostrata in Da verificare.
 
 ---
 
@@ -575,6 +618,10 @@ create_suggestion_state
 → non salva dati
 → non decide al posto dell’utente
 → alimenta container suggestion inline
+→ espone requiresUserOverride quando esiste una selezione attiva ma l’input suggerisce una candidate più specifica non ancora presente
+→ non blocca il salvataggio
+→ non modifica select_project / select_entity
+→ non modifica button_input_confirm.Disabled
 
 select_project
 → legge project_state.data.singleMatch
@@ -702,6 +749,25 @@ input_home
 → reset edit_mode / editing_event se necessario
 → feedback temporaneo
 → routing post-save contestuale
+
+Nota post G22:
+
+create_suggestion_state può produrre requiresUserOverride.
+
+preview_analysis_state consuma questo flag per generare un warning mirato non bloccante:
+
+- Associazione progetto da controllare
+- Associazione entità da controllare
+
+Questo warning non modifica:
+
+- parser
+- matching primario
+- select
+- confirm guard
+- payload
+- save flow
+- DB
 
 Nota UI Readiness / Input Analysis Result:
 
@@ -2684,6 +2750,37 @@ Nota:
 input_analysis_result non ricalcola gli hint.
 Li legge da preview_analysis_state.
 
+Nota post G22 — Match Present / User Override:
+
+preview_analysis_state ora può mostrare un warning mirato quando create_suggestion_state rileva una suggestion extension con selezione già attiva.
+
+Esempio project:
+
+20 euro villa sierri
+→ Progetto selezionato: Villa
+→ Candidate suggerita: Villa Sierri
+
+Output Da verificare:
+
+Associazione progetto da controllare
+Villa selezionato · testo letto: Villa Sierri
+
+Esempio entity:
+
+20 euro mario giordano
+→ Entità selezionata: Mario
+→ Candidate suggerita: Mario Giordano
+
+Output Da verificare:
+
+Associazione entità da controllare
+Mario selezionata · testo letto: Mario Giordano
+
+Regola:
+
+Questo warning è informativo e non bloccante.
+Non modifica status DB, payload o salvataggio.
+
 Nota post Visibility Migration Completion:
 
 Durante i test è stato osservato un residuo semantico non bloccante:
@@ -3343,10 +3440,27 @@ nessun match:
 → nessun hint ambiguità
 → conferma abilitata
 
-match generico con match più specifici:
+match generico semplice:
 → singleMatch valorizzato
-→ hint informativo
+→ nessun blocco
 → conferma abilitata
+
+match presente + suggestion extension:
+→ singleMatch valorizzato
+→ create_suggestion_state genera candidate più specifica
+→ requiresUserOverride = true
+→ Da verificare mostra warning mirato
+→ Suggerimenti associazione mostra azione di creazione
+→ conferma abilitata
+
+Nota post G22:
+
+Il vecchio warning generico “Esistono progetti più specifici” / “Esistono entità più specifiche” non deve più essere usato come segnale principale per il caso match presente + suggestion extension.
+
+Il segnale corretto per G22 è:
+
+create_suggestion_state.project.requiresUserOverride
+create_suggestion_state.entity.requiresUserOverride
 
 ---
 
@@ -3433,6 +3547,32 @@ Regole:
 - una sola creazione guidata aperta alla volta
 - select_project / select_entity restano decisione utente finale
 
+Regola post G22:
+
+create_suggestion_state gestisce anche il caso:
+
+match presente + possibile estensione più specifica
+
+Questo accade quando:
+
+- project_state / entity_state hanno già un singleMatch
+- create_suggestion_state trova una candidate più specifica non ancora presente
+- la candidate è una extension del nome selezionato
+- non esiste ambiguità reale
+
+Output aggiuntivo del layer suggestion:
+
+- requiresUserOverride = true
+
+Significato:
+
+requiresUserOverride non blocca.
+requiresUserOverride non salva.
+requiresUserOverride non cambia la select.
+requiresUserOverride non modifica il matching primario.
+
+Serve solo a permettere alla UI di esplicitare il rischio decisionale.
+
 ---
 
 PROJECT CREATE
@@ -3452,29 +3592,64 @@ Comportamento:
 - select_project viene valorizzata
 - evento resta da confermare manualmente
 
-Nota post G33:
+Nota post G22:
 
-Durante i test Button Confirm Readiness Alignment è stato osservato il caso:
+Il caso osservato in G33 è stato risolto nel nodo:
+
+PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+
+Caso guida:
 
 20 euro villa sierri
 → select_project = Villa
 → suggestion: possibile nuovo progetto Villa Sierri
 → Conferma attiva
 
-Classificazione:
+Classificazione finale:
 
 - non è problema di parser
 - non è problema di input_analysis_result
 - non è problema di button_input_confirm.Disabled
 - non è bug del payload o del save flow
-- è tema futuro da assorbire in G22 Project Create Suggestion — Match Present / User Override
+- è caso match presente + suggestion extension
 
-Possibile evoluzione futura:
+Soluzione consolidata:
 
-- auto-select confidence
-- gestione match generico salvabile
-- user override più esplicito
-- priorità/filtro contestuale delle select project/entity
+- create_suggestion_state espone requiresUserOverride
+- preview_analysis_state mostra warning mirato in Da verificare
+- container Suggerimenti associazione mostra solo l’azione disponibile
+- select_project resta valorizzata
+- Conferma resta attiva
+- suggestion ignorata non blocca il salvataggio
+
+Esempio UI finale:
+
+Da verificare:
+Associazione progetto da controllare
+Villa selezionato · testo letto: Villa Sierri
+
+Suggerimenti associazione:
+Possibile nuovo progetto: Villa Sierri
+Crea progetto
+
+Il caso simmetrico entity è gestito allo stesso modo:
+
+20 euro mario giordano
+→ select_entity = Mario
+→ suggestion: possibile nuova entità Mario Giordano
+
+Da verificare:
+Associazione entità da controllare
+Mario selezionata · testo letto: Mario Giordano
+
+Suggerimenti associazione:
+Possibile nuova entità: Mario Giordano
+Crea entità
+
+Decisione:
+
+G22 è chiuso a primo livello controllato.
+Non serve G10A per questo caso.
 
 ---
 
@@ -3792,9 +3967,13 @@ REGOLE:
 - input non vuoto
 - nessun match project/entity
 - match univoco project/entity
-- match generico con warning non bloccante
-- match più specifici segnalati come hint informativo
+- match generico semplice
+- match presente + suggestion extension con warning G22 non bloccante
+- suggestion ignorata
 - ambiguità project/entity risolta manualmente
+✔ G22 non modifica la guard funzionale della Conferma
+✔ requiresUserOverride non disabilita button_input_confirm
+✔ button_input_confirm non legge requiresUserOverride come blocco
 
 ✔ conferma bloccata se:
 
@@ -5884,6 +6063,127 @@ Nota fuori nodo:
 Il rischio match generico / auto-select confidence non appartiene a G33.
 Va assorbito in G22 Project Create Suggestion — Match Present / User Override.
 
+PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — TEST VALIDATI:
+
+Obiettivo:
+
+validare G22 senza riaprire G33, senza modificare Disabled,
+senza modificare payload e senza anticipare G10A.
+
+Modifiche applicate:
+
+- create_suggestion_state espone requiresUserOverride
+- preview_analysis_state legge create_suggestion_state
+- Da verificare mostra warning mirato solo quando c’è match presente + suggestion extension
+- create_suggestion_hint mantiene la suggestion operativa senza duplicare la selezione corrente
+- warning generici moreSpecificMatches rimossi dal caso G22
+
+Test:
+
+1. 20 euro villa
+
+Esito:
+
+- Progetto = Villa
+- nessun warning progetto da controllare
+- nessuna suggestion project
+- Conferma attiva
+
+RISULTATO:
+OK
+
+2. 20 euro villa sierri
+
+Esito:
+
+- Progetto = Villa
+- Da verificare mostra:
+  Associazione progetto da controllare
+  Villa selezionato · testo letto: Villa Sierri
+- Suggerimenti associazione mostra:
+  Possibile nuovo progetto: Villa Sierri
+- Conferma attiva
+
+RISULTATO:
+OK
+
+3. 20 euro villa sierri 6
+
+Esito:
+
+- Progetto = Villa Sierri 6
+- nessun warning progetto da controllare
+- nessuna suggestion project
+- Conferma attiva
+
+RISULTATO:
+OK
+
+4. 20 euro tecnico mario
+
+Esito:
+
+- Entità = Mario
+- nessun warning entità da controllare
+- nessuna suggestion entity
+- Conferma attiva
+
+RISULTATO:
+OK
+
+5. crea progetto test
+
+Esito:
+
+- command container visibile
+- Sintesi evento nascosta
+- Dati evento nascosti
+- Conferma evento non mostrata
+- nessun evento salvato
+
+RISULTATO:
+OK
+
+6. 20 euro mario rossi
+
+Esito:
+
+- Entità = Mario Rossi
+- nessun warning entità da controllare
+- nessuna suggestion entity
+- Conferma attiva
+
+RISULTATO:
+OK
+
+7. 20 euro mario giordano
+
+Esito:
+
+- Entità = Mario
+- Da verificare mostra:
+  Associazione entità da controllare
+  Mario selezionata · testo letto: Mario Giordano
+- Suggerimenti associazione mostra:
+  Possibile nuova entità: Mario Giordano
+- Conferma attiva
+
+RISULTATO:
+OK
+
+Regressioni escluse:
+
+- parser invariato
+- matching primario invariato
+- select_project/select_entity invariati
+- button_input_confirm.Disabled invariato
+- button_input_confirm.Hidden invariato
+- payload invariato
+- insert_event/update_event invariati
+- DB invariato
+- Supabase invariato
+- Command Intent non regressivo
+
 LIMITI ATTUALI
 
 INPUT / PARSING:
@@ -5936,7 +6236,7 @@ no filtro select su match ambigui
 no ranking avanzato
 auto-select confidence avanzata non implementata
 select_project/select_entity non filtrano né prioritizzano ancora i candidati contestuali
-match generico salvabile da assorbire in G22
+match presente + suggestion extension risolto in G22 a primo livello controllato
 
 PREVIEW:
 
@@ -5952,6 +6252,11 @@ visibilità Sintesi governata da input_analysis_result.readiness.canShowEventPre
 ui_visibility_state resta residuo tecnico deprecabile / rollback e non governa più gli Hidden principali migrati.
 contenuto interno Sintesi ancora non separato
 warning informativi non separati in blocchi autonomi
+G22 ha introdotto warning mirato in Da verificare per associazioni project/entity da controllare
+Da verificare segnala il rischio decisionale
+Suggerimenti associazione propone l’azione
+balloon blu “Manca progetto / Manca entità” ancora da rivalutare in nodo Preview/UX futuro
+badge OK / status Sintesi ancora da rivalutare in Status Semantics Alignment
 
 ARCHITETTURA:
 
@@ -5983,6 +6288,10 @@ handle_event_success eliminato
 “modifica” generico non ancora riconosciuto come guida edit
 “crea” in edit mode soppresso correttamente ma senza guidance esplicita
 cleanup obsolete UI guards / query reduction non ancora eseguito
+requiresUserOverride introdotto in create_suggestion_state senza creare motore monolitico
+preview_analysis_state consuma requiresUserOverride per warning mirato
+separazione tra warning e azione migliorata
+residui grafici/mobile polish da trattare in nodi UX dedicati o sessioni brevi
 
 COMMAND INTENT:
 
@@ -6033,6 +6342,8 @@ capace di comporre raw / selection / effective state tramite input_analysis_resu
 capace di mantenere separata la visibilità del bottone Conferma dalla sua readiness funzionale
 capace di bloccare solo ambiguità reali non risolte senza trasformare warning informativi in blocchi
 capace di alimentare gli Hidden principali del flow input senza diventare un motore monolitico
+capace di segnalare match presente + suggestion extension senza bloccare l’utente
+capace di distinguere rischio decisionale da azione suggerita
 
 NON:
 
@@ -6610,3 +6921,44 @@ v18 — 2026-06-01
 - nessuna modifica select options / candidate filtering
 - nessuna modifica save readiness centralizzata
 - nessuna anticipazione dashboard / KPI / output
+
+v19 — 2026-06-04
+
+- aggiornamento post PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+- G22 completato a primo livello controllato
+- documentato requiresUserOverride in create_suggestion_state
+- chiarito che requiresUserOverride segnala match presente + suggestion extension
+- chiarito che requiresUserOverride non modifica parser
+- chiarito che requiresUserOverride non modifica project_state / entity_state
+- chiarito che requiresUserOverride non modifica select_project / select_entity
+- chiarito che requiresUserOverride non modifica button_input_confirm.Disabled
+- chiarito che requiresUserOverride non modifica payload o save flow
+- preview_analysis_state aggiornato per mostrare warning mirato:
+  - Associazione progetto da controllare
+  - Associazione entità da controllare
+- create_suggestion_hint mantenuto come area di azione:
+  - Possibile nuovo progetto
+  - Possibile nuova entità
+- rimossa duplicazione semantica tra Da verificare e Suggerimenti associazione
+- documentato comportamento project:
+  - 20 euro villa
+  - 20 euro villa sierri
+  - 20 euro villa sierri 6
+- documentato comportamento entity:
+  - 20 euro tecnico mario
+  - 20 euro mario rossi
+  - 20 euro mario giordano
+- confermato che G22 non blocca Conferma
+- confermato che suggestion ignorata non blocca salvataggio
+- confermato che G22 non richiede G10A
+- confermato Command Intent non regressivo
+- confermato parser invariato
+- confermato matching primario invariato
+- confermato payload invariato
+- confermato save flow invariato
+- confermato DB invariato
+- confermato Supabase invariato
+- registrati residui fuori nodo:
+  - balloon blu “Manca progetto / Manca entità” da rivalutare in nodo Preview/UX futuro
+  - badge OK / status Sintesi da rivalutare in Status Semantics Alignment
+  - residui grafici/mobile polish da trattare in nodi UX dedicati o sessioni brevi
