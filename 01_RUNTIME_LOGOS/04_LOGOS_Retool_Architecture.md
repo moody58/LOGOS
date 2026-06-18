@@ -1,6 +1,6 @@
-# 04_LOGOS_Retool_Architecture_v21
+# 04_LOGOS_Retool_Architecture_v23
 
-DATA: 2026-06-04
+DATA: 2026-06-15
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -134,6 +134,13 @@ C (Completezza): 10/10
 - separazione semantica tra Da verificare e Suggerimenti associazione documentata
 - confermato button_input_confirm.Disabled invariato post G22
 - confermati payload, insert_event, update_event e save flow invariati post G22
+- INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY documentato
+- command_intent_state aggiornato con edit_generic_help per modifica / correggi / cambia
+- txt_command_intent_description aggiornato per mostrare guida generica
+- button_input_confirm aggiornato con EDIT MODE COMMAND GUARD locale
+- text_edit_mode_notice aggiornato con notice contestuale su command rilevato in edit mode
+- input_analysis_result rollbackato alla base stabile dopo test su approccio più invasivo
+- residuo UX edit mode command-like accettato e documentato
 
 Q (Qualità): 9.5/10  
 - architettura reale documentata  
@@ -208,6 +215,11 @@ Q (Qualità): 9.5/10
 - evitata modifica a select_project / select_entity
 - evitata modifica a button_input_confirm.Disabled
 - evitata apertura anticipata di Match Engine Advanced / G10A
+- migliorata la separazione tra input evento, command intent ed edit flow
+- evitato che alias generici modifica / correggi / cambia vengano salvati come eventi
+- evitato che command riconosciuti durante edit mode diventino update_event
+- mantenuta la stabilità di input_analysis_result evitando modifiche Hidden più ampie
+- accettato residuo UX visivo perché il blocco funzionale impedisce update_event e creazioni improprie
 
 D (Deployabilità): 10/10  
 - utilizzabile come riferimento tecnico reale  
@@ -302,6 +314,14 @@ D (Deployabilità): 10/10
 - nessuna regressione su Conferma evento
 - nessuna regressione su Command Intent
 - nessuna regressione su edit/no-op osservata
+- Input Context Consistency validato runtime Retool reale
+- create flow modifica / correggi / cambia validato senza creazione evento
+- edit flow modifica / correggi / cambia validato con blocco update_event
+- edit flow crea progetto test / crea entità test validato con blocco update_event e nessuna creazione strutturale
+- edit flow input evento valido validato con update_event corretto
+- Annulla modifica validato
+- G22 20 euro villa sierri non regressivo
+- linting Retool 0
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -420,6 +440,14 @@ Il documento descrive:
 - aggiornamento create_suggestion_hint nel container_association_suggestions
 - separazione tra warning decisionale e azione di creazione
 - conferma che G22 non modifica button_input_confirm.Disabled, payload, save flow, DB o Supabase
+- Input Context Consistency — Edit / Suggestion / Command Boundary
+- aggiornamento locale command_intent_state per alias generici modifica / correggi / cambia
+- aggiornamento txt_command_intent_description per edit_generic_help
+- aggiornamento button_input_confirm con EDIT MODE COMMAND GUARD
+- aggiornamento text_edit_mode_notice con micro-copy contestuale
+- conferma rollback input_analysis_result alla base stabile
+- conferma che button_input_confirm.Disabled resta invariato
+- conferma che payload, insert_event, update_event e save flow restano invariati
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -436,6 +464,10 @@ Questo documento è fonte canonica per:
 - componenti input / preview / command / suggestion / feedback / events list
 - wiring Retool tra input_home, input_raw, trigger_parse_debounced, parser, matching, suggestion, command, preview, input_analysis_result e confirm
 - button_input_confirm come componente Retool
+- guard locale button_input_confirm contro command freschi durante edit mode
+- micro-copy contestuale text_edit_mode_notice
+- rendering command container per edit_generic_help
+- comportamento Retool degli alias generici modifica / correggi / cambia
 - insert_event / update_event come query Retool
 - insert_project / insert_entity come query Retool
 - navigation dock
@@ -975,6 +1007,32 @@ Regole:
 - button_input_confirm.Disabled non è migrato dentro input_analysis_result
 - dopo G33, button_input_confirm.Disabled legge solo project_state/entity_state isAmbiguous
 
+Nota post Input Context Consistency:
+
+Durante il nodo INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+è stato testato un approccio più invasivo su input_analysis_result per trasformare i command riconosciuti in edit mode in command flow.
+
+Esito:
+
+- approccio respinto
+- app rallentata
+- linting emerso
+- command container diventato operativo durante edit mode
+- rischio creazione project/entity senza preservare correttamente lo stato edit
+
+Decisione finale:
+
+input_analysis_result è stato rollbackato alla base stabile.
+
+La protezione finale non avviene tramite Hidden multipli o cambio effectiveFlowType,
+ma tramite:
+
+- command_intent_state per riconoscere alias generici
+- button_input_confirm per bloccare update_event improprio in edit mode
+- text_edit_mode_notice per guidance contestuale
+
+Non modificare input_analysis_result per questo caso fuori da nodo dedicato.
+
 Regola anti-loop:
 
 input_analysis_result non legge più ui_visibility_state.
@@ -1250,6 +1308,7 @@ preview_analysis_state
 input_analysis_result
 text_input_analysis_loading
 text_edit_mode_notice
+EDIT MODE COMMAND GUARD in button_input_confirm
 edit_mode
 editing_event
 container_association_suggestions
@@ -1409,6 +1468,54 @@ Decisione UI:
 
 Da verificare segnala il rischio decisionale.
 Suggerimenti associazione propone l’azione disponibile.
+
+Nota post INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY:
+
+Durante il nodo sono state applicate modifiche Retool locali per stabilizzare il confine tra:
+
+- create flow
+- edit flow
+- Command Intent
+- suggestion project/entity
+- alias generici modifica / correggi / cambia
+
+Modifiche finali mantenute:
+
+- command_intent_state riconosce modifica / correggi / cambia come edit_generic_help
+- txt_command_intent_description mostra guida non operativa per edit_generic_help
+- button_input_confirm contiene una guard locale in edit mode contro command freschi
+- text_edit_mode_notice mostra un testo contestuale quando viene rilevato un command in edit mode
+
+Rollback finale:
+
+- input_analysis_result è stato riportato alla base stabile
+- nessuna modifica finale mantenuta su input_analysis_result
+
+Comportamento finale:
+
+Create flow:
+- modifica / correggi / cambia non mostrano Sintesi evento
+- non mostrano Dati evento
+- non mostrano Conferma evento
+- non creano eventi
+
+Edit flow:
+- modifica / correggi / cambia restano nel contesto edit
+- crea progetto test / crea entità test restano nel contesto edit
+- Conferma evento viene bloccata da button_input_confirm se il command è fresco
+- update_event non parte
+- project/entity non vengono creati
+- Annulla modifica resta disponibile
+
+Residuo UX accettato:
+
+in edit mode, Sintesi / Suggerimenti associazione / Dati evento possono restare visibili
+anche quando l’input è un command riconosciuto.
+
+Decisione:
+
+non correggere ora tramite input_analysis_result o Hidden multipli.
+Il blocco funzionale è sufficiente e più stabile.
 
 Funzione:
 
@@ -2068,7 +2175,11 @@ if (!rawText) {
   const isCreateCommand =
     /^(crea|aggiungi|inserisci|nuovo|nuova)\s+(nuovo\s+|nuova\s+)?(progetto|entita)(\s|$)/.test(rawText);
 
+  const isGenericEditGuideCommand =
+    /^(modifica|correggi|cambia)$/.test(rawText);
+
   const isGuideCommand =
+    isGenericEditGuideCommand ||
     /^(modifica|correggi|cambia)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText) ||
     /^(come\s+)?(modifico|correggo|cambio)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText) ||
     /^(devo\s+)?(modificare|correggere|cambiare)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText);
@@ -2104,10 +2215,17 @@ tra evento ordinario e command intent.
 
 La fonte funzionale del command intent resta command_intent_state.
 
-Limite noto:
+Limite aggiornato:
 
 “modifica evento” viene classificato come command.
-“modifica” generico non è ancora riconosciuto come guida edit e resta residuo futuro.
+“modifica”, “correggi” e “cambia” sono ora classificati come command guide generiche.
+
+Non sono implementati:
+
+- typo command recognition
+- fuzzy command recognition
+- alias system globale
+- “modifica progetto” come command strutturale
 
 Nota:
 
@@ -3050,6 +3168,7 @@ command_intent_state espone:
 - isPureCommand
 - commandFamily
 - commandType
+  - include edit_generic_help per modifica / correggi / cambia
 - targetType
 - candidateName
 - existingId
@@ -3074,6 +3193,10 @@ Principi:
 - ui_visibility_state resta presente solo come residuo tecnico deprecabile / rollback, non come fonte canonica degli Hidden principali migrati
 - command_intent_state resta la fonte funzionale del command
 - select_project / select_entity restano decisione finale per eventi ordinari
+- modifica / correggi / cambia sono command guide non operative
+- questi alias non salvano eventi
+- questi alias non aprono edit flow automatico
+- durante edit mode, command riconosciuti non devono diventare update_event
 
 ---
 
@@ -3190,11 +3313,17 @@ cambia evento
 come modifico evento
 devo modificare evento
 
-Nota residua:
+Guida generica post Input Context Consistency:
 
 modifica
-→ non ancora riconosciuto come guida edit generica.
-Attualmente viene trattato come evento ordinario.
+correggi
+cambia
+
+→ riconosciuti come edit_generic_help
+→ guida generica non operativa
+→ non salvano eventi
+→ non aprono edit flow automatico
+→ non modificano record
 
 Comportamento:
 
@@ -3202,6 +3331,15 @@ Comportamento:
 - mostra btn_command_go_events
 - non modifica record
 - non apre edit flow automatico
+- non salva eventi
+
+Comportamento per edit_generic_help:
+
+- mostra container_command_intent in create flow
+- mostra descrizione guidata tramite txt_command_intent_description
+- non mostra Sintesi evento
+- non mostra Dati evento
+- non mostra Conferma evento
 - non salva eventi
 
 ---
@@ -3242,6 +3380,24 @@ btn_command_go_events:
 - apre container_events_list
 - non modifica eventi
 - non crea eventi
+
+Regola edit mode:
+
+btn_command_create_project e btn_command_create_entity non devono essere usati come azioni operative durante edit mode.
+
+Nel risultato finale del nodo Input Context Consistency, input_analysis_result resta rollbackato alla base stabile.
+Quindi in edit mode il container command non diventa operativo.
+
+Se l’utente scrive un command riconosciuto durante edit mode e preme Conferma evento,
+il blocco avviene in button_input_confirm tramite EDIT MODE COMMAND GUARD.
+
+Comportamento:
+
+- nessun insert_project
+- nessun insert_entity
+- nessun update_event
+- edit_mode resta attivo
+- l’utente può correggere input o premere Annulla modifica
 
 ------------------------------------------------
 TYPE CLASSIFICATION BASE
@@ -4001,6 +4157,7 @@ Sequenza attuale:
 legge ui_state.parsed
 costruisce payload
 determina wasEditMode
+esegue EDIT MODE COMMAND GUARD se in edit mode l’input è un command riconosciuto
 esegue no-op edit guard se in edit mode
 costruisce feedbackText / feedbackProject / feedbackEntity
 costruisce feedbackSummary prima del reset input/select
@@ -4088,6 +4245,96 @@ requiresUserOverride non modifica:
 
 Il caso match presente + suggestion extension resta confermabile.
 
+Nota post Input Context Consistency:
+
+button_input_confirm legge command_intent_state solo per una guard locale di sicurezza in edit mode.
+
+Scopo:
+
+evitare che un command riconosciuto venga salvato come modifica evento.
+
+La guard non usa command_intent_state come fonte dati salvabile.
+Non modifica payload.
+Non modifica insert_event / update_event.
+Non modifica button_input_confirm.Disabled.
+
+Esempi bloccati in edit mode:
+
+- modifica
+- correggi
+- cambia
+- crea progetto test
+- crea entità test
+
+EDIT MODE COMMAND GUARD:
+
+In edit mode, prima del no-op edit guard e prima di update_event,
+button_input_confirm verifica se l’input corrente corrisponde a un command riconosciuto fresco.
+
+Scopo:
+
+- impedire update_event impropri
+- impedire che alias generici diventino modifiche evento
+- impedire che command strutturali scritti durante edit mode modifichino l’evento
+- lasciare l’utente in edit mode
+
+Campi / fonti lette:
+
+- edit_mode.data
+- input_raw.value
+- command_intent_state.data?.isCommand
+- command_intent_state.data?.rawInput
+
+Logica:
+
+- normalizza input_raw corrente
+- normalizza command_intent_state.data.rawInput
+- verifica che edit_mode sia true
+- verifica che command_intent_state.data.isCommand sia true
+- verifica che il rawInput del command sia coerente con l’input corrente
+- se il command è fresco, mostra notifica warning e interrompe il confirm handler
+
+Effetti:
+
+- update_event non parte
+- insert_event non è coinvolto
+- insert_project non parte
+- insert_entity non parte
+- edit_mode resta true
+- editing_event resta valorizzato
+- payload non viene modificato
+- button_input_confirm.Disabled non viene modificato
+
+Codice runtime concettuale:
+
+const normalizeCommandText = (value) => {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/\\s+/g, " ")
+    .trim();
+};
+
+const currentInputForCommandGuard = normalizeCommandText(input_raw.value);
+const commandRawForGuard = normalizeCommandText(command_intent_state.data?.rawInput);
+
+const isFreshCommandInEditMode =
+  wasEditMode === true &&
+  command_intent_state.data?.isCommand === true &&
+  currentInputForCommandGuard &&
+  commandRawForGuard === currentInputForCommandGuard;
+
+if (isFreshCommandInEditMode) {
+  utils.showNotification({
+    title: "Comando non disponibile durante la modifica",
+    description: "Completa la modifica dell’evento oppure premi Annulla modifica prima di usare un comando.",
+    notificationType: "warning"
+  });
+
+  return;
+}
+
 NO-OP EDIT GUARD:
 
 In edit mode, prima di eseguire update_event,
@@ -4134,6 +4381,19 @@ button_input_confirm non ricalcola parsing.
 button_input_confirm non ricalcola matching.
 button_input_confirm non gestisce command intent.
 button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm.
+
+EDIT MODE COMMAND GUARD:
+
+button_input_confirm contiene anche una guard locale runtime contro command freschi in edit mode.
+
+Questa guard è separata da Disabled.
+
+Motivo:
+
+Disabled resta focalizzato sulle ambiguità project/entity.
+La guard command/edit è una protezione contestuale del click handler.
+
+Non modificare button_input_confirm.Disabled per gestire questo caso.
 
 Stato attuale post G33:
 
@@ -4218,6 +4478,19 @@ per evitare che input_home.setValue("") o altri handler di change sovrascrivano 
 Save / refresh / routing:
 
 const wasEditMode = edit_mode.data;
+
+Prima della costruzione del no-op edit guard,
+button_input_confirm applica EDIT MODE COMMAND GUARD.
+
+Se la guard intercetta un command riconosciuto durante edit mode:
+
+- mostra notifica warning
+- interrompe il click handler
+- non costruisce salvataggio effettivo
+- non esegue update_event
+- non aggiorna events_new
+- non resetta edit_mode
+- non mostra feedback evento
 
 const savePromise = wasEditMode
   ? update_event.trigger({ additionalScope: payload })
@@ -4543,19 +4816,36 @@ Risultato:
 ✔ edit_mode.data = false
 ✔ editing_event.data = null
 
-Notice edit mode post UI Readiness:
+Notice edit mode post Input Context Consistency:
 
 Durante edit mode viene mostrato text_edit_mode_notice.
 
-Contenuto:
+Contenuto standard:
 
 Evento in modifica · Premi Annulla modifica per uscire.
+
+Contenuto quando l’input corrente è un command riconosciuto fresco:
+
+Comando rilevato · Premi Annulla modifica prima di usare comandi.
 
 Scopo:
 
 - chiarire che l’utente è ancora in modalità modifica
-- spiegare perché scrivere “crea” non apre Command Intent
-- evitare cambio implicito da edit flow a command flow
+- spiegare perché scrivere un command non esegue azioni strutturali
+- anticipare la guard di button_input_confirm
+- evitare che l’utente si aspetti la creazione project/entity durante edit mode
+
+Hidden:
+
+{{ edit_mode.data !== true }}
+
+Nota:
+
+la notice è solo UX.
+Non modifica eventi.
+Non modifica command_intent_state.
+Non modifica input_analysis_result.
+Non modifica save flow.
 
 Hidden:
 
@@ -4834,6 +5124,14 @@ command_intent_state:
 query page-level Run JS Code.
 Riconosce comandi puri e distingue input evento da comando strutturale.
 
+Dopo Input Context Consistency riconosce anche:
+
+- modifica
+- correggi
+- cambia
+
+come guide generiche non operative con commandType edit_generic_help.
+
 Non salva dati.
 Non modifica DB.
 Non modifica parser.
@@ -5069,6 +5367,9 @@ PATTERN ARCHITETTURALI
 ✔ Micro-flash Residual Observation Pattern
 ✔ Match Present User Override Pattern
 ✔ Decision Warning vs Suggestion Action Pattern
+✔ Edit Mode Command Guard Pattern
+✔ Generic Edit Guide Command Pattern
+✔ Contextual Edit Notice Pattern
 
 Nota:
 
@@ -5094,6 +5395,23 @@ Decision Warning vs Suggestion Action Pattern indica la separazione:
 
 - Da verificare = rischio decisionale
 - Suggerimenti associazione = azione disponibile
+
+Generic Edit Guide Command Pattern indica che alias generici come:
+
+- modifica
+- correggi
+- cambia
+
+sono riconosciuti come guide non operative e non come eventi ordinari.
+
+Edit Mode Command Guard Pattern indica che un command riconosciuto durante edit mode
+non deve diventare update_event.
+
+La protezione resta locale a button_input_confirm,
+senza modificare input_analysis_result, payload, Disabled o save flow.
+
+Contextual Edit Notice Pattern indica che text_edit_mode_notice mostra una micro-copy diversa
+quando rileva un command fresco durante edit mode.
 
 PROBLEMI NOTI
 
@@ -5208,6 +5526,13 @@ RISOLTI:
 ✔ 20 euro mario giordano salvabile su Mario senza warning mirato → RISOLTO
 ✔ duplicazione tra warning e suggestion action nel caso G22 → RISOLTA
 ✔ warning generico “Esistono progetti/entità più specifiche” fuorviante nei casi G22 → RISOLTO
+✔ “modifica” generico salvabile come evento → RISOLTO
+✔ “correggi” generico salvabile come evento → RISOLTO
+✔ “cambia” generico salvabile come evento → RISOLTO
+✔ command riconosciuto durante edit mode poteva diventare update_event → RISOLTO CON GUARD LOCALE
+✔ crea progetto test durante edit mode poteva aggiornare evento → RISOLTO CON GUARD LOCALE
+✔ crea entità test durante edit mode poteva aggiornare evento → RISOLTO CON GUARD LOCALE
+✔ text_edit_mode_notice non segnalava subito command in edit mode → RISOLTO CON MICRO-COPY CONTESTUALE
 
 UI:
 
@@ -5224,7 +5549,9 @@ UI:
 ⚠ “Da verificare” resta dentro Sintesi e non è blocco autonomo
 ✔ rendering progressivo input evento normale ridotto tramite UI Readiness
 ⚠ micro-flash feedback project/entity ancora presente
-⚠ “modifica” generico non ancora riconosciuto come guida edit
+✔ “modifica”, “correggi”, “cambia” riconosciuti come guide generiche non operative
+⚠ in edit mode Sintesi / Suggerimenti associazione / Dati evento restano visibili anche quando l’input è command riconosciuto
+⚠ residuo accettato perché update_event e creazioni improprie sono bloccati da button_input_confirm
 ✔ linting Retool azzerati
 ✔ Full Visibility Migration degli Hidden principali completata
 ✔ button_input_confirm.Hidden migrato a input_analysis_result
@@ -5274,6 +5601,10 @@ ARCHITETTURA:
 ⚠ ui_visibility_state ancora presente fisicamente come residuo tecnico deprecabile
 ⚠ save readiness completa non centralizzata
 ✔ auto-select confidence / match generico salvabile risolto a primo livello in G22
+✔ edit/command boundary stabilizzato a primo livello
+✔ input_analysis_result preservato stabile dopo rollback
+✔ command/edit guard gestita localmente in button_input_confirm
+⚠ residuo UX command-like in edit mode non risolto tramite Hidden multipli
 ⚠ select_project/select_entity non filtrano né prioritizzano ancora candidati contestuali
 ⚠ cleanup obsolete UI guards / query reduction non eseguito
 ✔ UI suggestion container rifinita a livello mobile base
@@ -5410,6 +5741,17 @@ STATO ARCHITETTURA
 ✔ button_input_confirm.Disabled invariato post G22
 ✔ payload e save flow invariati post G22
 ✔ G10A non necessario per il caso G22
+✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY completato
+✔ modifica / correggi / cambia gestiti come edit_generic_help
+✔ create flow protetto da eventi impropri su alias generici
+✔ edit flow protetto da update_event impropri su command riconosciuti
+✔ command create project/entity bloccati funzionalmente durante edit mode
+✔ button_input_confirm include EDIT MODE COMMAND GUARD
+✔ text_edit_mode_notice contestuale su command rilevato in edit mode
+✔ txt_command_intent_description aggiornata per edit_generic_help
+✔ input_analysis_result rollbackato alla base stabile
+✔ linting 0 dopo rollback e micro-fix locali
+
 
 ⚠ non completamente stabile nei layer evolutivi
 ⚠ preview ancora ibrida
@@ -5431,7 +5773,8 @@ STATO ARCHITETTURA
 ⚠ save readiness completa non centralizzata
 ⚠ micro-flash container_input durante transizioni input / command / empty in osservazione come residuo UX minore accettabile
 ✔ label “Importo” su durata risolta
-⚠ “modifica” generico non ancora riconosciuto come guida edit
+✔ “modifica” generico riconosciuto come guida non operativa insieme a “correggi” e “cambia”
+⚠ residuo UX: in edit mode Sintesi / Suggerimenti associazione / Dati evento restano visibili con command riconosciuto
 ⚠ suggestion create vs edit consistency da verificare
 ✔ project creation override con match generico risolto a primo livello in G22
 ✔ auto-select confidence / match generico salvabile risolto a primo livello in G22
@@ -5745,6 +6088,217 @@ Classificazione finale:
 G22 completato a primo livello controllato.
 
 Non serve G10A per questo caso.
+
+------------------------------------------------
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — TEST / ANALISI
+------------------------------------------------
+
+Nodo:
+
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+
+Gap collegati:
+
+- G21 — Suggestion Create vs Edit Consistency
+- G30 — Command Intent — Edit Guide Generic Alias
+
+Obiettivo:
+
+stabilizzare il confine tra:
+
+- create flow
+- edit flow
+- Command Intent
+- suggestion project/entity
+- input ordinario
+- input command-like
+- alias generici modifica / correggi / cambia
+
+Analisi AS-IS:
+
+command_intent_state riconosceva:
+
+- crea
+- crea progetto
+- crea entità
+- modifica evento
+
+ma non riconosceva:
+
+- modifica
+- correggi
+- cambia
+
+Risultato AS-IS:
+
+Create flow:
+
+modifica / correggi / cambia
+→ trattati come evento ordinario
+→ Sintesi visibile
+→ Dati evento visibili
+→ Conferma evento visibile
+→ evento creato
+
+Edit flow:
+
+modifica / correggi / cambia
+→ trattati come input edit ordinario
+→ update_event possibile
+
+crea progetto test / crea entità test durante edit mode
+→ command raw soppresso da input_analysis_result
+→ edit mode prevalente
+→ update_event possibile
+
+Approccio scartato:
+
+modificare input_analysis_result per rendere command flow effettivo anche in edit mode.
+
+Esito:
+
+- app rallentata
+- nuovo linting
+- command container operativo durante edit mode
+- rischio creazione project/entity senza preservare correttamente il contesto edit
+- rollback immediato alla base stabile
+
+Modifiche finali mantenute:
+
+1. command_intent_state
+
+- aggiunto riconoscimento:
+  - modifica
+  - correggi
+  - cambia
+- commandType:
+  edit_generic_help
+- commandFamily:
+  guide
+- canExecute:
+  false
+- comportamento:
+  guida non operativa
+
+2. txt_command_intent_description
+
+- aggiunta micro-copy per edit_generic_help:
+  Vuoi modificare qualcosa? Se intendi un evento già creato, apri la lista Eventi e usa Modifica.
+
+3. button_input_confirm
+
+- aggiunta EDIT MODE COMMAND GUARD
+- blocca update_event se edit_mode = true e input corrente corrisponde a un command riconosciuto fresco
+- mostra notifica warning
+- non chiude edit mode
+- non modifica payload
+- non modifica Disabled
+- non modifica insert_event / update_event
+
+4. text_edit_mode_notice
+
+- notice standard:
+  Evento in modifica · Premi Annulla modifica per uscire.
+
+- notice con command rilevato:
+  Comando rilevato · Premi Annulla modifica prima di usare comandi.
+
+Test finali validati:
+
+Create flow:
+
+modifica
+→ command rilevato
+→ guida visibile
+→ nessun evento creato
+
+correggi
+→ command rilevato
+→ guida visibile
+→ nessun evento creato
+
+cambia
+→ command rilevato
+→ guida visibile
+→ nessun evento creato
+
+crea progetto test
+→ command create project funzionante
+→ nessun evento salvato
+
+crea entità test
+→ command create entity funzionante
+→ nessun evento salvato
+
+Edit flow:
+
+modifica
+→ notice contestuale
+→ Conferma bloccata da guard
+→ nessun update_event
+
+correggi
+→ stesso comportamento
+→ nessun update_event
+
+cambia
+→ stesso comportamento
+→ nessun update_event
+
+crea progetto test
+→ nessun project creato
+→ nessun update_event
+→ warning mostrato
+→ edit mode resta attivo
+
+crea entità test
+→ nessuna entity creata
+→ nessun update_event
+→ warning mostrato
+→ edit mode resta attivo
+
+Edit flow con input evento valido:
+
+30 euro villa
+→ update_event corretto
+
+Annulla modifica:
+
+→ funzionante
+→ nessun update_event
+
+Regressioni:
+
+20 euro villa sierri
+→ G22 invariato
+→ warning mirato
+→ suggestion operativa
+→ Conferma attiva
+
+Linting:
+
+0
+
+Residuo UX accettato:
+
+in edit mode, quando viene rilevato un command:
+
+- Sintesi resta visibile
+- Suggerimenti associazione resta visibile
+- Dati evento restano visibili
+
+Decisione:
+
+residuo accettato perché:
+
+- update_event è bloccato
+- project/entity non vengono creati
+- Annulla modifica resta disponibile
+- input_analysis_result resta stabile
+- non vengono introdotte nuove dipendenze Hidden
+- non viene aperto G10A
+- non viene introdotto alias system globale
+
 
 ------------------------------------------------
 STATO DOCUMENTALE / REGOLE DI AGGIORNAMENTO
@@ -6435,3 +6989,59 @@ v22 — 2026-06-04
   - balloon blu “Manca progetto / Manca entità” da rivalutare in nodo Preview/UX futuro
   - badge OK / status Sintesi da riallineare semanticamente
   - residui grafici/mobile polish da trattare in nodi UX dedicati o sessioni brevi
+
+  v23 — 2026-06-15
+
+- aggiornamento post INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+- documento aggiornato da v22 a v23
+- documentato micro-nodo tecnico-funzionale su confine input/edit/command/suggestion
+- documentata analisi AS-IS di command_intent_state, input_analysis_result e button_input_confirm
+- documentato che command_intent_state non riconosceva modifica / correggi / cambia
+- documentato rischio AS-IS:
+  - modifica / correggi / cambia salvabili come eventi in create flow
+  - modifica / correggi / cambia salvabili come update_event in edit flow
+  - crea progetto test / crea entità test durante edit mode potevano diventare update_event
+- documentato approccio scartato su input_analysis_result
+- documentato rollback input_analysis_result alla base stabile
+- confermato che nessuna modifica finale è stata mantenuta su input_analysis_result
+- command_intent_state aggiornato con edit_generic_help
+- modifica / correggi / cambia riconosciuti come guide generiche non operative
+- txt_command_intent_description aggiornato per edit_generic_help
+- text_edit_mode_notice aggiornato con micro-copy contestuale
+- button_input_confirm aggiornato con EDIT MODE COMMAND GUARD
+- guard locale button_input_confirm documentata nel confirm flow
+- guard locale blocca command freschi durante edit mode prima di update_event
+- guard locale mostra notifica warning
+- guard locale non chiude edit mode
+- guard locale non azzera editing_event
+- guard locale non modifica payload
+- guard locale non modifica button_input_confirm.Disabled
+- guard locale non modifica insert_event / update_event
+- command create project/entity durante edit mode non crea project/entity
+- command create project/entity durante edit mode non aggiorna evento
+- create flow modifica / correggi / cambia validato senza evento creato
+- edit flow modifica / correggi / cambia validato senza update_event
+- edit flow crea progetto test / crea entità test validato senza project/entity creati e senza update_event
+- edit flow con input evento valido validato
+- Annulla modifica validato
+- G22 20 euro villa sierri non regressivo
+- linting Retool 0
+- aggiunti pattern:
+  - Generic Edit Guide Command Pattern
+  - Edit Mode Command Guard Pattern
+  - Contextual Edit Notice Pattern
+- registrato residuo UX accettato:
+  in edit mode Sintesi / Suggerimenti associazione / Dati evento restano visibili quando l’input è command riconosciuto
+- residuo accettato perché update_event e creazioni improprie sono bloccati funzionalmente
+- nessuna modifica DB
+- nessuna modifica Supabase
+- nessuna modifica payload
+- nessuna modifica save flow
+- nessuna modifica insert_event / update_event
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica Match Engine
+- nessuna riapertura G22
+- nessuna anticipazione G10A
+- nessun fuzzy matching
+- nessun alias system globale
+- nessun Input Analysis Model completo

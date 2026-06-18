@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v21
+# 00_PROJECT_Roadmap_v22
 
-DATA: 2026-06-04
+DATA: 2026-06-15
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -189,6 +189,42 @@ Residui emersi fuori nodo:
 - Preview / Missing Association Notice Cleanup
 - residui grafici/mobile polish non bloccanti
 
+Nota post Input Context Consistency — Edit / Suggestion / Command Boundary:
+
+Il nodo INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY è stato completato.
+
+Esito:
+
+- G21 trattato a primo livello controllato per il confine edit / command / suggestion
+- G30 integrato base per gli alias generici modifica / correggi / cambia
+- command_intent_state riconosce modifica / correggi / cambia come edit_generic_help
+- create flow protetto da eventi impropri su alias generici
+- edit flow protetto da update_event impropri su command riconosciuti
+- command create project/entity bloccati funzionalmente durante edit mode
+- button_input_confirm contiene EDIT MODE COMMAND GUARD locale
+- text_edit_mode_notice mostra guidance contestuale se rileva command in edit mode
+- input_analysis_result rollbackato alla base stabile dopo test non stabile
+
+Il nodo non ha modificato:
+
+- DB
+- Supabase
+- payload
+- insert_event / update_event
+- button_input_confirm.Disabled
+- Match Engine
+- G22
+- save flow
+
+Residuo UX accettato:
+
+in edit mode, con command riconosciuto, Sintesi / Suggerimenti associazione / Dati evento possono restare visibili.
+
+Decisione:
+
+non aprire un nuovo nodo immediato su questo residuo.
+Tracciarlo come G39 — Edit Mode Command-like Visual Residue, in osservazione.
+
 ------------------------------------------------
 STATO ATTUALE
 ------------------------------------------------
@@ -221,12 +257,13 @@ FASE COMPLETATA:
 ✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION (CHIUSO COME RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE)
 ✔ BUTTON CONFIRM READINESS ALIGNMENT (COMPLETATO)
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE (COMPLETATO)
+✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY (COMPLETATO)
 
 ---
 
 FASE ATTIVA / TRANSIZIONE:
 
-DEFINIZIONE PROSSIMO NODO POST G22 — STATUS / PREVIEW UX / HINT SEMANTICS
+DEFINIZIONE PROSSIMO NODO POST INPUT CONTEXT CONSISTENCY — STATUS / PREVIEW UX / HINT SEMANTICS
 
 Stato post audit documentale:
 
@@ -339,6 +376,69 @@ Test G22 validati:
 - 20 euro mario rossi → match specifico diretto
 - 20 euro mario giordano → warning G22 entity + suggestion entity
 
+Stato post Input Context Consistency — Edit / Suggestion / Command Boundary:
+
+- nodo completato su runtime Retool reale
+- G21 integrato parziale per la parte command/edit/suggestion trattata
+- G30 integrato base
+- modifica / correggi / cambia riconosciuti come guide generiche non operative
+- commandType edit_generic_help introdotto
+- create flow protetto:
+  - modifica / correggi / cambia non creano eventi
+  - Sintesi evento non mostrata
+  - Dati evento non mostrati
+  - Conferma evento non mostrata
+- edit flow protetto:
+  - command riconosciuti non diventano update_event
+  - crea progetto test / crea entità test non creano project/entity durante edit mode
+  - button_input_confirm blocca il salvataggio tramite EDIT MODE COMMAND GUARD
+- text_edit_mode_notice mostra guidance contestuale
+- input_analysis_result rollbackato alla base stabile
+- button_input_confirm.Disabled invariato
+- payload invariato
+- insert_event / update_event invariati
+- save flow invariato
+- DB invariato
+- Supabase invariato
+- G22 non regressivo
+- linting Retool 0
+
+Test Input Context Consistency validati:
+
+- create flow modifica → nessun evento creato
+- create flow correggi → nessun evento creato
+- create flow cambia → nessun evento creato
+- create flow crea progetto test → command funzionante
+- create flow crea entità test → command funzionante
+- edit flow modifica → nessun update_event
+- edit flow correggi → nessun update_event
+- edit flow cambia → nessun update_event
+- edit flow crea progetto test → nessun project creato, nessun update_event
+- edit flow crea entità test → nessuna entity creata, nessun update_event
+- edit flow con input evento valido → update_event corretto
+- Annulla modifica → funzionante
+- 20 euro villa sierri → G22 invariato
+
+Residuo post Input Context Consistency:
+
+G39 — Edit Mode Command-like Visual Residue
+
+Descrizione:
+
+in edit mode, quando viene rilevato un command, Sintesi / Suggerimenti associazione / Dati evento possono restare visibili.
+
+Classificazione:
+
+residuo UX accettato.
+
+Motivo:
+
+- update_event è bloccato
+- project/entity non vengono creati
+- edit mode resta attivo
+- Annulla modifica resta disponibile
+- input_analysis_result resta stabile
+
 Residui emersi post G22:
 
 1. STATUS SEMANTICS ALIGNMENT
@@ -353,25 +453,26 @@ Il balloon blu “Manca progetto / Manca entità” può risultare ridondante ri
 
 Residui puramente grafici/mobile polish da trattare più avanti o in sessioni brevi.
 
-Candidati principali residui ordinati:
+Candidati principali residui ordinati post Input Context Consistency:
 
 1. STATUS SEMANTICS ALIGNMENT
 2. PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
 3. PREVIEW MODEL / HINT STATE CONSOLIDATION
-4. COMMAND INTENT — EDIT GUIDE GENERIC ALIAS
-5. SUGGESTION CREATE VS EDIT CONSISTENCY
-6. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY — solo per ranking/fuzzy/alias/confidence avanzata reale
-7. DATA STRUCTURE / ENTITY HIERARCHY
-8. ECONOMIC DIRECTION ADVANCED
-9. DURATION ADVANCED — GIORNI / SETTIMANE
-10. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
-11. AZIONI RAPIDE OPERATIVE
-12. DASHBOARD BASE
-13. ICON SYSTEM / MOBILE POLISH FINALE
+4. EDIT MODE COMMAND-LIKE VISUAL RESIDUE — solo se il residuo UX diventa realmente problematico
+5. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY — solo per ranking/fuzzy/alias/confidence avanzata reale
+6. DATA STRUCTURE / ENTITY HIERARCHY
+7. ECONOMIC DIRECTION ADVANCED
+8. DURATION ADVANCED — GIORNI / SETTIMANE
+9. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
+10. AZIONI RAPIDE OPERATIVE
+11. DASHBOARD BASE
+12. ICON SYSTEM / MOBILE POLISH FINALE
 
-Nota sequenza post G22:
+Nota sequenza post Input Context Consistency:
 
 G22 è completato e non è più nodo operativo immediato.
+G30 è completato a livello base e non è più nodo operativo immediato.
+G21 è integrato parziale per la parte command/edit/suggestion trattata.
 
 G10A resta macro-gap futuro.
 Va aperto solo per evoluzioni realmente ampie del Match Engine:
@@ -385,8 +486,24 @@ Va aperto solo per evoluzioni realmente ampie del Match Engine:
 - deduplicazione
 - filtering contestuale delle select
 
-Non usare G10A per rifinire micro-copy, status preview o notice visuali.
+Non usare G10A per:
 
+- rifinire micro-copy
+- correggere status preview
+- correggere notice visuali
+- correggere residui command/edit
+- riaprire G22
+- riaprire G30
+- anticipare Input Analysis Model completo
+
+La sequenza deve evitare loop tra:
+
+- G22 già completato
+- G30 già completato
+- G21 integrato parziale
+- G10A futuro
+- input_analysis_result
+- Preview Model / Hint State Consolidation
 Candidati non immediati:
 
 - DASHBOARD BASE
@@ -948,6 +1065,39 @@ Regola:
 G22 non deve essere riaperto salvo regressione reale del caso match presente + suggestion extension.
 Eventuali evoluzioni ranking/fuzzy/alias/confidence strutturale restano in G10A.
 
+---
+
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+
+Stato:
+
+COMPLETATO — FIRST CONTROLLED LEVEL
+
+Risultato:
+
+- G21 trattato a primo livello controllato nel confine command/edit/suggestion
+- G30 integrato base per alias generici modifica / correggi / cambia
+- modifica / correggi / cambia riconosciuti come edit_generic_help
+- create flow protetto da eventi impropri su alias generici
+- edit flow protetto da update_event impropri su command riconosciuti
+- command create project/entity bloccati funzionalmente durante edit mode
+- button_input_confirm contiene EDIT MODE COMMAND GUARD locale
+- text_edit_mode_notice contestuale su command rilevato in edit mode
+- input_analysis_result rollbackato alla base stabile
+- G22 non regressivo
+
+Fonte canonica:
+- 01_LOGOS_Input_System
+- 03_LOGOS_Event_Lifecycle
+- 04_LOGOS_Retool_Architecture
+- LOGOS_RETOOL_RUNTIME_REAL
+
+Regola:
+
+G30 non deve essere riaperto come nodo base.
+G21 non deve essere riaperto salvo nuovo caso funzionale concreto o regressione reale.
+G39 resta residuo UX in osservazione, non nodo immediato.
+
 ------------------------------------------------
 STEP NON ATTIVI / FUTURI
 ------------------------------------------------
@@ -1032,13 +1182,31 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-DA DEFINIRE POST G22
+NODO ATTIVO / PROSSIMO NODO OPERATIVO
+
+DA DEFINIRE POST INPUT CONTEXT CONSISTENCY
 
 Stato:
 
-G22 PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE completato.
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY completato.
 
-Il sistema ha risolto il caso match presente + suggestion extension senza aprire G10A e senza modificare payload, save flow, DB o Supabase.
+Il sistema ha stabilizzato a primo livello il confine tra:
+
+- create flow
+- edit flow
+- Command Intent
+- suggestion project/entity
+- alias generici modifica / correggi / cambia
+
+Esito:
+
+- G30 chiuso come integrato base
+- G21 integrato parziale per la parte command/edit/suggestion
+- G22 rivalidato non regressivo
+- input_analysis_result preservato stabile
+- button_input_confirm.Disabled invariato
+- payload e save flow invariati
+- DB e Supabase invariati
 
 Prossimo nodo consigliato:
 
@@ -1046,11 +1214,12 @@ STATUS SEMANTICS ALIGNMENT
 
 Motivo:
 
-- durante G22 è emerso che l’utente legge la UI dall’alto verso il basso
-- la card Da verificare ora può contenere warning decisionale utile e non bloccante
+- resta il candidato più coerente e meno invasivo
+- il tema è Preview/Status, già emerso post G22
+- la card Da verificare può contenere warning decisionale utile e non bloccante
 - il badge OK può risultare semanticamente debole quando coesiste con Da verificare
-- il tema è circoscritto a Preview/Status
-- può essere affrontato come micro-nodo senza toccare save flow, DB o matching
+- il nodo può migliorare chiarezza mobile senza toccare save flow, DB o matching
+- non riapre G21, G22 o G30
 
 Obiettivo:
 
@@ -1069,7 +1238,10 @@ Vincoli:
 - non modificare save flow
 - non modificare matching
 - non riaprire G22 salvo regressione reale
+- non riaprire G30 salvo regressione reale
+- non riaprire G21 salvo nuovo caso funzionale concreto
 - non anticipare Input Analysis Model completo
+- non correggere G39 dentro questo nodo salvo impatto diretto e autorizzato
 - non anticipare dashboard / KPI / output
 
 Documenti da usare:
@@ -1097,14 +1269,8 @@ Nodo alternativo se si vuole restare su UX/Preview ma non toccare status:
 
 PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
 
-Scopo:
-
-- rivalutare il balloon blu “Manca progetto / Manca entità”
-- ridurre eventuale ridondanza con Suggerimenti associazione
-- migliorare leggibilità mobile senza alterare logica funzionale
-
 ------------------------------------------------
-NODI CANDIDATI POST G22
+NODI CANDIDATI POST INPUT CONTEXT CONSISTENCY
 ------------------------------------------------
 
 1. STATUS SEMANTICS ALIGNMENT
@@ -1163,38 +1329,41 @@ Vincoli:
 
 ---
 
-4. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
+4. EDIT MODE COMMAND-LIKE VISUAL RESIDUE
+
+Stato:
+
+NON PRIORITARIO IMMEDIATO
 
 Obiettivo:
 
-- migliorare guida comandi in edit mode
-- valutare alias modifica/correggi/cambia
-- non aprire edit flow automatici
+- rivalutare il residuo UX se diventa realmente problematico
+- chiarire ulteriormente la UI quando in edit mode viene rilevato un command
+- evitare che Sintesi / Suggerimenti / Dati evento restino visivamente ambigui
+
+Vincoli:
+
+- non modificare input_analysis_result fuori nodo dedicato
+- non rendere container_command_intent operativo in edit mode
+- non modificare save flow
+- non modificare payload
+- non modificare button_input_confirm.Disabled
+- non riaprire G21/G30 salvo regressione reale
 
 ---
 
-5. SUGGESTION CREATE VS EDIT CONSISTENCY
-
-Obiettivo:
-
-- verificare differenze suggestion tra create/edit
-- distinguere notice associazioni mancanti da suggestion operativa
-- mantenere G22 stabile
-
----
-
-6. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
+5. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
 
 Obiettivo:
 
 - aprire solo per evoluzione ampia reale
 - valutare alias, fuzzy leggero, ranking, confidence e partial ambiguity
 - non duplicare G22 già chiuso
-- non usare G10A per problemi di micro-copy o status preview
+- non usare G10A per problemi di micro-copy, status preview o residui edit command-like
 
 ---
 
-7. DATA STRUCTURE / ENTITY HIERARCHY
+6. DATA STRUCTURE / ENTITY HIERARCHY
 
 Obiettivo:
 
@@ -1203,7 +1372,7 @@ Obiettivo:
 
 ---
 
-8. ECONOMIC DIRECTION ADVANCED
+7. ECONOMIC DIRECTION ADVANCED
 
 Obiettivo:
 
@@ -1212,7 +1381,7 @@ Obiettivo:
 
 ---
 
-9. DURATION ADVANCED — GIORNI / SETTIMANE
+8. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Obiettivo:
 
@@ -1221,7 +1390,7 @@ Obiettivo:
 
 ---
 
-10. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
+9. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
 
 Obiettivo:
 
@@ -1231,7 +1400,7 @@ Obiettivo:
 
 ---
 
-11. AZIONI RAPIDE OPERATIVE
+10. AZIONI RAPIDE OPERATIVE
 
 Obiettivo:
 
@@ -1240,7 +1409,7 @@ Obiettivo:
 
 ---
 
-12. DASHBOARD BASE
+11. DASHBOARD BASE
 
 Obiettivo:
 
@@ -1248,7 +1417,7 @@ Obiettivo:
 
 ---
 
-13. ICON SYSTEM / MOBILE POLISH FINALE
+12. ICON SYSTEM / MOBILE POLISH FINALE
 
 Obiettivo:
 
@@ -1258,7 +1427,7 @@ Obiettivo:
 
 ---
 
-14. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
+13. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
 
 Stato:
 
@@ -1408,6 +1577,7 @@ Residui non bloccanti ma rilevanti:
 - match generico salvabile / auto-select confidence risolto a primo livello in G22
 - status OK / Da verificare da riallineare semanticamente
 - notice “Manca progetto / Manca entità” da rivalutare lato Preview/UX
+- residuo UX edit command-like: in edit mode Sintesi / Suggerimenti / Dati evento possono restare visibili con command riconosciuto
 - ui_visibility_state ancora presente fisicamente
 - Input Analysis Model completo non implementato
 - data structure / entity hierarchy non implementata
@@ -2051,3 +2221,37 @@ v21 — 2026-06-04
 - aggiornata lista nodi candidati post G22
 - confermato blocco verso dashboard / KPI / output
 - confermato divieto di anticipare istanze verticali
+
+v22 — 2026-06-15
+
+- aggiornamento post INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+- Roadmap aggiornata da v21 a v22
+- nodo Input Context Consistency registrato come COMPLETATO
+- G21 registrato come integrato parziale per il confine command/edit/suggestion
+- G30 registrato come integrato base
+- modifica / correggi / cambia riconosciuti come edit_generic_help
+- create flow protetto da eventi impropri su alias generici
+- edit flow protetto da update_event impropri su command riconosciuti
+- command create project/entity bloccati funzionalmente durante edit mode
+- button_input_confirm aggiornato con EDIT MODE COMMAND GUARD locale
+- text_edit_mode_notice aggiornato con guidance contestuale
+- input_analysis_result rollbackato alla base stabile
+- confermato button_input_confirm.Disabled invariato
+- confermato payload invariato
+- confermati insert_event / update_event invariati
+- confermato save flow invariato
+- confermato DB invariato
+- confermato Supabase invariato
+- G22 20 euro villa sierri rivalidato non regressivo
+- linting Retool 0
+- registrato G39 Edit Mode Command-like Visual Residue come residuo UX accettato
+- rimosso COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS dai candidati immediati
+- aggiunto EDIT MODE COMMAND-LIKE VISUAL RESIDUE come candidato non prioritario
+- aggiornata lista nodi candidati post Input Context Consistency
+- confermato prossimo nodo consigliato: STATUS SEMANTICS ALIGNMENT
+- confermato nodo alternativo: PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
+- confermato che G10A non va usato per residui command/edit visuali
+- confermato blocco verso dashboard / KPI / output
+- confermato divieto di anticipare istanze verticali
+- nessuna anticipazione Input Analysis Model completo
+- nessuna anticipazione Match Engine Advanced

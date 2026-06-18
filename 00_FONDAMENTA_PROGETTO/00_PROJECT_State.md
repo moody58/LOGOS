@@ -1,171 +1,211 @@
-# 00_PROJECT_State_v28
+# 00_PROJECT_State_v29
 
-DATA: 2026-06-04
+DATA: 2026-06-15
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE — COMPLETATO
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
 
 Stato nodo:
 
-- micro-nodo funzionale / Match-Suggestion policy / anti-errore associazione completato
-- G22 analizzato su sistema reale Retool
-- caso guida “20 euro villa sierri” verificato
-- classificazione finale: match presente + suggestion extension
-- tema risolto con micro-policy locale
-- G10A Match Engine Evolution Advanced non necessario per questo caso
+- micro-nodo tecnico-funzionale completato
+- nodo dedicato alla coerenza tra create flow, edit flow, Command Intent e suggestion project/entity
+- gap primario: G21 — Suggestion Create vs Edit Consistency
+- gap secondario controllato: G30 — Command Intent — Edit Guide Generic Alias
+- nodo chiuso senza modificare DB, Supabase, payload o save flow evento
+- input_analysis_result rollbackato alla base stabile dopo test su approccio più invasivo
+
+Obiettivo:
+
+stabilizzare il confine tra:
+
+- input evento ordinario
+- command intent
+- edit mode
+- suggestion project/entity
+- alias generici:
+  - modifica
+  - correggi
+  - cambia
+
+Problema AS-IS:
+
+Create flow:
+
+modifica / correggi / cambia
+→ trattati come eventi ordinari
+→ Sintesi visibile
+→ Dati evento visibili
+→ Conferma evento visibile
+→ evento creabile impropriamente
+
+Edit flow:
+
+modifica / correggi / cambia
+→ trattati come input edit ordinario
+→ update_event possibile
+
+crea progetto test / crea entità test durante edit mode
+→ command raw riconosciuto
+→ command effective soppresso da input_analysis_result
+→ edit mode prevalente
+→ update_event possibile
+
+Approccio scartato:
+
+È stato testato un approccio più invasivo su input_analysis_result per rendere i command effettivi anche durante edit mode.
 
 Esito:
 
-- create_suggestion_state aggiornato con flag requiresUserOverride
-- requiresUserOverride esposto quando:
-  - esiste un singleMatch già selezionato
-  - esiste una candidate più specifica proposta da create_suggestion_state
-  - reason = extension
-- preview_analysis_state aggiornato per leggere create_suggestion_state.data.project/entity
-- card Da verificare aggiornata con warning mirato:
-  - Associazione progetto da controllare
-  - Associazione entità da controllare
-- micro-copy consolidata:
-  - [baseName] selezionato · testo letto: [candidateName]
-  - [baseName] selezionata · testo letto: [candidateName]
-- create_suggestion_hint rifinito per mostrare solo la suggestion operativa
-- rimossa duplicazione della selezione corrente dal container Suggerimenti associazione
-- warning generici “Esistono progetti più specifici” / “Esistono entità più specifiche” non usati più come segnale principale nei casi G22
-- separazione semantica consolidata:
-  - Da verificare = rischio decisionale
-  - Suggerimenti associazione = azione disponibile
+- app rallentata
+- linting emerso
+- command container diventato operativo durante edit mode
+- rischio creazione project/entity senza preservare correttamente il contesto edit
 
-Comportamento finale project:
+Decisione:
 
-20 euro villa sierri
-→ select_project = Villa
-→ create_suggestion_state.project.candidateName = Villa Sierri
-→ requiresUserOverride = true
-→ Da verificare:
-  Associazione progetto da controllare
-  Villa selezionato · testo letto: Villa Sierri
-→ Suggerimenti associazione:
-  Possibile nuovo progetto: Villa Sierri
-→ Conferma attiva
+rollback immediato di input_analysis_result alla base stabile.
 
-Comportamento finale entity:
+Modifiche runtime finali mantenute:
 
-20 euro mario giordano
-→ select_entity = Mario
-→ create_suggestion_state.entity.candidateName = Mario Giordano
-→ requiresUserOverride = true
-→ Da verificare:
-  Associazione entità da controllare
-  Mario selezionata · testo letto: Mario Giordano
-→ Suggerimenti associazione:
-  Possibile nuova entità: Mario Giordano
-→ Conferma attiva
+1. command_intent_state
+
+- riconosce modifica / correggi / cambia
+- commandType: edit_generic_help
+- commandFamily: guide
+- canExecute: false
+- comportamento: guida non operativa
+
+2. txt_command_intent_description
+
+- micro-copy aggiunta per edit_generic_help
+- mostra guida generica non operativa
+- evita box command vuoto o poco chiaro
+
+3. button_input_confirm
+
+- aggiunta EDIT MODE COMMAND GUARD locale
+- blocca update_event se edit_mode = true e l’input corrente corrisponde a un command riconosciuto fresco
+- mostra notifica warning
+- non chiude edit mode
+- non azzera editing_event
+- non modifica payload
+- non modifica button_input_confirm.Disabled
+- non modifica insert_event / update_event
+
+4. text_edit_mode_notice
+
+- notice standard:
+  Evento in modifica · Premi Annulla modifica per uscire.
+- notice con command rilevato:
+  Comando rilevato · Premi Annulla modifica prima di usare comandi.
+
+Comportamento finale create flow:
+
+modifica / correggi / cambia
+→ command rilevato
+→ guida non operativa visibile
+→ nessuna Sintesi evento
+→ nessun Dati evento
+→ nessuna Conferma evento
+→ nessun evento creato
+
+Comportamento finale edit flow:
+
+modifica / correggi / cambia
+→ edit mode resta attivo
+→ notice contestuale visibile
+→ Conferma bloccata da guard
+→ nessun update_event
+
+crea progetto test / crea entità test
+→ nessun project/entity creato durante edit mode
+→ nessun update_event
+→ warning mostrato
+→ edit mode resta attivo
 
 Test runtime validati:
 
-- 20 euro villa → Progetto Villa, nessun warning G22 project, Conferma attiva
-- 20 euro villa sierri → warning G22 project, suggestion project, Conferma attiva
-- 20 euro villa sierri 6 → Progetto Villa Sierri 6, nessun warning G22 project, Conferma attiva
-- 20 euro tecnico mario → Entità Mario, nessun warning G22 entity, Conferma attiva
-- crea progetto test → container command visibile, Conferma evento non mostrata
-- 20 euro mario rossi → Entità Mario Rossi, nessun warning G22 entity, Conferma attiva
-- 20 euro mario giordano → warning G22 entity, suggestion entity, Conferma attiva
+- create flow → modifica
+- create flow → correggi
+- create flow → cambia
+- create flow → crea progetto test
+- create flow → crea entità test
+- edit flow → modifica → Conferma
+- edit flow → correggi → Conferma
+- edit flow → cambia → Conferma
+- edit flow → crea progetto test → Conferma
+- edit flow → crea entità test → Conferma
+- edit flow con input evento valido → update_event corretto
+- Annulla modifica
+- G22 “20 euro villa sierri” non regressivo
+- linting Retool 0
+
+Residuo UX accettato:
+
+In edit mode, quando viene rilevato un command:
+
+- Sintesi può restare visibile
+- Suggerimenti associazione possono restare visibili
+- Dati evento possono restare visibili
+
+Decisione:
+
+il residuo è accettato perché:
+
+- update_event è bloccato
+- project/entity non vengono creati impropriamente
+- Annulla modifica resta disponibile
+- input_analysis_result resta stabile
+- non vengono introdotte nuove dipendenze Hidden
+- non viene aperto G10A
+- non viene introdotto alias system globale
 
 Impatto:
 
-- nessuna modifica parser
-- nessuna modifica parse_input_controlled
-- nessuna modifica duration normalization
-- nessuna modifica type classification
-- nessuna modifica project_state/entity_state nella logica funzionale
-- nessuna modifica select_project/select_entity
-- nessuna modifica select1
-- nessuna modifica command_intent_state
-- nessuna modifica input_analysis_result
-- nessuna modifica button_input_confirm.Disabled
-- nessuna modifica button_input_confirm.Hidden
-- nessuna modifica button_input_confirm payload
-- nessuna modifica insert_event/update_event
-- nessuna modifica save flow
 - nessuna modifica DB
 - nessuna modifica Supabase
-- nessuna eliminazione di ui_visibility_state
-- nessun cleanup globale
+- nessuna modifica payload
+- nessuna modifica insert_event / update_event
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica Match Engine
+- nessuna modifica G22
 - nessuna anticipazione G10A
-- nessuna anticipazione fuzzy / alias / ranking globale / gerarchie / deduplicazione
-- nessuna anticipazione dashboard / KPI / output
-
-Classificazione:
-
-G22 completato come micro-policy locale di sicurezza associazione.
-
-Il nodo non ha modificato il Match Engine avanzato.
-Il nodo non ha trasformato suggestion in blocco.
-Il nodo non ha centralizzato la save readiness.
-Il nodo non ha introdotto Input Analysis Model completo.
-
-Residui emersi fuori nodo:
-
-1. Status Semantics Alignment
-
-Il badge OK nella Sintesi può risultare semanticamente debole quando esiste una card Da verificare.
-Da trattare in nodo Preview/Status dedicato, non in G22.
-
-2. Preview / Missing Association Notice Cleanup
-
-Il balloon blu “Manca progetto / Manca entità” può risultare ridondante rispetto al container Suggerimenti associazione in alcuni casi.
-Da valutare in nodo Preview/UX futuro.
-
-3. Residui grafici / mobile polish
-
-Da trattare più avanti o in sessioni brevi quando c’è poco tempo.
-Non blocca il sistema.
+- nessun fuzzy matching
+- nessun alias system globale
+- nessun Input Analysis Model completo
 
 Documenti aggiornati nel nodo:
 
-- 02_LOGOS_Match_Engine
 - 01_LOGOS_Input_System
+- 03_LOGOS_Event_Lifecycle
 - 04_LOGOS_Retool_Architecture
 - LOGOS_RETOOL_RUNTIME_REAL
-- 06_LOGOS_View_Preview_System
 - 00_PROJECT_State
 
 Documenti ancora da aggiornare:
 
 - 00_PROJECT_Gap_Register
-- 00_PROJECT_Roadmap solo se cambia sequenza o priorità
+- 00_PROJECT_Roadmap
 
 Documenti da non aggiornare:
 
-- 03_LOGOS_Event_Lifecycle
+- 02_LOGOS_Match_Engine
 - 05_LOGOS_Database_Schema
+- 06_LOGOS_View_Preview_System
 - LOGOS_SUPABASE_RUNTIME_REAL
 - 00_PROJECT_KERNEL_MANIFEST
 
 Checkpoint:
 
 Non necessario checkpoint esteso.
-Il nodo ha prodotto una modifica locale, testata e documentabile tramite aggiornamento dei documenti canonici.
+Il nodo ha prodotto micro-fix locali, testati e documentabili nei documenti canonici.
 
-Prossimo nodo operativo consigliato:
+Prossimo nodo operativo:
 
-DA DEFINIRE DOPO AGGIORNAMENTO GAP REGISTER / ROADMAP
-
-Nota:
-
-La sequenza futura deve evitare loop tra:
-
-- G22 già completato
-- G10A Match Engine Advanced
-- select contextual filtering
-- input_analysis_model avanzato
-- preview model / hint state consolidation
-
-La decisione va presa in Regia / Roadmap dopo aggiornamento Gap Register.
-
+da decidere dopo aggiornamento Gap Register / Roadmap.
 ------------------------------------------------
 FASE:
 ------------------------------------------------
@@ -193,7 +233,8 @@ PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
 ✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION — CHIUSO COME RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
 ✔ BUTTON CONFIRM READINESS ALIGNMENT — COMPLETATO
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — COMPLETATO
-TRANSIZIONE → AGGIORNAMENTO GAP REGISTER / ROADMAP PER DEFINIZIONE PROSSIMO NODO
+✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
+TRANSIZIONE → AGGIORNAMENTO GAP REGISTER / ROADMAP POST INPUT CONTEXT CONSISTENCY
 
 Nota:
 
@@ -254,6 +295,13 @@ C (Completezza): 10/10
 - warning mirato “Associazione progetto/entità da controllare” registrato nello State
 - separazione Da verificare / Suggerimenti associazione registrata
 - G10A registrato come non necessario per il caso G22
+- nodo Input Context Consistency registrato come completato
+- G21 trattato a primo livello controllato nel contesto edit / suggestion / command
+- G30 trattato a primo livello controllato per alias generici modifica / correggi / cambia
+- command_intent_state.edit_generic_help registrato nello State
+- EDIT MODE COMMAND GUARD registrata come micro-guard locale
+- input_analysis_result rollbackato alla base stabile registrato
+- residuo UX edit command-like registrato come accettato
 
 Q (Qualità): 9.4/10
 
@@ -276,6 +324,11 @@ Q (Qualità): 9.4/10
 - registrati solo esito, impatto e residui strategici del nodo G22
 - evitata anticipazione di Match Engine Advanced
 - evitata anticipazione di Input Analysis Model completo
+- evitato che alias generici modifica / correggi / cambia restassero eventi ordinari
+- evitato che command riconosciuti durante edit mode diventassero update_event
+- preservata stabilità architetturale tramite rollback input_analysis_result
+- evitata correzione UX tramite Hidden multipli fuori nodo dedicato
+- mantenuta separazione tra guida visuale, guard funzionale e save flow
 
 D (Deployabilità): 10/10
 
@@ -311,6 +364,14 @@ D (Deployabilità): 10/10
 - DB invariato
 - Supabase invariato
 - G10A non necessario per il caso G22
+- Input Context Consistency completato e testato su runtime Retool reale
+- create flow modifica / correggi / cambia validato senza creazione evento
+- edit flow modifica / correggi / cambia validato senza update_event
+- edit flow crea progetto test / crea entità test validato senza creazione strutturale e senza update_event
+- edit flow con input evento valido validato
+- Annulla modifica validato
+- G22 validato non regressivo
+- linting Retool 0
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -374,7 +435,15 @@ Stato consolidato:
 ✔ warning match più specifici preservati come non bloccanti dove pertinenti
 ✔ G22 Project Create Suggestion — Match Present / User Override completato
 ✔ match presente + suggestion extension gestito con warning mirato non bloccante
-✔ Da verificare e Suggerimenti associazione separati semanticamente
+✔ Da verificare e Suggerimenti associazione separati 
+✔ Input Context Consistency completato
+✔ modifica / correggi / cambia gestiti come guide generiche non operative
+✔ create flow protetto da eventi impropri su alias generici
+✔ edit flow protetto da update_event impropri su command riconosciuti
+✔ command create project/entity bloccati funzionalmente durante edit mode
+✔ text_edit_mode_notice contestuale su command rilevato in edit mode
+✔ button_input_confirm include EDIT MODE COMMAND GUARD locale
+✔ input_analysis_result rollbackato alla base stabile dopo test non stabile
 
 Debiti principali:
 
@@ -391,6 +460,7 @@ Debiti principali:
 ⚠ data structure / entity hierarchy non implementata  
 ⚠ output / dashboard / KPI non attivi  
 ⚠ micro-flash input/command transition residuo non bloccante, da non inseguire fuori nodo dedicato
+⚠ residuo UX edit command-like: in edit mode Sintesi / Suggerimenti associazione / Dati evento possono restare visibili con command riconosciuto
 
 Fonte completa:
 
@@ -408,7 +478,7 @@ Fonte completa:
 SNAPSHOT FUNZIONALE CONSOLIDATO
 ------------------------------------------------
 
-Il sistema LOGOS è stabilizzato su ventitré layer fondamentali.
+Il sistema LOGOS è stabilizzato su ventiquattro layer fondamentali.
 
 Layer completati:
 
@@ -435,6 +505,7 @@ Layer completati:
 21. PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT
 22. BUTTON CONFIRM READINESS ALIGNMENT
 23. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
+24. INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
 
 ------------------------------------------------
 CATENE RUNTIME ATTUALI — SINTESI NON INTERPRETATIVA
@@ -473,6 +544,20 @@ Fonti canoniche:
 
 Nota:
 button_input_confirm.Disabled e payload sono rimasti separati da input_analysis_result dopo Visibility Migration Completion.
+
+Nota post Input Context Consistency:
+
+button_input_confirm contiene una guard locale aggiuntiva:
+
+EDIT MODE COMMAND GUARD
+
+Scopo:
+
+- bloccare update_event quando edit_mode è attivo e l’input corrente è un command riconosciuto fresco
+- non modificare payload
+- non modificare Disabled
+- non modificare insert_event / update_event
+- lasciare attivo edit mode
 
 ---
 
@@ -558,7 +643,11 @@ Regole consolidate:
 - comandi puri non salvano eventi
 - “crea progetto...” e “crea entità...” creano risorse solo previa conferma
 - “modifica evento” è guida non operativa verso lista eventi
-- nessun update_event automatico da comando
+- nessun update_event automatico da - modifica / correggi / cambia sono guide generiche non operative
+- in create flow non salvano eventi
+- in edit flow non aggiornano eventi
+- durante edit mode command create project/entity non creano project/entity
+- EDIT MODE COMMAND GUARD blocca command freschi prima di update_event
 
 ---
 
@@ -639,6 +728,11 @@ Sistema:
 ✔ warning “Associazione progetto/entità da controllare” introdotto
 ✔ warning “progetti più specifici” / “entità più specifiche” non usati più come segnale principale nei casi G22
 ✔ suggestion ignorata resta non bloccante
+✔ modifica / correggi / cambia non creano più eventi ordinari
+✔ command riconosciuti durante edit mode non diventano update_event
+✔ crea progetto / crea entità durante edit mode non creano record strutturali
+✔ notice edit mode contestuale su command rilevato
+✔ input_analysis_result preservato stabile
 
 ------------------------------------------------
 DEBITI TECNICI / FUNZIONALI RESIDUI
@@ -707,8 +801,12 @@ Command Intent:
 
 - Command Intent implementato solo a primo livello controllato
 - engine intent globale non implementato
-- alias generici modifica/correggi/cambia non implementati
+- alias generici modifica / correggi / cambia implementati solo come guide non operative
+- non esiste alias system globale
+- fuzzy / typo command recognition non implementati
+- “modifica progetto” non gestito come command strutturale
 - non apre edit flow automatici
+- residuo UX edit command-like accettato: Sintesi / Suggerimenti / Dati evento possono restare visibili in edit mode con command riconosciuto
 
 Fonte canonica:
 - 01_LOGOS_Input_System
@@ -790,13 +888,13 @@ STATO LAYER SISTEMA
 ------------------------------------------------
 
 Layer 1 — Input: ~99%
-Layer Command Intent: ~72%
+Layer Command Intent: ~78%
 Layer 2 — Matching / Suggestion: ~94%
 Layer 3 — View / Preview: ~96%
 Layer HINT SYSTEM: ~94%
 Layer UX Mobile: ~96%
-Layer UI Readiness / Visibility: ~95% — G33 completato, residuo micro-flash G29 in osservazione
-Layer Input Analysis / Composition: ~69%
+Layer UI Readiness / Visibility: ~95% — G33 completato, residuo micro-flash G29 e residuo edit command-like in osservazione
+Layer Input Analysis / Composition: ~69% — preservato stabile, non esteso nel nodo Input Context Consistency
 Layer 4 — Data Structure: ~32%
 Layer 4 — Engine: ~48%
 Layer 6 — Output: 0%
@@ -837,12 +935,13 @@ FASE ATTUALE
 ✔ INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION — CHIUSO COME RESIDUO UX MINORE ACCETTABILE / IN OSSERVAZIONE
 ✔ BUTTON CONFIRM READINESS ALIGNMENT — COMPLETATO
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — COMPLETATO
+✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
 
 ---
 
 TRANSIZIONE:
 
-→ AGGIORNAMENTO GAP REGISTER / ROADMAP PER CHIUSURA G22 E DEFINIZIONE PROSSIMO NODO
+→ AGGIORNAMENTO GAP REGISTER / ROADMAP POST INPUT CONTEXT CONSISTENCY
 
 Nota:
 
@@ -856,38 +955,53 @@ OBIETTIVO IMMEDIATO
 
 Nodo appena completato:
 
-PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
 
 Esito:
 
-- G22 completato su runtime Retool reale
-- caso guida “20 euro villa sierri” risolto
-- match presente + suggestion extension gestito senza bloccare Conferma
-- create_suggestion_state espone requiresUserOverride
-- preview_analysis_state mostra warning mirato in Da verificare
-- create_suggestion_hint mostra solo la suggestion operativa
-- Da verificare e Suggerimenti associazione separati semanticamente
-- button_input_confirm.Disabled invariato
-- button_input_confirm.Hidden invariato
-- payload invariato
-- insert_event / update_event invariati
-- save flow invariato
-- parser invariato
-- matching primario invariato
-- input_analysis_result invariato
-- DB invariato
-- Supabase invariato
-- G10A non necessario per questo caso
+- nodo completato su runtime Retool reale
+- G21 trattato a primo livello controllato nel confine edit / suggestion / command
+- G30 trattato a primo livello controllato sugli alias generici modifica / correggi / cambia
+- create flow protetto da eventi impropri su alias generici
+- edit flow protetto da update_event impropri su command riconosciuti
+- command create project/entity bloccati funzionalmente durante edit mode
+- command_intent_state aggiornato con edit_generic_help
+- txt_command_intent_description aggiornato con micro-copy dedicata
+- button_input_confirm aggiornato con EDIT MODE COMMAND GUARD locale
+- text_edit_mode_notice aggiornato con micro-copy contestuale
+- input_analysis_result rollbackato alla base stabile
+- nessuna modifica DB
+- nessuna modifica Supabase
+- nessuna modifica payload
+- nessuna modifica insert_event / update_event
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica Match Engine
+- G22 non regressivo
+- linting Retool 0
 
 Test post-fix:
 
-- 20 euro villa → nessun warning G22 project
-- 20 euro villa sierri → warning G22 project + suggestion project
-- 20 euro villa sierri 6 → match specifico diretto
-- 20 euro tecnico mario → nessun warning G22 entity
-- crea progetto test → command container, nessuna Conferma evento
-- 20 euro mario rossi → match specifico diretto
-- 20 euro mario giordano → warning G22 entity + suggestion entity
+- create flow modifica → nessun evento creato
+- create flow correggi → nessun evento creato
+- create flow cambia → nessun evento creato
+- create flow crea progetto test → command funzionante
+- create flow crea entità test → command funzionante
+- edit flow modifica → nessun update_event
+- edit flow correggi → nessun update_event
+- edit flow cambia → nessun update_event
+- edit flow crea progetto test → nessun project creato, nessun update_event
+- edit flow crea entità test → nessuna entity creata, nessun update_event
+- edit flow con input evento valido → update_event corretto
+- Annulla modifica → funzionante
+- 20 euro villa sierri → G22 invariato
+
+Residuo accettato:
+
+in edit mode, con command riconosciuto, Sintesi / Suggerimenti associazione / Dati evento possono restare visibili.
+
+Classificazione:
+
+residuo UX accettato perché update_event e creazioni improprie sono bloccati funzionalmente.
 
 Prossimo passo immediato:
 
@@ -895,14 +1009,13 @@ aggiornare 00_PROJECT_Gap_Register.
 
 Obiettivo aggiornamento Gap Register:
 
-- chiudere G22
-- registrare che G22 non apre G10A per questo caso
-- registrare residui reali emersi:
-  - Status Semantics Alignment
-  - Preview / Missing Association Notice Cleanup
-  - residui grafici/mobile polish
-- evitare nuovi gap duplicati
-- preparare decisione ordinata sul prossimo nodo senza loop tra Match Engine Advanced, Preview Model e Input Analysis Model
+- chiudere / aggiornare G21 per la parte trattata nel nodo
+- chiudere / aggiornare G30 per alias generici modifica / correggi / cambia
+- registrare residuo UX edit command-like come accettato o come micro-residuo non bloccante
+- evitare duplicazione con Input Analysis Model completo
+- evitare riapertura G22
+- evitare apertura impropria G10A
+- preparare decisione ordinata sul prossimo nodo
 
 Prossimo nodo operativo:
 
@@ -1000,12 +1113,13 @@ Priorità aggiornata:
 20. input flow / transition micro-flash stabilization ✔
 21. button confirm readiness alignment ✔
 22. project create suggestion / match present / user override ✔
-23. definizione prossimo nodo post G22
-24. preview model / hint state consolidation
-25. input analysis model completo / single interpretation layer avanzato
-26. data structure / entity relations
-27. economic direction advanced
-28. output         
+23. input context consistency — edit / suggestion / command boundary ✔
+24. definizione prossimo nodo post Input Context Consistency
+25. preview model / hint state consolidation
+26. input analysis model completo / single interpretation layer avanzato
+27. data structure / entity relations
+28. economic direction advanced
+29. output      
 
 ---
 
@@ -1020,7 +1134,7 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. da definire dopo Gap Register / Roadmap post G22
+1. da definire dopo Gap Register / Roadmap post Input Context Consistency
 2. preview model / hint state consolidation
 3. input analysis model / single interpretation layer
 4. data structure / entity relations
@@ -1199,17 +1313,28 @@ Scopo:
 
 ---
 
-6. COMMAND INTENT — EDIT MODE GUIDANCE / GENERIC ALIAS
+6. COMMAND INTENT — ADVANCED GUIDANCE / ALIAS SYSTEM FUTURE
 
-Scopo:
+Stato:
 
-- migliorare la guida quando l’utente scrive comandi durante edit mode
-- valutare riconoscimento di comandi guida generici:
-  - modifica
-  - correggi
-  - cambia
-- evitare che “modifica” da solo venga trattato come evento ordinario
-- non aprire edit flow automatici
+NON PRIORITARIO IMMEDIATO
+
+Motivo:
+
+la parte minima sugli alias generici modifica / correggi / cambia è stata risolta nel nodo Input Context Consistency.
+
+Resta fuori scope:
+
+- alias system globale
+- fuzzy / typo command recognition
+- “modifica progetto” come command strutturale
+- command intent avanzato
+- guidance UI più pulita in edit mode tramite Hidden/input_analysis_result dedicati
+
+Vincoli:
+
+- non riaprire il nodo appena completato salvo regressione reale
+- non trasformare il residuo UX edit command-like in refactor input_analysis_result fuori nodo dedicato
 
 ---
 
@@ -1369,6 +1494,47 @@ Il nodo non modifica:
 - Supabase
 
 G10A non è necessario per questo caso.
+
+------------------------------------------------
+INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+------------------------------------------------
+
+Stato:
+
+COMPLETATO
+
+Nota:
+
+Il nodo ha stabilizzato a primo livello il confine tra input evento, Command Intent ed edit flow.
+
+Comportamento consolidato:
+
+- modifica / correggi / cambia sono guide generiche non operative
+- in create flow non creano eventi
+- in create flow non mostrano Conferma evento
+- in edit flow non aggiornano eventi
+- command create project/entity non crea project/entity durante edit mode
+- command riconosciuti durante edit mode vengono bloccati da button_input_confirm
+- text_edit_mode_notice mostra guidance contestuale
+- input_analysis_result resta alla base stabile
+
+Il nodo non modifica:
+
+- payload
+- insert_event / update_event
+- button_input_confirm.Disabled
+- DB
+- Supabase
+- Match Engine
+- G22
+
+Residuo UX:
+
+in edit mode Sintesi / Suggerimenti associazione / Dati evento possono restare visibili con command riconosciuto.
+
+Decisione:
+
+residuo accettato perché il blocco funzionale impedisce update_event e creazioni improprie.
 
 ------------------------------------------------
 CHANGELOG
@@ -2116,3 +2282,60 @@ aggiornamento post PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE /
 - nessuna anticipazione Match Engine Advanced
 - nessuna anticipazione Input Analysis Model completo
 - nessuna anticipazione dashboard / KPI / output
+
+v29 — 2026-06-15
+
+aggiornamento post INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+
+- State aggiornato da v28 a v29
+- nodo Input Context Consistency registrato come COMPLETATO
+- G21 trattato a primo livello controllato nel confine edit / suggestion / command
+- G30 trattato a primo livello controllato sugli alias generici modifica / correggi / cambia
+- documentata analisi AS-IS:
+  - modifica / correggi / cambia salvabili come eventi in create flow
+  - modifica / correggi / cambia salvabili come update_event in edit flow
+  - crea progetto test / crea entità test durante edit mode potevano diventare update_event
+- documentato approccio scartato su input_analysis_result
+- documentato rollback input_analysis_result alla base stabile
+- confermato che nessuna modifica finale è stata mantenuta su input_analysis_result
+- command_intent_state aggiornato con edit_generic_help
+- modifica / correggi / cambia riconosciuti come guide generiche non operative
+- txt_command_intent_description aggiornato per edit_generic_help
+- text_edit_mode_notice aggiornato con micro-copy contestuale
+- button_input_confirm aggiornato con EDIT MODE COMMAND GUARD locale
+- guard locale blocca command freschi durante edit mode prima di update_event
+- guard locale mostra notifica warning
+- guard locale non chiude edit mode
+- guard locale non azzera editing_event
+- guard locale non modifica payload
+- guard locale non modifica button_input_confirm.Disabled
+- guard locale non modifica insert_event / update_event
+- command create project/entity durante edit mode non crea project/entity
+- command create project/entity durante edit mode non aggiorna evento
+- create flow modifica / correggi / cambia validato senza evento creato
+- edit flow modifica / correggi / cambia validato senza update_event
+- edit flow crea progetto test / crea entità test validato senza project/entity creati e senza update_event
+- edit flow con input evento valido validato
+- Annulla modifica validato
+- G22 20 euro villa sierri non regressivo
+- linting Retool 0
+- registrato residuo UX accettato:
+  in edit mode Sintesi / Suggerimenti associazione / Dati evento restano visibili quando l’input è command riconosciuto
+- residuo accettato perché update_event e creazioni improprie sono bloccati funzionalmente
+- aggiornato snapshot funzionale consolidato a 24 layer
+- aggiornato Stato generale sistema
+- aggiornati Debiti Command Intent
+- aggiornati Next Nodes candidati
+- rimossa priorità immediata del nodo Command Intent — Edit Mode Guidance / Generic Alias
+- nessuna modifica DB
+- nessuna modifica Supabase
+- nessuna modifica payload
+- nessuna modifica save flow
+- nessuna modifica insert_event / update_event
+- nessuna modifica button_input_confirm.Disabled
+- nessuna modifica Match Engine
+- nessuna riapertura G22
+- nessuna anticipazione G10A
+- nessun fuzzy matching
+- nessun alias system globale
+- nessun Input Analysis Model completo
