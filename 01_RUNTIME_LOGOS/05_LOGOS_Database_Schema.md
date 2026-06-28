@@ -1,6 +1,6 @@
-# 05_LOGOS_Database_Schema_v10
+# 05_LOGOS_Database_Schema_v11
 
-DATA: 2026-05-25
+DATA: 2026-06-23
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -41,6 +41,13 @@ C (Completezza): 10/10
 - confermato schema DB invariato dopo Visibility Migration Completion
 - confermato schema DB invariato dopo Linting / Retool Query Safety Pass
 - confermato che input_analysis_result, preview_analysis_state, ui_visibility_mode e ui_visibility_state non vengono persistiti
+- DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL assorbito nel documento
+- politica core neutra ma vertical-ready documentata
+- policy project/entity/type/parent/metadata consolidata senza modifiche schema
+- stato reale export Supabase projects/entities/events/system_logs recepito in forma sintetica
+- confermato che parent_project_id e parent_entity_id sono capacità dormienti non operative
+- confermato che metadata è campo strategico futuro ma non valorizzato dall’input evento rapido
+- confermata distinzione tra duplicate alert futuro e merge/deduplicazione non attivi
 
 Q (Qualità): 9.5/10  
 - struttura corretta  
@@ -67,6 +74,10 @@ Q (Qualità): 9.5/10
 - chiarito che i layer UI/readiness/preview non modificano Supabase
 - chiarito che State, Roadmap e Gap Register non duplicano più il dettaglio tecnico DB
 - ridotto rischio di interpretare helper Retool come campi DB
+- chiarita distinzione tra valore tecnico DB e label UI italiane per i type project/entity
+- chiarito che type project/entity descrive la natura dell’oggetto, non il ruolo occasionale
+- chiarito che parent non rappresenta alias, duplicato o match testuale
+- chiarito che metadata deve restare profilo guidato e non contenitore caotico
 
 D (Deployabilità): 10/10  
 - documento utilizzabile come riferimento AS-IS  
@@ -89,6 +100,9 @@ D (Deployabilità): 10/10
 - pronto come fonte canonica per future sessioni DB / Supabase
 - nessuna migrazione Supabase richiesta
 - nessuna modifica schema richiesta
+- nessuna migrazione richiesta dopo il checkpoint Data Structure / Entity Hierarchy
+- nessuna modifica runtime Retool richiesta dal recepimento della policy
+- pronto come fonte canonica per il futuro nodo Project / Entity Guided Mode — Readiness & Minimum Scope
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -128,6 +142,13 @@ Il documento descrive:
 - assenza di persistenza per preview_analysis_state
 - assenza di persistenza per input_analysis_result
 - assenza di modifiche schema dopo i nodi UI/readiness/visibility
+- policy data structure project/entity post checkpoint
+- distinzione project/entity come contenitore operativo vs soggetto coinvolto
+- type project/entity come natura dell’oggetto
+- parent_project_id / parent_entity_id come capacità dormienti per gerarchie stabili future
+- metadata come campo strategico per profili guidati futuri
+- duplicati / alias / data hygiene come limiti e sviluppi futuri non attivi
+- conferma che il checkpoint è temporaneo e assorbito nei documenti canonici
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -154,6 +175,12 @@ Questo documento è fonte canonica per:
 - assenza di retro-normalizzazione
 - assenza di payload strutturato
 - vincoli operativi su future modifiche schema
+- policy project/entity/type/parent/metadata a livello schema
+- distinzione tra core neutro e vertical-ready
+- valori tecnici consigliati per type project/entity
+- limiti attuali di parent_project_id / parent_entity_id
+- limiti attuali di metadata
+- limiti attuali su duplicati, alias e data hygiene
 
 Questo documento NON è fonte canonica completa per:
 
@@ -442,6 +469,639 @@ Regola:
 
 Supabase riceve solo i payload finali delle query di scrittura confermate.
 Non riceve lo stato interno dei layer UI/readiness/preview.
+
+
+------------------------------------------------
+POLICY DATA STRUCTURE / PROJECT-ENTITY — POST CHECKPOINT 2026-06-23
+------------------------------------------------
+
+Origine:
+
+CHECKPOINT — DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+
+Stato:
+
+- policy assorbita nel documento canonico 05_LOGOS_Database_Schema
+- nessuna modifica schema DB eseguita
+- nessuna migrazione Supabase eseguita
+- nessuna modifica runtime Retool eseguita
+- checkpoint temporaneo archiviabile dopo aggiornamento degli altri documenti canonici
+
+------------------------------------------------
+PRINCIPIO CORE
+------------------------------------------------
+
+LOGOS non deve essere un gestionale verticale hard-coded.
+
+LOGOS deve essere un core estendibile e vertical-ready.
+
+Definizione:
+
+LOGOS mantiene un core neutro, stabile e coerente,
+ma deve poter sostenere profili applicativi futuri tramite:
+
+- type
+- parent_project_id / parent_entity_id
+- metadata
+- modalità guidate project/entity
+- feedback utente
+- controlli anti-duplicazione
+
+Formula decisionale:
+
+vertical-ready, non vertical-hardcoded.
+
+Conseguenze:
+
+- non introdurre ora campi rigidi per ASPRI
+- non introdurre ora campi rigidi per ADEXIMA
+- non anticipare dashboard o KPI verticali
+- non trasformare input evento rapido in gestionale complesso
+- preparare metadata e profili utili a casi reali futuri
+- mantenere il core abbastanza neutro da sostenere più istanze
+
+------------------------------------------------
+STATO REALE EXPORT SUPABASE — SINTESI
+------------------------------------------------
+
+Export analizzati:
+
+- projects_rows.csv
+- entities_rows.csv
+- events_rows.csv
+- system_logs_rows.csv
+
+Sintesi:
+
+- projects: 32 record
+- entities: 30 record
+- events: 266 record
+- system_logs: 4 record
+
+Projects:
+
+- parent_project_id sempre vuoto
+- type valorizzato solo in un caso rilevato
+- status sempre ACTIVE
+- rilevato un project senza nome
+- nessun duplicato esatto normalizzato sul nome
+- molti project non ancora usati o derivati da test/sviluppo
+
+Entities:
+
+- parent_entity_id sempre vuoto
+- type quasi sempre vuoto
+- status sempre vuoto
+- metadata sempre {}
+- rilevata una entity senza nome
+- rilevato duplicato esatto Cliente Test
+- entities contiene già persone, organizzazioni, animali, fornitori, referenti e record test
+
+Events:
+
+- molti eventi ancora NEW
+- project_id e entity_id valorizzati solo su una parte degli eventi
+- nessun riferimento project/entity orfano rilevato negli export
+- payload quasi sempre {}
+- dati ancora influenzati da sviluppo/test
+
+Conclusione:
+
+Il DB attuale contiene già campi utili per evolvere,
+ma non deve attivare automaticamente gerarchie, metadata strutturati,
+alias o deduplicazione senza modalità guidata e nodo dedicato.
+
+------------------------------------------------
+PROJECT — POLICY
+------------------------------------------------
+
+Project rappresenta un contenitore operativo dell’evento.
+
+Può indicare:
+
+- ambito
+- luogo
+- lavoro
+- commessa
+- progetto interno
+- area operativa
+- workspace applicativo
+
+Regola utente:
+
+se risponde a “su quale ambito / luogo / progetto / lavoro?”,
+tende a essere project.
+
+Esempi:
+
+- ASPRI
+- ADEXIMA
+- Casa
+- Casa Mare
+- Villa Sierri
+- Lavoro
+- Ristrutturazione Bagno
+- CEAS
+
+Project non deve normalmente rappresentare:
+
+- persona
+- animale
+- azienda come soggetto
+- cliente come controparte
+- fornitore
+- referente
+
+Eccezione:
+
+un nome può essere project se rappresenta un contenitore operativo,
+non il soggetto.
+
+------------------------------------------------
+ENTITY — POLICY
+------------------------------------------------
+
+Entity rappresenta un soggetto coinvolto nell’evento.
+
+Può indicare:
+
+- persona
+- organizzazione
+- azienda
+- cliente
+- fornitore
+- referente
+- tecnico
+- animale
+- soggetto generico
+
+Regola utente:
+
+se risponde a “chi / con chi / per chi / da chi?”,
+tende a essere entity.
+
+Esempi:
+
+- Mario
+- Mario Rossi
+- Alfie
+- Ikea
+- Amazon
+- Leroy Merlin
+- Allevamento Aspri
+- Referente Kappa
+
+------------------------------------------------
+TYPE PROJECT / ENTITY — POLICY
+------------------------------------------------
+
+Principio:
+
+type deve indicare la natura dell’oggetto,
+non il ruolo occasionale.
+
+Esempi:
+
+- Mario è person, anche se può essere cliente, referente o tecnico
+- Ikea è organization, anche se può essere fornitore
+- Alfie è animal, anche se appartiene a un contesto ASPRI
+- Villa Sierri può essere location/job come project, non entity
+
+Lingua:
+
+- chiavi DB tecniche in inglese
+- label UI in italiano
+
+Motivo:
+
+- il DB mantiene valori stabili
+- l’utente vede testi italiani
+- le label possono cambiare senza migrare dati
+- il core resta più adatto a integrazioni future
+
+Entities type base — valori DB consigliati:
+
+- person
+- organization
+- animal
+- generic
+
+Entities type base — label UI:
+
+- Persona
+- Organizzazione
+- Animale
+- Generica
+
+Projects type base — valori DB consigliati:
+
+- workspace
+- location
+- job
+- internal
+- generic
+
+Projects type base — label UI:
+
+- Area / Sistema
+- Luogo
+- Lavoro / Intervento
+- Interno
+- Generico
+
+Vincolo:
+
+non introdurre type verticali specifici ora.
+
+Evitare nel core:
+
+- dog
+- cantiere_adexima
+- cliente_aspri
+- cucciolata
+- preventivo
+- lead
+- pratica
+- ordine
+
+Questi elementi possono essere supportati in futuro tramite:
+
+- metadata profile
+- relazioni dedicate
+- moduli verticali futuri
+
+Non devono diventare type base del core.
+
+------------------------------------------------
+PARENT PROJECT / ENTITY — POLICY
+------------------------------------------------
+
+parent_project_id e parent_entity_id non sono inutili.
+
+Sono capacità dormienti perché oggi manca una modalità utente
+per valorizzarli.
+
+Decisione:
+
+parent va preparato per il futuro,
+ma non attivato automaticamente ora.
+
+Regola:
+
+parent significa gerarchia stabile.
+
+Parent NON significa:
+
+- alias
+- duplicato
+- nome simile
+- match generico
+- relazione occasionale
+- ruolo cliente/fornitore
+
+parent_project_id:
+
+da usare in futuro per relazione contenitore → sotto-contenitore.
+
+Esempi possibili:
+
+- Casa → Casa Mare
+- ASPRI → Cucciolata Marzo 2026
+- ADEXIMA → Cantiere X
+- Villa → Villa Sierri, solo se Villa è davvero contenitore stabile
+
+parent_entity_id:
+
+da usare in futuro per relazione soggetto principale → soggetto collegato,
+solo se stabile.
+
+Esempi possibili:
+
+- Organizzazione → Referente
+- Allevamento → Animale, se la policy futura lo conferma
+- Cliente principale → componente collegato, se realmente gerarchico
+
+Vincolo:
+
+non usare parent per:
+
+- risolvere duplicati
+- gestire alias
+- dedurre gerarchie solo da somiglianza testuale
+- correggere match imperfetti
+
+------------------------------------------------
+METADATA — POLICY
+------------------------------------------------
+
+metadata è fondamentale per il completamento futuro di LOGOS.
+
+Non deve però essere valorizzato dall’input evento rapido
+nella fase attuale.
+
+Deve essere gestito tramite:
+
+- modalità guidata
+- editor project/entity
+- Command Intent strutturale
+- profilo project/entity
+
+Regola:
+
+metadata contiene attributi descrittivi estendibili.
+
+metadata NON deve contenere:
+
+- alias strutturali
+- deduplicazioni
+- relazioni core
+- logiche di merge
+- stato evento
+- dati che richiedono query relazionali forti
+
+Se una logica diventa fondamentale e interrogabile,
+va valutata come struttura dedicata futura.
+
+Ogni metadata strutturato dovrà prevedere:
+
+schema_version
+
+Motivo:
+
+consentire evoluzioni future senza rompere record esistenti.
+
+Profili metadata futuri possibili:
+
+Project / location / job:
+
+- address
+- coordinates
+- notes
+
+Entity / person:
+
+- phone
+- email
+- address
+- notes
+
+Entity / organization:
+
+- phone
+- email
+- address
+- vat
+- fiscal_code
+- notes
+
+Entity / animal:
+
+- species
+- breed
+- birth_date
+- microchip
+- notes
+
+Questi profili preparano ASPRI, ADEXIMA e altre istanze
+senza inserire logiche verticali rigide nel core.
+
+------------------------------------------------
+DUPLICATI — POLICY
+------------------------------------------------
+
+Stato reale:
+
+è stato rilevato almeno un duplicato esatto negli export:
+
+- Cliente Test
+
+Possibili cause:
+
+- seed iniziali
+- test manuali
+- Command Intent
+- create suggestion
+- assenza di vincolo unique su entities.name
+- assenza di controllo normalizzato prima della creazione
+
+Decisione:
+
+non fondere duplicati ora.
+
+Prima bisogna capire perché nascono e introdurre prevenzione lato UI.
+
+Duplicato esatto:
+
+nel futuro flow create project/entity,
+se il nome normalizzato esiste già,
+il sistema deve avvisare.
+
+Micro-copy futura:
+
+“Esiste già un elemento con questo nome. Vuoi usare quello esistente?”
+
+Duplicato simile:
+
+per nomi simili non bloccare automaticamente.
+
+Mostrare warning:
+
+“Esistono elementi simili. Controlla se vuoi usare uno di questi o crearne uno nuovo.”
+
+Merge futuro:
+
+la fusione duplicati deve essere un nodo dedicato.
+
+Requisiti futuri:
+
+- scelta record principale
+- scelta record da assorbire
+- conteggio eventi collegati
+- riassegnazione eventi
+- log operazione
+- conferma esplicita utente
+
+No merge automatico.
+
+No merge dentro input rapido evento.
+
+------------------------------------------------
+ALIAS — POLICY
+------------------------------------------------
+
+Alias non viene implementato ora.
+
+Alias non deve essere gestito tramite parent.
+
+Alias non deve essere confuso con duplicato.
+
+Alias significa:
+
+- stesso oggetto reale
+- nome alternativo
+- abbreviazione
+- variante frequente
+
+Esempi:
+
+- Villa S. → Villa Sierri
+- Mario R. → Mario Rossi
+
+Strategia futura:
+
+alias strutturali probabilmente richiederanno una tabella dedicata.
+
+metadata può eventualmente contenere alias temporanei solo come ponte,
+ma non deve diventare alias engine definitivo.
+
+------------------------------------------------
+DATA HYGIENE — POLICY
+------------------------------------------------
+
+Data Hygiene non va eseguita subito dopo questo nodo.
+
+Motivo:
+
+- lo sviluppo core è ancora incompleto
+- continueranno test e record tecnici
+- non è ancora consolidata la modalità guidata project/entity
+- non è ancora consolidata la gestione metadata
+- pulire ora rischia di produrre nuovo sporco dopo poco
+
+Momento corretto:
+
+- fine sviluppo core principale
+- oppure prima di analisi dati / dashboard / KPI
+- comunque dopo policy e modalità guidata project/entity
+
+Eccezione ammessa:
+
+introdurre prima protezioni anti-nuovo-sporco:
+
+- blocco record senza nome
+- alert duplicato esatto
+- warning elementi simili
+
+Non eseguire cleanup storico ora.
+
+------------------------------------------------
+FEEDBACK UTENTE — POLICY
+------------------------------------------------
+
+Il sistema deve aiutare l’utente a scegliere tra project ed entity.
+
+Non deve solo salvare.
+
+Deve guidare.
+
+Feedback project:
+
+“Sembra un progetto o ambito operativo. Usalo per luoghi, lavori, commesse, aree operative o contenitori di eventi.”
+
+Feedback entity:
+
+“Sembra un’entità. Usala per persone, aziende, animali, fornitori, clienti o referenti.”
+
+Feedback ambiguo:
+
+“Questo nome potrebbe essere sia un project sia una entity. Scegli project se indica un ambito/lavoro/luogo. Scegli entity se indica una persona, azienda, animale o soggetto.”
+
+Feedback parent:
+
+“Puoi collegarlo a un elemento esistente solo se esiste una relazione stabile, non solo perché il nome è simile.”
+
+Feedback duplicato:
+
+“Esistono elementi uguali o simili. Controlla prima di crearne uno nuovo.”
+
+------------------------------------------------
+COMMAND INTENT / MODALITÀ GUIDATA — POLICY DB
+------------------------------------------------
+
+Non usare il termine “command event”.
+
+Motivo:
+
+in LOGOS event è l’unità salvata nel ledger.
+
+I comandi strutturali non devono diventare eventi.
+
+Termini corretti:
+
+- Command Intent
+- modalità guidata
+- editor project/entity
+- profilo project/entity
+
+Regola:
+
+i comandi strutturali modificano project/entity,
+non generano eventi.
+
+Esempi futuri:
+
+- crea progetto Villa Sierri
+- modifica progetto Villa Sierri
+- aggiungi coordinate a Villa Sierri
+- crea entità Alfie
+- modifica entità Alfie
+- aggiungi telefono a Mario
+
+Questi input possono aprire modalità guidata o editor,
+ma non devono creare eventi NEW.
+
+------------------------------------------------
+PROSSIMA EVOLUZIONE CONSIGLIATA
+------------------------------------------------
+
+Non aprire direttamente una guided mode completa.
+
+Nodo candidato corretto:
+
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Obiettivo:
+
+valutare con codice reale Retool:
+
+- componenti attuali di creazione project/entity
+- query insert_project / insert_entity
+- create_suggestion_state
+- command_intent_state
+- lista projects/entities
+- fattibilità senza migrazione
+- prima tranche implementabile e chiudibile
+
+Output:
+
+- specifica minima
+- confini del primo nodo implementativo
+- elenco codici necessari
+- test di chiusura
+- decisione go/no-go
+
+Primo nodo implementativo eventuale, solo dopo readiness:
+
+PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+
+Ambito massimo:
+
+- name
+- type con label italiane
+- alert duplicato esatto
+- warning elementi simili se sostenibile
+- micro-copy project/entity
+
+Fuori scope:
+
+- parent
+- metadata avanzato
+- merge
+- alias engine
+- data hygiene
+- dashboard
+- verticalizzazioni
+
 
 ------------------------------------------------
 MODELLO DATI
@@ -844,6 +1504,37 @@ name univoco = base matching
 parent_project_id presente ma non operativo
 relazioni avanzate non implementate
 
+
+Nota post Data Structure / Entity Hierarchy — Policy Decision Model:
+
+projects rappresenta il contenitore operativo dell’evento.
+
+Può rappresentare ambito, luogo, lavoro, commessa, progetto interno, area operativa o workspace applicativo.
+
+Regola policy:
+
+se risponde a “su quale ambito / luogo / progetto / lavoro?”, tende a essere project.
+
+Type project futuro consigliato:
+
+- workspace → Area / Sistema
+- location → Luogo
+- job → Lavoro / Intervento
+- internal → Interno
+- generic → Generico
+
+parent_project_id resta capacità dormiente.
+
+Non è inutile: non viene usato perché manca una modalità guidata per valorizzarlo.
+
+Va usato in futuro solo per gerarchie stabili contenitore → sotto-contenitore.
+
+Non va usato per alias, duplicati, somiglianze testuali o correzioni di matching.
+
+metadata project non è presente come campo dedicato in projects.
+Se serviranno profili project/location/job, l’uso di metadata richiederà valutazione schema o modello dedicato.
+
+
 Project / Entity Create Suggestion First Controlled Level:
 
 projects può ora essere popolata da Retool tramite insert_project.
@@ -940,6 +1631,53 @@ possibili duplicati
 nessuna gerarchia attiva
 parent_entity_id non operativo
 metadata non usato in modo strutturale
+
+
+Nota post Data Structure / Entity Hierarchy — Policy Decision Model:
+
+entities rappresenta il soggetto coinvolto nell’evento.
+
+Può rappresentare persona, organizzazione, azienda, cliente, fornitore, referente, tecnico, animale o soggetto generico.
+
+Regola policy:
+
+se risponde a “chi / con chi / per chi / da chi?”, tende a essere entity.
+
+Type entity futuro consigliato:
+
+- person → Persona
+- organization → Organizzazione
+- animal → Animale
+- generic → Generica
+
+Il type descrive la natura dell’oggetto, non il ruolo occasionale.
+
+Esempio:
+
+Ikea è organization anche se può agire da fornitore.
+Mario è person anche se può agire da cliente, tecnico o referente.
+Alfie è animal anche se usato in un contesto ASPRI.
+
+parent_entity_id resta capacità dormiente.
+
+Va usato in futuro solo per gerarchie stabili soggetto principale → soggetto collegato.
+
+Non va usato per alias, duplicati o somiglianze testuali.
+
+metadata è campo strategico futuro.
+
+Deve essere gestito tramite modalità guidata / editor entity / Command Intent strutturale, non tramite input evento rapido.
+
+Ogni metadata strutturato dovrà prevedere schema_version.
+
+Profili futuri possibili:
+
+- person: contatti, indirizzo, note
+- organization: contatti, dati fiscali, indirizzo, note
+- animal: specie, razza, nascita, microchip, note
+
+metadata non deve contenere alias strutturali, deduplicazioni, relazioni core o logiche di merge.
+
 
 Match Engine Unification First Controlled Level:
 
@@ -1977,6 +2715,26 @@ La stessa regola vale per Command Intent:
 LIMITI
 ------------------------------------------------
 
+
+Nota post Data Structure / Entity Hierarchy:
+
+Non implementato anche:
+
+- modalità guidata project/entity completa
+- valorizzazione type project/entity da UI
+- valorizzazione parent_project_id / parent_entity_id da UI
+- valorizzazione metadata guidata
+- profili metadata operativi
+- duplicate alert strutturato nel create flow
+- warning elementi simili nel create flow
+- merge duplicati
+- data hygiene storico
+- alias engine
+
+Decisione:
+
+questi elementi restano evoluzioni future e non modificano lo schema attuale.
+
 Non implementato:
 
 - classificazione economica avanzata
@@ -2168,6 +2926,16 @@ non usare payload per stati UI/readiness senza decisione architetturale dedicata
 non creare project/entity automaticamente lato DB
 non aggiungere audit trail project/entity senza nodo dedicato
 
+non attivare parent_project_id / parent_entity_id senza modalità guidata
+non usare parent per alias, duplicati o somiglianze testuali
+non valorizzare metadata da input evento rapido senza nodo dedicato
+non usare metadata come contenitore caotico di relazioni core
+non introdurre type verticali hard-coded nel core
+non trasformare ruoli occasionali cliente/fornitore/tecnico in type base senza modello relazionale dedicato
+non eseguire data hygiene storico prima della fine sviluppo core o prima della fase analisi dati/KPI
+non eseguire merge duplicati automatico
+non aprire guided mode completa senza readiness/minimum scope
+
 Motivazione:
 
 sistema ancora in fase evolutiva.
@@ -2178,6 +2946,22 @@ non imposta dal database.
 EVOLUZIONE FUTURA NON ATTIVA
 
 Possibili estensioni:
+
+
+DATA STRUCTURE / GUIDED MODE:
+
+Project / Entity Guided Mode — Readiness & Minimum Scope
+Project / Entity Guided Mode — Name + Type + Duplicate Alert Base
+valorizzazione controllata type project/entity
+label UI italiane per type tecnici DB
+parent guidato per gerarchie stabili
+metadata guidato con schema_version
+profili metadata location/person/organization/animal
+duplicate alert esatto
+warning elementi simili
+merge duplicati controllato solo in nodo dedicato
+data hygiene storico prima di analisi dati/KPI
+
 
 TYPE:
 
@@ -2470,3 +3254,35 @@ v10 — 2026-05-25
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+
+v11 — 2026-06-23
+
+- assorbito CHECKPOINT — DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+- confermato checkpoint come documento temporaneo / archiviabile dopo aggiornamento documentale
+- confermato schema DB invariato
+- confermata assenza di migrazione Supabase
+- confermata assenza di modifiche runtime Retool
+- confermata assenza di modifiche parser, matching, preview, save flow e payload
+- aggiunta sezione POLICY DATA STRUCTURE / PROJECT-ENTITY — POST CHECKPOINT 2026-06-23
+- recepita fotografia reale export Supabase projects/entities/events/system_logs in forma sintetica
+- consolidato principio LOGOS vertical-ready, non vertical-hardcoded
+- definita policy Project come contenitore operativo dell’evento
+- definita policy Entity come soggetto coinvolto nell’evento
+- definito type project/entity come natura dell’oggetto e non ruolo occasionale
+- stabilita separazione tra chiavi tecniche DB in inglese e label UI italiane
+- proposti valori futuri project.type: workspace, location, job, internal, generic
+- proposti valori futuri entity.type: person, organization, animal, generic
+- chiarito che parent_project_id e parent_entity_id sono capacità dormienti, non inutili
+- chiarito che parent va usato solo per gerarchie stabili e non per alias, duplicati o somiglianze testuali
+- chiarito che metadata è fondamentale per il futuro ma deve essere guidato, non valorizzato da input evento rapido
+- introdotto principio schema_version per metadata strutturati futuri
+- indicati profili metadata futuri location/person/organization/animal senza renderli runtime attivo
+- chiarito che metadata non deve contenere alias strutturali, deduplicazioni, relazioni core o merge
+- registrata policy duplicati: alert futuro, nessun merge automatico
+- registrata policy alias: futuro modello dedicato, non parent
+- registrata policy Data Hygiene: rimandata a fine core / pre-analisi dati, salvo protezioni anti-nuovo-sporco
+- chiarito che i comandi strutturali restano Command Intent / modalità guidata e non command event
+- indicato prossimo nodo candidato: PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+- indicato primo nodo implementativo eventuale: PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+- esplicitato che guided mode completa non deve essere aperta come nodo unico troppo ampio
+

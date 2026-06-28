@@ -1,211 +1,239 @@
-# 00_PROJECT_State_v29
+# 00_PROJECT_State_v30
 
-DATA: 2026-06-15
+DATA: 2026-06-23
 
 ------------------------------------------------
 NODO ATTIVO:
 ------------------------------------------------
 
-INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
+DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL — COMPLETATO
 
 Stato nodo:
 
-- micro-nodo tecnico-funzionale completato
-- nodo dedicato alla coerenza tra create flow, edit flow, Command Intent e suggestion project/entity
-- gap primario: G21 — Suggestion Create vs Edit Consistency
-- gap secondario controllato: G30 — Command Intent — Edit Guide Generic Alias
-- nodo chiuso senza modificare DB, Supabase, payload o save flow evento
-- input_analysis_result rollbackato alla base stabile dopo test su approccio più invasivo
-
-Obiettivo:
-
-stabilizzare il confine tra:
-
-- input evento ordinario
-- command intent
-- edit mode
-- suggestion project/entity
-- alias generici:
-  - modifica
-  - correggi
-  - cambia
-
-Problema AS-IS:
-
-Create flow:
-
-modifica / correggi / cambia
-→ trattati come eventi ordinari
-→ Sintesi visibile
-→ Dati evento visibili
-→ Conferma evento visibile
-→ evento creabile impropriamente
-
-Edit flow:
-
-modifica / correggi / cambia
-→ trattati come input edit ordinario
-→ update_event possibile
-
-crea progetto test / crea entità test durante edit mode
-→ command raw riconosciuto
-→ command effective soppresso da input_analysis_result
-→ edit mode prevalente
-→ update_event possibile
-
-Approccio scartato:
-
-È stato testato un approccio più invasivo su input_analysis_result per rendere i command effettivi anche durante edit mode.
-
-Esito:
-
-- app rallentata
-- linting emerso
-- command container diventato operativo durante edit mode
-- rischio creazione project/entity senza preservare correttamente il contesto edit
-
-Decisione:
-
-rollback immediato di input_analysis_result alla base stabile.
-
-Modifiche runtime finali mantenute:
-
-1. command_intent_state
-
-- riconosce modifica / correggi / cambia
-- commandType: edit_generic_help
-- commandFamily: guide
-- canExecute: false
-- comportamento: guida non operativa
-
-2. txt_command_intent_description
-
-- micro-copy aggiunta per edit_generic_help
-- mostra guida generica non operativa
-- evita box command vuoto o poco chiaro
-
-3. button_input_confirm
-
-- aggiunta EDIT MODE COMMAND GUARD locale
-- blocca update_event se edit_mode = true e l’input corrente corrisponde a un command riconosciuto fresco
-- mostra notifica warning
-- non chiude edit mode
-- non azzera editing_event
-- non modifica payload
-- non modifica button_input_confirm.Disabled
-- non modifica insert_event / update_event
-
-4. text_edit_mode_notice
-
-- notice standard:
-  Evento in modifica · Premi Annulla modifica per uscire.
-- notice con command rilevato:
-  Comando rilevato · Premi Annulla modifica prima di usare comandi.
-
-Comportamento finale create flow:
-
-modifica / correggi / cambia
-→ command rilevato
-→ guida non operativa visibile
-→ nessuna Sintesi evento
-→ nessun Dati evento
-→ nessuna Conferma evento
-→ nessun evento creato
-
-Comportamento finale edit flow:
-
-modifica / correggi / cambia
-→ edit mode resta attivo
-→ notice contestuale visibile
-→ Conferma bloccata da guard
-→ nessun update_event
-
-crea progetto test / crea entità test
-→ nessun project/entity creato durante edit mode
-→ nessun update_event
-→ warning mostrato
-→ edit mode resta attivo
-
-Test runtime validati:
-
-- create flow → modifica
-- create flow → correggi
-- create flow → cambia
-- create flow → crea progetto test
-- create flow → crea entità test
-- edit flow → modifica → Conferma
-- edit flow → correggi → Conferma
-- edit flow → cambia → Conferma
-- edit flow → crea progetto test → Conferma
-- edit flow → crea entità test → Conferma
-- edit flow con input evento valido → update_event corretto
-- Annulla modifica
-- G22 “20 euro villa sierri” non regressivo
-- linting Retool 0
-
-Residuo UX accettato:
-
-In edit mode, quando viene rilevato un command:
-
-- Sintesi può restare visibile
-- Suggerimenti associazione possono restare visibili
-- Dati evento possono restare visibili
-
-Decisione:
-
-il residuo è accettato perché:
-
-- update_event è bloccato
-- project/entity non vengono creati impropriamente
-- Annulla modifica resta disponibile
-- input_analysis_result resta stabile
-- non vengono introdotte nuove dipendenze Hidden
-- non viene aperto G10A
-- non viene introdotto alias system globale
-
-Impatto:
-
-- nessuna modifica DB
+- micro-sessione decisionale completata
+- nodo dedicato alla valutazione controllata della struttura dati reale projects/entities
+- export Supabase reali analizzati:
+  - projects_rows.csv
+  - entities_rows.csv
+  - events_rows.csv
+  - system_logs_rows.csv
+- checkpoint temporaneo prodotto:
+  CHECKPOINT — DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+- checkpoint classificato come temporaneo / archiviabile dopo assorbimento documentale
+- policy assorbita nei documenti canonici competenti
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
 - nessuna modifica Supabase
-- nessuna modifica payload
-- nessuna modifica insert_event / update_event
-- nessuna modifica button_input_confirm.Disabled
+- nessuna migrazione DB
+- nessuna modifica schema
+- nessuna modifica parser
 - nessuna modifica Match Engine
-- nessuna modifica G22
-- nessuna anticipazione G10A
-- nessun fuzzy matching
-- nessun alias system globale
-- nessun Input Analysis Model completo
+- nessuna modifica insert_event / update_event
+- nessuna modifica save flow
+- nessuna modifica payload
 
-Documenti aggiornati nel nodo:
+Obiettivo del nodo:
 
-- 01_LOGOS_Input_System
-- 03_LOGOS_Event_Lifecycle
-- 04_LOGOS_Retool_Architecture
-- LOGOS_RETOOL_RUNTIME_REAL
-- 00_PROJECT_State
+valutare in modo controllato:
 
-Documenti ancora da aggiornare:
+- projects
+- entities
+- parent_project_id
+- parent_entity_id
+- type
+- metadata
+- duplicati
+- alias futuri
+- Data Hygiene futura
+- propedeuticità verso qualità dati e output futuri
 
+Principio consolidato:
+
+LOGOS deve essere vertical-ready, non vertical-hardcoded.
+
+Significato:
+
+- il core resta neutro, stabile e non monolitico
+- le istanze ASPRI / ADEXIMA / CEAS / MaurizioLab restano future
+- il core deve però poter sostenere profili applicativi futuri tramite type, parent, metadata e modalità guidate
+- non introdurre campi o moduli verticali rigidi nel core ora
+- non anticipare dashboard / KPI / output / istanze verticali
+
+Stato AS-IS rilevato dagli export:
+
+Projects:
+
+- 32 record
+- parent_project_id sempre vuoto
+- type quasi sempre vuoto
+- status sempre ACTIVE
+- 1 project senza nome
+- nessun duplicato esatto normalizzato sul nome
+- molti project di test/sviluppo
+
+Entities:
+
+- 30 record
+- parent_entity_id sempre vuoto
+- type quasi sempre vuoto
+- status sempre vuoto
+- metadata sempre {}
+- 1 entity senza nome
+- duplicato esatto Cliente Test
+- entities contiene persone, organizzazioni, animali, fornitori, referenti e record test
+
+Events:
+
+- 266 eventi
+- 205 NEW
+- 45 ERROR
+- 16 WRITTEN
+- 76 eventi con project_id
+- 46 eventi con entity_id
+- nessun riferimento project/entity orfano
+- payload quasi sempre {}
+
+System logs:
+
+- 4 log
+- tutti collegati a eventi esistenti
+
+Decisioni consolidate:
+
+Project:
+
+- rappresenta il contenitore operativo dell’evento
+- può indicare ambito, luogo, lavoro, commessa, progetto interno, area operativa o workspace applicativo
+- risponde a “su quale ambito / luogo / progetto / lavoro?”
+
+Entity:
+
+- rappresenta un soggetto coinvolto nell’evento
+- può indicare persona, organizzazione, azienda, cliente, fornitore, referente, tecnico, animale o soggetto generico
+- risponde a “chi / con chi / per chi / da chi?”
+
+Type:
+
+- indica la natura dell’oggetto, non il ruolo occasionale
+- chiavi tecniche DB in inglese
+- label UI in italiano
+
+Entities type base futuro:
+
+- person → Persona
+- organization → Organizzazione
+- animal → Animale
+- generic → Generica
+
+Projects type base futuro:
+
+- workspace → Area / Sistema
+- location → Luogo
+- job → Lavoro / Intervento
+- internal → Interno
+- generic → Generico
+
+Parent:
+
+- parent_project_id e parent_entity_id sono capacità dormienti, non inutili
+- oggi non sono usati perché manca una modalità UI per valorizzarli
+- parent significa gerarchia stabile
+- parent non significa alias, duplicato, nome simile o match generico
+- parent non deve essere assegnato automaticamente da matching testuale
+
+Metadata:
+
+- metadata è campo strategico per il completamento futuro di LOGOS
+- non deve essere valorizzato dall’input evento rapido nella fase attuale
+- deve essere gestito tramite modalità guidata, editor project/entity o Command Intent strutturale
+- metadata deve essere guidato, con schema_version e profili coerenti
+- metadata non deve diventare contenitore caotico per alias, deduplicazioni o relazioni core
+
+Duplicati:
+
+- non fondere duplicati ora
+- prima introdurre prevenzione/alert lato UI
+- duplicato esatto → avviso e proposta uso elemento esistente
+- duplicato simile → warning non bloccante
+- merge duplicati solo in nodo futuro dedicato
+
+Alias:
+
+- alias non implementato ora
+- alias non deve usare parent
+- alias non deve essere confuso con duplicato
+- eventuale alias engine futuro probabilmente richiederà struttura dedicata
+
+Data Hygiene:
+
+- non eseguirla ora
+- rimandarla a fine sviluppo core o prima di analisi dati / dashboard / KPI
+- ammessa prima solo protezione anti-nuovo-sporco:
+  - blocco record senza nome
+  - alert duplicato esatto
+  - warning elementi simili
+
+STP consolidato:
+
+- guided mode completa subito sarebbe troppo ampia
+- Match Engine Advanced / G10A non è il prossimo passo corretto
+- cleanup UX/preview resta utile ma meno strategico
+- prossimo passo migliore: readiness controllata e minimum scope della modalità guidata project/entity
+
+Output del nodo:
+
+- checkpoint temporaneo prodotto
+- 05_LOGOS_Database_Schema aggiornato
+- 00_PROJECT_Gap_Register aggiornato
+- 00_PROJECT_Roadmap aggiornato
+- 00_PROJECT_State aggiornato
+
+Documenti aggiornati nel ciclo documentale:
+
+- 05_LOGOS_Database_Schema
 - 00_PROJECT_Gap_Register
 - 00_PROJECT_Roadmap
+- 00_PROJECT_State
 
-Documenti da non aggiornare:
+Documenti non aggiornati:
 
-- 02_LOGOS_Match_Engine
-- 05_LOGOS_Database_Schema
-- 06_LOGOS_View_Preview_System
+- LOGOS_RETOOL_RUNTIME_REAL
 - LOGOS_SUPABASE_RUNTIME_REAL
+- 01_LOGOS_Input_System
+- 02_LOGOS_Match_Engine
+- 03_LOGOS_Event_Lifecycle
+- 04_LOGOS_Retool_Architecture
+- 06_LOGOS_View_Preview_System
 - 00_PROJECT_KERNEL_MANIFEST
 
-Checkpoint:
+Motivo:
 
-Non necessario checkpoint esteso.
-Il nodo ha prodotto micro-fix locali, testati e documentabili nei documenti canonici.
+nessuna modifica runtime, Retool, Supabase, input, matching, lifecycle, preview o schema DB è stata eseguita.
 
-Prossimo nodo operativo:
+Prossimo nodo operativo consigliato:
 
-da decidere dopo aggiornamento Gap Register / Roadmap.
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Scopo prossimo nodo:
+
+- acquisire codice reale Retool coinvolto
+- valutare componenti/query esistenti di creazione project/entity
+- definire prima tranche chiudibile
+- evitare guided mode completa e superficiale
+- preparare eventuale implementazione limitata successiva
+
+Vincoli prossimo nodo:
+
+- non implementare subito guided mode completa
+- non attivare parent senza UI guidata
+- non valorizzare metadata da input evento rapido
+- non introdurre alias engine
+- non introdurre merge duplicati
+- non fare Data Hygiene storica
+- non aprire G10A
+- non anticipare dashboard / KPI / output
+- non anticipare istanze verticali
+
 ------------------------------------------------
 FASE:
 ------------------------------------------------
@@ -234,31 +262,36 @@ PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
 ✔ BUTTON CONFIRM READINESS ALIGNMENT — COMPLETATO
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — COMPLETATO
 ✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
-TRANSIZIONE → AGGIORNAMENTO GAP REGISTER / ROADMAP POST INPUT CONTEXT CONSISTENCY
+✔ DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL — COMPLETATO
+
+TRANSIZIONE → PROSSIMO NODO READINESS PROJECT / ENTITY GUIDED MODE
 
 Nota:
 
-Il nodo documentale è completato.
+Il nodo Data Structure / Entity Hierarchy è stato completato come nodo decisionale e documentale.
+
 Non ha modificato runtime LOGOS.
 Non ha modificato Retool.
 Non ha modificato Supabase.
-Non ha modificato DB, parser, matching, preview, save flow, payload o componenti UI.
+Non ha modificato schema DB.
+Non ha modificato parser.
+Non ha modificato matching.
+Non ha modificato preview.
+Non ha modificato save flow.
+Non ha modificato payload.
 
 Risultato:
 
-- fonti canoniche complete consolidate
-- richiami espliciti introdotti nei documenti non canonici
-- documenti core alleggeriti
-- documenti tecnici preservati
-- runtime manifest normalizzati
-- Session Boot Matrix consolidata
-- costo aggiornamenti futuri ridotto
-
-Transizione operativa:
-
-Il nodo PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT è completato.
-
-Il prossimo nodo consigliato è INPUT FLOW / TRANSITION MICRO-FLASH STABILIZATION, salvo diversa decisione in Regia.
+- policy project/entity consolidata
+- principio vertical-ready / non vertical-hardcoded consolidato
+- type base futuro definito come natura dell’oggetto
+- parent classificato come capacità dormiente futura
+- metadata classificato come campo strategico guidato
+- duplicati da prevenire con alert, non fondere ora
+- alias rimandato a modello futuro dedicato
+- Data Hygiene rimandata a fine core / pre-analisi dati
+- guided mode completa dichiarata troppo ampia come nodo immediato
+- prossimo nodo consigliato: readiness & minimum scope
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
@@ -267,111 +300,49 @@ CQD — VALIDAZIONE DOCUMENTO
 C (Completezza): 10/10
 
 - stato corrente del progetto documentato
-- nodo documentale registrato come completato
-- Pacchetto A registrato come allineamento, non riduzione
-- Pacchetto B registrato come completato
-- Pacchetto C registrato come completato
-- Pacchetto D registrato come completato
-- Kernel Manifest registrato come aggiornato
-- stress test documentale finale registrato
-- layer completati mantenuti in snapshot funzionale
-- catene runtime principali mantenute in forma sintetica non interpretativa
-- debiti tecnici/funzionali residui esplicitati
-- prossimi nodi candidati mantenuti
-- changelog aggiornato a v24
-- richiami canonici inseriti per le logiche complete
-- nodo Preview / Event Data Label Semantic Alignment registrato come completato
-- label semantica Importo / Durata / Valore registrata nello stato sintetico
-- impatto runtime limitato a micro-copy Sintesi documentato
-- prossimo nodo consigliato aggiornato
-- nodo Button Confirm Readiness Alignment registrato come completato
-- G33 registrato come completato
-- button_input_confirm.Disabled allineato a isAmbiguous
-- fallback matches.length > 1 rimosso da Disabled
-- rischio match generico / auto-select confidence registrato come fuori nodo da assorbire in G227
-- nodo Project Create Suggestion — Match Present / User Override registrato come completato
-- G22 registrato come completato a primo livello controllato
-- requiresUserOverride registrato come flag UI derivato da create_suggestion_state
-- warning mirato “Associazione progetto/entità da controllare” registrato nello State
-- separazione Da verificare / Suggerimenti associazione registrata
-- G10A registrato come non necessario per il caso G22
-- nodo Input Context Consistency registrato come completato
-- G21 trattato a primo livello controllato nel contesto edit / suggestion / command
-- G30 trattato a primo livello controllato per alias generici modifica / correggi / cambia
-- command_intent_state.edit_generic_help registrato nello State
-- EDIT MODE COMMAND GUARD registrata come micro-guard locale
-- input_analysis_result rollbackato alla base stabile registrato
-- residuo UX edit command-like registrato come accettato
+- nodo Data Structure / Entity Hierarchy registrato come completato a livello policy decisionale
+- export Supabase reali considerati nella fotografia AS-IS
+- checkpoint temporaneo registrato come assorbito nei documenti canonici
+- principio vertical-ready / non vertical-hardcoded registrato
+- policy Project / Entity registrata
+- policy Type registrata come natura dell’oggetto, non ruolo occasionale
+- chiavi DB inglesi + label UI italiane registrate
+- parent_project_id / parent_entity_id registrati come capacità dormienti future
+- metadata registrato come campo strategico guidato
+- duplicati registrati come tema di prevenzione/alert, non merge immediato
+- alias registrato come futuro modello dedicato
+- Data Hygiene rimandata a fine core / pre-analisi dati
+- prossimo nodo consigliato aggiornato a PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+- blocco verso dashboard / KPI / output confermato
+- divieto di anticipare istanze verticali confermato
+- nessuna modifica runtime dichiarata
 
-Q (Qualità): 9.4/10
+Q (Qualità): 9.5/10
 
-- documento riportato alla funzione di State
-- ridotte duplicazioni tecniche lunghe
-- conservata ricostruibilità tramite richiami canonici
-- separato stato corrente da implementazione tecnica completa
-- ridotto rischio di versioni divergenti tra State e documenti tecnici
-- nessuna decisione runtime ricalcolata
-- nessuna roadmap operativa anticipata
-- preservata funzione leggera dello State
-- dettaglio tecnico completo rimandato a 06_LOGOS_View_Preview_System e LOGOS_RETOOL_RUNTIME_REAL
-- nessuna duplicazione lunga del codice Sintesi
-- preservata funzione leggera dello State anche dopo G33
-- nessuna duplicazione lunga del codice runtime oltre al minimo necessario per ricostruire il nodo
-- separato il fix locale Disabled dai temi futuri Match Engine / G22
-- evitata creazione di gap ridondanti su auto-select confidence
-- ridotto rischio di salvataggio inconsapevole su associazione generica
-- preservata leggerezza dello State senza duplicare tutto il codice runtime
-- registrati solo esito, impatto e residui strategici del nodo G22
-- evitata anticipazione di Match Engine Advanced
-- evitata anticipazione di Input Analysis Model completo
-- evitato che alias generici modifica / correggi / cambia restassero eventi ordinari
-- evitato che command riconosciuti durante edit mode diventassero update_event
-- preservata stabilità architetturale tramite rollback input_analysis_result
-- evitata correzione UX tramite Hidden multipli fuori nodo dedicato
-- mantenuta separazione tra guida visuale, guard funzionale e save flow
+- documento mantiene funzione di State
+- decisioni tecniche complete rimandate ai documenti canonici
+- evitata duplicazione integrale del checkpoint
+- preservata distinzione tra policy completata e implementazione non attiva
+- evitato di dichiarare attivi parent, metadata, alias o guided mode
+- evitata apertura immediata di un nodo troppo ampio
+- mantenuta sequenza propedeutica verso qualità dati e output futuri
+- ridotto rischio di deriva verso verticalizzazione rigida
+- ridotto rischio di sistema troppo generico e poco utile
 
 D (Deployabilità): 10/10
 
 - pronto come documento core di boot
-- nessuna modifica runtime LOGOS
-- nessuna modifica Retool
-- nessuna modifica Supabase
-- nessuna modifica DB
-- nessuna modifica parser
-- nessuna modifica matching
-- nessuna modifica preview
-- nessuna modifica save flow
-- nessuna modifica payload
-- fonti canoniche richiamate per ricostruzione completa
-- pronto come documento core di boot post documentation audit
-- prossimo nodo operativo consigliato chiarito
-- modifica runtime testata
-- nessuna regressione parser / matching / save flow / DB
-- G36 pronto per chiusura in Gap Register
-- G33 completato e testato
-- button_input_confirm.Disabled aggiornato senza regressioni
-- payload invariato
-- save flow invariato
-- DB invariato
-- parser / matching / preview invariati nella logica funzionale
-- G22 completato e testato su runtime Retool reale
-- create_suggestion_state.requiresUserOverride validato
-- preview_analysis_state warning G22 validato
-- create_suggestion_hint validato senza duplicazione informativa
-- button_input_confirm.Disabled invariato
-- payload invariato
-- save flow invariato
-- DB invariato
-- Supabase invariato
-- G10A non necessario per il caso G22
-- Input Context Consistency completato e testato su runtime Retool reale
-- create flow modifica / correggi / cambia validato senza creazione evento
-- edit flow modifica / correggi / cambia validato senza update_event
-- edit flow crea progetto test / crea entità test validato senza creazione strutturale e senza update_event
-- edit flow con input evento valido validato
-- Annulla modifica validato
-- G22 validato non regressivo
-- linting Retool 0
+- nessuna modifica runtime LOGOS richiesta
+- nessuna modifica Retool richiesta
+- nessuna modifica Supabase richiesta
+- nessuna modifica DB richiesta
+- nessuna modifica parser richiesta
+- nessuna modifica matching richiesta
+- nessuna modifica preview richiesta
+- nessuna modifica save flow richiesta
+- nessuna modifica payload richiesta
+- prossimo nodo operativo delimitato e verificabile
+- checkpoint temporaneo archiviabile dopo assorbimento documentale
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -444,6 +415,10 @@ Stato consolidato:
 ✔ text_edit_mode_notice contestuale su command rilevato in edit mode
 ✔ button_input_confirm include EDIT MODE COMMAND GUARD locale
 ✔ input_analysis_result rollbackato alla base stabile dopo test non stabile
+✔ Data Structure / Entity Hierarchy — Policy Decision Model completato
+✔ policy Project / Entity consolidata su export Supabase reali
+✔ LOGOS confermato vertical-ready, non vertical-hardcoded
+✔ type / parent / metadata / duplicati / alias / Data Hygiene inquadrati come policy futura controllata
 
 Debiti principali:
 
@@ -457,7 +432,9 @@ Debiti principali:
 ⚠ auto-select confidence avanzata / ranking globale non implementati
 ⚠ Status Semantics Alignment da valutare: badge OK può risultare debole con card Da verificare
 ⚠ Missing Association Notice Cleanup da valutare: balloon blu “Manca progetto / Manca entità”
-⚠ data structure / entity hierarchy non implementata  
+✔ data structure / entity hierarchy policy completata
+⚠ guided mode project/entity non implementata
+⚠ parent / metadata / alias / deduplicazione non ancora operativi  
 ⚠ output / dashboard / KPI non attivi  
 ⚠ micro-flash input/command transition residuo non bloccante, da non inseguire fuori nodo dedicato
 ⚠ residuo UX edit command-like: in edit mode Sintesi / Suggerimenti associazione / Dati evento possono restare visibili con command riconosciuto
@@ -469,7 +446,7 @@ Fonte completa:
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
 - 04_LOGOS_Retool_Architecture per componenti/query/Hidden
-- 04_LOGOS_Database_Schema per schema DB
+- 05_LOGOS_Database_Schema per schema DB
 - 06_LOGOS_View_Preview_System per preview/hint
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
 - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
@@ -478,7 +455,7 @@ Fonte completa:
 SNAPSHOT FUNZIONALE CONSOLIDATO
 ------------------------------------------------
 
-Il sistema LOGOS è stabilizzato su ventiquattro layer fondamentali.
+Il sistema LOGOS è stabilizzato su venticinque layer fondamentali.
 
 Layer completati:
 
@@ -506,6 +483,7 @@ Layer completati:
 22. BUTTON CONFIRM READINESS ALIGNMENT
 23. PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE
 24. INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+25. DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
 
 ------------------------------------------------
 CATENE RUNTIME ATTUALI — SINTESI NON INTERPRETATIVA
@@ -539,7 +517,7 @@ ui_state.parsed
 Fonti canoniche:
 - 01_LOGOS_Input_System per origine dei dati salvabili lato input.
 - 03_LOGOS_Event_Lifecycle per lifecycle evento, edit, no-op, cancel, WRITTEN / ERROR.
-- 04_LOGOS_Database_Schema per struttura DB e campi persistiti.
+- 05_LOGOS_Database_Schema per struttura DB e campi persistiti.
 - LOGOS_SUPABASE_RUNTIME_REAL per comportamento Supabase as-is.
 
 Nota:
@@ -569,7 +547,7 @@ ui_state.parsed.unit
 
 Fonte canonica:
 - 01_LOGOS_Input_System per Type Classification Base.
-- 04_LOGOS_Database_Schema per persistenza di events.type.
+- 05_LOGOS_Database_Schema per persistenza di events.type.
 
 Regola consolidata:
 type attuali = Evento / Tempo / Spesa / Incasso.
@@ -612,7 +590,7 @@ create_suggestion_state
 Fonte canonica:
 - 01_LOGOS_Input_System per create_suggestion_state e flow input.
 - 04_LOGOS_Retool_Architecture per componenti/query.
-- 04_LOGOS_Database_Schema per impatto DB.
+- 05_LOGOS_Database_Schema per impatto DB.
 
 Regole consolidate:
 - nessuna creazione automatica project/entity
@@ -754,7 +732,9 @@ Matching / entity structure:
 
 - fuzzy matching non implementato
 - alias system non implementato
-- gerarchie project/entity non implementate
+- policy data structure / entity hierarchy completata a livello decisionale
+- gerarchie project/entity non operative
+- guided mode project/entity non implementata
 - deduplicazione avanzata non implementata
 - select options non filtrate in caso di ambiguità
 - policy match presente + suggestion extension risolta a primo livello in G22
@@ -762,6 +742,7 @@ Matching / entity structure:
 
 Fonte canonica:
 - 02_LOGOS_Match_Engine
+- 05_LOGOS_Database_Schema
 - 00_PROJECT_Gap_Register per stato dei gap futuri
 
 ---
@@ -823,7 +804,7 @@ DB / Supabase:
 - nessun audit trail dedicato
 
 Fonte canonica:
-- 04_LOGOS_Database_Schema
+- 05_LOGOS_Database_Schema
 - LOGOS_SUPABASE_RUNTIME_REAL
 
 ---
@@ -895,7 +876,7 @@ Layer HINT SYSTEM: ~94%
 Layer UX Mobile: ~96%
 Layer UI Readiness / Visibility: ~95% — G33 completato, residuo micro-flash G29 e residuo edit command-like in osservazione
 Layer Input Analysis / Composition: ~69% — preservato stabile, non esteso nel nodo Input Context Consistency
-Layer 4 — Data Structure: ~32%
+Layer 4 — Data Structure: ~40% — policy decision model completato, implementazione guided mode non attiva
 Layer 4 — Engine: ~48%
 Layer 6 — Output: 0%
 
@@ -936,12 +917,13 @@ FASE ATTUALE
 ✔ BUTTON CONFIRM READINESS ALIGNMENT — COMPLETATO
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — COMPLETATO
 ✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
+✔ DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL — COMPLETATO
 
 ---
 
 TRANSIZIONE:
 
-→ AGGIORNAMENTO GAP REGISTER / ROADMAP POST INPUT CONTEXT CONSISTENCY
+→ PROSSIMO NODO READINESS PROJECT / ENTITY GUIDED MODE
 
 Nota:
 
@@ -955,71 +937,63 @@ OBIETTIVO IMMEDIATO
 
 Nodo appena completato:
 
-INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY
+DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
 
 Esito:
 
-- nodo completato su runtime Retool reale
-- G21 trattato a primo livello controllato nel confine edit / suggestion / command
-- G30 trattato a primo livello controllato sugli alias generici modifica / correggi / cambia
-- create flow protetto da eventi impropri su alias generici
-- edit flow protetto da update_event impropri su command riconosciuti
-- command create project/entity bloccati funzionalmente durante edit mode
-- command_intent_state aggiornato con edit_generic_help
-- txt_command_intent_description aggiornato con micro-copy dedicata
-- button_input_confirm aggiornato con EDIT MODE COMMAND GUARD locale
-- text_edit_mode_notice aggiornato con micro-copy contestuale
-- input_analysis_result rollbackato alla base stabile
+- nodo completato come policy decisionale controllata
+- export reali Supabase analizzati
+- checkpoint temporaneo prodotto e assorbito nei documenti canonici
+- 05_LOGOS_Database_Schema aggiornato
+- 00_PROJECT_Gap_Register aggiornato
+- 00_PROJECT_Roadmap aggiornato
+- 00_PROJECT_State aggiornato
+- nessuna modifica runtime
 - nessuna modifica DB
-- nessuna modifica Supabase
-- nessuna modifica payload
-- nessuna modifica insert_event / update_event
-- nessuna modifica button_input_confirm.Disabled
-- nessuna modifica Match Engine
-- G22 non regressivo
-- linting Retool 0
+- nessuna migrazione
+- nessuna modifica parser / matching / preview / save flow
 
-Test post-fix:
+Decisioni consolidate:
 
-- create flow modifica → nessun evento creato
-- create flow correggi → nessun evento creato
-- create flow cambia → nessun evento creato
-- create flow crea progetto test → command funzionante
-- create flow crea entità test → command funzionante
-- edit flow modifica → nessun update_event
-- edit flow correggi → nessun update_event
-- edit flow cambia → nessun update_event
-- edit flow crea progetto test → nessun project creato, nessun update_event
-- edit flow crea entità test → nessuna entity creata, nessun update_event
-- edit flow con input evento valido → update_event corretto
-- Annulla modifica → funzionante
-- 20 euro villa sierri → G22 invariato
-
-Residuo accettato:
-
-in edit mode, con command riconosciuto, Sintesi / Suggerimenti associazione / Dati evento possono restare visibili.
-
-Classificazione:
-
-residuo UX accettato perché update_event e creazioni improprie sono bloccati funzionalmente.
+- LOGOS deve essere vertical-ready, non vertical-hardcoded
+- Project = contenitore operativo
+- Entity = soggetto coinvolto
+- Type = natura dell’oggetto, non ruolo occasionale
+- parent_project_id / parent_entity_id = gerarchie stabili future, non alias o duplicati
+- metadata = profilo guidato strategico, non contenitore caotico
+- duplicati = prevenzione/alert futuro, non merge automatico
+- alias = modello futuro dedicato
+- Data Hygiene = rimandata a fine core / pre-analisi dati
+- guided mode completa = troppo ampia come nodo immediato
 
 Prossimo passo immediato:
 
-aggiornare 00_PROJECT_Gap_Register.
+aprire un nodo di readiness, non implementativo completo:
 
-Obiettivo aggiornamento Gap Register:
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
 
-- chiudere / aggiornare G21 per la parte trattata nel nodo
-- chiudere / aggiornare G30 per alias generici modifica / correggi / cambia
-- registrare residuo UX edit command-like come accettato o come micro-residuo non bloccante
-- evitare duplicazione con Input Analysis Model completo
-- evitare riapertura G22
-- evitare apertura impropria G10A
-- preparare decisione ordinata sul prossimo nodo
+Obiettivo prossimo nodo:
 
-Prossimo nodo operativo:
+- acquisire il codice reale Retool coinvolto
+- verificare componenti e query attuali di creazione project/entity
+- capire se è possibile una prima tranche chiudibile
+- separare ciò che può essere implementato subito da ciò che va rimandato
+- evitare di aprire una guided mode completa e superficiale
 
-da decidere dopo aggiornamento Gap Register e Roadmap.
+Possibile primo nodo implementativo successivo, solo dopo readiness:
+
+PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+
+Fuori scope immediato:
+
+- parent operativo
+- metadata avanzato
+- alias engine
+- merge duplicati
+- Data Hygiene storica
+- G10A Match Engine Advanced
+- dashboard / KPI / output
+- istanze verticali ASPRI / ADEXIMA / CEAS / MaurizioLab
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1114,12 +1088,13 @@ Priorità aggiornata:
 21. button confirm readiness alignment ✔
 22. project create suggestion / match present / user override ✔
 23. input context consistency — edit / suggestion / command boundary ✔
-24. definizione prossimo nodo post Input Context Consistency
-25. preview model / hint state consolidation
-26. input analysis model completo / single interpretation layer avanzato
-27. data structure / entity relations
-28. economic direction advanced
-29. output      
+24. data structure / entity hierarchy — policy decision model ✔
+25. project / entity guided mode — readiness & minimum scope
+26. project / entity guided mode — name + type + duplicate alert base
+27. preview model / hint state consolidation
+28. input analysis model completo / single interpretation layer avanzato
+29. economic direction advanced
+30. output      
 
 ---
 
@@ -1134,10 +1109,10 @@ Il sistema attuale è:
 
 PRIORITÀ FUTURE:
 
-1. da definire dopo Gap Register / Roadmap post Input Context Consistency
-2. preview model / hint state consolidation
-3. input analysis model / single interpretation layer
-4. data structure / entity relations
+1. Project / Entity Guided Mode — Readiness & Minimum Scope
+2. Project / Entity Guided Mode — Name + Type + Duplicate Alert Base, solo dopo readiness
+3. Preview / status / hint cleanup se necessario
+4. input analysis model / single interpretation layer avanzato
 5. economic direction advanced
 6. duration advanced — giorni / settimane
 7. dashboard / KPI base
@@ -1230,6 +1205,187 @@ Pacchetti completati:
 
 ------------------------------------------------
 NEXT NODES CANDIDATI
+------------------------------------------------
+
+1. PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Scopo:
+
+- valutare il codice reale Retool coinvolto nella creazione project/entity
+- identificare componenti, query, stati e micro-flow esistenti
+- definire una prima tranche implementabile e chiudibile
+- evitare una guided mode troppo ampia e incompleta
+- decidere go/no-go per il nodo implementativo successivo
+
+Vincoli:
+
+- nessuna implementazione completa nel nodo readiness
+- nessuna migrazione DB salvo decisione esplicita futura
+- nessuna modifica save flow evento
+- nessuna modifica parser
+- nessuna modifica Match Engine
+- nessun alias engine
+- nessun merge duplicati
+- nessuna Data Hygiene storica
+- nessuna dashboard / KPI / output
+- nessuna verticalizzazione ASPRI / ADEXIMA / CEAS / MaurizioLab
+
+Codici probabilmente necessari:
+
+- insert_project
+- insert_entity
+- create_suggestion_state
+- command_intent_state
+- query projects_list / entities_list
+- componenti micro-editor project/entity attuali
+- container suggestion project/entity
+- pulsanti create project/entity esistenti
+
+---
+
+2. PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+
+Stato:
+
+CANDIDATO IMPLEMENTATIVO SUCCESSIVO SOLO DOPO READINESS
+
+Scopo:
+
+- introdurre prima tranche limitata della modalità guidata
+- name
+- type con chiavi DB tecniche e label UI italiane
+- alert duplicato esatto
+- warning elementi simili se sostenibile
+- micro-copy per aiutare scelta project/entity
+
+Fuori scope:
+
+- parent
+- metadata avanzato
+- merge
+- alias engine
+- Data Hygiene
+- dashboard / KPI
+- verticalizzazioni
+
+---
+
+3. STATUS SEMANTICS ALIGNMENT
+
+Scopo:
+
+- riallineare il badge OK / Verifica / Attenzione della Sintesi
+- evitare che la Sintesi mostri OK quando è presente una card Da verificare significativa
+- non modificare save flow
+- non modificare button_input_confirm.Disabled
+- non trasformare warning non bloccanti in blocchi
+- mantenere distinzione tra stato visuale e readiness funzionale
+
+Nota:
+
+resta candidato valido, ma non è più la priorità strategica principale dopo il nodo Data Structure.
+
+---
+
+4. PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
+
+Scopo:
+
+- rivalutare il balloon blu “Manca progetto / Manca entità”
+- verificare se resta utile nella Sintesi o se crea ridondanza con Suggerimenti associazione
+- mantenere distinta la notice informativa dalla suggestion operativa
+- migliorare UX mobile senza alterare logica di salvataggio
+
+---
+
+5. PREVIEW MODEL / HINT STATE CONSOLIDATION
+
+Scopo:
+
+- ridurre ulteriormente la natura ibrida della Sintesi
+- consolidare preview_analysis_state come fonte hint/status
+- separare meglio hint bloccanti / warning informativi / suggerimenti
+- valutare se “Da verificare” debba diventare blocco autonomo
+
+---
+
+6. MATCH ENGINE — MORE SPECIFIC MATCH POLICY / G10A ADVANCED
+
+Stato:
+
+NON PRIORITARIO IMMEDIATO
+
+Scopo:
+
+- aprire solo per evoluzione ampia reale
+- ranking globale
+- fuzzy matching
+- alias
+- gerarchie
+- deduplicazione
+- confidence score strutturale
+
+Vincoli:
+
+- non necessario per il caso “20 euro villa sierri”
+- non anticipare se il nodo guided mode richiede solo alert duplicati o type base
+- non usare G10A per problemi di micro-copy, status preview o residui edit command-like
+
+---
+
+7. ECONOMIC DIRECTION ADVANCED
+
+Scopo:
+
+- valutare amount firmato
+- valutare direction field
+- valutare regole contabili per Spesa/Incasso
+
+Vincoli:
+
+- non attivo finché data quality e data structure non sono sufficienti
+
+---
+
+8. DURATION ADVANCED — GIORNI / SETTIMANE
+
+Scopo:
+
+- decidere conversione giorni/settimane
+- valutare giornata lavorativa
+- valutare mezza giornata
+- evitare conversioni automatiche ambigue
+
+---
+
+9. CLEANUP OBSOLETE UI GUARDS / QUERY REDUCTION
+
+Scopo:
+
+- valutare eliminazione ui_visibility_state
+- rimuovere guardie duplicate ormai sostituite da input_analysis_result
+- eliminare componenti/query obsolete solo dopo stabilità documentata
+
+---
+
+10. AZIONI RAPIDE OPERATIVE
+
+Scopo:
+
+- rendere operative le Azioni rapide oggi solo predisposte
+- collegarle a flow già stabili
+- evitare scorciatoie che bypassino input_analysis_result, parser, matching o conferma utente
+
+---
+
+11. DASHBOARD BASE
+
+Scopo:
+
+- attivare la voce Dashboard solo quando Core Event System e data quality saranno sufficientemente consolidati
+- definire prime viste aggregate
+- evitare KPI prematuri
+
 ------------------------------------------------
 
 1. STATUS SEMANTICS ALIGNMENT
@@ -2042,7 +2198,7 @@ aggiunti richiami canonici a:
 - 02_LOGOS_Match_Engine per matching project/entity
 - 03_LOGOS_Event_Lifecycle per stati evento, edit, no-op, cancel e processing
 - 04_LOGOS_Retool_Architecture per componenti/query/Hidden/wiring Retool
-- 04_LOGOS_Database_Schema per schema DB
+- 05_LOGOS_Database_Schema per schema DB
 - 06_LOGOS_View_Preview_System per Sintesi, preview, hint e label visuali
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is
 - LOGOS_SUPABASE_RUNTIME_REAL per comportamento Supabase as-is
@@ -2339,3 +2495,45 @@ aggiornamento post INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOU
 - nessun fuzzy matching
 - nessun alias system globale
 - nessun Input Analysis Model completo
+
+v30 — 2026-06-23
+
+aggiornamento post DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+
+- State aggiornato da v29 a v30
+- nodo Data Structure / Entity Hierarchy registrato come COMPLETATO a livello policy decisionale
+- export Supabase reali analizzati:
+  - projects_rows.csv
+  - entities_rows.csv
+  - events_rows.csv
+  - system_logs_rows.csv
+- checkpoint temporaneo prodotto:
+  CHECKPOINT — DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+- checkpoint classificato come archiviabile dopo assorbimento nei documenti canonici
+- principio LOGOS vertical-ready / non vertical-hardcoded registrato
+- Project definito come contenitore operativo
+- Entity definita come soggetto coinvolto
+- Type definito come natura dell’oggetto, non ruolo occasionale
+- chiavi DB inglesi + label UI italiane registrate come policy
+- parent_project_id / parent_entity_id classificati come capacità dormienti future
+- parent escluso come soluzione per alias, duplicati o match testuale
+- metadata registrato come campo strategico guidato con schema_version futura
+- metadata escluso dall’input evento rapido nella fase attuale
+- duplicati classificati come tema di prevenzione/alert futuro, non merge automatico
+- alias classificato come futuro modello dedicato, non parent
+- Data Hygiene rimandata a fine sviluppo core / pre-analisi dati
+- guided mode completa dichiarata troppo ampia come nodo immediato
+- prossimo nodo operativo consigliato aggiornato a PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+- STATUS SEMANTICS ALIGNMENT mantenuto come candidato UX valido ma non priorità strategica principale
+- blocco verso dashboard / KPI / output confermato
+- divieto di anticipare istanze verticali confermato
+- nessuna modifica runtime LOGOS
+- nessuna modifica Retool
+- nessuna modifica Supabase
+- nessuna modifica DB
+- nessuna modifica schema
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica preview
+- nessuna modifica save flow
+- nessuna modifica payload

@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v22
+# 00_PROJECT_Roadmap_v23
 
-DATA: 2026-06-15
+DATA: 2026-06-23
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -225,6 +225,60 @@ Decisione:
 non aprire un nuovo nodo immediato su questo residuo.
 Tracciarlo come G39 — Edit Mode Command-like Visual Residue, in osservazione.
 
+Nota post Data Structure / Entity Hierarchy — Policy Decision Model:
+
+Il nodo DATA STRUCTURE / ENTITY HIERARCHY — CONTROLLED AS-IS + DECISION MODEL è stato completato come nodo decisionale/policy.
+
+Esito:
+
+- export Supabase reali analizzati:
+  - projects
+  - entities
+  - events
+  - system_logs
+- confermato che il DB attuale è sufficiente per preparare una policy senza migrazione immediata
+- confermato che parent_project_id / parent_entity_id sono capacità dormienti, non inutili
+- confermato che type deve rappresentare la natura dell'oggetto, non il ruolo occasionale
+- consolidata policy DB value tecnico in inglese + label UI italiana
+- consolidata distinzione:
+  - project = contenitore operativo
+  - entity = soggetto coinvolto
+- consolidato principio LOGOS vertical-ready, non vertical-hardcoded
+- metadata confermato come capacità strategica futura, da valorizzare tramite modalità guidata/editor, non dall'input evento rapido
+- duplicati da prevenire con alert/warning futuri, non da fondere automaticamente
+- alias confermati come futuro modello dedicato, non parent
+- Data Hygiene rimandata a fine sviluppo core / pre-analisi dati
+- guided mode completa giudicata troppo ampia come nodo immediato
+
+Il nodo non ha modificato:
+
+- DB
+- Supabase
+- Retool runtime
+- payload
+- insert_event / update_event
+- insert_project / insert_entity
+- parser
+- Match Engine
+- command_intent_state
+- input_analysis_result
+- preview_analysis_state
+- button_input_confirm
+
+Decisione:
+
+prima di implementare una modalità guidata completa, aprire eventualmente un nodo delimitato:
+
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Obiettivo del nodo successivo candidato:
+
+- valutare componenti e query Retool reali
+- definire prima tranche chiudibile
+- evitare nodo ampio e incompleto
+- non anticipare parent/metadata avanzati, alias, merge o data hygiene storica
+- non anticipare istanze ASPRI / ADEXIMA / MaurizioLab
+
 ------------------------------------------------
 STATO ATTUALE
 ------------------------------------------------
@@ -258,12 +312,13 @@ FASE COMPLETATA:
 ✔ BUTTON CONFIRM READINESS ALIGNMENT (COMPLETATO)
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE (COMPLETATO)
 ✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY (COMPLETATO)
+✔ DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL (COMPLETATO COME POLICY / NESSUNA IMPLEMENTAZIONE RUNTIME)
 
 ---
 
 FASE ATTIVA / TRANSIZIONE:
 
-DEFINIZIONE PROSSIMO NODO POST INPUT CONTEXT CONSISTENCY — STATUS / PREVIEW UX / HINT SEMANTICS
+TRANSIZIONE POST DATA STRUCTURE / ENTITY HIERARCHY — POLICY ASSORBITA / PROSSIMO NODO DA DELIMITARE
 
 Stato post audit documentale:
 
@@ -419,6 +474,46 @@ Test Input Context Consistency validati:
 - Annulla modifica → funzionante
 - 20 euro villa sierri → G22 invariato
 
+Stato post Data Structure / Entity Hierarchy — Policy Decision Model:
+
+- nodo completato come policy decisionale, non come implementazione runtime
+- export reali Supabase analizzati:
+  - projects
+  - entities
+  - events
+  - system_logs
+- confermato schema DB invariato
+- confermato Retool runtime invariato
+- confermato save flow invariato
+- confermato input rapido evento invariato
+- confermata distinzione project/entity:
+  - project = contenitore operativo
+  - entity = soggetto coinvolto
+- confermato type come natura dell'oggetto, non ruolo occasionale
+- confermate chiavi tecniche DB in inglese e label UI italiane
+- confermato parent come gerarchia stabile futura, non alias o duplicato
+- confermato metadata come profilo controllato futuro, non payload caotico
+- confermato duplicato come alert/warning futuro, non merge automatico
+- confermato alias come futuro modello dedicato
+- confermata Data Hygiene come nodo successivo alla maturazione core / prima di analisi dati
+- confermato principio LOGOS vertical-ready, non vertical-hardcoded
+- checkpoint temporaneo prodotto e assorbito nei documenti canonici
+
+Decisione roadmap:
+
+non aprire una modalità guidata completa come nodo monolitico.
+
+Prossimo nodo candidato corretto:
+
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Motivo:
+
+- serve completare progressivamente project/entity senza aprire un nodo troppo grande
+- la guided mode è propedeutica a type, parent, metadata e prevenzione duplicati
+- prima serve leggere il runtime Retool reale e definire una prima tranche chiudibile
+- parent, metadata avanzati, alias, merge e data hygiene storica restano fuori dal primo nodo implementativo
+
 Residuo post Input Context Consistency:
 
 G39 — Edit Mode Command-like Visual Residue
@@ -453,20 +548,35 @@ Il balloon blu “Manca progetto / Manca entità” può risultare ridondante ri
 
 Residui puramente grafici/mobile polish da trattare più avanti o in sessioni brevi.
 
-Candidati principali residui ordinati post Input Context Consistency:
+Candidati principali ordinati post Data Structure / Entity Hierarchy Policy:
 
-1. STATUS SEMANTICS ALIGNMENT
-2. PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
-3. PREVIEW MODEL / HINT STATE CONSOLIDATION
-4. EDIT MODE COMMAND-LIKE VISUAL RESIDUE — solo se il residuo UX diventa realmente problematico
-5. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY — solo per ranking/fuzzy/alias/confidence avanzata reale
-6. DATA STRUCTURE / ENTITY HIERARCHY
+1. PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+2. STATUS SEMANTICS ALIGNMENT
+3. PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
+4. PREVIEW MODEL / HINT STATE CONSOLIDATION
+5. EDIT MODE COMMAND-LIKE VISUAL RESIDUE — solo se il residuo UX diventa realmente problematico
+6. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY — solo per ranking/fuzzy/alias/confidence avanzata reale
 7. ECONOMIC DIRECTION ADVANCED
 8. DURATION ADVANCED — GIORNI / SETTIMANE
 9. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
 10. AZIONI RAPIDE OPERATIVE
 11. DASHBOARD BASE
 12. ICON SYSTEM / MOBILE POLISH FINALE
+
+Nota:
+
+DATA STRUCTURE / ENTITY HIERARCHY non è più un nodo astratto da valutare in blocco.
+
+È stato completato un primo nodo decisionale/policy.
+Restano futuri nodi operativi separati:
+
+- guided mode readiness
+- prima tranche guided mode name/type/duplicate alert
+- parent guidato
+- metadata guidato
+- alias model
+- merge/dedup dedicato
+- data hygiene
 
 Nota sequenza post Input Context Consistency:
 
@@ -1106,20 +1216,33 @@ STEP 5 — DATA STRUCTURE
 
 Stato:
 
-NON ATTIVO
+PARZIALMENTE AVVIATO — POLICY DECISION MODEL COMPLETATO / IMPLEMENTAZIONE NON ATTIVA
 
-Obiettivo futuro:
+Esito policy:
 
-- relazioni entity-project
-- alias
-- deduplicazione avanzata
-- gerarchie project/entity
-- filtro select su match ambigui
+- project/entity analizzati su export Supabase reali
+- project definito come contenitore operativo
+- entity definita come soggetto coinvolto
+- type definito come natura dell'oggetto, non ruolo occasionale
+- DB value tecnici in inglese + label UI italiane
+- parent definito come gerarchia stabile futura, non alias o duplicato
+- metadata definito come profilo controllato futuro
+- duplicati da prevenire con alert/warning futuri, non merge automatico
+- Data Hygiene rimandata a fine core / pre-analisi dati
+- nessuna migrazione DB immediata
 
-Fonte canonica futura:
-- 02_LOGOS_Match_Engine
+Obiettivo futuro operativo:
+
+- PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+- eventuale prima tranche name/type/duplicate alert
+- parent guidato in nodo successivo dedicato
+- metadata guidato in nodo successivo dedicato
+- alias/dedup/merge solo con nodi futuri specifici
+
+Fonte canonica:
 - 05_LOGOS_Database_Schema
 - 00_PROJECT_Gap_Register
+- 00_PROJECT_Roadmap
 
 ---
 
@@ -1184,65 +1307,74 @@ NODO ATTIVO / PROSSIMO NODO OPERATIVO
 
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 
-DA DEFINIRE POST INPUT CONTEXT CONSISTENCY
+AGGIORNAMENTO DOCUMENTALE POST DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
 
 Stato:
 
-INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY completato.
+DATA STRUCTURE / ENTITY HIERARCHY — CONTROLLED AS-IS + DECISION MODEL completato come nodo decisionale/policy.
 
-Il sistema ha stabilizzato a primo livello il confine tra:
+Il nodo ha consolidato:
 
-- create flow
-- edit flow
-- Command Intent
-- suggestion project/entity
-- alias generici modifica / correggi / cambia
+- stato reale projects/entities/events/system_logs da export Supabase
+- distinzione project/entity
+- type come natura dell'oggetto
+- DB value inglesi + label UI italiane
+- parent come gerarchia stabile futura
+- metadata come profilo controllato futuro
+- duplicati come alert/warning futuro, non merge automatico
+- alias come modello dedicato futuro
+- Data Hygiene rimandata a fine sviluppo core / pre-analisi dati
+- principio LOGOS vertical-ready, non vertical-hardcoded
 
 Esito:
 
-- G30 chiuso come integrato base
-- G21 integrato parziale per la parte command/edit/suggestion
-- G22 rivalidato non regressivo
-- input_analysis_result preservato stabile
-- button_input_confirm.Disabled invariato
-- payload e save flow invariati
-- DB e Supabase invariati
+- nessuna modifica DB
+- nessuna modifica Supabase
+- nessuna modifica Retool runtime
+- nessuna modifica payload
+- nessuna modifica save flow
+- nessuna modifica parser
+- nessuna modifica matching
+- nessuna modifica command intent
+- nessuna modifica preview/input_analysis_result
 
 Prossimo nodo consigliato:
 
-STATUS SEMANTICS ALIGNMENT
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
 
 Motivo:
 
-- resta il candidato più coerente e meno invasivo
-- il tema è Preview/Status, già emerso post G22
-- la card Da verificare può contenere warning decisionale utile e non bloccante
-- il badge OK può risultare semanticamente debole quando coesiste con Da verificare
-- il nodo può migliorare chiarezza mobile senza toccare save flow, DB o matching
-- non riapre G21, G22 o G30
+- evita di aprire una guided mode completa e troppo ampia
+- permette di leggere il runtime Retool reale prima di decidere modifiche
+- definisce una prima tranche implementabile e chiudibile
+- prepara type/parent/metadata/duplicati senza anticipare tutto insieme
+- aiuta a completare project/entity in modo progressivo e non superficiale
+- resta coerente con blocco verso dashboard/KPI/output
 
 Obiettivo:
 
-- riallineare OK / Verifica / Attenzione alla presenza reale di warning significativi
-- migliorare comprensione mobile
-- mantenere distinzione tra stato visuale e readiness funzionale
-- non trasformare warning non bloccanti in blocchi
-- non modificare button_input_confirm.Disabled
+- acquisire codice reale Retool collegato a creazione/modifica project/entity
+- verificare insert_project / insert_entity
+- verificare create_suggestion_state
+- verificare command_intent_state
+- verificare componenti e container UI già presenti
+- definire cosa è implementabile senza migrazione DB
+- definire primo nodo implementativo minimo
+- definire test di chiusura
+- decidere go/no-go per la prima tranche
 
-Vincoli:
+Fuori scope del prossimo nodo readiness:
 
-- non modificare DB
-- non modificare Supabase
-- non modificare payload
-- non modificare insert_event / update_event
-- non modificare save flow
-- non modificare matching
-- non riaprire G22 salvo regressione reale
-- non riaprire G30 salvo regressione reale
-- non riaprire G21 salvo nuovo caso funzionale concreto
-- non anticipare Input Analysis Model completo
-- non correggere G39 dentro questo nodo salvo impatto diretto e autorizzato
-- non anticipare dashboard / KPI / output
+- implementare guided mode completa
+- attivare parent
+- attivare metadata avanzati
+- creare alias engine
+- creare merge duplicati
+- eseguire Data Hygiene storica
+- modificare dashboard/KPI/output
+- anticipare ASPRI / ADEXIMA / MaurizioLab
+- introdurre Match Engine Advanced
+- introdurre fuzzy matching
 
 Documenti da usare:
 
@@ -1254,26 +1386,89 @@ Core Boot:
 
 Documenti tecnici:
 
-- 06_LOGOS_View_Preview_System
+- 05_LOGOS_Database_Schema
+- LOGOS_SUPABASE_RUNTIME_REAL
 - 04_LOGOS_Retool_Architecture
 - LOGOS_RETOOL_RUNTIME_REAL
+- 01_LOGOS_Input_System
+- 02_LOGOS_Match_Engine
 
 Documenti da caricare solo se emerge impatto:
 
-- 01_LOGOS_Input_System se si tocca preview_analysis_state in modo collegato all’input flow
-- 02_LOGOS_Match_Engine solo se emerge impatto matching, non previsto
-- 03_LOGOS_Event_Lifecycle solo se emerge impatto save/edit/no-op, non previsto
-- 05_LOGOS_Database_Schema solo se emerge ipotesi DB, da bloccare salvo nodo dedicato
+- 03_LOGOS_Event_Lifecycle se emerge impatto lifecycle/save/edit
+- 06_LOGOS_View_Preview_System se emerge impatto micro-copy/feedback visuale
 
-Nodo alternativo se si vuole restare su UX/Preview ma non toccare status:
+Nodo alternativo se si vuole rimandare la linea project/entity:
 
-PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
+STATUS SEMANTICS ALIGNMENT
 
+Nota:
+
+STATUS SEMANTICS ALIGNMENT resta valido ma diventa meno strategico rispetto al completamento controllato project/entity.
 ------------------------------------------------
-NODI CANDIDATI POST INPUT CONTEXT CONSISTENCY
+NODI CANDIDATI POST DATA STRUCTURE / ENTITY HIERARCHY POLICY
 ------------------------------------------------
 
-1. STATUS SEMANTICS ALIGNMENT
+1. PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Obiettivo:
+
+- valutare runtime Retool reale prima di implementare
+- definire confine della guided mode project/entity
+- evitare nodo monolitico e incompleto
+- stabilire prima tranche chiudibile
+- preparare type, parent, metadata e duplicate alert in sequenza corretta
+
+Vincoli:
+
+- nessuna migrazione DB immediata
+- nessuna guided mode completa in un unico nodo
+- nessun parent automatico
+- nessun metadata avanzato
+- nessun merge duplicati
+- nessun alias engine
+- nessuna data hygiene storica
+- nessuna modifica save flow evento rapido
+- nessuna anticipazione dashboard / KPI / output
+- nessuna anticipazione moduli ASPRI / ADEXIMA / MaurizioLab
+
+Output atteso:
+
+- specifica minima
+- elenco codici/componenti necessari
+- confine primo nodo implementativo
+- test di chiusura
+- decisione go/no-go
+
+---
+
+2. PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+
+Stato:
+
+CANDIDATO SOLO DOPO READINESS.
+
+Obiettivo:
+
+- introdurre eventualmente una prima tranche implementativa
+- gestire name
+- gestire type con label italiane
+- prevenire duplicato esatto
+- mostrare warning su elementi simili se sostenibile
+- migliorare feedback project/entity
+
+Fuori scope:
+
+- parent
+- metadata avanzato
+- merge duplicati
+- alias engine
+- data hygiene
+- dashboard/KPI/output
+
+---
+
+3. STATUS SEMANTICS ALIGNMENT
 
 Obiettivo:
 
@@ -1293,7 +1488,7 @@ Vincoli:
 
 ---
 
-2. PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
+4. PREVIEW / MISSING ASSOCIATION NOTICE CLEANUP
 
 Obiettivo:
 
@@ -1312,7 +1507,7 @@ Vincoli:
 
 ---
 
-3. PREVIEW MODEL / HINT STATE CONSOLIDATION
+5. PREVIEW MODEL / HINT STATE CONSOLIDATION
 
 Obiettivo:
 
@@ -1329,7 +1524,7 @@ Vincoli:
 
 ---
 
-4. EDIT MODE COMMAND-LIKE VISUAL RESIDUE
+6. EDIT MODE COMMAND-LIKE VISUAL RESIDUE
 
 Stato:
 
@@ -1352,7 +1547,7 @@ Vincoli:
 
 ---
 
-5. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
+7. MATCH ENGINE EVOLUTION ADVANCED / PARTIAL AMBIGUITY
 
 Obiettivo:
 
@@ -1363,16 +1558,7 @@ Obiettivo:
 
 ---
 
-6. DATA STRUCTURE / ENTITY HIERARCHY
-
-Obiettivo:
-
-- valutare relazioni, alias, gerarchie e deduplicazione
-- preparare qualità dati prima degli output
-
----
-
-7. ECONOMIC DIRECTION ADVANCED
+8. ECONOMIC DIRECTION ADVANCED
 
 Obiettivo:
 
@@ -1381,7 +1567,7 @@ Obiettivo:
 
 ---
 
-8. DURATION ADVANCED — GIORNI / SETTIMANE
+9. DURATION ADVANCED — GIORNI / SETTIMANE
 
 Obiettivo:
 
@@ -1390,7 +1576,7 @@ Obiettivo:
 
 ---
 
-9. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
+10. CLEANUP OBSOLETE UI GUARDS / UI VISIBILITY STATE DECOMMISSION
 
 Obiettivo:
 
@@ -1400,7 +1586,7 @@ Obiettivo:
 
 ---
 
-10. AZIONI RAPIDE OPERATIVE
+11. AZIONI RAPIDE OPERATIVE
 
 Obiettivo:
 
@@ -1409,7 +1595,7 @@ Obiettivo:
 
 ---
 
-11. DASHBOARD BASE
+12. DASHBOARD BASE
 
 Obiettivo:
 
@@ -1417,7 +1603,7 @@ Obiettivo:
 
 ---
 
-12. ICON SYSTEM / MOBILE POLISH FINALE
+13. ICON SYSTEM / MOBILE POLISH FINALE
 
 Obiettivo:
 
@@ -1427,7 +1613,7 @@ Obiettivo:
 
 ---
 
-13. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
+14. ISTANZE / MODULI VERTICALI ASPRI / ADEXIMA / MAURIZIOLAB
 
 Stato:
 
@@ -1580,7 +1766,8 @@ Residui non bloccanti ma rilevanti:
 - residuo UX edit command-like: in edit mode Sintesi / Suggerimenti / Dati evento possono restare visibili con command riconosciuto
 - ui_visibility_state ancora presente fisicamente
 - Input Analysis Model completo non implementato
-- data structure / entity hierarchy non implementata
+- guided mode project/entity non implementata
+- data structure / entity hierarchy policy completata, implementazione guided mode non attiva
 - output / KPI / dashboard non attivi
 
 Regola:
@@ -2255,3 +2442,45 @@ v22 — 2026-06-15
 - confermato divieto di anticipare istanze verticali
 - nessuna anticipazione Input Analysis Model completo
 - nessuna anticipazione Match Engine Advanced
+
+v23 — 2026-06-23
+
+- aggiornamento post DATA STRUCTURE / ENTITY HIERARCHY — CONTROLLED AS-IS + DECISION MODEL
+- Roadmap aggiornata da v22 a v23
+- nodo Data Structure / Entity Hierarchy registrato come completato a livello policy decisionale
+- analizzati export Supabase reali:
+  - projects
+  - entities
+  - events
+  - system_logs
+- confermato che il DB attuale è sufficiente per preparare policy senza migrazione immediata
+- confermato schema DB invariato
+- confermato Retool runtime invariato
+- confermato save flow invariato
+- confermato payload invariato
+- confermato parser invariato
+- confermato Match Engine invariato
+- confermato command_intent_state invariato
+- confermato input_analysis_result invariato
+- consolidata distinzione project/entity:
+  - project = contenitore operativo
+  - entity = soggetto coinvolto
+- consolidato type come natura dell'oggetto, non ruolo occasionale
+- consolidata policy DB value tecnico in inglese + label UI italiana
+- parent_project_id / parent_entity_id classificati come capacità dormienti future
+- parent definito come gerarchia stabile, non alias o duplicato
+- metadata confermato come capacità strategica futura guidata
+- metadata non da valorizzare tramite input evento rapido
+- duplicati da prevenire tramite alert/warning futuri
+- merge duplicati non automatico e non immediato
+- alias confermato come futuro modello dedicato
+- Data Hygiene rimandata a fine sviluppo core / pre-analisi dati
+- consolidato principio LOGOS vertical-ready, non vertical-hardcoded
+- confermato che ASPRI / ADEXIMA / MaurizioLab restano istanze future e non nodi da anticipare
+- aggiornato STEP 5 DATA STRUCTURE a PARZIALMENTE AVVIATO — POLICY DECISION MODEL COMPLETATO / IMPLEMENTAZIONE NON ATTIVA
+- aggiornato prossimo nodo consigliato a PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+- guided mode completa non autorizzata come nodo monolitico
+- STATUS SEMANTICS ALIGNMENT mantenuto come nodo alternativo valido ma non più prioritario strategico
+- confermato blocco verso dashboard / KPI / output
+- nessuna anticipazione Match Engine Advanced
+- nessuna anticipazione alias/fuzzy/merge/data hygiene
