@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v21
+# 00_PROJECT_Gap_Register_v22
 
-DATA: 2026-06-23
+DATA: 2026-09-30
 
 ------------------------------------------------
 SCOPO
@@ -74,108 +74,39 @@ Questo registro mantiene:
 GAP ATTIVO DEL NODO CORRENTE
 ------------------------------------------------
 
-Nessun gap attivo del nodo corrente.
+REENTRY / STATE RECONSTRUCTION — ALLINEAMENTO DOCUMENTALE COMPLETATO
 
-Il nodo DATA STRUCTURE / ENTITY HIERARCHY — CONTROLLED AS-IS + DECISION MODEL è stato completato come nodo decisionale / policy.
-
-Gap primario trattato:
-
-- G11 — Data Structure / Entity Hierarchy
-
-Classificazione finale G11:
-
-POLICY CONSOLIDATA — CORE DATA STRUCTURE VERTICAL-READY / GUIDED MODE DA VALUTARE COME SOTTO-NODO DELIMITATO
+Discrepanza trattata:
+State v30, Roadmap v23 e Gap Register v21 indicavano ancora la Readiness come passo futuro, mentre la sessione Readiness era già conclusa.
 
 Esito:
+- discrepanza documentale assorbita nei tre documenti aggiornati
+- Readiness completata senza modifiche runtime
+- Editor Base aperto solo nella chat, mai applicato né testato
+- nessuna regressione runtime dedotta dalla discrepanza
+- G11 resta un macro-gap parzialmente trattato: policy e readiness completate, implementazione Editor Base non attiva
+- nessun altro gap implementato o chiuso nel presente ciclo
+- prossimo nodo da definire e confermare con l'utente dopo l'allineamento
 
-- analizzati export reali Supabase:
-  - projects_rows.csv
-  - entities_rows.csv
-  - events_rows.csv
-  - system_logs_rows.csv
-- confermato che lo schema DB resta invariato
-- confermato che non sono state eseguite migrazioni Supabase
-- confermato che non sono state eseguite modifiche Retool runtime
-- confermato che non sono stati modificati parser, matching, preview, payload, insert_event o update_event
-- consolidata policy Project = contenitore operativo dell’evento
-- consolidata policy Entity = soggetto coinvolto nell’evento
-- consolidata policy type = natura dell’oggetto, non ruolo occasionale
-- consolidata separazione tra chiavi DB tecniche in inglese e label UI italiane
-- chiarito che parent_project_id e parent_entity_id sono capacità dormienti, non inutili
-- chiarito che parent va usato solo per gerarchie stabili future, non per alias, duplicati o somiglianze testuali
-- chiarito che metadata è fondamentale per profili futuri, ma deve essere guidato e non valorizzato dall’input evento rapido
-- chiarito che metadata non deve diventare contenitore caotico di relazioni core, alias o merge
-- chiarito che duplicati richiedono alert/prevenzione futura, non merge automatico
-- chiarito che alias resta futuro modello dedicato, non parent
-- chiarito che Data Hygiene storico va rimandata a fine sviluppo core / pre-analisi dati
-- confermato principio LOGOS vertical-ready, non vertical-hardcoded
-
-Decisione sul prossimo sviluppo:
-
-Non aprire una guided mode completa in un unico nodo.
-
-Il prossimo sotto-nodo coerente, se confermato in Roadmap, è:
-
-PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
-
-Obiettivo del sotto-nodo:
-
-- valutare codice reale Retool attuale
-- verificare fattibilità senza migrazione
-- definire una prima tranche chiudibile
-- evitare nodo troppo ampio o superficiale
-
-Prima tranche implementativa eventuale, solo dopo readiness:
-
-PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
-
-Fuori scope immediato:
-
-- parent operativo completo
-- metadata avanzato
-- merge duplicati
-- alias engine
-- data hygiene storico
-- Match Engine Advanced / G10A
-- dashboard / KPI
-- istanze verticali ASPRI / ADEXIMA / MaurizioLab
+Fonti:
+- checkpoint Readiness già acquisito e conferma esplicita dell'utente nella ripresa
+- baseline GitHub 5f21ee0 — ENTITY HIERARCHY
+- State v30, Roadmap v23, Gap Register v21 e Database Schema v11
+- runtime documentato Retool v21 / Supabase v6; nessuna verifica live effettuata nel ciclo
 
 Checkpoint:
+- Data Structure: già assorbito, archiviabile
+- Readiness: esito e vincoli assorbiti; conservare originale come riferimento storico
+- alla baseline 5f21ee0 il checkpoint originale Readiness non è ancora tracciato nel repository; questo ciclo non lo ricrea né lo altera
 
-CHECKPOINT — DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+Documenti aggiornati e consegnati come file scaricabili:
+- 00_PROJECT_State v31
+- 00_PROJECT_Roadmap v24
+- 00_PROJECT_Gap_Register v22
 
-Stato checkpoint:
-
-- temporaneo
-- da assorbire nei documenti canonici
-- archiviabile dopo aggiornamento documentale
-
-Documento canonico già aggiornato:
-
-- 05_LOGOS_Database_Schema v11
-
-Documenti ancora da aggiornare:
-
-- 00_PROJECT_Gap_Register
-- 00_PROJECT_Roadmap
-- 00_PROJECT_State
-
-Possibili richiami leggeri successivi, solo se necessario:
-
-- 01_LOGOS_Input_System
-- 04_LOGOS_Retool_Architecture
-
-Documenti da non aggiornare ora:
-
-- LOGOS_RETOOL_RUNTIME_REAL
-- LOGOS_SUPABASE_RUNTIME_REAL
-- 02_LOGOS_Match_Engine
-- 03_LOGOS_Event_Lifecycle
-- 06_LOGOS_View_Preview_System
-
-Motivo:
-
-nessuna modifica runtime, Supabase, matching, lifecycle o preview è stata eseguita.
+Documenti tecnici e runtime manifest invariati nel ciclo.
+Le nuove versioni devono essere recepite nelle copie PC e negli allegati del progetto; nessun aggiornamento automatico della sessione attiva.
+GitHub resta alla baseline verificata finché l'utente non recepisce i file e completa commit/push locale.
 
 ------------------------------------------------
 GAP RESIDUI PRIORITARI
@@ -712,7 +643,7 @@ NOME:
 Data Structure / Entity Hierarchy
 
 STATO:
-POLICY CONSOLIDATA — CORE DATA STRUCTURE VERTICAL-READY / GUIDED MODE DA VALUTARE
+POLICY E READINESS CONSOLIDATE — EDITOR BASE NON IMPLEMENTATO / PROSSIMO NODO DA CONFERMARE
 
 DESCRIZIONE:
 
@@ -750,38 +681,45 @@ Decisioni operative:
 - non aprire Data Hygiene subito
 - non aprire G10A per questo tema
 
-Sotto-nodo consigliato:
+Sotto-nodo readiness:
 
 PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
 
-Scopo del sotto-nodo:
+Stato: COMPLETATO COME READINESS DECISIONALE, senza modifiche runtime.
 
-- verificare componenti/query Retool reali di creazione project/entity
-- delimitare la prima tranche implementabile
-- evitare nodo guided mode troppo ampio o incompleto
-- decidere go/no-go prima di implementare
+Esito:
+- input libero assistito distinto da guided mode completa
+- GO storico per PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
+- NO-GO guided event mode completa
+- nessuna migrazione DB richiesta dalla Readiness
 
-Prima tranche implementativa eventuale:
+Tranche emersa:
 
-PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
-Ambito massimo prima tranche:
+Stato: CHAT APERTA / CODICE MAI APPLICATO / TEST NON ESEGUITI.
 
-- name
-- type con label italiane
-- alert duplicato esatto
-- warning elementi simili se sostenibile
-- micro-copy project/entity
+Perimetro proposto:
+- completare editor project/entity esistente
+- preservare name e alert/protezione duplicato esatto già presenti a livello base
+- introdurre gestione type in liste/UI/insert con chiavi DB e label italiane
 
-Fuori scope prima tranche:
+Il gap implementativo resta aperto.
+Il candidato non è automaticamente riconfermato come prossimo nodo alla ripresa.
+La scelta verrà chiarita con l'utente dopo l'allineamento documentale, con scopo e risultato espliciti.
 
+Fuori scope della prima tranche:
 - parent operativo completo
 - metadata avanzato
 - merge duplicati
 - alias engine
-- data hygiene storico
-- dashboard / KPI
+- fuzzy/G10A
+- Data Hygiene storica
+- guided event mode completa
+- dashboard / KPI / output
 - istanze verticali
+
+I conteggi e i dati export recepiti nella policy sono quelli della sessione Data Structure del giugno 2026, non una nuova verifica live.
 
 Fonte canonica:
 - 05_LOGOS_Database_Schema
@@ -1418,53 +1356,29 @@ Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
-Ordine attuale consigliato post Data Structure / Entity Hierarchy:
+Nessun prossimo nodo assegnato durante il REENTRY.
+L'ordine di backlog precedente resta riferimento storico; priorità e prossimo passo saranno confermati con l'utente dopo l'allineamento.
 
-1. G11 — PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
-2. G11 — PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE, solo se il readiness conferma fattibilità e scope chiudibile
-3. G35 — Status Semantics Alignment
-4. G38 — Preview / Missing Association Notice Cleanup
-5. G17 — Preview Model / Hint State Consolidation
-6. G39 — Edit Mode Command-like Visual Residue, solo se il residuo UX diventa realmente problematico
-7. G10A — Match Engine Evolution Advanced / Partial Ambiguity, solo per ranking/fuzzy/alias/confidence avanzata reale
-8. G13 — Economic Direction Advanced
-9. G08A — Duration Advanced / Giorni-Settimane
-10. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
-11. G23 — Azioni Rapide Operative
-12. G24 — Dashboard Base
-13. G04 — Logging / Versioning
-14. G05 — Input Modes
-15. G06 — Multi-source Input
+Readiness G11: COMPLETATA, esclusa dai lavori futuri da riaprire automaticamente.
 
-Nota sequenza post Data Structure / Entity Hierarchy:
+Backlog non attivato:
+1. G11 — PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT, candidato storico non implementato/testato e da riconfermare
+2. G35 — Status Semantics Alignment
+3. G38 — Preview / Missing Association Notice Cleanup
+4. G17 — Preview Model / Hint State Consolidation
+5. G39 — Edit Mode Command-like Visual Residue, solo se il residuo UX diventa realmente problematico
+6. G10A — Match Engine Evolution Advanced / Partial Ambiguity, solo per evoluzione avanzata reale
+7. G13 — Economic Direction Advanced
+8. G08A — Duration Advanced / Giorni-Settimane
+9. G32 / G34 — Cleanup Obsolete UI Guards / ui_visibility_state Decommission
+10. G23 — Azioni Rapide Operative
+11. G24 — Dashboard Base
+12. G04 — Logging / Versioning
+13. G05 — Input Modes
+14. G06 — Multi-source Input
 
-La guided mode project/entity è ora il candidato funzionale-strategico più coerente,
-ma NON deve essere aperta come nodo completo e ampio.
-
-Prima va aperto solo un nodo di readiness/minimum scope per:
-
-- acquisire codice reale Retool
-- valutare componenti/query esistenti
-- stabilire la prima tranche chiudibile
-- evitare sviluppo superficiale o incompleto
-
-La prima tranche eventuale deve limitarsi a:
-
-- name
-- type
-- duplicate alert base
-- micro-copy di orientamento project/entity
-
-Restano fuori dalla prima tranche:
-
-- parent operativo completo
-- metadata avanzato
-- merge duplicati
-- alias engine
-- Data Hygiene storico
-- G10A Match Engine Advanced
-- dashboard / KPI
-- istanze verticali
+I vincoli preesistenti sulle dipendenze e sull'anti-deriva restano validi.
+Non pianificare parent, metadata avanzato, alias, merge, Data Hygiene, G10A, dashboard/KPI o istanze verticali nel presente ciclo.
 
 Nota Data Hygiene:
 
@@ -2217,3 +2131,18 @@ v21 — 2026-06-23
 - nessuna riapertura G22
 - nessuna anticipazione G10A
 - nessuna anticipazione dashboard / KPI / output
+
+v22 — 2026-09-30
+
+- aggiornamento documentale REENTRY / STATE RECONSTRUCTION
+- assorbito esito PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE: readiness completata; input libero assistito distinto da guided mode completa
+- registrato GO storico per Editor Base limitato e NO-GO guided event mode completa
+- registrato PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT come chat aperta ma mai implementata né testata
+- preservata distinzione tra codice proposto e runtime attivo
+- prossimo nodo da definire e confermare con l'utente dopo l'allineamento; nessuna apertura automatica dell'Editor Base
+- documentazione runtime distinta da verifica live, non effettuata in questo ciclo
+- nessuna modifica Retool, Supabase, schema DB, parser, matching, preview, payload o save flow in questo ciclo
+- Database Schema v11 e runtime manifest preservati
+- checkpoint Data Structure già assorbito / archiviabile; checkpoint Readiness conservato come riferimento storico dopo assorbimento delle decisioni
+- file consegnati per recepimento locale; scrittura GitHub via integrazione bloccata con errore 403, nessuna modifica remota eseguita
+- storico revisioni precedente preservato integralmente

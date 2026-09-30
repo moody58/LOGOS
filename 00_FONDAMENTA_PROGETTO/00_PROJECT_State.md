@@ -1,9 +1,68 @@
-# 00_PROJECT_State_v30
+# 00_PROJECT_State_v31
 
-DATA: 2026-06-23
+DATA: 2026-09-30
 
 ------------------------------------------------
 NODO ATTIVO:
+------------------------------------------------
+
+REENTRY / STATE RECONSTRUCTION — ALLINEAMENTO DOCUMENTALE COMPLETATO
+
+Perimetro del ciclo:
+- ripresa controllata e assorbimento delle decisioni post-Readiness
+- aggiornamento di State, Roadmap e Gap Register
+- nessun audit completo e nessuna implementazione
+- scelta del prossimo nodo rinviata su istruzione dell'utente del 2026-09-30
+
+Ultimo nodo realmente completato:
+PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
+
+Esito consolidato:
+- readiness decisionale completata; nessuna implementazione runtime prodotta
+- input libero assistito distinto da guided mode completa
+- GO storico per una prima tranche limitata: PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
+- NO-GO per guided event mode completa
+- name e protezione/alert duplicato esatto già presenti a livello base nel runtime documentato
+- gestione type project/entity in liste, UI e insert non resa attiva dalla Readiness
+- parent, metadata avanzato, alias, merge, fuzzy/G10A, Data Hygiene, dashboard/KPI/output e istanze verticali fuori dalla prima tranche
+
+Ultimo nodo aperto solo nella conversazione:
+PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
+
+Stato:
+- codice proposto ma mai applicato dall'utente
+- nessun test del pacchetto proposto eseguito
+- nessuna modifica runtime attribuibile a quel nodo
+- la vecchia chat non costituisce fonte di implementazione attiva
+
+Prossimo nodo operativo:
+DA DEFINIRE E CONFERMARE CON L'UTENTE DOPO L'ALLINEAMENTO DOCUMENTALE.
+
+L'Editor Base resta il candidato emerso dalla Readiness, non un nodo attivo o una scelta automaticamente riconfermata alla ripresa.
+Prima di aprire una nuova micro-sessione saranno chiariti scopo, risultato utile e perimetro.
+Non riaprire la Readiness già completata salvo incoerenza reale.
+
+Fonti e limiti della ricostruzione:
+- baseline GitHub verificata al commit 5f21ee091f46ba4f3146e854d497c3fc0f55d9bb — ENTITY HIERARCHY
+- State v30, Roadmap v23, Gap Register v21 e Database Schema v11 acquisiti come baseline
+- checkpoint Readiness acquisito nella chat di ripresa; decisioni già ricostruite nella sessione e assorbite in questo ciclo
+- LOGOS_RETOOL_RUNTIME_REAL v21 e LOGOS_SUPABASE_RUNTIME_REAL v6 restano le fotografie documentali di riferimento
+- runtime precedente al pacchetto Editor Base, secondo documentazione e conferma esplicita dell'utente
+- nessuna ispezione live di Retool o Supabase effettuata nel presente ciclo
+- assenza di modifiche riferita a Readiness, pacchetto Editor Base non applicato e presente allineamento; non certifica tutte le impostazioni operative esterne al nodo
+- conteggi export, test e percentuali riportati sotto sono dati della baseline, non nuove misurazioni del 2026-09-30
+
+Checkpoint e sincronizzazione:
+- Data Structure / Entity Hierarchy: policy già assorbita; checkpoint archiviabile
+- Readiness: esito e vincoli assorbiti nei tre documenti di governance; conservare il checkpoint originale come riferimento storico
+- alla baseline 5f21ee0 il checkpoint originale Readiness non è ancora tracciato nel repository
+- questo ciclo non ricrea né altera il checkpoint originale
+- file aggiornati consegnati come pacchetto scaricabile; applicazione sul PC e successivo commit/push restano da eseguire
+- GitHub non è stato modificato: la scrittura precedente è stata rifiutata dall'integrazione con errore 403
+- una nuova sessione dovrà acquisire le versioni aggiornate; lo snapshot della sessione corrente non cambia automaticamente
+
+------------------------------------------------
+NODO PRECEDENTE CONSOLIDATO — DATI DEL 2026-06-23:
 ------------------------------------------------
 
 DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL — COMPLETATO
@@ -178,7 +237,7 @@ STP consolidato:
 - guided mode completa subito sarebbe troppo ampia
 - Match Engine Advanced / G10A non è il prossimo passo corretto
 - cleanup UX/preview resta utile ma meno strategico
-- prossimo passo migliore: readiness controllata e minimum scope della modalità guidata project/entity
+- indicazione storica del nodo Data Structure: readiness controllata, successivamente completata; prossimo nodo alla ripresa da confermare
 
 Output del nodo:
 
@@ -210,29 +269,11 @@ Motivo:
 
 nessuna modifica runtime, Retool, Supabase, input, matching, lifecycle, preview o schema DB è stata eseguita.
 
-Prossimo nodo operativo consigliato:
+Transizione post nodo Data Structure:
 
-PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
-
-Scopo prossimo nodo:
-
-- acquisire codice reale Retool coinvolto
-- valutare componenti/query esistenti di creazione project/entity
-- definire prima tranche chiudibile
-- evitare guided mode completa e superficiale
-- preparare eventuale implementazione limitata successiva
-
-Vincoli prossimo nodo:
-
-- non implementare subito guided mode completa
-- non attivare parent senza UI guidata
-- non valorizzare metadata da input evento rapido
-- non introdurre alias engine
-- non introdurre merge duplicati
-- non fare Data Hygiene storica
-- non aprire G10A
-- non anticipare dashboard / KPI / output
-- non anticipare istanze verticali
+La Readiness indicata nella v30 come passo successivo è stata completata.
+Il candidato implementativo emerso è l'Editor Base, mai applicato né testato.
+Il prossimo nodo alla ripresa resta da definire e confermare dopo l'allineamento documentale.
 
 ------------------------------------------------
 FASE:
@@ -263,8 +304,9 @@ PREVIEW / EVENT DATA LABEL SEMANTIC ALIGNMENT — COMPLETATO
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — COMPLETATO
 ✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
 ✔ DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL — COMPLETATO
+✔ PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE — COMPLETATO COME READINESS / NESSUNA IMPLEMENTAZIONE
 
-TRANSIZIONE → PROSSIMO NODO READINESS PROJECT / ENTITY GUIDED MODE
+TRANSIZIONE → POST READINESS / PROSSIMO NODO DA CONFERMARE
 
 Nota:
 
@@ -291,58 +333,21 @@ Risultato:
 - alias rimandato a modello futuro dedicato
 - Data Hygiene rimandata a fine core / pre-analisi dati
 - guided mode completa dichiarata troppo ampia come nodo immediato
-- prossimo nodo consigliato: readiness & minimum scope
+- Readiness successivamente completata senza modifiche runtime; prossimo nodo alla ripresa da confermare
 
 ------------------------------------------------
 CQD — VALIDAZIONE DOCUMENTO
 ------------------------------------------------
 
-C (Completezza): 10/10
+CQD verificato — integrità confermata.
 
-- stato corrente del progetto documentato
-- nodo Data Structure / Entity Hierarchy registrato come completato a livello policy decisionale
-- export Supabase reali considerati nella fotografia AS-IS
-- checkpoint temporaneo registrato come assorbito nei documenti canonici
-- principio vertical-ready / non vertical-hardcoded registrato
-- policy Project / Entity registrata
-- policy Type registrata come natura dell’oggetto, non ruolo occasionale
-- chiavi DB inglesi + label UI italiane registrate
-- parent_project_id / parent_entity_id registrati come capacità dormienti future
-- metadata registrato come campo strategico guidato
-- duplicati registrati come tema di prevenzione/alert, non merge immediato
-- alias registrato come futuro modello dedicato
-- Data Hygiene rimandata a fine core / pre-analisi dati
-- prossimo nodo consigliato aggiornato a PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
-- blocco verso dashboard / KPI / output confermato
-- divieto di anticipare istanze verticali confermato
-- nessuna modifica runtime dichiarata
-
-Q (Qualità): 9.5/10
-
-- documento mantiene funzione di State
-- decisioni tecniche complete rimandate ai documenti canonici
-- evitata duplicazione integrale del checkpoint
-- preservata distinzione tra policy completata e implementazione non attiva
-- evitato di dichiarare attivi parent, metadata, alias o guided mode
-- evitata apertura immediata di un nodo troppo ampio
-- mantenuta sequenza propedeutica verso qualità dati e output futuri
-- ridotto rischio di deriva verso verticalizzazione rigida
-- ridotto rischio di sistema troppo generico e poco utile
-
-D (Deployabilità): 10/10
-
-- pronto come documento core di boot
-- nessuna modifica runtime LOGOS richiesta
-- nessuna modifica Retool richiesta
-- nessuna modifica Supabase richiesta
-- nessuna modifica DB richiesta
-- nessuna modifica parser richiesta
-- nessuna modifica matching richiesta
-- nessuna modifica preview richiesta
-- nessuna modifica save flow richiesta
-- nessuna modifica payload richiesta
-- prossimo nodo operativo delimitato e verificabile
-- checkpoint temporaneo archiviabile dopo assorbimento documentale
+- documento completo aggiornato dalla v30; storico revisioni precedente preservato integralmente
+- Readiness registrata come completata, distinta dall'implementazione
+- Editor Base registrato come chat aperta ma mai applicata/testata
+- prossimo nodo non preassegnato
+- baseline documentale distinta dalla verifica live del sistema
+- nessuna logica tecnica nuova e nessuna modifica runtime
+- fonti canoniche e vincoli di scope preservati
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -918,12 +923,13 @@ FASE ATTUALE
 ✔ PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE — COMPLETATO
 ✔ INPUT CONTEXT CONSISTENCY — EDIT / SUGGESTION / COMMAND BOUNDARY — COMPLETATO
 ✔ DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL — COMPLETATO
+✔ PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE — COMPLETATO COME READINESS / NESSUNA IMPLEMENTAZIONE
 
 ---
 
 TRANSIZIONE:
 
-→ PROSSIMO NODO READINESS PROJECT / ENTITY GUIDED MODE
+→ POST READINESS / PROSSIMO NODO DA DEFINIRE E CONFERMARE
 
 Nota:
 
@@ -935,65 +941,20 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Nodo appena completato:
+Ripresa e allineamento documentale completati in questo ciclo.
 
-DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
+Per la fotografia post-Readiness e lo stato dell'Editor Base, vedere NODO ATTIVO all'inizio del documento.
 
-Esito:
+Prossimo nodo: da definire e confermare con l'utente dopo l'allineamento, chiarendo scopo, risultato utile e perimetro.
 
-- nodo completato come policy decisionale controllata
-- export reali Supabase analizzati
-- checkpoint temporaneo prodotto e assorbito nei documenti canonici
-- 05_LOGOS_Database_Schema aggiornato
-- 00_PROJECT_Gap_Register aggiornato
-- 00_PROJECT_Roadmap aggiornato
-- 00_PROJECT_State aggiornato
-- nessuna modifica runtime
-- nessuna modifica DB
-- nessuna migrazione
-- nessuna modifica parser / matching / preview / save flow
+Boot per il confronto sul prossimo passo:
+- State v31
+- Roadmap v24
+- Gap Register v22
+- ultimo checkpoint rilevante, solo se necessario per dettagli non assorbiti
 
-Decisioni consolidate:
-
-- LOGOS deve essere vertical-ready, non vertical-hardcoded
-- Project = contenitore operativo
-- Entity = soggetto coinvolto
-- Type = natura dell’oggetto, non ruolo occasionale
-- parent_project_id / parent_entity_id = gerarchie stabili future, non alias o duplicati
-- metadata = profilo guidato strategico, non contenitore caotico
-- duplicati = prevenzione/alert futuro, non merge automatico
-- alias = modello futuro dedicato
-- Data Hygiene = rimandata a fine core / pre-analisi dati
-- guided mode completa = troppo ampia come nodo immediato
-
-Prossimo passo immediato:
-
-aprire un nodo di readiness, non implementativo completo:
-
-PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
-
-Obiettivo prossimo nodo:
-
-- acquisire il codice reale Retool coinvolto
-- verificare componenti e query attuali di creazione project/entity
-- capire se è possibile una prima tranche chiudibile
-- separare ciò che può essere implementato subito da ciò che va rimandato
-- evitare di aprire una guided mode completa e superficiale
-
-Possibile primo nodo implementativo successivo, solo dopo readiness:
-
-PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
-
-Fuori scope immediato:
-
-- parent operativo
-- metadata avanzato
-- alias engine
-- merge duplicati
-- Data Hygiene storica
-- G10A Match Engine Advanced
-- dashboard / KPI / output
-- istanze verticali ASPRI / ADEXIMA / CEAS / MaurizioLab
+I documenti tecnici del futuro nodo saranno scelti dopo la sua conferma, secondo il Kernel Manifest.
+Nessun boot implementativo Editor Base è imposto da questo aggiornamento.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1089,8 +1050,8 @@ Priorità aggiornata:
 22. project create suggestion / match present / user override ✔
 23. input context consistency — edit / suggestion / command boundary ✔
 24. data structure / entity hierarchy — policy decision model ✔
-25. project / entity guided mode — readiness & minimum scope
-26. project / entity guided mode — name + type + duplicate alert base
+25. project / entity guided mode — readiness & minimum scope ✔ (decisionale, runtime invariato)
+26. project / entity editor base — name + type + duplicate alert (candidato storico, non implementato/testato, da riconfermare)
 27. preview model / hint state consolidation
 28. input analysis model completo / single interpretation layer avanzato
 29. economic direction advanced
@@ -1107,10 +1068,10 @@ Il sistema attuale è:
 
 ---
 
-PRIORITÀ FUTURE:
+BACKLOG DI RIFERIMENTO — PRIORITÀ ALLA RIPRESA DA CONFERMARE:
 
-1. Project / Entity Guided Mode — Readiness & Minimum Scope
-2. Project / Entity Guided Mode — Name + Type + Duplicate Alert Base, solo dopo readiness
+1. Project / Entity Guided Mode — Readiness & Minimum Scope: completato, non più lavoro futuro
+2. Project / Entity Editor Base — Name + Type + Duplicate Alert: candidato storico, non implementato/testato
 3. Preview / status / hint cleanup se necessario
 4. input analysis model / single interpretation layer avanzato
 5. economic direction advanced
@@ -1207,66 +1168,30 @@ Pacchetti completati:
 NEXT NODES CANDIDATI
 ------------------------------------------------
 
+Elenco di riferimento del backlog; non determina il prossimo nodo alla ripresa.
+
 1. PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
 
-Scopo:
+Stato:
+COMPLETATO COME READINESS DECISIONALE — NON DA RIAPRIRE COME CANDIDATO.
 
-- valutare il codice reale Retool coinvolto nella creazione project/entity
-- identificare componenti, query, stati e micro-flow esistenti
-- definire una prima tranche implementabile e chiudibile
-- evitare una guided mode troppo ampia e incompleta
-- decidere go/no-go per il nodo implementativo successivo
-
-Vincoli:
-
-- nessuna implementazione completa nel nodo readiness
-- nessuna migrazione DB salvo decisione esplicita futura
-- nessuna modifica save flow evento
-- nessuna modifica parser
-- nessuna modifica Match Engine
-- nessun alias engine
-- nessun merge duplicati
-- nessuna Data Hygiene storica
-- nessuna dashboard / KPI / output
-- nessuna verticalizzazione ASPRI / ADEXIMA / CEAS / MaurizioLab
-
-Codici probabilmente necessari:
-
-- insert_project
-- insert_entity
-- create_suggestion_state
-- command_intent_state
-- query projects_list / entities_list
-- componenti micro-editor project/entity attuali
-- container suggestion project/entity
-- pulsanti create project/entity esistenti
+Esito: GO per Editor Base limitato; NO-GO guided event mode completa; runtime invariato nel nodo.
 
 ---
 
-2. PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
+2. PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
 Stato:
+CANDIDATO STORICO POST READINESS — NON IMPLEMENTATO / NON TESTATO / DA RICONFERMARE.
 
-CANDIDATO IMPLEMENTATIVO SUCCESSIVO SOLO DOPO READINESS
+Scopo emerso dalla Readiness:
+- completare in modo limitato l'editor project/entity esistente
+- preservare gestione name e alert/protezione duplicato esatto già presenti
+- gestire type con chiavi tecniche DB e label italiane
 
-Scopo:
+Fuori scope del candidato: parent, metadata avanzato, alias, merge, fuzzy/G10A, Data Hygiene, guided event mode completa, dashboard/KPI/output e verticalizzazioni.
 
-- introdurre prima tranche limitata della modalità guidata
-- name
-- type con chiavi DB tecniche e label UI italiane
-- alert duplicato esatto
-- warning elementi simili se sostenibile
-- micro-copy per aiutare scelta project/entity
-
-Fuori scope:
-
-- parent
-- metadata avanzato
-- merge
-- alias engine
-- Data Hygiene
-- dashboard / KPI
-- verticalizzazioni
+L'apertura della vecchia chat non costituisce implementazione e non autorizza il recupero automatico dei suoi comandi.
 
 ---
 
@@ -2537,3 +2462,18 @@ aggiornamento post DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
 - nessuna modifica preview
 - nessuna modifica save flow
 - nessuna modifica payload
+
+v31 — 2026-09-30
+
+- aggiornamento documentale REENTRY / STATE RECONSTRUCTION
+- assorbito esito PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE: readiness completata; input libero assistito distinto da guided mode completa
+- registrato GO storico per Editor Base limitato e NO-GO guided event mode completa
+- registrato PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT come chat aperta ma mai implementata né testata
+- preservata distinzione tra codice proposto e runtime attivo
+- prossimo nodo da definire e confermare con l'utente dopo l'allineamento; nessuna apertura automatica dell'Editor Base
+- documentazione runtime distinta da verifica live, non effettuata in questo ciclo
+- nessuna modifica Retool, Supabase, schema DB, parser, matching, preview, payload o save flow in questo ciclo
+- Database Schema v11 e runtime manifest preservati
+- checkpoint Data Structure già assorbito / archiviabile; checkpoint Readiness conservato come riferimento storico dopo assorbimento delle decisioni
+- file consegnati per recepimento locale; scrittura GitHub via integrazione bloccata con errore 403, nessuna modifica remota eseguita
+- storico revisioni precedente preservato integralmente
