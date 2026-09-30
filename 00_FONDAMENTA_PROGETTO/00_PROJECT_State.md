@@ -1,9 +1,63 @@
-# 00_PROJECT_State_v31
+# 00_PROJECT_State_v32
 
 DATA: 2026-09-30
 
 ------------------------------------------------
 NODO ATTIVO:
+------------------------------------------------
+
+FONTI CANONICHE / BOOT CONTROLLATO — AGGIORNAMENTO DOCUMENTALE COMPLETATO
+
+Scopo del nodo autorizzato dall'utente:
+- rendere ripetibile la lettura delle fonti al boot con provenienza e limiti dichiarati
+- conservare lo snapshot della micro-sessione e impedire fallback silenziosi
+- separare acquisizione fonti e autorizzazione a scrivere
+
+Output del nodo:
+- istruzioni progetto v1.0 allineate al testo attivo nell'app e al Kernel aggiornato
+- 00_PROJECT_KERNEL_MANIFEST v04: fonte madre per repository, percorsi, identità Supabase e boot
+- 98_PROJECT_Session_Management_Protocol v1.0 incluso con contenuto originale invariato
+- CHECKPOINT_FONTI_CANONICHE_BOOT_CONTROLLATO.md
+- State v32; Roadmap v24 e Gap Register v22 preservati
+
+Recepimento e attivazione:
+- il pacchetto deve essere presente nella repository utilizzata dal prossimo boot
+- la tab istruzioni dell'app richiede recepimento del testo consegnato; non si aggiorna automaticamente
+- al prossimo #start verificare commit corrente, presenza dei file e testo applicato;
+  non dedurre l'attivazione dalla sola generazione o consegna del pacchetto
+- permessi dei collegamenti non modificati da questo nodo; sola lettura tecnica non certificata
+- pubblicazione via integrazione rifiutata con errore 403: nessun aggiornamento remoto;
+  recepire il pacchetto verificato sul PC e pubblicarlo tramite il normale commit/push
+
+Fonti e verifiche realmente effettuate:
+- baseline documentale GitHub: e08b07fee77a372cde7e7f6fa94b668e700010fb — reentry project
+- Kernel v03 e State v31 acquisiti integralmente e coincidenti con gli allegati del progetto
+- istruzioni GitHub precedenti meno complete delle istruzioni attive nell'app: riallineate nel pacchetto
+- Session Protocol originale disponibile tra gli allegati, assente dalla baseline GitHub: incluso nel pacchetto
+- Supabase logos_template / utvwefciuxtwoqvvcwel: accesso e stato ACTIVE_HEALTHY rilevati;
+  lette le sole informazioni restituite dall'elenco di events, projects, entities e system_logs
+- nessuna certificazione del contenuto delle tabelle, dello schema completo, delle funzioni o del frontend Retool
+- nessuna verifica live del codice Retool
+
+Stato funzionale LOGOS:
+- Readiness completata; Editor Base mai applicato né testato
+- runtime Retool/Supabase e schema DB invariati da questo nodo
+- nessuna migrazione, modifica query, RLS, parser, matching, preview, payload o save flow
+- prossimo nodo di sviluppo ancora DA DEFINIRE E CONFERMARE CON L'UTENTE
+- l'aggiornamento delle fonti non riconferma automaticamente l'Editor Base né apre altri candidati
+
+Checkpoint:
+- ultimo checkpoint pertinente a ripresa/fonti:
+  00_FONDAMENTA_PROGETTO/CHECKPOINT_FONTI_CANONICHE_BOOT_CONTROLLATO.md
+- decisioni Readiness già assorbite nei documenti canonici; originale storico non ricreato
+- se una futura sessione richiede dettagli non assorbiti, recuperare l'originale prima dell'operatività
+
+Il blocco REENTRY seguente è conservato come snapshot storico del precedente ciclo.
+I suoi riferimenti a consegna locale, scrittura 403 e sincronizzazione da eseguire descrivono
+quell'istante storico e non costituiscono una misurazione dello stato corrente della repository.
+
+------------------------------------------------
+SNAPSHOT REENTRY PRECEDENTE — STORICO:
 ------------------------------------------------
 
 REENTRY / STATE RECONSTRUCTION — ALLINEAMENTO DOCUMENTALE COMPLETATO
@@ -2477,3 +2531,14 @@ v31 — 2026-09-30
 - checkpoint Data Structure già assorbito / archiviabile; checkpoint Readiness conservato come riferimento storico dopo assorbimento delle decisioni
 - file consegnati per recepimento locale; scrittura GitHub via integrazione bloccata con errore 403, nessuna modifica remota eseguita
 - storico revisioni precedente preservato integralmente
+
+v32 — 2026-09-30
+
+- chiuso documentalmente il nodo FONTI CANONICHE / BOOT CONTROLLATO
+- registrati Kernel v04, istruzioni v1.0, protocollo sessioni originale e checkpoint del nodo
+- distinta preparazione del pacchetto da recepimento nella repo e attivazione nella tab dell'app
+- registrate soltanto le verifiche GitHub/Supabase effettivamente effettuate
+- conservato il precedente snapshot REENTRY come storico esplicito
+- preservati integralmente snapshot funzionale e changelog precedenti
+- Roadmap v24 e Gap Register v22 invariati; prossimo nodo di sviluppo da confermare
+- nessuna modifica al runtime LOGOS o ai permessi dei collegamenti
