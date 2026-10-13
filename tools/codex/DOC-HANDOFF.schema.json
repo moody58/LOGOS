@@ -1,0 +1,586 @@
+{
+  "$comment": "Candidate schema. JSON Schema does not detect duplicate source keys or enforce Git/path/hash/cross-field rules; a strict parser and executable gates are mandatory.",
+  "$id": "urn:aios:doc-handoff:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "checks": {
+      "additionalProperties": false,
+      "properties": {
+        "cqd_review_anchor": {
+          "maxLength": 240,
+          "pattern": "^#(?:DOC|DECISION|TASK|STRUCTURE|INSIGHT)(?:\\.[A-Za-z0-9_.-]+)?$",
+          "type": "string"
+        },
+        "metric_method": {
+          "const": "AIOS-TEXT-METRICS/1.0"
+        },
+        "preserve_outside_ranges": {
+          "const": true
+        },
+        "require_clean_index": {
+          "const": true
+        },
+        "require_final_diff": {
+          "const": true
+        }
+      },
+      "required": [
+        "metric_method",
+        "cqd_review_anchor",
+        "preserve_outside_ranges",
+        "require_final_diff",
+        "require_clean_index"
+      ],
+      "type": "object"
+    },
+    "decision_anchors": {
+      "items": {
+        "maxLength": 240,
+        "pattern": "^#(?:DOC|DECISION|TASK|STRUCTURE|INSIGHT)(?:\\.[A-Za-z0-9_.-]+)?$",
+        "type": "string"
+      },
+      "maxItems": 64,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "executor_dependencies": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n\\u0000]*$",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "type": "array"
+    },
+    "executor_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "files": {
+      "items": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "bom": {
+                "type": "boolean"
+              },
+              "contains_once": {
+                "items": {
+                  "maxLength": 65536,
+                  "minLength": 1,
+                  "pattern": "^[^\\r\\u0000]*$",
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "encoding": {
+                "const": "utf-8"
+              },
+              "eol": {
+                "enum": [
+                  "LF",
+                  "CRLF"
+                ]
+              },
+              "final_newline": {
+                "type": "boolean"
+              },
+              "metrics_before": {
+                "additionalProperties": false,
+                "properties": {
+                  "bytes": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "characters_utf16": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "headings": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "paragraphs": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "words": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "words",
+                  "characters_utf16",
+                  "paragraphs",
+                  "headings",
+                  "bytes"
+                ],
+                "type": "object"
+              },
+              "metrics_expected": {
+                "additionalProperties": false,
+                "properties": {
+                  "bytes": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "characters_utf16": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "headings": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "paragraphs": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "words": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "words",
+                  "characters_utf16",
+                  "paragraphs",
+                  "headings",
+                  "bytes"
+                ],
+                "type": "object"
+              },
+              "operation": {
+                "const": "modify_ranges"
+              },
+              "path": {
+                "maxLength": 240,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))[^\\\\:\\x00-\\x1f<>\"|?*]+\\.md$",
+                "type": "string"
+              },
+              "post_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "pre_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "ranges": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "after_sha256": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "type": "string"
+                    },
+                    "after_utf8": {
+                      "maxLength": 65536,
+                      "minLength": 1,
+                      "pattern": "^[^\\r\\u0000]*$",
+                      "type": "string"
+                    },
+                    "anchor_id": {
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$",
+                      "type": "string"
+                    },
+                    "before_sha256": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "type": "string"
+                    },
+                    "before_utf8": {
+                      "maxLength": 65536,
+                      "minLength": 1,
+                      "pattern": "^[^\\r\\u0000]*$",
+                      "type": "string"
+                    },
+                    "end_marker": {
+                      "maxLength": 512,
+                      "minLength": 1,
+                      "pattern": "^[^\\r\\n\\u0000]*$",
+                      "type": "string"
+                    },
+                    "start_marker": {
+                      "maxLength": 512,
+                      "minLength": 1,
+                      "pattern": "^[^\\r\\n\\u0000]*$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "anchor_id",
+                    "start_marker",
+                    "end_marker",
+                    "before_utf8",
+                    "after_utf8",
+                    "before_sha256",
+                    "after_sha256"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 32,
+                "minItems": 1,
+                "type": "array"
+              }
+            },
+            "required": [
+              "path",
+              "post_sha256",
+              "encoding",
+              "eol",
+              "bom",
+              "final_newline",
+              "contains_once",
+              "operation",
+              "pre_sha256",
+              "ranges",
+              "metrics_before",
+              "metrics_expected"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "bom": {
+                "type": "boolean"
+              },
+              "contains_once": {
+                "items": {
+                  "maxLength": 65536,
+                  "minLength": 1,
+                  "pattern": "^[^\\r\\u0000]*$",
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "content_utf8": {
+                "maxLength": 65536,
+                "minLength": 1,
+                "pattern": "^[^\\r\\u0000]*$",
+                "type": "string"
+              },
+              "encoding": {
+                "const": "utf-8"
+              },
+              "eol": {
+                "enum": [
+                  "LF",
+                  "CRLF"
+                ]
+              },
+              "expected_absent": {
+                "const": true
+              },
+              "final_newline": {
+                "type": "boolean"
+              },
+              "metrics_expected": {
+                "additionalProperties": false,
+                "properties": {
+                  "bytes": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "characters_utf16": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "headings": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "paragraphs": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "words": {
+                    "maximum": 16777216,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "words",
+                  "characters_utf16",
+                  "paragraphs",
+                  "headings",
+                  "bytes"
+                ],
+                "type": "object"
+              },
+              "operation": {
+                "const": "create_text"
+              },
+              "path": {
+                "maxLength": 240,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))[^\\\\:\\x00-\\x1f<>\"|?*]+\\.md$",
+                "type": "string"
+              },
+              "post_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "post_sha256",
+              "encoding",
+              "eol",
+              "bom",
+              "final_newline",
+              "contains_once",
+              "operation",
+              "expected_absent",
+              "content_utf8",
+              "metrics_expected"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "type": "array"
+    },
+    "format": {
+      "const": "AIOS-DOC-HANDOFF/1.0"
+    },
+    "id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$",
+      "type": "string"
+    },
+    "node": {
+      "maxLength": 512,
+      "minLength": 1,
+      "pattern": "^[^\\r\\n\\u0000]*$",
+      "type": "string"
+    },
+    "policy_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "project": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$",
+      "type": "string"
+    },
+    "project_profile": {
+      "additionalProperties": false,
+      "properties": {
+        "archive_source_paths": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n\\u0000]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$",
+          "type": "string"
+        },
+        "naming_source_paths": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n\\u0000]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "profile_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "version_source_paths": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n\\u0000]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "profile_sha256",
+        "naming_source_paths",
+        "archive_source_paths",
+        "version_source_paths"
+      ],
+      "type": "object"
+    },
+    "repository": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\r\\n\\u0000]*$",
+          "type": "string"
+        },
+        "expected_head": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "expected_upstream_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "origin": {
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+          "type": "string"
+        },
+        "root": {
+          "maxLength": 240,
+          "pattern": "^[A-Za-z]:\\\\[^\\x00-\\x1f]*$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "root",
+        "origin",
+        "branch",
+        "expected_head",
+        "expected_upstream_sha"
+      ],
+      "type": "object"
+    },
+    "session_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$",
+      "type": "string"
+    },
+    "source_snapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[^\\r\\n\\u0000]*$",
+          "type": "string"
+        },
+        "commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "repository": {
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository",
+        "branch",
+        "commit"
+      ],
+      "type": "object"
+    },
+    "sources": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "blob_sha1": {
+            "pattern": "^[0-9a-f]{40}$",
+            "type": "string"
+          },
+          "commit": {
+            "pattern": "^[0-9a-f]{40}$",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          },
+          "working_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "commit",
+          "blob_sha1",
+          "working_sha256"
+        ],
+        "type": "object"
+      },
+      "maxItems": 64,
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "session_id",
+    "node",
+    "project",
+    "source_snapshot",
+    "sources",
+    "project_profile",
+    "repository",
+    "executor_sha256",
+    "executor_dependencies",
+    "policy_sha256",
+    "decision_anchors",
+    "files",
+    "checks"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,7 @@
+default_permissions = "logos_readonly"
+approval_policy = "on-request"
+approvals_reviewer = "user"
+
+[permissions.logos_readonly]
+description = "LOGOS - read-only with human approvals"
+extends = ":read-only"
