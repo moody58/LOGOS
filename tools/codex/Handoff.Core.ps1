@@ -90,7 +90,7 @@ function Assert-AIOSProfilePolicy {
         $fields = $(if ($evidence.exists) { @('path', 'exists', 'sha256') } else { @('path', 'exists') })
         if ($evidence.ContainsKey('guard')) {
             $fields += 'guard'
-            if (-not $evidence.exists -or $evidence.guard -cne 'codex-operational-v3') { throw 'STOP: unsupported semantic instruction guard.' }
+            if (-not $evidence.exists -or $evidence.guard -cne 'codex-operational-v4') { throw 'STOP: unsupported semantic instruction guard.' }
         }
         Assert-AIOSFields $evidence $fields
         if ($evidence.path -isnot [string] -or $evidence.path -cnotmatch '^[A-Za-z]:\\' -or $evidence.path -match '[\x00-\x1f]') { throw 'STOP: evidence absolute path required.' }

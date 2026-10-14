@@ -1,7 +1,7 @@
 LOGOS — PROJECT RUNTIME INSTRUCTIONS
 
-VERSIONE: v1.0
-DATA: 2026-09-30
+VERSIONE: v1.1
+DATA: 2026-10-14
 
 Estensione delle AIOS Universal Project Runtime Instructions.
 Queste istruzioni integrano il comportamento AIOS con il contesto del progetto LOGOS.
@@ -236,6 +236,18 @@ Aggiornamento stato
 
 ---
 
+## PROCEDURA DOCUMENTALE WORK / CODEX
+
+Per attivazione, ruoli permanenti, pacchetti, messaggi rapidi e dipendenze:
+leggere 98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md, documento madre della procedura.
+La richiesta «Avvia la procedura documentale LOGOS» avvia preparazione/Check;
+non autorizza Apply. Work prepara contenuti, script e ZIP; Codex esegue
+operazioni locali pinned. Non chiedere ogni volta dove svolgere le elaborazioni.
+La scelta delle fonti e il boot restano governati dal Kernel; il perimetro
+esecutivo è quello della release verificata. Nessuna estensione implicita.
+
+---
+
 ## GESTIONE DOCUMENTI
 
 Chat genera → Documento consolida.
@@ -439,6 +451,11 @@ Il sistema reale:
 ## REVISIONI
 
 v1.0 — 2026-09-30: istruzioni attive preservate e allineate alla repo; boot/fonti delegati al Kernel v04.
+
+---
+
+v1.1 — 2026-10-14: integrazione del richiamo al Runtime quale ingresso completo
+della procedura documentale; ruoli e richiesta breve senza duplicare il manuale.
 
 ---
 

@@ -27,7 +27,7 @@ Eseguire gli script del motore con Windows PowerShell 5.1 Desktop,
 FullLanguage e policy RemoteSigned senza modificare policy o LanguageMode.
 La shell GUI può essere diversa: delega al comando nativo già preparato.
 Non attestare permessi effettivi o origine umana da soli file/configurazioni.
-Fermarsi al primo errore operativo; preservare output e stato parziale.
+Dall'invio del task operativo, fermarsi al primo errore; preservare output e stato parziale.
 Nessun retry automatico per operazioni fallite o di esito ignoto.
 
 P4 resta concluso nel perimetro AIOS_CORE. P5 non avvia lo sviluppo prodotto
@@ -35,3 +35,17 @@ né attività su servizi esterni. baseline_adopted e production_ready restano fa
 finché le relative decisioni non sono esplicitamente concluse nel loro perimetro.
 
 VALIDAZIONE: nodo: OK · scope: OK · deviazione: NO
+
+## Ingresso documentale permanente
+
+Leggere 98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md per attivazione, divisione
+Work/Codex, archivi, messaggi rapidi, fonti AIOS e dipendenze di ripartenza.
+Non far ripetere questi dettagli all'utente a ogni avvio. Work prepara codice,
+controlli complessi e ZIP; Codex esegue le letture/task pinned e i comandi pronti.
+Nelle letture preliminari completare soltanto blocchi mancanti o rettificare
+un pathname materiale errato se l'handoff lo consente, prima dell'invio operativo.
+Non ricomporre preflight, campi JSON o comandi. Non correggere/riprovare un task.
+Il perimetro effettivo deriva dalla release verificata: la prima corsia P5
+resta quella sopra descritta fino alla nuova qualifica e al provisioning P6.
+Per un altro documento usare il profilo esatto revisionato e la release che
+lo ammette; questo adattatore non abilita da solo nuovi target.

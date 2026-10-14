@@ -36,13 +36,13 @@ param(
     if((Get-FileHash -LiteralPath $entryPath -Algorithm SHA256).Hash.ToLowerInvariant() -cne $ExpectedEntrypointSha256){throw 'STOP: entrypoint pin mismatch.'}
     $bindings=@{
         'DocumentSafety.Core.ps1'='5151846b30d4e11e2eb83072d220e1369e49ce22499fe950fc1afbd0cb5fd4cc'
-        'Handoff.Core.ps1'='1dc0095e92ce20ae44949090077f92ed146a55db333fede69d0e895bf5df5eb6'
+        'Handoff.Core.ps1'='5a3d6633acdeca891e815b683fd351d48bf621a8a6e78fdbaf720516e0cd75c9'
         'StrictJson.cs'='156755dbcef7e922b9ba16b2a2e551555891a198d883301760cc6222f00d7421'
         'DOC-HANDOFF.schema.json'='3442b8cce3cac0556b71acf9c33808b17a3d7cdf6d8896c828bdc8e6ab0ba357'
         'Transaction.Core.ps1'='cd7db804d534803853a8eddfa906ba41b951176dbe093ca14b0b7fa26f34877f'
         'Recovery.Core.ps1'='650a52268a7c9f267112c2bac78136d8d8ade780132641479a433b232d68696e'
         'DocumentApply.Adapter.ps1'='8362b05d4b4d5eaae6046acaf1976e30f8123cd20f1aa9b51d306154ccd95069'
-        'ProductionScope.Adapter.ps1'='f94fdf76f6fb25dfdea2a729f76d9dca44c67338a2c22a54c2f40592ef2812eb'
+        'ProductionScope.Adapter.ps1'='5824ec185888e6514aa993f9b03827b36b67d3e37312583bf9b7aae4dcd9476c'
         'ApprovalProtocol.Core.ps1'='c0e8e99c11c51913453f2b7981694474207ca0efb868911b6e0c7516a908cf51'
     }
     foreach($name in $bindings.Keys){

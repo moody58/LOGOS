@@ -71,10 +71,41 @@ function Assert-AIOSEntrypointDocument {
         $h.files[0].operation -cne 'modify_ranges' -or $h.files[0].pre_sha256 -ceq $h.files[0].post_sha256 -or
         $p.allowed_new_directories.Count -ne 0){throw 'STOP: P1 permits one existing policy-authorized document, modify_ranges only.'}
     Assert-AIOSRelativePath $h.files[0].path
-    # These immediate directories have the complete instruction inventory below.
-    # No arbitrary nested path, tool, configuration or other project is enabled.
-    if($h.files[0].path -cnotmatch '^98_SISTEMA_TECNICO/98_PROJECT_RUNTIME\.md$'){
-        throw 'STOP: target outside the reviewed LOGOS runtime document.'
+    # Explicit current canonical paths; no folder wildcard or provisioning file.
+    $documentPaths=@(
+        '00_FONDAMENTA_PROGETTO/00_PROJECT_Gap_Register.md',
+        '00_FONDAMENTA_PROGETTO/00_PROJECT_KERNEL_MANIFEST.md',
+        '00_FONDAMENTA_PROGETTO/00_PROJECT_Regia.md',
+        '00_FONDAMENTA_PROGETTO/00_PROJECT_Roadmap.md',
+        '00_FONDAMENTA_PROGETTO/00_PROJECT_State.md',
+        '00_FONDAMENTA_PROGETTO/00_PROJECT_System.md',
+        '00_FONDAMENTA_PROGETTO/CHECKPOINT_FONTI_CANONICHE_BOOT_CONTROLLATO.md',
+        '01_RUNTIME_LOGOS/01_LOGOS_Input_System.md',
+        '01_RUNTIME_LOGOS/02_LOGOS_Match_Engine.md',
+        '01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md',
+        '01_RUNTIME_LOGOS/04_LOGOS_Retool_Architecture.md',
+        '01_RUNTIME_LOGOS/05_LOGOS_Database_Schema.md',
+        '01_RUNTIME_LOGOS/06_LOGOS_View_Preview_System.md',
+        '01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md',
+        '01_RUNTIME_LOGOS/LOGOS_SUPABASE_RUNTIME_REAL.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_Anchor_System.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_CQD_Protocol.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_File_System_Guide.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_Incident_Management.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_PROTOCOL.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_Radar.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_STP_Protocol.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_Session_Management_Protocol.md',
+        '98_SISTEMA_TECNICO/98_PROJECT_Sistema_Fonti.md',
+        'AIOS_REFERENCE.md',
+        'PROJECT_CHANGELOG.md',
+        'README.md',
+        'RUNTIME_NOTE.md',
+        'UNIVERSAL_PROJECT_RUNTIME_INSTRUCTIONS.md'
+    )
+    if($documentPaths -cnotcontains $h.files[0].path){
+        throw 'STOP: target outside the reviewed LOGOS document profile.'
     }
     if($null -ne $script:AIOSBaseline -and $h.files[0].path -cne $script:AIOSBaselineTarget.path){throw 'STOP: active baseline target changed.'}
     $script:AIOSDocumentTarget=$h.files[0].path
@@ -103,6 +134,7 @@ function Assert-AIOSProductionInstructions {
     $expected=@{'C:\Users\moody\.codex\AGENTS.md'=$true;'C:\Users\moody\.codex\config.toml'=$true;
         'C:\AIOS_GITHUB\LOGOS\.codex\config.toml'=$true;'C:\AIOS_GITHUB\LOGOS\AGENTS.md'=$true}
     $roots=@('C:\Users\moody\.codex','C:\','C:\AIOS_GITHUB','C:\AIOS_GITHUB\LOGOS',
+        'C:\AIOS_GITHUB\LOGOS\00_FONDAMENTA_PROGETTO','C:\AIOS_GITHUB\LOGOS\01_RUNTIME_LOGOS',
         'C:\AIOS_GITHUB\LOGOS\98_SISTEMA_TECNICO',
         'C:\AIOS_GITHUB\LOGOS\tools','C:\AIOS_GITHUB\LOGOS\tools\codex')
     foreach($root in $roots){foreach($name in @('AGENTS.md','AGENTS.override.md')){
@@ -117,7 +149,7 @@ function Assert-AIOSProductionInstructions {
             $record.exists -ne $expected[$record.path]){throw 'STOP: production instruction presence/scope mismatch.'}
         $seen[$record.path]=$true
         if($record.path -ceq 'C:\Users\moody\.codex\config.toml'){
-            if(-not $record.ContainsKey('guard') -or $record.guard -cne 'codex-operational-v3'){throw 'STOP: user config semantic guard required.'}
+            if(-not $record.ContainsKey('guard') -or $record.guard -cne 'codex-operational-v4'){throw 'STOP: user config semantic guard required.'}
         }elseif($record.ContainsKey('guard')){throw 'STOP: semantic guard on foreign instruction file.'}
         if($record.path -ceq 'C:\Users\moody\.codex\AGENTS.md' -and
             $record.sha256 -cne 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'){
@@ -150,7 +182,7 @@ function Read-AIOSGuardStringArray {
 function Get-AIOSAcquiredUserIntegrationPins {
     # Exact acquired configuration values; not an external-tools qualification.
     return @{
-        'ROOT|notify'=@{shape='ARRAY';sha256='9bdca3b22011bf07c128913fddc054a03ef497a1486ee53c7d5b7f43383df930'}
+        'ROOT|notify'=@{rule='WINDOWS_CUA_RUNTIME_ID_V1';shape='ARRAY';raw_chars=173;masked_sha256='c59be91f0326c434f52fb40828540aa132a2f623d862cc6a8e46aab839558b5d'}
         'marketplaces.openai-bundled|source_type'=@{shape='BASIC_STRING';sha256='ea17e25c6c7aa6ef9407f976a670e87e37bc7e2a86b7bd4a3305bb16f1ba6052'}
         'marketplaces.openai-bundled|source'=@{shape='LITERAL_STRING';sha256='4aaea7a0519c336da2f43d1098a65db00a98e432b33b0374495f6219362d96e6'}
         'marketplaces.openai-primary-runtime|source_type'=@{shape='BASIC_STRING';sha256='ea17e25c6c7aa6ef9407f976a670e87e37bc7e2a86b7bd4a3305bb16f1ba6052'}
@@ -166,24 +198,24 @@ function Get-AIOSAcquiredUserIntegrationPins {
         'plugins.presentations@openai-primary-runtime|enabled'=@{shape='BOOLEAN';sha256='b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b'}
         'plugins.template-creator@openai-primary-runtime|enabled'=@{shape='BOOLEAN';sha256='b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b'}
         'mcp_servers.node_repl|args'=@{shape='ARRAY';sha256='4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945'}
-        'mcp_servers.node_repl|command'=@{shape='LITERAL_STRING';sha256='0f20ae15868baff14ae83be1f3f56dd69041184596d5a473964cc5d75b529437'}
+        'mcp_servers.node_repl|command'=@{rule='WINDOWS_CUA_RUNTIME_ID_V1';shape='LITERAL_STRING';raw_chars=96;masked_sha256='304305a341a23baa2c69534183c05882c019367b1df6c4a5d9a0e35bcac218dc'}
         'mcp_servers.node_repl|env_vars'=@{shape='ARRAY';sha256='55b005debe5c799eab33d781831bab2dd93dedef0928942edf74ccc216fb1ae6'}
         'mcp_servers.node_repl|startup_timeout_sec'=@{shape='NUMBER_OR_DATETIME';sha256='2abaca4911e68fa9bfbf3482ee797fd5b9045b841fdff7253557c5fe15de6477'}
         'mcp_servers.node_repl.env|NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS'=@{shape='BASIC_STRING';sha256='ea33dc847d962e75874bfed11cf65b69acebbfa3cabec313effeb7c8b4fc90e1'}
-        'mcp_servers.node_repl.env|NODE_REPL_NODE_MODULE_DIRS'=@{shape='LITERAL_STRING';sha256='155adc5bded7539527721aa480d6158d68d915bfc2b1b7863b5930ff1153a335'}
-        'mcp_servers.node_repl.env|NODE_REPL_NODE_PATH'=@{shape='LITERAL_STRING';sha256='4e7daa2a8895c35989712b44072e29f497bef9e6ac3d3b8370465caa5cfca0c3'}
-        'mcp_servers.node_repl.env|NODE_REPL_TRUSTED_CODE_PATHS'=@{shape='LITERAL_STRING';sha256='7c89cac317fe16b7c34212622fac6a0a4bcdbfd6cf1bb5767a07c57174f46e37'}
+        'mcp_servers.node_repl.env|NODE_REPL_NODE_MODULE_DIRS'=@{rule='WINDOWS_CUA_RUNTIME_ID_V1';shape='LITERAL_STRING';raw_chars=95;masked_sha256='01afa5c69e9d77dc8a8e57b8955b00e514bf8fe20c1648a61eed830e9517574e'}
+        'mcp_servers.node_repl.env|NODE_REPL_NODE_PATH'=@{rule='WINDOWS_CUA_RUNTIME_ID_V1';shape='LITERAL_STRING';raw_chars=91;masked_sha256='e42323057c40da9ac72253095db884cec6217a9fdbe8eb6f5d5d022ff82dee4e'}
+        'mcp_servers.node_repl.env|NODE_REPL_TRUSTED_CODE_PATHS'=@{rule='WINDOWS_CUA_RUNTIME_ID_V1';shape='LITERAL_STRING';raw_chars=117;masked_sha256='22fb3c58140732445a4b4122b87f47e769c2f403274f98a87b20b7faf1f55a3f'}
         'mcp_servers.node_repl.env|CODEX_HOME'=@{shape='LITERAL_STRING';sha256='bcc817a6735f01afe38402de5c0b98d22440b1fb3d7fb5897db2b4f8c9b5b4e9'}
         'mcp_servers.node_repl.env|BROWSER_USE_AVAILABLE_BACKENDS'=@{shape='BASIC_STRING';sha256='2fea4f146c18a05750abc6315e6d483d83c0bf2586f78ddd2af8ee2977db6251'}
         'mcp_servers.node_repl.env|BROWSER_USE_TINYSKY_ENABLED'=@{shape='BASIC_STRING';sha256='391552c099c101b131feaf24c5795a6a15bc8ec82015424e0d2b4274a369a0bf'}
         'mcp_servers.node_repl.env|NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER'=@{shape='BASIC_STRING';sha256='12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126'}
         'mcp_servers.node_repl.env|NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME'=@{shape='BASIC_STRING';sha256='12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126'}
         'mcp_servers.node_repl.env|BROWSER_USE_CODEX_APP_BUILD_FLAVOR'=@{shape='BASIC_STRING';sha256='4120bf0e89c30b878b5d1830d3e31493080be0f6dfd295deceacea83cd4dbb50'}
-        'mcp_servers.node_repl.env|BROWSER_USE_CODEX_APP_VERSION'=@{shape='BASIC_STRING';sha256='80cfaf76a920d380d325b404658ae3e2b4dddddd37b762f9b63eafad62c0a8fe'}
-        'mcp_servers.node_repl.env|NODE_REPL_TRUSTED_SERVICES'=@{shape='LITERAL_STRING';sha256='b38421877c806836ab6142314d86164e1c390a3aad9c5d747823038edca2e198'}
+        'mcp_servers.node_repl.env|BROWSER_USE_CODEX_APP_VERSION'=@{rule='CODEX_APP_VERSION_V1';shape='BASIC_STRING'}
+        'mcp_servers.node_repl.env|NODE_REPL_TRUSTED_SERVICES'=@{rule='BROWSER_PLUGIN_VERSION_V1';shape='LITERAL_STRING';browser_tail_sha256='e0dc53b93edf1c6a4fdcb3b9bb48289d491e336989009833bf449e084ebb3a5c';sky_sha256='1c3e11685c3b0aeb51ad891a02fed1226b1c56b939a03519da7d90aaebb2dc48';sky_chars=16}
         'mcp_servers.node_repl.env|SKY_CUA_NATIVE_PIPE'=@{shape='BASIC_STRING';sha256='391552c099c101b131feaf24c5795a6a15bc8ec82015424e0d2b4274a369a0bf'}
         'mcp_servers.node_repl.env|SKY_CUA_NATIVE_PIPE_DIRECTORY'=@{shape='LITERAL_STRING';rule='WINDOWS_PIPE_GUID_V1';value_chars=64;masked_sha256='0b8211e26377257fe69d2779525c245b665623125fb755778bb4c9afcc1c145a'}
-        'mcp_servers.node_repl.env|CODEX_CLI_PATH'=@{shape='LITERAL_STRING';sha256='f559fb15192d5b48216bf8985d3e5139921d9a3f0290ddf9f6fd505575335634'}
+        'mcp_servers.node_repl.env|CODEX_CLI_PATH'=@{rule='CODEX_WINDOWS_BINARY_ID_V1';shape='LITERAL_STRING';masked_sha256='b70c22c14ec4b29376c33354687594ad61700c01ea36b341df54155cc7c8226c'}
         'mcp_servers.node_repl.env|NODE_REPL_UNTRUSTED_ENV_ALLOWLIST'=@{shape='BASIC_STRING';sha256='063536721e246e5341b782390d4e7c19856a7317de824c0ca17df4b03f305fc5'}
     }
 }
@@ -215,6 +247,80 @@ function Assert-AIOSAcquiredPipeValue {
         throw 'STOP: acquired pipe fixed structure changed; review the specific delta.'
     }
 }
+function Assert-AIOSAcquiredMutableIntegrationValue {
+    param([string]$Identity,[string]$Raw,[object]$Pin,[object]$Context)
+    # Lexical validation only. Never resolve/probe/open/execute configured tools.
+    $cuaFields=@('ROOT|notify','mcp_servers.node_repl|command',
+        'mcp_servers.node_repl.env|NODE_REPL_NODE_MODULE_DIRS','mcp_servers.node_repl.env|NODE_REPL_NODE_PATH',
+        'mcp_servers.node_repl.env|NODE_REPL_TRUSTED_CODE_PATHS')
+    if($Pin.rule -ceq 'WINDOWS_CUA_RUNTIME_ID_V1'){
+        if($cuaFields -cnotcontains $Identity -or $Pin.shape -cne $(if($Identity -ceq 'ROOT|notify'){'ARRAY'}else{'LITERAL_STRING'}) -or
+            $Pin.masked_sha256 -cnotmatch '^[0-9a-f]{64}$' -or $Pin.raw_chars -lt 1 -or $Raw.Length -ne $Pin.raw_chars){
+            throw 'STOP: acquired CUA integration rule/scope changed.'
+        }
+        $pattern='C:(?<sep>\\{1,2})Users\k<sep>moody\k<sep>AppData\k<sep>Local\k<sep>OpenAI\k<sep>Codex\k<sep>runtimes\k<sep>cua_node\k<sep>(?<id>[0-9a-f]{16})(?=\k<sep>)'
+        $runtimeMatches=[regex]::Matches($Raw,$pattern)
+        if($runtimeMatches.Count -ne 1 -or [regex]::IsMatch($Raw,'[\x00-\x1f\x7f]')){throw 'STOP: acquired CUA integration structure changed.'}
+        $masked=[regex]::Replace($Raw,$pattern,{param($m) $m.Value.Substring(0,$m.Value.Length-16)+'<RUNTIME_ID>'})
+        if((Get-AIOSHash ((New-Object Text.UTF8Encoding($false)).GetBytes($masked))) -cne $Pin.masked_sha256){
+            throw 'STOP: acquired CUA fixed integration bytes changed.'
+        }
+        if($Pin.shape -ceq 'ARRAY'){$unusedArray=Read-AIOSGuardStringArray $Raw}
+        else{$unusedScalar=Read-AIOSGuardScalar $Raw}
+        $Context.cua_ids[$Identity]=$runtimeMatches[0].Groups['id'].Value
+    }elseif($Pin.rule -ceq 'CODEX_WINDOWS_BINARY_ID_V1'){
+        if($Identity -cne 'mcp_servers.node_repl.env|CODEX_CLI_PATH' -or $Pin.shape -cne 'LITERAL_STRING' -or
+            $Pin.masked_sha256 -cnotmatch '^[0-9a-f]{64}$'){throw 'STOP: acquired CLI integration rule/scope changed.'}
+        $m=[regex]::Match($Raw,'^''C:\\Users\\moody\\AppData\\Local\\OpenAI\\Codex\\bin\\(?<id>[0-9a-f]{16})\\codex\.exe''$')
+        if(-not $m.Success){throw 'STOP: acquired CLI integration structure changed.'}
+        $id=$m.Groups['id'];$masked=$Raw.Substring(0,$id.Index)+'<BINARY_ID>'+$Raw.Substring($id.Index+$id.Length)
+        if((Get-AIOSHash ((New-Object Text.UTF8Encoding($false)).GetBytes($masked))) -cne $Pin.masked_sha256){throw 'STOP: acquired CLI fixed integration bytes changed.'}
+    }elseif($Pin.rule -ceq 'CODEX_APP_VERSION_V1'){
+        if($Identity -cne 'mcp_servers.node_repl.env|BROWSER_USE_CODEX_APP_VERSION' -or $Pin.shape -cne 'BASIC_STRING'){
+            throw 'STOP: acquired app version rule/scope changed.'
+        }
+        $m=[regex]::Match($Raw,'^"(?<version>[0-9]{2}\.[0-9]{4}\.[0-9]{1,6})"$')
+        if(-not $m.Success){throw 'STOP: acquired app version structure changed.'}
+        $Context.app_version=$m.Groups['version'].Value
+    }elseif($Pin.rule -ceq 'BROWSER_PLUGIN_VERSION_V1'){
+        if($Identity -cne 'mcp_servers.node_repl.env|NODE_REPL_TRUSTED_SERVICES' -or $Pin.shape -cne 'LITERAL_STRING' -or
+            $Pin.browser_tail_sha256 -cnotmatch '^[0-9a-f]{64}$' -or $Pin.sky_sha256 -cnotmatch '^[0-9a-f]{64}$' -or $Pin.sky_chars -ne 16){
+            throw 'STOP: acquired services rule/scope changed.'
+        }
+        $literal=[regex]::Match($Raw,'^''([^'']*)''$')
+        if(-not $literal.Success -or $Raw.Length -gt 16384){throw 'STOP: acquired services literal syntax changed.'}
+        $services=[AIOSHandoff.StrictJson]::Parse($literal.Groups[1].Value)
+        if($services -isnot [Collections.IDictionary] -or $services.Count -ne 2 -or
+            -not $services.ContainsKey('browser') -or -not $services.ContainsKey('sky') -or
+            $services['browser'] -isnot [string] -or $services['sky'] -isnot [string]){
+            throw 'STOP: acquired services key/type set changed.'
+        }
+        $m=[regex]::Match($services['browser'],'^C:/Users/moody/\.codex/plugins/cache/openai-bundled/browser/(?<version>[0-9]{2}\.[0-9]{4}\.[0-9]{1,6})/scripts/(?<tail>[A-Za-z0-9_.-]{1,64})$')
+        if(-not $m.Success){throw 'STOP: acquired browser service path structure changed.'}
+        $tailHash=Get-AIOSHash ((New-Object Text.UTF8Encoding($false)).GetBytes($m.Groups['tail'].Value))
+        if($tailHash -cne $Pin.browser_tail_sha256){throw 'STOP: acquired browser service fixed basename changed.'}
+        if($services['sky'].Length -ne $Pin.sky_chars -or -not $services['sky'].StartsWith('@oai/sky/',[StringComparison]::Ordinal) -or
+            (Get-AIOSHash ((New-Object Text.UTF8Encoding($false)).GetBytes($services['sky']))) -cne $Pin.sky_sha256){
+            throw 'STOP: acquired sky service reference changed.'
+        }
+        $Context.browser_version=$m.Groups['version'].Value
+    }else{throw 'STOP: unreviewed integration structural rule.'}
+}
+function Assert-AIOSMutableIntegrationConsistency {
+    param([object]$Context)
+    if($Context.cua_ids.Count -gt 0){
+        if($Context.cua_ids.Count -ne 5){throw 'STOP: acquired CUA integration group incomplete.'}
+        $common='';foreach($id in $Context.cua_ids.Values){
+            if($common -ceq ''){$common=$id}elseif($common -cne $id){throw 'STOP: acquired CUA runtime identity inconsistent.'}
+        }
+    }
+    if($Context.app_version -cne '' -or $Context.browser_version -cne ''){
+        if($Context.app_version -ceq '' -or $Context.browser_version -ceq '' -or $Context.app_version -cne $Context.browser_version){
+            throw 'STOP: acquired app/browser version inconsistent.'
+        }
+    }
+}
+
 function Assert-AIOSCodexConfigText {
     param([string]$Text,[string]$Root,[ValidateSet('User','Project')][string]$Role,
         [object]$IntegrationPins,[bool]$RequireIntegrationSet=$false)
@@ -222,6 +328,7 @@ function Assert-AIOSCodexConfigText {
     # below always supply the compiled acquisition pins and required real set.
     $section='';$project='';$seen=@{};$tables=@{};$operational=@{};$trust='';$windows=''
     $profileDescription='';$profileExtends='';$integrationSeen=@{}
+    $mutableContext=@{cua_ids=@{};app_version='';browser_version=''}
     foreach($line in @($Text -split "`n")){
         $line=$line.Trim()
         if($line -ceq '' -or $line.StartsWith('#')){continue}
@@ -258,10 +365,12 @@ function Assert-AIOSCodexConfigText {
         if($Role -ceq 'User' -and @($IntegrationPins.Keys) -ccontains $integrationId){
             $pin=$IntegrationPins[$integrationId]
             if($pin.ContainsKey('rule')){
-                if($integrationId -cne 'mcp_servers.node_repl.env|SKY_CUA_NATIVE_PIPE_DIRECTORY'){
-                    throw 'STOP: structural rule on foreign integration field.'
-                }
-                Assert-AIOSAcquiredPipeValue $raw $pin
+                if($pin.rule -ceq 'WINDOWS_PIPE_GUID_V1'){
+                    if($integrationId -cne 'mcp_servers.node_repl.env|SKY_CUA_NATIVE_PIPE_DIRECTORY'){
+                        throw 'STOP: structural rule on foreign integration field.'
+                    }
+                    Assert-AIOSAcquiredPipeValue $raw $pin
+                }else{Assert-AIOSAcquiredMutableIntegrationValue $integrationId $raw $pin $mutableContext}
             }else{
                 if((Get-AIOSHash ((New-Object Text.UTF8Encoding($false)).GetBytes($raw))) -cne $pin.sha256){
                     throw 'STOP: acquired integration config changed; review the specific delta.'
@@ -305,6 +414,7 @@ function Assert-AIOSCodexConfigText {
         if($integrationSeen.Count -ne $IntegrationPins.Count){throw 'STOP: acquired integration config set incomplete.'}
         foreach($name in $IntegrationPins.Keys){if(-not $integrationSeen.ContainsKey($name)){throw 'STOP: acquired integration config set incomplete.'}}
     }
+    Assert-AIOSMutableIntegrationConsistency $mutableContext
     $named=($Role -ceq 'Project' -and $operational.ContainsKey('default_permissions'))
     if($named -and $operational.ContainsKey('sandbox_mode')){throw 'STOP: permission profile cannot be combined with sandbox_mode.'}
     $required=@{approval_policy='on-request';approvals_reviewer='user'}
