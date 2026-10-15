@@ -1,6 +1,6 @@
-# 00_PROJECT_Gap_Register_v22
+# 00_PROJECT_Gap_Register_v23
 
-DATA: 2026-09-30
+DATA: 2026-10-15
 
 ------------------------------------------------
 SCOPO
@@ -105,7 +105,10 @@ Documenti aggiornati e consegnati come file scaricabili:
 - 00_PROJECT_Gap_Register v22
 
 Documenti tecnici e runtime manifest invariati nel ciclo.
-Le nuove versioni devono essere recepite nelle copie PC e negli allegati del progetto; nessun aggiornamento automatico della sessione attiva.
+Le copie PC cambiano tramite il ciclo documentale; commit/push pubblicano i documenti.
+Per gli allegati vale il Kernel Manifest: nessuna duplicazione ordinaria dei documenti
+canonici; checkpoint attivi e materiali di chat hanno provenienza dichiarata.
+Nessun aggiornamento automatico dello snapshot della sessione attiva.
 GitHub resta alla baseline verificata finché l'utente non recepisce i file e completa commit/push locale.
 
 ------------------------------------------------
@@ -2146,3 +2149,5 @@ v22 — 2026-09-30
 - checkpoint Data Structure già assorbito / archiviabile; checkpoint Readiness conservato come riferimento storico dopo assorbimento delle decisioni
 - file consegnati per recepimento locale; scrittura GitHub via integrazione bloccata con errore 403, nessuna modifica remota eseguita
 - storico revisioni precedente preservato integralmente
+
+v23 — 2026-10-15: allineamento del solo richiamo alle fonti/copie/checkpoint; sequenza prodotto, gap e priorita' invariati.

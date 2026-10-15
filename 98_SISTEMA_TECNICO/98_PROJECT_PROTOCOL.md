@@ -4,6 +4,9 @@ PROJECT — Protocollo Operativo
 
 Sistema: AIOS Project Framework
 
+Versione: v1.0
+Data revisione: 2026-10-15
+
 
 
 
@@ -338,8 +341,8 @@ TECNICI (se rilevanti):
 
 Se un documento necessario manca:
 
-→ attivazione Safe Mode
-→ richiesta upload
+→ sospensione dell'operativita' dipendente
+→ tentare il recupero secondo il Kernel; se non disponibile chiedere soltanto la fonte mancante
 
 ---
 
@@ -469,4 +472,9 @@ Se:
 
 → Boot Sequence
 
-→ ricarica documenti core
+→ acquisizione documenti core dalla repository allo SHA del boot
+STORICO REVISIONI
+
+v1.0 — 2026-10-15: prima versione esplicita, testo precedente preservato.
+Per acquisizione, copie, checkpoint e re-boot vale il Kernel Manifest.
+Nessun obbligo di duplicare nelle fonti allegate i documenti gia' su GitHub.

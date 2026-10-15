@@ -2,7 +2,7 @@ PROJECT --- CQD PROTOCOL
 
 Documento: 98_PROJECT_CQD_Protocol
 
-Versione: v1.0
+Versione: v1.1
 
 Sistema: AIOS Project Framework
 
@@ -138,7 +138,11 @@ della versione precedente.
 
 Se il contenuto precedente non è disponibile
 
-deve essere richiesto il caricamento del documento originale.
+si tenta prima l'acquisizione completa secondo il Kernel Manifest.
+
+Solo se non accessibile si richiede il materiale originale mancante.
+
+Per una scrittura serve la preimage locale completa, anche non committata.
 
 È vietata la generazione di versioni parziali
 
@@ -261,3 +265,7 @@ VERSION HISTORY
 v1.0 --- Prima definizione del CQD Protocol universale
 
 per progetti basati sul sistema AIOS.
+
+v1.1 — 2026-10-15: recupero completo delle fonti prima dell'upload;
+preimage locale preservata. Metriche pregresse e regole CQD restano nel loro
+ambito: nessuna nuova esportazione DOCX o qualifica nativa e' attestata qui.

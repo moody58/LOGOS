@@ -1,7 +1,7 @@
 PROJECT — SESSION MANAGEMENT PROTOCOL
 
 Documento: 98_PROJECT_Session_Management_Protocol  
-Versione: v1.0  
+Versione: v1.1  
 
 ------------------------------------------------
 SCOPO
@@ -133,11 +133,11 @@ Procedura:
 
 1. nuova chat
 2. Boot Sequence (#start)
-3. caricare:
+3. acquisire dalla repository allo SHA del boot secondo il Kernel:
 
 - 00_PROJECT_State
 - Roadmap
-- ultimo checkpoint
+- ultimo checkpoint pertinente, da repo oppure allegato con provenienza dichiarata
 
 4. dichiarare nodo attivo
 
@@ -175,7 +175,8 @@ Conseguenza:
 
 Le fonti NON causano deriva  
 
-La deriva è causata da saturazione chat  
+La saturazione puo' causare deriva; fonti incoerenti o stale vanno rilevate
+secondo il Kernel, senza attribuire tutto alla lunghezza della chat.  
 
 ------------------------------------------------
 PRINCIPIO FINALE
@@ -192,3 +193,10 @@ Meglio:
 Peggio:
 
 ❌ Regia lunga e incoerente  
+VERSION HISTORY
+
+v1.1 — 2026-10-15: acquisizione tramite integrazioni e checkpoint pertinenti.
+Per fonti, allegati persistenti, nuovo boot e fallimenti di accesso applicare
+00_FONDAMENTA_PROGETTO/00_PROJECT_KERNEL_MANIFEST.md.
+Un re-boot esplicito nello stesso nodo non richiede una nuova chat se il
+contesto resta adeguato; cambio nodo o saturazione conservano #switch/nuova chat.

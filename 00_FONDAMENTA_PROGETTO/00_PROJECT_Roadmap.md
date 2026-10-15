@@ -1,6 +1,6 @@
-# 00_PROJECT_Roadmap_v24
+# 00_PROJECT_Roadmap_v25
 
-DATA: 2026-09-30
+DATA: 2026-10-15
 
 ------------------------------------------------
 ALLINEAMENTO REENTRY / REGOLA DI RIPRESA
@@ -1315,7 +1315,8 @@ Prossimo nodo operativo:
 DA DEFINIRE E CONFERMARE CON L'UTENTE DOPO L'ALLINEAMENTO DOCUMENTALE.
 
 Sequenza alla ripresa:
-1. recepire sul PC State v31, Roadmap v24 e Gap Register v22 e sincronizzare il repository con il normale commit/push locale
+1. acquisire lo State, la Roadmap e il Gap Register correnti allo SHA del boot;
+   per eventuali scritture acquisire i file locali completi, poi commit/push manuali
 2. chiarire con l'utente scopo, risultato atteso e perimetro del prossimo lavoro
 3. confermare un solo nodo
 4. aprire una nuova micro-sessione con Core Boot e soli documenti necessari secondo il Kernel Manifest
@@ -1330,7 +1331,9 @@ Checkpoint:
 - Data Structure: già assorbito, archiviabile
 - Readiness: esito e vincoli assorbiti; checkpoint originale da conservare come riferimento storico, senza ricrearlo
 
-La sincronizzazione delle copie PC e degli allegati ChatGPT richiede il recepimento delle nuove versioni.
+La regola corrente di acquisizione e copia e' nel Kernel Manifest: documenti
+consolidati da GitHub, preimage locali per le scritture, allegati persistenti
+ordinariamente riservati ai checkpoint attivi. Nessuna ricarica sistematica dei documenti.
 Le fonti nuove non aggiornano automaticamente la sessione già avviata.
 
 ------------------------------------------------
@@ -2395,3 +2398,5 @@ v24 — 2026-09-30
 - checkpoint Data Structure già assorbito / archiviabile; checkpoint Readiness conservato come riferimento storico dopo assorbimento delle decisioni
 - file consegnati per recepimento locale; scrittura GitHub via integrazione bloccata con errore 403, nessuna modifica remota eseguita
 - storico revisioni precedente preservato integralmente
+
+v25 — 2026-10-15: allineamento del solo richiamo alle fonti/copie/checkpoint; sequenza prodotto, gap e priorita' invariati.

@@ -1,6 +1,6 @@
-# 00_PROJECT_KERNEL_MANIFEST_v04
+# 00_PROJECT_KERNEL_MANIFEST_v05
 
-DATA: 2026-09-30
+DATA: 2026-10-15
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -294,8 +294,10 @@ Percorsi canonici nella repository:
 | Protocolli AIOS necessari al nodo | 98_SISTEMA_TECNICO/98_PROJECT_*.md; selezionare quelli pertinenti |
 
 La presenza di un percorso nel manifest non dimostra la disponibilità del file: verificarla al boot.
-Il file delle istruzioni nella repository deve coincidere con il testo recepito nella tab del progetto.
-La tab dell'app non si sincronizza da sola: ogni sua modifica richiede recepimento esplicito.
+La tab del progetto contiene il blocco BOOTSTRAP TAB CHATGPT, copiato esattamente da
+UNIVERSAL_PROJECT_RUNTIME_INSTRUCTIONS.md; il resto delle istruzioni complete si legge
+dalla repository allo SHA del boot. Non e' richiesta la duplicazione dell'intero file
+nella tab. La tab non si sincronizza da sola: ogni modifica richiede recepimento esplicito.
 La discordanza tra istruzioni applicate e copia canonica va segnalata prima dell'operatività.
 Lettura tramite connettore preferita; recupero diretto dallo stesso repository/SHA ammesso
 se disponibile. Dichiarare il mezzo di acquisizione effettivamente riuscito.
@@ -369,6 +371,56 @@ Checkpoint:
 - le sue decisioni assorbite sono nei documenti canonici; se al prossimo nodo serve contenuto
   non assorbito, richiedere l'originale. Non inventarne testo, data, percorso o provenienza
 
+### Fonti, copie e sessioni con integrazioni — 2026-10-15
+
+La fonte documentale consolidata e' la repository del progetto. Al boot
+risolvere branch e commit SHA, poi leggere integralmente i documenti necessari
+a quello SHA, senza mescolare letture successive di main. Registrare mezzo
+di acquisizione, percorsi, commit e limiti. Cercare prima tramite le capacita'
+disponibili; se una fonte necessaria non e' accessibile chiedere soltanto il
+materiale mancante. Connessione configurata, nome file o risultato di ricerca
+non attestano lettura completa. Nessun fallback silenzioso su allegati vecchi.
+
+La working copy locale e' la preimage per ogni scrittura: acquisirla completa,
+con hash, BOM/EOL e modifiche non committate. GitHub non sostituisce un delta
+locale. Commit registra in Git locale; push pubblica sul remoto. Uguaglianza
+dei commit non prova identita' dei byte del PC, dei file esclusi o dei servizi.
+Le letture native e le guardie restano quelle dell'azione realmente qualificata.
+
+Le fonti persistenti allegate al progetto ChatGPT sono riservate ordinariamente
+ai checkpoint attivi non ancora assorbiti. Gli allegati di una singola chat
+possono invece contenere report, preimage locali, export pertinenti o fonti
+eccezionalmente indisponibili: dichiararne origine, hash quando disponibile,
+scopo e divergenze. Non duplicare abitualmente i documenti canonici gia' su
+GitHub. Una correzione esplicita dell'utente resta un delta da integrare,
+non una prova che il remoto sia gia' aggiornato.
+
+I checkpoint possono essere gia' tracciati oppure allegati: dichiarare quale
+copia viene usata. Non imporre il doppio caricamento. Se duplicati, confrontare
+contenuto e provenienza; non scegliere soltanto per data o nome. Dopo il
+recepimento nei documenti attivi registrarne l'assorbimento e valutare
+l'archiviazione. Creazione, spostamento o cancellazione nella repo seguono
+un task autorizzato e un percorso che li supporti; il modify_ranges esistente
+non li abilita. Nessuna cancellazione automatica o riscrittura della storia Git.
+Non caricare credenziali, dati personali superflui o materiali privati in repo
+pubbliche. Le prove necessarie alla ripartenza restano conservate.
+
+Lo snapshot documentale della sessione resta esplicito. Dopo una pubblicazione
+necessaria al lavoro dichiarare un nuovo boot con nuovo SHA; non e' obbligatorio
+cambiare chat se contesto, nodo e qualita' sono ancora adeguati. Un cambio nodo
+o saturazione richiede la nuova sessione prevista dai protocolli. Nessun
+aggiornamento di file, memoria o allegato modifica da solo lo snapshot attivo.
+Un rebind dopo commit acquisisce sempre nuovi binding; non riusa descriptor
+o approvazioni consumati. Le conversazioni precedenti, se recuperabili con
+capacita' disponibili, aiutano la ricostruzione ma non attestano un runtime.
+
+I servizi collegati sono fonti live soltanto per gli oggetti davvero letti.
+Per Retool/Supabase dichiarare identita', istante, oggetti e proprieta'
+verificate; il commit documentale non congela app o DB. Nessun export di
+righe o controllo live estraneo e' necessario a una sessione solo documentale.
+Accesso in lettura non autorizza scritture; permessi tecnici e connessioni
+vanno osservati, non dedotti dal testo delle istruzioni.
+
 Ordine delle fonti e fallback:
 - la scelta esplicita dell'utente sulle fonti governa la sessione e va registrata
 - in assenza di una scelta diversa, acquisire la documentazione canonica da GitHub allo SHA del boot
@@ -383,7 +435,8 @@ Ordine delle fonti e fallback:
 Snapshot:
 - lo SHA vincola le letture documentali successive della stessa sessione
 - un commit pubblicato dopo il boot non entra nello snapshot attivo
-- per recepire nuove versioni, aprire una nuova sessione con #start
+- per recepire nuove versioni, dichiarare un nuovo boot #start con nuovo SHA;
+  una nuova chat serve se cambia nodo, il contesto non e' sufficiente o c'e' saturazione
 - Supabase non viene congelato dal boot: annotare istante e ambito di ogni osservazione
 - prima di una modifica runtime già autorizzata, ricontrollare gli oggetti interessati
   con letture prive di effetti collaterali; se divergono dalla baseline, sospendere la modifica
@@ -560,3 +613,7 @@ v04 — 2026-09-30
 - Session Management Protocol originale v1.0 incluso senza modifiche di contenuto
 - nessuna autorizzazione permanente a scrivere e nessuna modifica al runtime LOGOS
 - sezioni originali e changelog v01-v03 preservati
+
+Revisione v05 — 2026-10-15: fonti con integrazioni, distinzione Git/working copy/live,
+allegati persistenti per checkpoint e bootstrap tab derivato dalle istruzioni canoniche.
+Nessun trasferimento automatico di permessi o ampliamento del motore.

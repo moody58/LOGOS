@@ -2,8 +2,8 @@ PROJECT — Runtime System
 
 
 
-Versione: v1.2
-Data: 2026-10-14
+Versione: v1.3
+Data: 2026-10-15
 
 
 
@@ -179,7 +179,9 @@ Documenti fondamentali verificati:
 
 Se i documenti non sono disponibili
 
-il sistema deve richiederne il caricamento.
+il sistema tenta prima il recupero dalle fonti accessibili secondo il Kernel;
+
+solo se mancano ancora richiede il materiale necessario.
 
 
 
@@ -677,9 +679,9 @@ riusa fonti e prove immutate. Applica la divisione Work/Codex documentata
 nel Runtime. Riporta stato, capacità effettive, prossimo passo e residuo.
 ```
 
-La tab delle istruzioni del progetto ChatGPT non si sincronizza da sola
-con UNIVERSAL_PROJECT_RUNTIME_INSTRUCTIONS.md: se la sua copia cambia,
-il recepimento nella tab resta un passo esplicito. Il riferimento stabile
+La tab ChatGPT contiene il blocco BOOTSTRAP TAB CHATGPT delle istruzioni
+canoniche; non si sincronizza da sola. Se quel blocco cambia, il suo
+recepimento nella tab resta un passo esplicito. Il riferimento stabile
 al Runtime evita di duplicare qui o nelle chat l'intero manuale.
 
 
@@ -721,3 +723,9 @@ Il suo obiettivo è mantenere:
 
 
 
+
+v1.3 — 2026-10-15: acquisizione da fonti accessibili prima dell'upload,
+contratto del bootstrap tab e rinvio al Kernel per fonti e sessioni.
+Il limite del marker iniziale di modify_ranges resta invariato: intestazioni
+versionate sulla prima riga richiedono un percorso distinto o una qualifica dedicata.
+Nessuna qualifica o installazione del motore e' eseguita da questa revisione.
