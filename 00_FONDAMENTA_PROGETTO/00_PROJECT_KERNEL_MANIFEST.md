@@ -1,6 +1,6 @@
-# 00_PROJECT_KERNEL_MANIFEST_v05
+# 00_PROJECT_KERNEL_MANIFEST_v06
 
-DATA: 2026-10-15
+DATA: 2026-10-16
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -277,6 +277,8 @@ Percorsi canonici nella repository:
 |---|---|
 | Istruzioni del progetto; nome file storico conservato | UNIVERSAL_PROJECT_RUNTIME_INSTRUCTIONS.md |
 | Kernel Manifest | 00_FONDAMENTA_PROGETTO/00_PROJECT_KERNEL_MANIFEST.md |
+| LOGOS Visual Identity | 00_FONDAMENTA_PROGETTO/BRAND_IDENTITY/00_LOGOS_Visual_Identity.md |
+| LOGOS Typography System | 00_FONDAMENTA_PROGETTO/BRAND_IDENTITY/00_LOGOS_Typography_System.md |
 | State | 00_FONDAMENTA_PROGETTO/00_PROJECT_State.md |
 | Roadmap | 00_FONDAMENTA_PROGETTO/00_PROJECT_Roadmap.md |
 | Gap Register | 00_FONDAMENTA_PROGETTO/00_PROJECT_Gap_Register.md |
@@ -490,6 +492,13 @@ Matching project/entity:
 - 06_LOGOS_View_Preview_System se coinvolge hint/preview
 - 04_LOGOS_Retool_Architecture se coinvolge select/componenti
 
+Brand Identity / font / UI:
+
+- 00_FONDAMENTA_PROGETTO/BRAND_IDENTITY/00_LOGOS_Visual_Identity.md
+- 00_FONDAMENTA_PROGETTO/BRAND_IDENTITY/00_LOGOS_Typography_System.md
+- 04_LOGOS_Retool_Architecture se il nodo coinvolge componenti Retool
+- LOGOS_RETOOL_RUNTIME_REAL se serve verifica del runtime
+
 Retool UI / componenti / graph / Hidden:
 
 - 04_LOGOS_Retool_Architecture
@@ -617,3 +626,6 @@ v04 — 2026-09-30
 Revisione v05 — 2026-10-15: fonti con integrazioni, distinzione Git/working copy/live,
 allegati persistenti per checkpoint e bootstrap tab derivato dalle istruzioni canoniche.
 Nessun trasferimento automatico di permessi o ampliamento del motore.
+
+Revisione v06 — 2026-10-16: aggiunte le fonti canoniche Brand Identity e Typography
+e la loro lettura nella Session Boot Matrix per i nodi pertinenti. Core Boot e gerarchia invariati.

@@ -1,6 +1,6 @@
-# PROJECT_CHANGELOG_v03
+# PROJECT_CHANGELOG_v04
 
-DATA: 2026-10-15
+DATA: 2026-10-16
 
 ------------------------------------------------
 SCOPO
@@ -37,6 +37,21 @@ correzioni e riallineamenti
 
 ### Removed
 elementi eliminati
+
+------------------------------------------------
+2026-10-16 — BRAND IDENTITY & TYPOGRAPHY / CONSOLIDAMENTO DOCUMENTALE
+------------------------------------------------
+
+### Added
+
+- Registrata la pubblicazione iniziale dei sei file: Visual Identity v1.0, Typography System v1.1 e quattro PNG, nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6`.
+- Consolidate documentalmente Visual Identity v1.1 e Typography System v1.2, senza attribuirle al commit iniziale.
+- Aggiornate le fonti canoniche e la Session Boot Matrix del Kernel per i nodi pertinenti a Brand Identity, font e UI.
+
+### Limiti
+
+- Nessuna modifica a palette, artwork, PNG, famiglie tipografiche, Roadmap o Gap Register.
+- I due pathname Brand Identity e i marker versionati sono fuori dal perimetro P6 qualificato.
 
 ------------------------------------------------
 2026-10-14 — PROCEDURA DOCUMENTALE LOGOS P6 INTEGRATA E VERIFICATA
@@ -216,6 +231,13 @@ Non include:
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v04 — 2026-10-16
+
+- registrata la pubblicazione iniziale dei sei file (due documenti originari Visual Identity v1.0 e Typography v1.1, più quattro PNG) nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6`
+- registrato il successivo consolidamento documentale Visual Identity v1.1 e Typography v1.2, distinto dalla pubblicazione iniziale
+- preservati identità, palette, artwork, PNG, famiglie tipografiche e criteri approvati; nessuna nuova versione viene attribuita alla pubblicazione iniziale
+- pathname Brand Identity e marker versionato fuori dai limiti P6 disponibili
 
 v03 — 2026-10-15
 

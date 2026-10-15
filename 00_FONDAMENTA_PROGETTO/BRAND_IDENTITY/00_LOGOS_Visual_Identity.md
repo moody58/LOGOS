@@ -1,13 +1,13 @@
 # 00_LOGOS_Visual_Identity — LOGOS Visual Identity System
 
-**Documento canonico previsto:** `00_LOGOS_Visual_Identity.md`  
-**Versione del contenuto:** v1.0 — candidata al recepimento  
-**Data di preparazione:** 2026-10-15  
+**Documento canonico:** `00_LOGOS_Visual_Identity.md`  
+**Versione del contenuto:** v1.1 — recepimento documentale canonico  
+**Data del recepimento documentale:** 2026-10-16  
 **Decisione creativa originale:** 2026-10-09  
 **Progetto:** LOGOS — Event Operating System  
 **Ambito:** identità visiva, asset di marca, palette, riferimenti di utilizzo  
 **Stato della decisione:** APPROVATA CREATIVAMENTE dall'utente nel brainstorming LOGOS  
-**Stato del recepimento:** da certificare con controllo della working copy, applicazione autorizzata e commit/push manuali  
+**Stato del recepimento:** versione v1.1 del presente documento; la baseline `f4e02738dd43668c7ce6e16821e81c02846423d6` pubblicava la versione originaria v1.0  
 **Fonte primaria:** [`references/LOGOS_Visual_Identity_Reference_Board_20261009.png`](references/LOGOS_Visual_Identity_Reference_Board_20261009.png)  
 **Sistema tipografico correlato:** [`00_LOGOS_Typography_System.md`](00_LOGOS_Typography_System.md)
 
@@ -132,7 +132,7 @@ Le dimensioni e le regole complete sono preservate in `00_LOGOS_Typography_Syste
 | B07 | Equivalenze Pantone/RAL | **Indicative**; swatch fisici da validare |
 | B08 | AAA, contrasti di tutti i componenti, mobile Safari | **Da verificare su UI reale** |
 | B09 | Uso dei font in Retool web/mobile e dashboard futura | **Da verificare sul piano e runtime effettivi** |
-| B10 | Integrazione nei documenti canonici del repo | **Da verificare nel repository locale e remoto** prima di dichiarare il recepimento |
+| B10 | Integrazione nei documenti canonici del repo | Documento recepito come v1.1; la baseline `f4e02738dd43668c7ce6e16821e81c02846423d6` conteneva la versione originaria v1.0 |
 
 ## 9. Registro degli asset raster e provenienza
 
@@ -163,3 +163,5 @@ I file sono **copie binarie identiche** ai PNG forniti alla sessione, salvate co
 - Standard e criteri: WCAG 2.2 W3C (https://www.w3.org/TR/WCAG22/), verifiche applicative future, non certificazione del prodotto.
 
 **v1.0 (candidato, 2026-10-15):** recepimento conservativo delle scelte creative 2026-10-09, trascrizione fedele di palette e limiti, asset originali con hash e ruoli; nessun aggiornamento del runtime.
+
+**v1.1 (2026-10-16):** consolidamento documentale canonico; la versione originaria v1.0 era stata pubblicata nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6`. Identità, palette, artwork e PNG invariati.

@@ -1,9 +1,20 @@
-# 00_PROJECT_State_v33
+# 00_PROJECT_State_v34
 
-DATA: 2026-10-15
+DATA: 2026-10-16
 
 ------------------------------------------------
 NODO ATTIVO:
+------------------------------------------------
+
+BRAND IDENTITY & FONT — CONSOLIDAMENTO DOCUMENTALE
+
+Pubblicazione iniziale dei sei file (due documenti originari e quattro PNG) registrata nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6`.
+Consolidamento documentale: Visual Identity v1.1 e Typography System v1.2. Il commit iniziale pubblicava le versioni originarie Visual Identity v1.0 e Typography v1.1. Identità, palette, artwork, PNG, Source Sans 3, IBM Plex Mono e criteri approvati invariati.
+Limiti P6: i due pathname Brand Identity non rientrano nei target qualificati; il marker iniziale versionato non può essere modificato tramite modify_ranges.
+Stato funzionale, Roadmap e Gap Register invariati; nessuna verifica live del prodotto.
+
+------------------------------------------------
+SNAPSHOT PRECEDENTE — PROCEDURA DOCUMENTALE LOGOS P6 — 2026-10-15
 ------------------------------------------------
 
 PROCEDURA DOCUMENTALE LOGOS — P6 INTEGRATO E VERIFICATO NEL PERIMETRO QUALIFICATO
@@ -42,6 +53,7 @@ Stato funzionale del prodotto preservato:
 - Roadmap v24 e Gap Register v22 preservati; nessuna nuova priorità di sviluppo assegnata
 
 ------------------------------------------------
+
 SNAPSHOT FONTI CANONICHE / BOOT CONTROLLATO — STORICO 2026-09-30:
 ------------------------------------------------
 
@@ -2594,3 +2606,9 @@ v33 — 2026-10-15
 - distinta la portabilità documentale ADEXIMA dall'implementazione dell'istanza applicativa
 - preservati integralmente storico e snapshot precedenti, salvo i richiami correnti esplicitamente aggiornati
 - nessuna nuova qualifica, verifica live del prodotto o adozione automatica di baseline
+
+v34 — 2026-10-16
+
+- registrata la pubblicazione iniziale dei sei file nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6` e il successivo consolidamento documentale Visual Identity v1.1 / Typography System v1.2
+- preservati identità, colori, artwork, PNG, font e criteri approvati; il commit iniziale contiene Visual Identity v1.0 e Typography v1.1, non le revisioni successive
+- dichiarati i limiti P6 sui nuovi pathname e sul marker versionato

@@ -1,9 +1,9 @@
 # 00_LOGOS_Typography_System — LOGOS Sistema tipografico
 
-**Documento canonico previsto:** `00_LOGOS_Typography_System.md`  
-**Versione:** `v1.1` — recepimento documentale della decisione v1.0 del 2026-10-09, candidato  
+**Documento canonico:** `00_LOGOS_Typography_System.md`  
+**Versione:** `v1.2` — recepimento documentale canonico della decisione approvata il 2026-10-09  
 **Data della decisione:** 09 ottobre 2026  
-**Recepimento documentale predisposto:** 15 ottobre 2026  
+**Data del recepimento documentale:** 16 ottobre 2026  
 **Ambito:** identità tipografica e criteri di leggibilità del progetto LOGOS (Event Operating System)  
 **Stato decisionale:** **APPROVATO** per l'identità tipografica; **implementazione Retool e conformità WCAG AAA da validare**.  
 **Fonte decisionale:** confronto progressivo fra Atkinson Hyperlegible Next, Inter, Geist Sans, IBM Plex Sans, Source Sans 3 e Public Sans; laboratori HTML 01, 02, 03 e correzione 03.1; valutazioni dell'utente in questa sessione.  
@@ -212,13 +212,14 @@ body, input, select, textarea, button { font-family: var(--logos-font-ui); }
 |---|---|---|
 | v1.0 | 09.10.2026 | Prima approvazione del sistema LOGOS: Source Sans 3 + IBM Plex Mono. Gerarchie, accessibilità, condizioni Retool, distribuzione e test futuri. |
 | v1.1 (candidata) | 15.10.2026 | Allineamento di nomenclatura, sede canonica e provenienza della decisione v1.0; famiglie, pesi e criteri approvati invariati. |
+| v1.2 | 16.10.2026 | Consolidamento documentale successivo alla versione originaria v1.1, pubblicata nel commit `f4e02738dd43668c7ce6e16821e81c02846423d6`; Source Sans 3, IBM Plex Mono e criteri tipografici invariati. |
 
 ### Origine delle decisioni
 
 1. Base tipografica **AIOS**: Geist Sans + IBM Plex Mono; wordmark AIOS proprietario (discussione e documento ufficiale AIOS già confrontato).
 2. **LOGOS**: scelta esplicita dell'utente dopo prove comparative; Source Sans 3 favorito per disambiguazione e compattezza; Inter favorito sui testi lunghi ma non selezionato.
 3. Versione LOGOS deliberatamente differente dal font UI AIOS; wordmark LOGOS proprietario invariato.
-4. **Fonte madre tipografica prevista:** questo documento, dopo recepimento verificato in `00_FONDAMENTA_PROGETTO/BRAND_IDENTITY/`; il semplice file candidato non attesta pubblicazione. **Non** sostituisce `00_PROJECT_State`, Roadmap, Kernel, documenti di runtime Retool/Supabase, né aggiorna automaticamente il repository GitHub.
+4. **Fonte madre tipografica:** questo documento canonico; la baseline `f4e02738dd43668c7ce6e16821e81c02846423d6` pubblicava la versione originaria v1.1 e la presente revisione registra v1.2. **Non** sostituisce `00_PROJECT_State`, Roadmap, Kernel o documenti di runtime Retool/Supabase.
 
 ### Fonti primarie di verifica
 
@@ -235,7 +236,7 @@ body, input, select, textarea, button { font-family: var(--logos-font-ui); }
 
 ### CQD / consegna
 
-- Documento **nuovo**, non sostituisce una precedente versione ufficiale LOGOS inesistente in questo perimetro.
+- Versione v1.2 del presente documento; la baseline `f4e02738dd43668c7ce6e16821e81c02846423d6` pubblicava la versione originaria v1.1.
 - Identità approvata / runtime invariato / accessibilità e disponibilità dei font in Retool **non ancora certificati**.
 - Markdown è il **master testuale**; l'eventuale PDF potrà essere prodotto con la procedura CQD dedicata, non dal ciclo P6 Markdown.
-- **Recepimento delle copie canoniche e commit GitHub:** passaggio successivo esplicito dell'utente; non eseguito in questa sessione.
+
