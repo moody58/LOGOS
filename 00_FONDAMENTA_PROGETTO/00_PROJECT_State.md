@@ -1,9 +1,48 @@
-# 00_PROJECT_State_v32
+# 00_PROJECT_State_v33
 
-DATA: 2026-09-30
+DATA: 2026-10-15
 
 ------------------------------------------------
 NODO ATTIVO:
+------------------------------------------------
+
+PROCEDURA DOCUMENTALE LOGOS — P6 INTEGRATO E VERIFICATO NEL PERIMETRO QUALIFICATO
+
+Esito consolidato al 2026-10-14:
+- upgrade reale del motore installato e verificato con processo Verify indipendente
+- cicli documentali reali su Runtime, istruzioni universali e AIOS_REFERENCE completati e revisionati
+- commit/push manuali conclusi: b0d8614b6c373857406e27ca3f66cfe75d91af9b
+- contenuti pubblicati confrontati con le postimage approvate; stato Git locale finale segnalato pulito
+- P4 resta concluso in AIOS_CORE; la portabilità LOGOS non ne riapre il perimetro
+
+Fonte madre della procedura:
+- 98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md v1.2: attivazione, ruoli, archivi, messaggi rapidi, evidenze e dipendenze
+- UNIVERSAL_PROJECT_RUNTIME_INSTRUCTIONS.md v1.1, AGENTS.md e AIOS_REFERENCE.md contengono i rimandi operativi
+- il dettaglio tecnico non viene duplicato nello State
+
+Perimetro e limiti dell'esito:
+- trenta pathname Markdown canonici esistenti, con un documento modify_ranges per transazione; nessuna atomicità multi-documento
+- setup verificato non equivale ad autorizzazione di nuovi delta, baseline adottata o readiness produttiva globale
+- baseline_adopted=false e production_ready=false restano i valori delle evidenze finali
+- Prepare originale P5 resta UNKNOWN: gli esiti successivi non ne attestano retroattivamente il completamento
+- individuato nell'allineamento del 2026-10-15 un limite del modify_ranges: il marker iniziale deve essere preservato; la prima riga versionata di State e Changelog richiede un percorso di aggiornamento distinto o un'estensione qualificata
+- non generalizzare i cicli riusciti alla modifica arbitraria delle intestazioni, dei nuovi file, del codice o delle configurazioni
+
+Allineamento e ripresa:
+- questa revisione registra la conclusione tecnica P6; il recepimento del candidato State e del Changelog è distinto dalla preparazione in Work
+- istruzioni nelle tab dei progetti ChatGPT LOGOS e AIOS ancora da acquisire integralmente e confrontare; nessun recepimento automatico dai file
+- ripristino delle regie tramite nuovo boot sulle fonti effettivamente recepite, senza trascinare i vecchi comandi o aprire candidati storici
+- installazione della procedura nella repository ADEXIMA soltanto da valutare in un nodo distinto, con accesso e binding specifici; non costituisce avvio dell'istanza applicativa LOGOS/ADEXIMA
+
+Stato funzionale del prodotto preservato:
+- Readiness completata; Editor Base mai applicato né testato secondo la ricostruzione documentale consolidata
+- prossimo nodo di sviluppo DA DEFINIRE E CONFERMARE CON L'UTENTE
+- nessuna operazione su Retool, Supabase, DB, parser, matching, preview, payload o save flow nel ciclo documentale P6
+- nessuna nuova verifica live del prodotto; percentuali, test e conteggi storici sottostanti non sono nuove misurazioni
+- Roadmap v24 e Gap Register v22 preservati; nessuna nuova priorità di sviluppo assegnata
+
+------------------------------------------------
+SNAPSHOT FONTI CANONICHE / BOOT CONTROLLATO — STORICO 2026-09-30:
 ------------------------------------------------
 
 FONTI CANONICHE / BOOT CONTROLLATO — AGGIORNAMENTO DOCUMENTALE COMPLETATO
@@ -393,15 +432,12 @@ Risultato:
 CQD — VALIDAZIONE DOCUMENTO
 ------------------------------------------------
 
-CQD verificato — integrità confermata.
-
-- documento completo aggiornato dalla v30; storico revisioni precedente preservato integralmente
-- Readiness registrata come completata, distinta dall'implementazione
-- Editor Base registrato come chat aperta ma mai applicata/testata
-- prossimo nodo non preassegnato
-- baseline documentale distinta dalla verifica live del sistema
-- nessuna logica tecnica nuova e nessuna modifica runtime
-- fonti canoniche e vincoli di scope preservati
+- documento completo preservato; aggiornati soltanto intestazione, esito documentale, richiamo CQD, obiettivo immediato e storico della revisione
+- State v32 e relativi snapshot conservati come storico esplicito; nessuna sintesi sostitutiva dei contenuti precedenti
+- conclusione tecnica P6 distinta dallo stato del prodotto e dal recepimento dei candidati di allineamento
+- limite dell'intestazione versionata dichiarato senza estendere tacitamente la qualifica del motore
+- prossimi nodi di sviluppo non preassegnati; regie e istruzioni nelle tab da riallineare separatamente
+- metriche e confronto del candidato completi nel relativo pacchetto; Check/Apply di questa revisione non attestati da questa sezione
 
 ------------------------------------------------
 IDENTIFICAZIONE PROGETTO
@@ -995,20 +1031,26 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Ripresa e allineamento documentale completati in questo ciclo.
+Consolidare l'allineamento documentale della procedura P6 già integrata e verificata,
+distinguendo preparazione in Work e recepimento effettivo dei file sul PC.
 
-Per la fotografia post-Readiness e lo stato dell'Editor Base, vedere NODO ATTIVO all'inizio del documento.
+Completare la verifica delle istruzioni nelle tab ChatGPT di LOGOS e AIOS.
+Ripristinare poi le regie con fonti aggiornate e nuovo boot, senza riaprire le qualifiche concluse.
+Valutare in seguito la portabilità documentale verso ADEXIMA con accesso e binding specifici.
+Il limite del marker iniziale dei documenti versionati va risolto nel percorso autorizzato;
+la preparazione di questo testo non certifica un Apply qualificato sulla prima riga.
 
-Prossimo nodo: da definire e confermare con l'utente dopo l'allineamento, chiarendo scopo, risultato utile e perimetro.
+Per lo stato prodotto resta valido: Readiness completata; Editor Base mai applicato né testato.
+Prossimo nodo di sviluppo: da definire e confermare con l'utente in regia, chiarendo scopo e perimetro.
 
-Boot per il confronto sul prossimo passo:
-- State v31
-- Roadmap v24
-- Gap Register v22
-- ultimo checkpoint rilevante, solo se necessario per dettagli non assorbiti
+Fonti per la ripresa:
+- versione di questo State effettivamente recepita, non la sola versione candidata
+- Roadmap v24 e Gap Register v22
+- Kernel Manifest e istruzioni canoniche al commit acquisito dal nuovo boot
+- ultimo checkpoint pertinente, senza assumere una sincronizzazione automatica delle chat
 
-I documenti tecnici del futuro nodo saranno scelti dopo la sua conferma, secondo il Kernel Manifest.
-Nessun boot implementativo Editor Base è imposto da questo aggiornamento.
+I documenti tecnici del futuro nodo saranno scelti dopo la sua conferma.
+Nessun boot implementativo Editor Base o avvio di istanze verticali è imposto da questo allineamento.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -2542,3 +2584,13 @@ v32 — 2026-09-30
 - preservati integralmente snapshot funzionale e changelog precedenti
 - Roadmap v24 e Gap Register v22 invariati; prossimo nodo di sviluppo da confermare
 - nessuna modifica al runtime LOGOS o ai permessi dei collegamenti
+
+v33 — 2026-10-15
+
+- registrata la conclusione tecnica P6 e il commit/push del 2026-10-14
+- richiamato il Runtime v1.2 senza duplicare il manuale operativo
+- preservati lo stato prodotto, la Readiness e il prossimo nodo da confermare
+- dichiarati il limite del marker iniziale, le tab ChatGPT da verificare e il ripristino separato delle regie
+- distinta la portabilità documentale ADEXIMA dall'implementazione dell'istanza applicativa
+- preservati integralmente storico e snapshot precedenti, salvo i richiami correnti esplicitamente aggiornati
+- nessuna nuova qualifica, verifica live del prodotto o adozione automatica di baseline

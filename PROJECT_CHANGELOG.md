@@ -1,6 +1,6 @@
-# PROJECT_CHANGELOG_v02
+# PROJECT_CHANGELOG_v03
 
-DATA: 2026-04-02
+DATA: 2026-10-15
 
 ------------------------------------------------
 SCOPO
@@ -37,6 +37,34 @@ correzioni e riallineamenti
 
 ### Removed
 elementi eliminati
+
+------------------------------------------------
+2026-10-14 — PROCEDURA DOCUMENTALE LOGOS P6 INTEGRATA E VERIFICATA
+------------------------------------------------
+
+### Added
+
+- Ingresso operativo permanente nel Runtime v1.2: ruoli Work/Codex, attivazione, pacchetti, messaggi rapidi e dipendenze.
+- Perimetro documentale qualificato di trenta pathname canonici esistenti, un documento modify_ranges per transazione.
+
+### Changed
+
+- Motore documentale e guardia aggiornati con binding LOGOS e verifiche native indipendenti.
+- Runtime, istruzioni universali e AIOS_REFERENCE allineati tramite cicli reali Check, Apply e Verify revisionati.
+- Consolidamento pubblicato con commit manuale b0d8614b6c373857406e27ca3f66cfe75d91af9b.
+
+### Fixed
+
+- Distinti stato della procedura, autorizzazione al singolo delta e stato funzionale del prodotto.
+- Fonte madre tecnica unica nel Runtime; gli altri documenti mantengono rimandi e risultati di propria competenza.
+
+### Limiti e seguito documentale
+
+- Nessuna modifica a Retool, Supabase, schema DB, parser, matching, preview, payload o save flow nel ciclo P6.
+- Nessuna atomicità multi-documento, adozione automatica della baseline o readiness produttiva globale attestata.
+- Il 2026-10-15 l'allineamento State/Changelog ha evidenziato che il marker iniziale del modify_ranges deve restare invariato: l'incremento della versione sulla prima riga richiede un percorso distinto o un'estensione qualificata, non attestata dai precedenti cicli riusciti.
+- Istruzioni nelle tab ChatGPT LOGOS/AIOS da verificare separatamente; ripristino delle regie successivo al recepimento delle fonti.
+- Portabilità documentale verso ADEXIMA da valutare con accesso e binding specifici, senza avviare l'istanza applicativa.
 
 ------------------------------------------------
 2026-04-02 — REBUILD COMPLETO LOGOS
@@ -188,6 +216,12 @@ Non include:
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v03 — 2026-10-15
+
+- registrati la milestone P6 verificata il 2026-10-14, il commit pubblicato e i limiti effettivi della procedura
+- richiamati gli allineamenti delle istruzioni nelle tab e delle regie ancora da completare
+- preservato integralmente lo storico strategico precedente
 
 v02 — 2026-04-02
 
