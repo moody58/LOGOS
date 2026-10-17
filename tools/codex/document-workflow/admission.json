@@ -1,0 +1,9 @@
+{
+  "branch": "main",
+  "document_profile_sha256": "f2345304b5d2717a4400704a1d424b2b62e61d07e3aeb855f653c4ac37d8fb40",
+  "format": "AIOS-PROJECT-ADMISSION/0.6",
+  "permissions_name": "logos_readonly",
+  "project": "LOGOS",
+  "repository": "https://github.com/moody58/LOGOS.git",
+  "root": "C:\\AIOS_GITHUB\\LOGOS"
+}

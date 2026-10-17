@@ -1,9 +1,9 @@
 PROJECT — Runtime System
+Versione: v1.4
 
 
 
-Versione: v1.3
-Data: 2026-10-15
+Data: 2026-10-17
 
 
 
@@ -333,12 +333,6 @@ non attesta da solo i permessi effettivi della GUI, il primo ciclo documentale
 reale, una baseline adottata o la disponibilità per la produzione.
 I permessi della sessione vanno verificati prima dei comandi.
 
-Storico revisioni
-
-v1.0 — 2026-10-13: prima versione dichiarata di questo documento;
-contenuto precedente senza versione esplicita preservato. Integrata la procedura
-documentale LOGOS P5 e la divisione dei compiti tra Work e Codex.
-
 ## Ingresso stabile della procedura documentale
 
 Questo Runtime è il documento madre della procedura documentale LOGOS.
@@ -380,7 +374,9 @@ Segnala soltanto gli input locali completi e i binding realmente mancanti.
 Il riferimento canonico nella repository è:
 https://github.com/moody58/LOGOS/blob/main/98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md
 Main è soltanto il punto di scoperta: dopo il boot usare il commit risolto.
-Work non può leggere direttamente un percorso C: del PC dell'utente.
+L'accesso ai percorsi locali va osservato nella sessione effettiva: quando
+disponibile si acquisiscono i byte locali; altrimenti Codex esegue il task
+di lettura predisposto. Non presumere accesso o indisponibilita.
 
 ### Ruoli permanenti e luogo delle elaborazioni
 
@@ -640,7 +636,7 @@ Le sorgenti dei task vanno conservate nel pacchetto/release di ripartenza;
 un UUID consumato non è un comando da rieseguire. Se manca una dipendenza,
 chiedere quel materiale, non rilanciare la vecchia installazione.
 
-### Riferimenti AIOS_CORE verificabili
+### Riferimenti AIOS_CORE verificabili — snapshot storico del 15 ottobre
 
 Fonti lette integralmente allo SHA
 23e9305f538554fa952d3dd2c65d46d7c38eb174 di moody58/AIOS_CORE:
@@ -685,17 +681,123 @@ recepimento nella tab resta un passo esplicito. Il riferimento stabile
 al Runtime evita di duplicare qui o nelle chat l'intero manuale.
 
 
-Storico integrazione della procedura
+## Release comune 0.6-R01 — stato del 17 ottobre 2026
 
-v1.1 — 2026-10-13: consolidamento proposto dell’ingresso documentale LOGOS;
-attivazione, ruoli permanenti, formato archivi, messaggi rapidi, fonti AIOS
-e dipendenze di ripartenza. Estensione del motore separata e subordinata
-alla propria qualifica e installazione verificata.
+### Ingresso, regole LOGOS e percorsi disponibili
 
-v1.2 — 2026-10-14: consolidamento operativo sul setup P6 installato e
-verificato, ricevuta effettiva, guardia v4 e trenta target esatti. Conservati
-P5 e la storia della proposta v1.1; ruoli, archivi e messaggi rapidi restano
-documentati qui. Nessuna adozione automatica di baseline o readiness globale.
+L'ingresso resta la chiusura del nodo di lavoro: decisioni ed esiti verificati
+individuano i documenti canonici da rettificare. Le preimage complete della
+working copy, anche dirty, sono la base. Si preparano proposte coordinate,
+diff completi e metriche; seguono Check, review e consenso specifico,
+Apply nel percorso qualificato, Verify indipendente e review visiva in VS Code.
+Commit e push restano manuali. Questo Runtime rimane il documento madre LOGOS.
+
+Il motore comune separa codice condiviso e regole per repository. LOGOS usa
+root C:\AIOS_GITHUB\LOGOS, origin moody58/LOGOS, branch main e preset
+logos_readonly. Naming, struttura, fonti e archiviazione restano quelli LOGOS;
+non si importano automaticamente le personalizzazioni AIOS o di altri progetti.
+I filename canonici restano stabili. La versione corrente e sempre in seconda
+riga, dopo il titolo; lo storico compatto completo rimane alla fine.
+La migrazione riguarda progressivamente i soli documenti aggiornati.
+
+Il P6 precedente conserva trenta target, modify_ranges e un documento per
+transazione. La corsia comune assistita aggiunge il profilo LOGOS per trentadue
+Markdown tracciati esistenti, inclusi i due documenti Brand Identity esclusi
+dal P6. L'ammissibilita dipende dal profilo e dall'azione vincolati alla release;
+non estende il codice P6 e non equivale a una Apply gia eseguita su ogni target.
+
+Il motore comune gestisce proposte coordinate per piu documenti: ogni file
+conserva preimage, backup, postimage ed esito. Nessuna atomicita globale del
+batch e nessun passaggio automatico a un altro esecutore dopo un blocco.
+Nuovi documenti, nuove root, rinomine e operazioni mancanti richiedono un task
+assistito specifico e revisionato. Dichiarare una root non esistente non la crea.
+Il percorso alternativo conserva gli stessi vincoli di contenuto e consenso.
+
+### Installazione effettiva e dipendenza esterna
+
+Dopo la chiusura AIOS sul commit ea8afe897505a4166b3144e54bb608e266160b8a,
+osservato anche su GitHub main, il 17 ottobre e stato eseguito una sola volta
+il piano LOGOS approvato, sul main 3b908fb7ea521cf3f4bf6992c6ea451e3d7232f7.
+Exit code 0, Verify indipendente VERIFIED_CREATE_ONLY_PROJECT_LINK e controllo
+nativo PROJECT_LINK_BYTES_VERIFIED; pin stabili dopo l'esecuzione.
+Sono stati creati soltanto:
+
+- tools/codex/Invoke-DocumentWorkflow.ps1
+- tools/codex/document-workflow/project.json
+- tools/codex/document-workflow/profile.json
+- tools/codex/document-workflow/admission.json
+- tools/codex/document-workflow/README.md
+
+Il Verify registra cinque file nuovi, byte preesistenti e indice preservati.
+Runtime P6, AGENTS, configurazioni e file AIOS sono stati conservati.
+Il catalogo condiviso e stato KEEP: nessuna reinstallazione del motore comune.
+Le qualificazioni gia PASS, 24 casi del motore e 8 dell'installatore, sono
+state riutilizzate con pin corrispondenti, senza ripeterle per LOGOS.
+La presente proposta v1.4 non attesta la propria Apply o il proprio Verify.
+
+Il codice e le prove comuni devono restare nel percorso qualificato
+C:\AIOS_MIGRAZIONE\DWF06_Q01. Il catalogo e
+C:\AIOS_MIGRAZIONE\DWF06_Q01\RELEASE_COMMON_0_6_R01.json,
+SHA-256 635c299f86cddaf7e3e5dcbccc6000c7a402066b151ac841e0d1f938905427d2.
+Il clone della sola repository non ricrea questa dipendenza esterna.
+Il pacchetto di release ne conserva sorgenti, pin, prove e mappa dei percorsi;
+un nuovo PC o percorso richiede bootstrap e binding propri, senza riutilizzare
+automaticamente qualificazioni riferite a un'altra collocazione.
+
+Per un progetto successivo si riutilizzano il codice invariato e le prove
+pertinenti, predisponendo identita, regole, permessi e binding locali, quindi
+controlli e primo uso nel relativo scope. Adexima non e stata configurata o
+qualificata. La semplice dichiarazione della root non sostituisce questi passi.
+
+### Processo effettivo, approvazioni e raccolta
+
+Distinguere shell GUI, processo operativo e sessione Work da Codex VS Code.
+I nomi dei preset e i TOML non attestano enforcement o origine umana.
+Osservare il contesto effettivo: on-request, reviewer user e read-only nel
+percorso VS Code previsto; UNKNOWN resta UNKNOWN. Info legge i collegamenti
+e non aggiorna documenti. Restano baseline_adopted=false e production_ready=false.
+
+Per i task nativi gia predisposti usare exec_command tramite functions.exec,
+con Windows PowerShell 5.1 Desktop FullLanguage RemoteSigned osservati nel
+processo operativo. Quando il task richiede il contesto operativo esterno,
+require_escalated deve essere esplicito e puntuale: il solo avvio di 5.1 puo
+restare nel processo ristretto. Nessun prefisso permanente o modifica di policy,
+LanguageMode o profili. Un rifiuto non si aggira cambiando esecutore.
+Le letture di file e metadati non richiedono controlli GUI o kernel JavaScript.
+
+Conservare il percorso completo restituito dal launcher e leggere le ricevute
+esistenti nel contesto di accesso necessario. Un pathname troncato non dimostra
+che le prove siano assenti. Se Collect fallisce dopo Apply, non ripetere Apply:
+preservare lo stato e predisporre una ripresa distinta della sola raccolta.
+Su qualsiasi errore o esito ignoto: STOP, niente retry, cleanup o rollback
+automatici. Request, claim, backup e fallimenti storici restano conservati.
+
+### Prove e riferimenti correnti
+
+Base delle prove Work:
+C:\Users\moody\.codex\.chatgpt-projects\g-p-69a8b7113e2c8191be15ccfb6234d471\artifacts\common_release_0_6_R01_20261017.
+Sottocartella LOGOS: prepared_LOGOS_after_AIOS_ea8afe_20261017.
+
+- Piano consumato: PLAN.json, SHA-256
+  a75cbb071f90df83967a0dec86783da7d2bcec7f941cde7e3c78c126baa65d29.
+- Ricevuta nativa: native_install_c68fcde5dc6b45baab0018a1e91b4c66/launch_receipt.json.
+- Verify indipendente: installation_24d89bf888eb4c34b7f34599fe85b145/receipt.json.
+- Qualifica motore: C:\AIOS_MIGRAZIONE\DWF06_Q01\document_activation_v0_5_20261016\TEST_REPORT_4a47b76736ff4690aac04be8c3044023.json,
+  SHA-256 b85ee350ebe9955fec817a8bd59beb5e3a96ce13e372b6c4004948b4d3410fd4.
+- Qualifica installatore: PROVISION_TEST_REPORT_552b79e069c948a5b7ac8325d4496686.json,
+  SHA-256 f3e8f265ec2685f2e311d78c304781b344fdff6ff48bd56d589fc1901e49126a.
+- Archivio comune: AIOS_LOGOS_COMMON_RELEASE_0_6_R01_20261017.zip,
+  SHA-256 bd4a5d9b8a03f2653eb752713d278e7e9bf884874de2d6369b62055f2af17c70.
+  La mappa distingue sorgenti incluse e percorsi esterni; non e un backup del PC.
+
+Il manuale AIOS corrente acquisito integralmente e la v1.4 al commit
+ea8afe897505a4166b3144e54bb608e266160b8a, SHA-256
+db9bdbcea0e699e22c56b4d30bf2af3614b1706332e4672d5eaf866df89eaeec,
+percorso 05_WORKSPACE/05_AIOS_Codex_Procedura_Documentale_e_Piano_Operativo.md.
+I riferimenti precedenti alla v1.2 restano snapshot storici, non il binding
+di una nuova azione. Per ripartire leggere Runtime LOGOS e checkpoint corrente,
+riusando soltanto fonti e prove ancora corrispondenti. Non riaprire backlog
+applicativi o modificare Regia, State e Roadmap per questa chiusura documentale.
 
 Principio operativo
 
@@ -723,6 +825,30 @@ Il suo obiettivo è mantenere:
 
 
 
+
+## Storico revisioni
+
+Versione corrente, poi revisioni precedenti in ordine cronologico.
+
+v1.4 — 2026-10-17: release comune 0.6-R01 installata in LOGOS con Verify
+indipendente e catalogo KEEP; flusso coordinato, regole locali, dipendenze
+e limiti espliciti. Versione in seconda riga; tutte le voci precedenti
+riunite alla fine senza modificarne il testo. Proposta subordinata al
+proprio Check, consenso e Apply/Verify.
+
+v1.0 — 2026-10-13: prima versione dichiarata di questo documento;
+contenuto precedente senza versione esplicita preservato. Integrata la procedura
+documentale LOGOS P5 e la divisione dei compiti tra Work e Codex.
+
+v1.1 — 2026-10-13: consolidamento proposto dell’ingresso documentale LOGOS;
+attivazione, ruoli permanenti, formato archivi, messaggi rapidi, fonti AIOS
+e dipendenze di ripartenza. Estensione del motore separata e subordinata
+alla propria qualifica e installazione verificata.
+
+v1.2 — 2026-10-14: consolidamento operativo sul setup P6 installato e
+verificato, ricevuta effettiva, guardia v4 e trenta target esatti. Conservati
+P5 e la storia della proposta v1.1; ruoli, archivi e messaggi rapidi restano
+documentati qui. Nessuna adozione automatica di baseline o readiness globale.
 
 v1.3 — 2026-10-15: acquisizione da fonti accessibili prima dell'upload,
 contratto del bootstrap tab e rinvio al Kernel per fonti e sessioni.

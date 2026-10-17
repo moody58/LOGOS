@@ -1,0 +1,17 @@
+{
+  "admission": {
+    "path": "C:\\AIOS_GITHUB\\LOGOS\\tools\\codex\\document-workflow\\admission.json",
+    "sha256": "4d6549aff1e11100e23d3002addeaf40ec1d3d71277f69e2a446a698920cedd3"
+  },
+  "catalog": {
+    "path": "C:\\AIOS_MIGRAZIONE\\DWF06_Q01\\RELEASE_COMMON_0_6_R01.json",
+    "sha256": "635c299f86cddaf7e3e5dcbccc6000c7a402066b151ac841e0d1f938905427d2"
+  },
+  "format": "AIOS-DOCUMENT-PROJECT-LINK/0.6",
+  "profile": {
+    "path": "C:\\AIOS_GITHUB\\LOGOS\\tools\\codex\\document-workflow\\profile.json",
+    "sha256": "f2345304b5d2717a4400704a1d424b2b62e61d07e3aeb855f653c4ac37d8fb40"
+  },
+  "project": "LOGOS",
+  "root": "C:\\AIOS_GITHUB\\LOGOS"
+}
