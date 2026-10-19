@@ -1,8 +1,9 @@
-\# 00\_PROJECT\_Regia\_v02
+\# 00\_PROJECT\_Regia\_v03
+Versione: v03
 
 
 
-DATA: 2026-04-02
+DATA: 2026-10-18
 
 
 
@@ -14,7 +15,7 @@ SCOPO DELLA REGIA
 
 
 
-La Regia LOGOS rappresenta il livello direzionale del progetto.
+La Regia LOGOS è la discussione che governa la direzione del progetto. Questo documento ne descrive il mandato. La Control Room AIOS è la discussione di riferimento per il metodo trasversale.
 
 
 
@@ -84,13 +85,13 @@ REGISTRY
 
 \------------------------------------------------
 
-GERARCHIA OPERATIVA
+GERARCHIA DECISIONALE
 
 \------------------------------------------------
 
 
 
-GERARCHIA VINCOLANTE:
+GERARCHIA DECISIONALE VINCOLANTE:
 
 
 
@@ -123,6 +124,23 @@ REGISTRY:
 
 
 \- storico eventi e decisioni
+
+
+
+Le tre gerarchie descrivono funzioni differenti:
+
+Decisionale: REGIA > STATE > REGISTRY.
+La Regia governa la direzione; State rappresenta lo stato;
+Registry conserva le registrazioni pertinenti.
+
+Organizzativa: Regia → Roadmap → microsessioni.
+La Regia definisce e coordina il mandato; ogni microsessione opera
+su un solo nodo confermato e restituisce un recap conclusivo.
+
+Documentale: AIOS_RUNTIME → PROJECT_RUNTIME → 00_PROJECT_Regia →
+Roadmap → State → documenti runtime pertinenti, secondo il Kernel.
+
+Le tre gerarchie non devono essere fuse o sostituite automaticamente.
 
 
 
@@ -260,7 +278,7 @@ Se un’attività:
 
 
 
-→ viene bloccata
+→ viene fermata la sola azione incompatibile, dichiarandone la causa. Analisi, chiarimenti e alternative non esecutive restano possibili. I passaggi già autorizzati non richiedono un nuovo ritorno in Regia.
 
 
 
@@ -318,6 +336,10 @@ GESTIONE SESSIONI
 
 
 
+Per ogni nodo confermato la Regia prepara un BLOCCO D'APERTURA copiabile con mandato, obiettivo, scope ed esclusioni, output e criteri di chiusura, prove valide, fonti/checkpoint e SHA, dipendenze, autorizzazioni e primo passo. Il blocco non avvia la chat e non attesta letture. Senza nodo confermato la Regia discute, ma non attiva candidati storici.
+
+
+
 Ogni sessione deve dichiarare:
 
 
@@ -336,13 +358,14 @@ Ogni sessione deve dichiarare:
 
 
 
-La sessione termina quando:
+La sessione si conclude con DOC o CHECKPOINT e un recap per la Regia:
+nodo/scope, esito PASS/BLOCCATA/FALLITA, decisioni, risultati, fonti,
+prove, anomalie, attività residue e prossimo passo.
 
-
-
-\- obiettivo raggiunto
-
-\- output applicabile prodotto
+La sessione conclusa non implica il nodo completato.
+Distinguere conclusione tecnica, consolidamento documentale,
+pubblicazione e passaggio conversazionale pendente.
+Non dichiarare la Regia aggiornata senza trasferimento reale.
 
 
 
@@ -473,6 +496,13 @@ CHANGELOG
 \------------------------------------------------
 
 
+
+v03 — 2026-10-18
+
+\- Distinzione tra gerarchie decisionale, organizzativa e documentale
+\- Mandato della Regia come discussione e blocco d'apertura delle microsessioni
+\- STOP della sola azione incompatibile e recap conclusivo
+\- Esito della sessione distinto dal completamento del nodo
 
 v02 — 2026-04-02
 

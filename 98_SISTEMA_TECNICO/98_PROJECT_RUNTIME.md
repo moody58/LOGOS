@@ -1,5 +1,5 @@
 PROJECT — Runtime System
-Versione: v1.4
+Versione: v1.5
 
 
 
@@ -173,7 +173,7 @@ Documenti fondamentali verificati:
 
 00\_PROJECT\_State
 
-00\_PROJECT\_System\_Map
+00\_PROJECT\_System
 
 
 
@@ -829,6 +829,8 @@ Il suo obiettivo è mantenere:
 ## Storico revisioni
 
 Versione corrente, poi revisioni precedenti in ordine cronologico.
+
+v1.5 — 2026-10-18: corretto il solo riferimento obsoleto 00_PROJECT_System_Map in 00_PROJECT_System nella Boot Sequence. Nessuna modifica al motore o al perimetro della procedura.
 
 v1.4 — 2026-10-17: release comune 0.6-R01 installata in LOGOS con Verify
 indipendente e catalogo KEEP; flusso coordinato, regole locali, dipendenze

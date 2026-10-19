@@ -1,11 +1,11 @@
 PROJECT — Protocollo Operativo
+Versione: v1.1
 
 
 
 Sistema: AIOS Project Framework
 
-Versione: v1.0
-Data revisione: 2026-10-15
+Data revisione: 2026-10-18
 
 
 
@@ -428,9 +428,11 @@ La micro-sessione:
 
 MA:
 
-❌ non può cambiare nodo  
-❌ non può modificare roadmap  
-❌ non può introdurre architettura  
+❌ non può cambiare nodo implicitamente  
+❌ non può modificare la Roadmap senza mandato esplicito  
+❌ non può introdurre modifiche architetturali senza mandato esplicito  
+
+Un mandato confermato non può essere ampliato implicitamente. I passaggi già autorizzati non richiedono nuovi consensi organizzativi.
 
 ---
 
@@ -438,9 +440,11 @@ MA:
 
 Una sessione è chiusa solo se:
 
-- output prodotto
-- nodo completato
-- stato aggiornato
+- DOC o CHECKPOINT prodotto;
+- esito della sessione PASS/BLOCCATA/FALLITA, con prove e limiti;
+- recap predisposto per la Regia: nodo/scope, decisioni, risultati, fonti, prove, anomalie, prossimo passo.
+
+La sessione conclusa non implica il nodo completato. Distinguere conclusione tecnica, consolidamento documentale, pubblicazione e passaggio conversazionale ancora pendente. Il nodo è completato soltanto quando i risultati richiesti sono verificati. Non dichiarare aggiornamenti documentali o trasferimenti alla Regia che non sono stati effettivamente eseguiti.
 
 ---
 
@@ -452,9 +456,13 @@ Se durante la sessione:
 - emergono nuovi problemi
 - si esce dal nodo
 
-→ STOP
+→ verificare la compatibilità dell'azione con nodo e scope autorizzati
 
-→ ritorno in Regia
+→ STOP della sola azione incompatibile, dichiarando causa e deviazione
+
+→ conservare prove valide; analisi, chiarimenti e alternative non esecutive restano possibili
+
+→ riportare in Regia le decisioni strategiche esterne al mandato con proposta circoscritta
 
 ---
 
@@ -474,6 +482,8 @@ Se:
 
 → acquisizione documenti core dalla repository allo SHA del boot
 STORICO REVISIONI
+
+v1.1 — 2026-10-18: precisati i vincoli del mandato, lo STOP della sola azione incompatibile e la distinzione tra esito della sessione e completamento del nodo.
 
 v1.0 — 2026-10-15: prima versione esplicita, testo precedente preservato.
 Per acquisizione, copie, checkpoint e re-boot vale il Kernel Manifest.

@@ -1,7 +1,7 @@
 PROJECT — SESSION MANAGEMENT PROTOCOL
+Versione: v1.2
 
 Documento: 98_PROJECT_Session_Management_Protocol  
-Versione: v1.1  
 
 ------------------------------------------------
 SCOPO
@@ -25,13 +25,28 @@ Sessioni eseguono
 
 ---
 
-La Regia NON lavora.
+La Regia analizza, valuta, sceglie e coordina i mandati. Non esegue coding, debug o scritture operative.
 
 Le sessioni NON decidono direzione.
 
 ------------------------------------------------
 MICRO-SESSIONI
 ------------------------------------------------
+
+Per ogni nodo confermato la Regia prepara un BLOCCO D'APERTURA copiabile:
+@@LOGOS, tipo di sessione, nodo/mandato, obiettivo, scope ed esclusioni,
+output e criteri di chiusura, decisioni/prove valide, fonti/checkpoint,
+provenienza e SHA, dipendenze, autorizzazioni e primo passo.
+Il blocco non avvia la chat e non attesta letture.
+
+In ogni nuova chat LOGOS eseguire il Core Boot obbligatorio secondo il Kernel:
+State, Roadmap e ultimo checkpoint pertinente; seguire la Session Boot Matrix.
+Dichiarare fonti, completezza, provenienza e limiti. Non presumere letture
+ereditate dal blocco d'apertura o da una conversazione precedente.
+
+Nello stesso nodo e con contesto adeguato mantenere la continuità.
+Per nuove pubblicazioni dichiarare nuovo boot/rebind; non ripetere
+acquisizioni o test validi a fonti immutate.
 
 Regole:
 
@@ -48,8 +63,11 @@ Output ammessi:
 
 Una sessione termina quando:
 
-- obiettivo raggiunto  
-- nodo chiuso  
+- obiettivo della sessione raggiunto;  
+- impedimento che richiede restituzione del controllo;  
+- saturazione, perdita di contesto o cambio nodo che richiedono #switch.  
+
+Produrre DOC o CHECKPOINT e dichiarare l'esito della sessione: PASS, BLOCCATA o FALLITA, con prove e limiti. La sessione conclusa non implica il nodo completato. Distinguere conclusione tecnica, consolidamento documentale, pubblicazione e passaggio conversazionale pendente.
 
 ---
 
@@ -58,6 +76,8 @@ Divieto:
 - cambiare nodo
 - espandere scope
 - introdurre nuove direzioni
+
+I cambi di nodo, Roadmap o architettura richiedono mandato esplicito; non possono essere introdotti implicitamente durante l'esecuzione. Fermare soltanto l'azione incompatibile. Le decisioni strategiche esterne al mandato tornano in Regia con proposta circoscritta.
 
 ------------------------------------------------
 CICLO OPERATIVO
@@ -82,6 +102,9 @@ Micro-sessione:
 Output:
 
 → CHECKPOINT  
+oppure DOC
+
+Preparare un unico recap per la Regia LOGOS: nodo/scope, esito della sessione, decisioni, risultati, fonti, prove, anomalie, attività residue e prossimo passo. Non dichiarare la Regia aggiornata senza trasferimento reale.
 
 ↓
 
@@ -89,6 +112,8 @@ Aggiornamento:
 
 → STATE  
 → documenti  
+
+#switch richiede un BLOCCO DI RIPRESA: nodo e scope, prove e consensi ancora validi, fonti/SHA/checkpoint, decisioni, risultati, rischi e prossimo comando o passo. La nuova chat verifica le fonti necessarie e svolge il Core Boot iniziale. La ripresa sullo stesso nodo non implica un nuovo mandato.
 
 ------------------------------------------------
 GESTIONE REGIA
@@ -194,6 +219,8 @@ Peggio:
 
 ❌ Regia lunga e incoerente  
 VERSION HISTORY
+
+v1.2 — 2026-10-18: apertura e Core Boot, continuità e blocco di ripresa, esiti PASS/BLOCCATA/FALLITA distinti dal completamento del nodo e recap conclusivo per la Regia; nessun trasferimento o aggiornamento implicito.
 
 v1.1 — 2026-10-15: acquisizione tramite integrazioni e checkpoint pertinenti.
 Per fonti, allegati persistenti, nuovo boot e fallimenti di accesso applicare
