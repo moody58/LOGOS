@@ -1,7 +1,7 @@
 LOGOS — PROJECT RUNTIME INSTRUCTIONS
-Versione: v1.4
+Versione: v1.5
 
-DATA: 2026-10-18
+DATA: 2026-10-21
 
 ## BOOTSTRAP TAB CHATGPT
 
@@ -287,11 +287,47 @@ Aggiornamento stato
 
 Per attivazione, ruoli permanenti, pacchetti, messaggi rapidi e dipendenze:
 leggere 98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md, documento madre della procedura.
-La richiesta «Avvia la procedura documentale LOGOS» avvia preparazione/Check;
-non autorizza Apply. Work prepara contenuti, script e ZIP; Codex esegue
-operazioni locali pinned. Non chiedere ogni volta dove svolgere le elaborazioni.
+La richiesta «Avvia la procedura documentale LOGOS» avvia la sola
+preparazione; non autorizza copia manuale, Apply o altre scritture.
+Work prepara contenuti completi, diff e pacchetti; nella corsia C l'utente
+esegue la copia personale dopo consenso puntuale, mentre nella corsia A
+Codex VS Code invoca solo task nativi predisposti e autorizzati.
+Non chiedere ogni volta dove svolgere le elaborazioni.
 La scelta delle fonti e il boot restano governati dal Kernel; il perimetro
 esecutivo è quello della release verificata. Nessuna estensione implicita.
+
+---
+
+## MODELLO DOCUMENTALE IBRIDO D — CORRIDOI C/A
+
+Il documento madre operativo e' 98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md.
+Il modello D distingue C (pacchetto statico, copia personale dell'utente)
+e A (motore nativo gia' qualificato); B (nuovo raccordo tecnico) e' esclusa.
+Le due corsie non sono equivalenti: per ogni target determinare prima
+ammissibilita', rischio, protezioni, permessi e scelta motivata.
+
+C e' ammessa solo per Markdown esistenti, tracciati, non protetti, con
+rischio contenuto e preimage completa verificata. Work prepara originali,
+postimage complete, diff, hash, manifest e backup/controlli; l'utente approva
+puntualmente e copia personalmente dopo il ricontrollo dello stato locale.
+La verifica successiva riguarda i byte reali e si chiama verifica
+documentale assistita, mai Verify nativo. A conserva Prepare/Check,
+review, consenso specifico, Apply autorizzato, gate, Verify indipendente
+e review secondo la release/profilo realmente abilitati.
+
+Acquisire prima da GitHub allo SHA fissato; la ricostruzione dei byte locali
+vale come preimage soltanto se dimensioni e SHA-256 corrispondono esattamente
+alla working copy verificata sul PC, considerando BOM/EOL/newline e dirty.
+Non richiedere upload ripetuti se la prova e' sufficiente. Fonte,
+preimage, target o gate UNKNOWN: STOP della sola azione dipendente; nessun
+fallback, retry, rollback, cleanup o nuovo esecutore automatico.
+
+Proposte per piu' documenti possono essere coordinate, ma non costituiscono
+transazione atomica multi-documento. Nuovi file, README/profili o altri
+target protetti richiedono un percorso separato autorizzato. Commit/push
+rimangono manuali e selettivi. Nessuna modifica alla tab prima dei gate
+canonici, nuovo SHA, confronto letterale del bootstrap pubblicato e
+consenso specifico; conferma della sostituzione e collaudo restano distinti.
 
 ---
 
@@ -496,6 +532,10 @@ Il sistema reale:
 ---
 
 ## REVISIONI
+
+v1.5 — 2026-10-21: istruzioni complete allineate al modello D; corsie
+C/A distinte, Source Guard locale byte-esatta, nessuna estensione nativa
+o modifica del bootstrap V4. Candidata non applicata/pubblicata.
 
 v1.4 — 2026-10-18: bootstrap allineato alla V4 congelata; Core Boot obbligatorio, Safe Mode propositiva, STOP limitato all'azione incompatibile, gerarchie distinte, esiti della sessione e validazione ai passaggi operativi. Kernel invariato, CQD comune differito; nessuna estensione del motore.
 

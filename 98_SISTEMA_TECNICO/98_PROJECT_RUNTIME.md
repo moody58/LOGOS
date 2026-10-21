@@ -1,9 +1,9 @@
 PROJECT — Runtime System
-Versione: v1.5
+Versione: v1.6
 
 
 
-Data: 2026-10-17
+Data: 2026-10-21
 
 
 
@@ -799,6 +799,99 @@ di una nuova azione. Per ripartire leggere Runtime LOGOS e checkpoint corrente,
 riusando soltanto fonti e prove ancora corrispondenti. Non riaprire backlog
 applicativi o modificare Regia, State e Roadmap per questa chiusura documentale.
 
+## Modello documentale ibrido D — recepimento LOGOS (21 ottobre 2026)
+
+### Finalità e precedenze
+
+La presente integrazione recepisce nel solo ambito LOGOS il modello ibrido D
+approvato in AIOS. Non sostituisce le qualificazioni P5/P6, la release comune
+0.6-R01 o i rispettivi contratti, ricevute e dipendenze. La fonte madre di
+questa procedura per LOGOS resta il presente Runtime; gli altri documenti
+la richiamano senza duplicare il metodo. Le versioni AIOS sono riferimenti
+metodologici, non prova di un'installazione o autorizzazione locale LOGOS.
+
+Per ciascun target, prima di qualsiasi copia o Apply, dichiarare root Git,
+percorso relativo esatto, stato/protezioni, delta, rischio, capacita' effettive
+e scelta motivata della corsia. La corsia C e' ordinaria soltanto per file
+Markdown esistenti, tracciati, non protetti e a rischio contenuto; la corsia
+A si usa se richiesta dalla protezione/enforcement del target o scelta
+esplicitamente e ammessa dai gate reali. L'esistenza di A non impone il suo
+uso per ogni documento. Le corsie non sono tecnicamente equivalenti.
+La corsia B (nuovo bridge/raccordo tecnico) resta esclusa e non installata.
+
+### Source Guard condivisa e acquisizione GitHub-first
+
+Fissare moody58/LOGOS, branch e commit SHA prima delle acquisizioni. Leggere
+integralmente il contenuto canonico a quel pin. La copia locale COMPLETA,
+anche dirty, rimane la preimage di ogni scrittura. GitHub puo' evitare
+l'upload ripetitivo soltanto se la ricostruzione dei byte locali, compresi
+encoding, BOM, EOL e terminatore finale, coincide *esattamente* con le
+dimensioni e lo SHA-256 osservati sul PC; working tree pulita o hash Git
+non sono equivalenza sufficiente. In caso di delta locale o conversione
+ambigua acquisire la preimage locale integrale con un canale autorizzato.
+Se permane UNKNOWN, fermare soltanto l'azione dipendente. I riferimenti
+storici e i pin di precedenti sessioni non sostituiscono lo stato corrente.
+
+Prima dell'applicazione: verificare root, origin, branch, HEAD/upstream e
+riferimento remoto, indice, staged/dirty/untracked, operazioni Git pendenti,
+flag nascosti, natura dei path, protezioni, preimage, backup e autorizzazioni.
+Non usare fetch, pull, reset, clean, stash o correzioni automatiche per
+forzare la corrispondenza. Proteggere file estranei e delta preesistenti.
+
+### Corsia C — manuale assistito dall'utente
+
+Per un target ammissibile, Work prepara in un unico pacchetto statico esterno
+alla repository originali byte-identici, postimage Markdown complete,
+diff, layout, root e percorsi relativi, versioni/storico, dimensioni,
+SHA-256, manifest e istruzioni di verifica. Il pacchetto e' dichiarativo:
+non esegue comandi e non contiene un'autorizzazione implicita alla copia.
+Prima della sostituzione l'utente approva puntualmente i documenti e il
+delta, ricontrolla HEAD, indice, stato Git e SHA-256 locali, quindi conserva
+un backup esterno integrale delle preimage effettive. Solo l'utente copia
+personalmente i file esattamente approvati.
+
+Dopo la copia, acquisire e confrontare i file effettivi: hash, dimensioni,
+encoding, BOM/EOL, terminatore finale, versioni, storico, diff e assenza
+di modifiche estranee. L'esito e' una **verifica documentale assistita**,
+non una Apply o Verify nativa, e non certifica atomicita' multi-documento.
+Qualsiasi esito anomalo, PARTIAL o UNKNOWN comporta STOP mirato,
+conservazione delle prove e nessun retry, rollback o fallback automatico.
+Commit e push rimangono manuali e selettivi, soltanto dopo review.
+
+### Corsia A — percorso nativo qualificato
+
+A e' ammessa esclusivamente quando target, operazione, policy, profilo,
+runner, dipendenze esterne e binding siano quelli realmente qualificati
+per LOGOS. Eseguire Prepare/Check senza scrittura, review del diff completo,
+consenso specifico sul delta e sul comando, quindi una sola Apply tramite
+l'esecutore autorizzato, gate, Verify indipendente e review conclusiva.
+Nessuna riqualifica o reinstallazione dei componenti immutati; nessun
+allargamento tacito del motore P6 o della release 0.6-R01. Info non prova
+permessi o preimage; Check non autorizza Apply. Un batch di proposte puo'
+essere coordinato, ma i file mantengono azioni e binding propri e nessuna
+atomicita' globale e' promessa. Un blocco in A non commuta verso C senza
+scelta esplicita, verifica di ammissibilita' e consenso nuovo.
+
+### Esclusioni, pubblicazione e tab ChatGPT
+
+AGENTS, policy, admission/profili, catalogo, launcher, codice, README del
+collegamento e altri target protetti o fuori profilo non diventano ammessi
+soltanto perche' sono Markdown. Nuovi file, directory, rinomine, asset e
+cambi strutturali richiedono classificazione e un percorso separato
+specificamente autorizzato. State, Roadmap e Kernel non si aggiornano per
+semplice uniformita' stilistica. La dipendenza esterna
+C:\AIOS_MIGRAZIONE\DWF06_Q01 e le prove storiche restano da preservare.
+
+Dopo verifica appropriata, review e commit/push manuali verificare il
+nuovo SHA pubblicato; dichiarare rebind delle fonti. La tab LOGOS usa solo
+il blocco BOOTSTRAP TAB CHATGPT delle istruzioni canoniche. Qualsiasi
+candidata va confrontata letteralmente con il bootstrap pubblicato ed
+essere entro 8.000 byte UTF-8. La dicitura storica "V4 DEFINITIVA — NON
+PUBBLICATA" non si corregge implicitamente. Consegna della tab, consenso,
+sostituzione manuale e collaudo in nuova chat sono gate distinti.
+Non attestare identita' byte-per-byte con la tab realmente installata se
+il suo contenuto non e' direttamente acquisibile.
+
 Principio operativo
 
 
@@ -829,6 +922,12 @@ Il suo obiettivo è mantenere:
 ## Storico revisioni
 
 Versione corrente, poi revisioni precedenti in ordine cronologico.
+
+v1.6 — 2026-10-21: recepito in LOGOS il modello ibrido D con corsia C
+manuale assistita e corsia A nativa qualificata, scelta per target e
+Source Guard GitHub-first byte-esatta; percorso B escluso e gate
+originari intatti. Candidata documentale: nessuna Apply/Verify,
+commit, push o modifica tab attestata da questa proposta.
 
 v1.5 — 2026-10-18: corretto il solo riferimento obsoleto 00_PROJECT_System_Map in 00_PROJECT_System nella Boot Sequence. Nessuna modifica al motore o al perimetro della procedura.
 
