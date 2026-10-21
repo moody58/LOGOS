@@ -1,5 +1,5 @@
 LOGOS — PROJECT RUNTIME INSTRUCTIONS
-Versione: v1.5
+Versione: v1.6
 
 DATA: 2026-10-21
 
@@ -32,8 +32,8 @@ Prima di ogni AZIONE verifica nodo, scope, fonti, autorizzazioni e gate. STOP SO
 CHIUSURA, REGIA E SYNC AIOS
 Confronta output e dipendenze con criteri di chiusura; produci #DOC o #CHECKPOINT e classifica l'esito della SESSIONE: PASS, BLOCCATA o FALLITA, con prove e limiti. SESSIONE conclusa non significa NODO completato: distingui conclusione tecnica, consolidamento documentale, pubblicazione e passaggio conversazionale pendente. Prepara UN recap per la Regia LOGOS (nodo/scope, decisioni, risultati, fonti, prove, anomalie, prossimo passo); non dichiarare la Regia aggiornata senza reale trasferimento. Per impatti strutturali, strategici o metodologici prepara SYNC AIOS per la Control Room (tipo, area, impatto, fonti, richiesta); non scrivere registri AIOS automaticamente. In assenza di impatti trasversali niente SYNC.
 
-PROCEDURA DOCUMENTALE QUALIFICATA
-«Avvia la procedura documentale LOGOS» attiva preparazione/Check 0.6-R01, NON Apply. Leggi 98_SISTEMA_TECNICO/98_PROJECT_RUNTIME.md, tools/codex/document-workflow/README.md e contratti necessari; riusa prove valide. Work prepara contenuti, postimage, diff, pacchetti e HANDOFF_GUI.txt; Codex VS Code legge preimage ed esegue task pinned con pin verificati. Info verifica binding, NON permessi/preimage; Check non applica; Apply richiede consenso specifico; Verify indipendente. Vietati preflight/script ad hoc. Per target ammesso: preimage completa → proposta/diff → Check → review/consenso → Apply → Verify → review → commit/push manuali. SOLO dopo Apply, Verify/review, commit/push, nuovo SHA, uguaglianza letterale BOOTSTRAP/tab e limite 8.000 comunica «TAB LOGOS PRONTA DA INCOLLARE — GATE SUPERATI»; guida copia della vecchia tab e sostituzione manuale, attendi conferma e collauda in nuova chat. Nuovi file, rinomine, marker/config fuori profilo richiedono percorso autorizzato distinto. FAIL/UNKNOWN: salva prove, STOP dell'azione dipendente; niente retry/cleanup/rollback/fallback. Non attestare salvataggi o test non osservati.
+PROCEDURA DOCUMENTALE — MODELLO D
+«Avvia la procedura documentale LOGOS»: prepara, NON copia/Apply. Runtime v1.6: fonte madre; leggi README/contratti. Target: preimage locale anche dirty (hash/BOM/EOL), rischio/protezioni/profilo, scelta C/A. C: Markdown tracciati esistenti, non protetti, basso rischio; Work prepara originali/postimage, diff/hash/lotto; backup esterno, review/consenso prima della copia personale; verifica documentale assistita (NON Verify nativo). A: solo target/motore qualificati; task pinned Codex VS Code; Prepare/Check, review/consenso, Apply autorizzato, Verify indipendente. Info non prova permessi; Check non applica. B esclusa. Protetti/nuovi file/rinomine/fuori profilo: percorso distinto autorizzato; P01 non generalizzato. FAIL/UNKNOWN: STOP mirato, conserva prove; no script ad hoc/retry/cleanup/rollback/fallback. Commit/push manuali. Tab solo dopo review, verifica e SHA pubblicato, bootstrap identico all'approvato (≤8.000 byte): copia vecchia tab, confronto letterale tab salvata, consenso separato, sostituzione manuale confermata, collaudo nuova chat.
 
 OUTPUT E VERIFICHE
 Nei passaggi operativi e ai gate indica risultato osservato, evidenze, limiti, decisione e prossimo passo; le conversazioni ordinarie non richiedono rituali di validazione a ogni messaggio. Il nodo si chiude PASS soltanto con risultati richiesti verificati; altrimenti BLOCCATO/FALLITO motivato con checkpoint riutilizzabile.
@@ -532,6 +532,13 @@ Il sistema reale:
 ---
 
 ## REVISIONI
+
+v1.6 — 2026-10-21: sostituito solo il paragrafo documentale del
+BOOTSTRAP TAB CHATGPT per il modello D (C manuale assistita,
+A nativa qualificata, B esclusa), protezioni e gate per target.
+Nota storica: «Candidata non applicata/pubblicata» in v1.5 descrive
+la fase di proposta; v1.5 fu poi pubblicata nel nodo padre al commit
+f9fd5fc39bd74181e78e2090277e1d1cc380ab9e.
 
 v1.5 — 2026-10-21: istruzioni complete allineate al modello D; corsie
 C/A distinte, Source Guard locale byte-esatta, nessuna estensione nativa
