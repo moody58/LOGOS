@@ -1,6 +1,51 @@
-# LOGOS_SUPABASE_RUNTIME_REAL_v6
+# LOGOS_SUPABASE_RUNTIME_REAL
+Versione: v7
 
-DATA: 2026-05-25
+DATA: 2026-10-27
+
+## Fotografia documentale Supabase dopo i nodi 07/08
+
+Identità delle prove pregresse: `logos_template`, project ref
+`utvwefciuxtwoqvvcwel`, schema public. Nessuna lettura live in questa revisione.
+
+| Area | Risultato attestato dai checkpoint |
+| --- | --- |
+| Lifecycle | Migrazione guard_events_lifecycle_p0_20261027, versione 20261027160034; due trigger abilitati e conservati nell'ultimo Verify |
+| projects / entities | ACL aggiuntive revocate, RLS attiva senza policy permissive introdotte; CRUD formali conservati |
+| events | RLS attiva, zero policy nel Verify, revocati i quattro privilegi aggiuntivi ai ruoli ordinari |
+| system_logs | RLS e restrizioni dei privilegi applicate/verificate nelle fasi precedenti del nodo 08; dettaglio ACL non interamente ripetuto nel checkpoint finale |
+| RPC | EXECUTE revocato da PUBLIC/anon/authenticated e conservato per service_role; definizione e impostazioni rimaste invariate |
+| Connessione Core | Privilegi conservati per service_role con BYPASSRLS; non è isolamento individuale via login Retool |
+
+Le migrazioni denominate nel checkpoint 08 sono
+`logos_n08_enable_rls_projects_entities_20261027` e
+`logos_n08_events_acl_policies_rpc_20261027`. Le revoche manuali non sono
+automaticamente migrazioni registrate. Per ACL/RLS, i limiti sui dettagli
+non acquisiti e il provisioning con GRANT espliciti sulle nuove
+tabelle public dal 30 ottobre 2026 consultare `05_LOGOS_Database_Schema.md`.
+La fonte ufficiale non attesta che il rollout sia già avvenuto sul progetto.
+
+Per le regole NEW/WRITTEN/ERROR consultare `03_LOGOS_Event_Lifecycle.md`:
+DELETE di NEW rimane ammesso dalla guardia per ruoli con accesso sufficiente;
+TRUNCATE protetto ma non eseguito come prova. Il nodo 07 superò 17 verifiche
+transazionali con ROLLBACK, non un collaudo di ogni percorso amministrativo.
+
+Il PASS finale delle letture Retool è manuale e successivo all'ultimo Apply.
+Non è stato ripetuto un test di scrittura né il Security Advisor dopo
+l'ultimo delta events. Nessuna readiness produttiva o release è attestata.
+
+### Provenienza e limiti della riconciliazione
+
+Riconciliazione documentale del 27 ottobre 2026, nodo
+`CP-LOGOS-DOC-RUNTIME-ALIGN-20261027-09`, sulle preimage locali della repository
+`moody58/LOGOS`, branch `main`, commit documentale
+`abfd708f791bf66520fa720d954df43526d0fe67`.
+Le prove tecniche sono quelle dei checkpoint conclusivi 07 e 08, recuperati
+dalle conversazioni originali «Protezione lifecycle Core» e «Verifica sicurezza RLS».
+Questa revisione non costituisce una nuova lettura live di Retool o Supabase.
+I collaudi e i punteggi CQD precedenti conservati nel seguito appartengono
+ai rispettivi contesti storici; non certificano nuovamente l'intera app al 27 ottobre.
+
 
 ------------------------------------------------
 DESCRIZIONE
@@ -78,7 +123,7 @@ chiarire il rapporto tra Supabase e i layer runtime Retool:
 
 Nota:
 
-Supabase resta storage layer passivo.
+Supabase conserva i dati e applica anche protezioni lifecycle e accesso.
 
 I layer Retool sopra indicati non vengono persistiti come stati DB,
 non aggiungono campi,
@@ -86,8 +131,7 @@ non aggiungono tabelle,
 non modificano payload,
 non modificano RPC.
 
-Il database funge da storage layer passivo,
-senza logica di business né validazione strutturale applicativa.
+Il database conserva i dati e applica guardie lifecycle, ACL e RLS. Parsing, normalizzazione e matching restano in Retool.
 
 ------------------------------------------------
 RESPONSABILITÀ CANONICA DEL DOCUMENTO
@@ -97,7 +141,7 @@ Questo documento è fonte canonica per:
 
 - runtime Supabase reale LOGOS as-is
 - comportamento Supabase effettivo
-- ruolo di Supabase come storage layer passivo
+- ruolo di Supabase come persistenza con protezioni lifecycle e accesso
 - schema public lato Supabase nel runtime reale
 - tabelle realmente presenti:
   - events
@@ -108,7 +152,7 @@ Questo documento è fonte canonica per:
 - vincoli realmente presenti / assenti
 - RPC realmente presenti
 - update_event_status come RPC di status
-- assenza di logica business lato Supabase
+- assenza di parsing/matching DB; protezioni lifecycle e accesso attive
 - assenza di parsing lato Supabase
 - assenza di normalization lato Supabase
 - assenza di matching lato Supabase
@@ -117,7 +161,7 @@ Questo documento è fonte canonica per:
 - assenza di preview_analysis_state lato Supabase
 - assenza di ui_visibility_mode / ui_visibility_state lato Supabase
 - impatto reale dei nodi Retool su Supabase
-- conferma che i nodi recenti non hanno modificato schema, payload, tabelle o RPC
+- effetti storici dei nodi Retool distinti dagli interventi database dei nodi 07/08
 - limiti Supabase attuali
 - stato reale Supabase prima di eventuali future migrazioni DB
 
@@ -164,8 +208,8 @@ Ruolo:
 - fetch dati
 - update eventi
 - update status
-- nessuna validazione applicativa
-- nessuna logica lato DB, eccetto RPC minimale per status
+- validazione lifecycle tramite trigger, senza interpretazione semantica completa
+- RPC di status e guardie lifecycle, con ACL/RLS
 
 Pattern architetturale:
 
@@ -278,7 +322,7 @@ ASSENTI:
 - foreign key su project_id
 - foreign key su entity_id
 - unique constraints aggiuntivi
-- vincoli applicativi su status
+- CHECK applicativi su status (la protezione lifecycle è nei trigger)
 - vincoli applicativi su type
 - vincoli applicativi su amount/unit
 
@@ -503,8 +547,7 @@ eventi WRITTEN / ERROR non modificabili da UI
 
 Nota:
 
-Il DB non impedisce autonomamente update impropri.
-Il vincolo è applicativo, gestito da Retool.
+La guardia database rifiuta le operazioni incompatibili con il lifecycle, oltre alle guardie UI Retool.
 
 Edit flow aggiornato:
 
@@ -934,12 +977,11 @@ set status = new_status
 where id = event_id::uuid;
 end;
 CARATTERISTICHE
-nessuna validazione input
-nessun controllo stato precedente
+il corpo RPC non valida semanticamente l'input né lo stato precedente; la guardia sulla tabella verifica il lifecycle
 nessun ritorno
 nessun logging
 nessun updated_at documentato nella RPC
-nessun controllo transizione
+nessun controllo transizione nel corpo RPC; controllo tramite trigger sulla tabella
 COMPORTAMENTO GLOBALE SISTEMA
 
 Flusso create evento ordinario:
@@ -996,7 +1038,7 @@ NEW
 Il database:
 
 non interpreta dati
-non valida dati
+non interpreta semanticamente i dati; valida il lifecycle tramite trigger
 non corregge dati
 non normalizza dati
 non gestisce lifecycle avanzato
@@ -1027,7 +1069,7 @@ riceve dati normalizzati base da Retool
 riceve durate certe normalizzate in minuti
 riceve type determinato da select1.value
 riceve project_id/entity_id da select_project/select_entity
-modificabile solo applicativamente in stato NEW
+modificabile in stato NEW, con guardia database oltre al frontend
 privo di storico revisioni
 
 projects:
@@ -1065,13 +1107,13 @@ update_event_status attiva per status
 non usata per editing contenuto evento
 
 LIMITI SUPABASE ATTUALI
-DB PASSIVO
-nessuna logica business
-nessun controllo applicativo lato DB
+DB CON PROTEZIONI LIFECYCLE E ACCESSO
+parsing e matching restano nel frontend
+guardie lifecycle e ACL/RLS attive
 
 NESSUNA VALIDAZIONE FORTE
 project_id/entity_id non vincolati
-status non governato da constraint applicativa documentata
+status governato dai trigger lifecycle; non si aggiunge qui un CHECK
 type non validato
 
 MATCH STATE NON PERSISTITO
@@ -1121,7 +1163,7 @@ Il database LOGOS:
 è progettato per scalabilità
 non impone vincoli rigidi
 delega la logica a Retool
-resta passivo
+applica anche protezioni lifecycle e accesso
 riceve dati più coerenti dopo Normalization Layer Base
 
 Stato attuale:
@@ -1144,11 +1186,11 @@ update flow attivo
 lista aggiornata dopo save
 grande capacità inutilizzata
 
-⚠ la coerenza dei dati è garantita esclusivamente dal frontend
+⚠ qualità semantica e matching dipendono dal frontend; lifecycle e accesso sono protetti anche nel database
 
 ⚠ modifiche eventi non sono versionate
 
-⚠ Supabase non esegue logica business
+⚠ Supabase non esegue parsing/matching; applica anche guardie lifecycle e accesso
 
 ⚠ match state non viene persistito
 
@@ -1182,6 +1224,10 @@ Conferme:
 
 La fonte canonica per i dettagli Retool è LOGOS_RETOOL_RUNTIME_REAL.
 La fonte canonica per lo schema DB è 05_LOGOS_Database_Schema.
+
+## Revisione corrente
+
+v7 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
 CHANGELOG
 

@@ -1,9 +1,55 @@
-# 03_LOGOS_Event_Lifecycle_v13
+# 03_LOGOS_Event_Lifecycle
+Versione: v14
 
-DATA: 2026-06-15
+DATA: 2026-10-27
+
+## Protezione del lifecycle implementata nel database
+
+Il nodo `CP-LOGOS-CORE-LIFECYCLE-GUARD-20261027-07` è concluso PASS.
+La migrazione `guard_events_lifecycle_p0_20261027`, versione registrata
+`20261027160034`, ha introdotto `public.logos_events_lifecycle_guard()`,
+`events_lifecycle_row_guard` e `events_lifecycle_truncate_guard`.
+
+| Operazione | Comportamento documentato dalle prove 07/08 |
+| --- | --- |
+| INSERT | Un evento deve iniziare in `NEW` |
+| UPDATE su NEW | Contenuti modificabili; stato ammesso `NEW`, `WRITTEN` o `ERROR` |
+| UPDATE su WRITTEN/ERROR | Rifiutato dai trigger, anche se lo stato richiesto rimane terminale |
+| DELETE su WRITTEN/ERROR | Rifiutato dai trigger |
+| DELETE su NEW | Rimane consentito dalla guardia a un ruolo con accesso sufficiente; non è un divieto generale di DELETE |
+| TRUNCATE | Guardia installata e abilitata; nessun TRUNCATE di prova eseguito |
+
+La RPC `public.update_event_status(text,text)` è rimasta invariata: la guardia
+opera sulla tabella anche quando l'UPDATE proviene dalla RPC. L'immutabilità
+vale per le operazioni soggette ai trigger, non costituisce una garanzia
+contro un amministratore capace di disabilitarli. Non sono introdotti
+event_version, history table, rettifiche post-validazione o nuovi stati.
+
+Il nodo 07 ha superato 17 verifiche SQL transazionali concluse con ROLLBACK,
+senza record di test residui. Il salvataggio NEW è stato verificato anche
+su Supabase; annullamento e caricamento sono stati collaudati dall'utente.
+Il tentativo UI su eventi terminali era NON APPLICABILE: l'interfaccia
+disponibile esponeva soltanto NEW. Non si estende quel PASS a future viste.
+Nel nodo 08 i due trigger e la funzione di guardia sono risultati invariati.
+
+Per ACL/RLS ed EXECUTE consultare `05_LOGOS_Database_Schema.md`; per la
+fotografia delle prove operative consultare i due manifest runtime.
+
+### Provenienza e limiti della riconciliazione
+
+Riconciliazione documentale del 27 ottobre 2026, nodo
+`CP-LOGOS-DOC-RUNTIME-ALIGN-20261027-09`, sulle preimage locali della repository
+`moody58/LOGOS`, branch `main`, commit documentale
+`abfd708f791bf66520fa720d954df43526d0fe67`.
+Le prove tecniche sono quelle dei checkpoint conclusivi 07 e 08, recuperati
+dalle conversazioni originali «Protezione lifecycle Core» e «Verifica sicurezza RLS».
+Questa revisione non costituisce una nuova lettura live di Retool o Supabase.
+I collaudi e i punteggi CQD precedenti conservati nel seguito appartengono
+ai rispettivi contesti storici; non certificano nuovamente l'intera app al 27 ottobre.
+
 
 ------------------------------------------------
-CQD — VALIDAZIONE DOCUMENTO
+CQD — VALIDAZIONE STORICA DELLA BASELINE PRECEDENTE
 ------------------------------------------------
 
 C (Completezza): 10/10  
@@ -231,10 +277,10 @@ Fonti canoniche collegate:
 - 01_LOGOS_Input_System per input flow, parser, normalization, duration normalization, type classification base nel contesto input, Command Intent, create_suggestion_state e input_analysis_result.
 - 02_LOGOS_Match_Engine per project_state / entity_state / matches / isAmbiguous / singleMatch / moreSpecificMatches / confirm guard matching.
 - 04_LOGOS_Retool_Architecture per componenti, query, Hidden, edit_mode, editing_event, button_input_confirm, insert_event, update_event, insert_project, insert_entity e wiring Retool.
-- 05_LOGOS_Database_Schema per schema DB, tabelle, campi persistiti e comportamento Supabase passivo.
+- 05_LOGOS_Database_Schema per schema DB, tabelle, campi persistiti e comportamento Supabase con protezioni lifecycle e accesso.
 - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
-- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / persistenza protetta.
 
 Nota post Pacchetto B:
 
@@ -2618,6 +2664,10 @@ solo dopo stabilizzazione:
 24. output / dashboard base
 
 ------------------------------------------------
+## Revisione corrente
+
+v14 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
+
 CHANGELOG
 ------------------------------------------------
 

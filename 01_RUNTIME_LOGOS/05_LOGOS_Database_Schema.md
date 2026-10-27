@@ -1,9 +1,83 @@
-# 05_LOGOS_Database_Schema_v11
+# 05_LOGOS_Database_Schema
+Versione: v12
 
-DATA: 2026-06-23
+DATA: 2026-10-27
+
+## Sicurezza e protezioni database consolidate dai nodi 07/08
+
+Il modello conserva parsing, normalizzazione e matching nel frontend.
+Supabase applica anche protezioni del lifecycle e dell'accesso: non è più
+corretto descriverlo come privo di guardie database.
+
+La funzione `public.logos_events_lifecycle_guard()` e i trigger
+`events_lifecycle_row_guard` / `events_lifecycle_truncate_guard` provengono
+dalla migrazione `guard_events_lifecycle_p0_20261027` (`20261027160034`).
+Il contratto completo degli stati e dei limiti di DELETE NEW/TRUNCATE è
+in `03_LOGOS_Event_Lifecycle.md`; qui si registrano oggetti e autorizzazioni.
+
+| Oggetto | Assetto attestato dal checkpoint conclusivo 08 |
+| --- | --- |
+| projects / entities | RLS abilitata, nessuna policy permissiva introdotta; CRUD formalmente conservati per anon/authenticated |
+| projects / entities | TRUNCATE, REFERENCES, TRIGGER, MAINTAIN revocati da anon/authenticated |
+| events | RLS rimasta attiva; eliminate Allow select events, Allow insert events, Allow update events; zero policy nel Verify del delta |
+| events | CRUD formalmente conservati; quattro privilegi aggiuntivi revocati da anon/authenticated |
+| system_logs | Protezioni RLS e restrizioni dei privilegi applicate e verificate nel nodo 08; il checkpoint finale non dettaglia tutte le ACL né i relativi identificativi di migrazione |
+| update_event_status(text,text) | EXECUTE revocato da PUBLIC, anon e authenticated; conservato per service_role |
+| service_role | Privilegi previsti conservati e BYPASSRLS attestato nel Verify storico; la RLS non limita questa connessione privilegiata |
+
+CRUD concesso a un ruolo non equivale ad accesso alle righe: con RLS attiva
+e nessuna policy applicabile, anon/authenticated non ottengono tale accesso.
+La RPC è `SECURITY INVOKER`; definizione, parametri e search_path sono rimasti
+invariati nell'ultimo delta. I controlli delle transizioni sono nei trigger,
+non vengono attribuiti al corpo della RPC.
+
+Migrazioni denominate nel checkpoint 08:
+
+- `logos_n08_enable_rls_projects_entities_20261027`.
+- `logos_n08_events_acl_policies_rpc_20261027`.
+
+Le revoche ACL manuali di projects/entities e gli altri passaggi precedenti
+non diventano automaticamente migrazioni versionate. Non si inventano
+nomi, versioni o SQL non presenti nelle fonti acquisite. Gli identificativi
+non dettagliati nel checkpoint finale restano da recuperare dalle prove
+originarie soltanto se necessari a una riproduzione esecutiva.
+
+Il Security Advisor, dopo la RLS projects/entities, non riportava i precedenti
+RLS Disabled e riportava informazioni RLS Enabled No Policy. Non fu eseguito
+un ulteriore Advisor dopo l'ultima migrazione events; non si dichiara una
+certificazione globale né la correzione del warning storico search_path.
+
+### Provisioning futuro e Data API
+
+Il changelog ufficiale Supabase del 28 aprile 2026 annuncia l'estensione
+ai progetti esistenti dal 30 ottobre 2026 della mancata esposizione automatica
+delle nuove tabelle public. I GRANT delle tabelle esistenti restano conservati.
+Per nuove tabelle esposte via Data API, il provisioning dovrà versionare
+i privilegi espliciti dei soli ruoli previsti, insieme alla RLS e alle policy
+necessarie al modello scelto. Non concedere automaticamente accesso ad anon
+o authenticated; BYPASSRLS non sostituisce i privilegi sugli oggetti.
+Questa nota non attesta rollout o impostazioni live di logos_template.
+Fonte: https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically
+
+Restano approvate installazioni ASPRI/ADEXIMA indipendenti con database e
+risorse separati, da un Core comune. Nessuna multi-tenancy, nuovo database,
+release o creazione delle istanze deriva da questa revisione.
+
+### Provenienza e limiti della riconciliazione
+
+Riconciliazione documentale del 27 ottobre 2026, nodo
+`CP-LOGOS-DOC-RUNTIME-ALIGN-20261027-09`, sulle preimage locali della repository
+`moody58/LOGOS`, branch `main`, commit documentale
+`abfd708f791bf66520fa720d954df43526d0fe67`.
+Le prove tecniche sono quelle dei checkpoint conclusivi 07 e 08, recuperati
+dalle conversazioni originali «Protezione lifecycle Core» e «Verifica sicurezza RLS».
+Questa revisione non costituisce una nuova lettura live di Retool o Supabase.
+I collaudi e i punteggi CQD precedenti conservati nel seguito appartengono
+ai rispettivi contesti storici; non certificano nuovamente l'intera app al 27 ottobre.
+
 
 ------------------------------------------------
-CQD — VALIDAZIONE DOCUMENTO
+CQD — VALIDAZIONE STORICA DELLA BASELINE PRECEDENTE
 ------------------------------------------------
 
 C (Completezza): 10/10  
@@ -165,12 +239,12 @@ Questo documento è fonte canonica per:
 - campi persistiti
 - campi non utilizzati
 - campi non esistenti
-- comportamento DB passivo
+- comportamento DB con protezioni lifecycle e accesso
 - impatto DB di insert_event / update_event
 - impatto DB di insert_project / insert_entity
 - relazione tra frontend Retool e Supabase
 - limiti attuali del modello dati
-- assenza di trigger / logica DB applicativa
+- trigger lifecycle e protezioni di accesso, senza parsing o matching DB
 - assenza di audit trail dedicato
 - assenza di retro-normalizzazione
 - assenza di payload strutturato
@@ -200,7 +274,7 @@ Fonti canoniche collegate:
 - 04_LOGOS_Retool_Architecture per componenti, query, Hidden, button_input_confirm, insert_event, update_event, insert_project, insert_entity e wiring Retool.
 - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
-- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / persistenza protetta.
 
 Nota post Pacchetto B:
 
@@ -211,12 +285,12 @@ Il dettaglio completo del modello dati resta in questo documento e nei documenti
 PRINCIPIO ARCHITETTURALE
 ------------------------------------------------
 
-Il database è PASSIVO.
+Il database applica protezioni lifecycle e accesso; parsing, normalizzazione e matching restano nel frontend.
 
 NON contiene:
 
 - logica di business
-- validazione applicativa
+- interpretazione e validazione semantica completa dei dati
 - trasformazioni dati
 - parsing
 - matching
@@ -1448,12 +1522,12 @@ type
 
 COMPORTAMENTO:
 
-nessuna validazione DB
-nessuna constraint forte applicativa
+validazione lifecycle tramite trigger; nessuna validazione semantica completa dei dati
+nessuna validazione semantica completa tramite constraint; guardie lifecycle attive
 inserimento consentito lato frontend se non bloccato da ambiguità project/entity non risolta
-update consentito solo lato applicativo su eventi NEW
-DB non impedisce autonomamente update impropri
-integrità demandata a Retool
+update consentito sui NEW anche secondo la guardia database
+DB rifiuta le operazioni incompatibili con la guardia lifecycle
+qualità semantica e matching demandati a Retool; protezioni lifecycle e accesso anche nel DB
 
 Regole matching lato frontend:
 
@@ -1757,7 +1831,7 @@ NON vincolata formalmente da FK applicativa documentata
 
 Nota:
 
-integrità demandata al frontend.
+integrità delle associazioni demandata al frontend; lifecycle protetto anche nel DB.
 
 COMPORTAMENTO GLOBALE
 
@@ -2789,8 +2863,8 @@ feedback_mode non persistito
 
 RELAZIONI DEBOLI
 project/entity opzionali
-nessun vincolo integrità forte documentato
-integrità demandata al frontend
+nessuna FK applicativa per le associazioni documentata; lifecycle protetto dai trigger
+integrità delle associazioni demandata al frontend; lifecycle protetto anche nel DB
 match state non persistito
 singleMatch non persistito
 moreSpecificMatches non persistito
@@ -2897,7 +2971,7 @@ NON modificare schema attuale senza nodo dedicato
 NON introdurre vincoli rigidi prematuri
 mantenere flessibilità
 evitare update su eventi WRITTEN / ERROR
-non introdurre trigger DB per logica applicativa
+preservare i trigger lifecycle approvati; ulteriori trigger o logiche DB richiedono un nodo dedicato
 non spostare duration normalization in Supabase
 non aggiungere campo duration_minutes senza nodo schema dedicato
 non usare payload.duration senza decisione architetturale dedicata
@@ -3073,6 +3147,10 @@ duration normalization lato Retool
 type classification base lato Retool
 insert/update validati su casi reali
 raw_input preservato per debug/correzione futura
+
+## Revisione corrente
+
+v12 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
 CHANGELOG
 

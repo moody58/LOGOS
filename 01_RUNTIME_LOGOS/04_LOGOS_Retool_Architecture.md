@@ -1,9 +1,53 @@
-# 04_LOGOS_Retool_Architecture_v23
+# 04_LOGOS_Retool_Architecture
+Versione: v24
 
-DATA: 2026-06-15
+DATA: 2026-10-27
+
+## Confine Retool/Supabase dopo l'hardening
+
+L'applicazione di riferimento è l'originale Classic `Logos`, UUID
+`18ea4684-29de-11f1-b868-0b05f2d402b2`, mantenuta in Draft.
+Il checkpoint conclusivo 08 attesta nove binding REST migrati alla risorsa
+`supabase_api_secure_test`. Tale attestazione non è un nuovo export completo
+di query, header e handler e non autorizza modifiche a questi componenti.
+
+La connessione server-side è privilegiata, coerente con service_role.
+Il login Retool non costituisce automaticamente un'identità Supabase
+individuale. La RLS dei ruoli ordinari non fornisce isolamento tra utilizzatori
+di tale risorsa. La protezione dei terminali rimane affidata anche ai trigger.
+Il modello approvato usa utenti fidati e conserva i rischi noti dei privilegi
+Retool Free; non si attribuisce alla sola UI un confine di autorizzazione.
+
+La vecchia risorsa `supabase_api` rimane una dipendenza di tre app legacy.
+La loro possibile perdita di accesso dopo le revoche è stata accettata
+esplicitamente. Non è attestato un collaudo completo di quelle tre app.
+Draft non equivale a database isolato e non rende innocue le scritture.
+
+Il collaudo finale dopo l'ultimo Apply events è soltanto READ-ONLY, riferito
+dall'utente: Home, lista NEW, selettore progetti e selettore entità PASS.
+Le prove di scrittura precedenti restano nel loro contesto temporale;
+non sono un nuovo test di scrittura dopo l'ultimo hardening. Non è stata
+pubblicata l'app. Gli script storici conservati nel documento non sono
+un export nuovamente acquisito della Draft dopo la migrazione dei binding.
+
+Per la fotografia as-is consultare `LOGOS_RETOOL_RUNTIME_REAL.md`; per
+le garanzie database consultare Schema ed Event Lifecycle.
+
+### Provenienza e limiti della riconciliazione
+
+Riconciliazione documentale del 27 ottobre 2026, nodo
+`CP-LOGOS-DOC-RUNTIME-ALIGN-20261027-09`, sulle preimage locali della repository
+`moody58/LOGOS`, branch `main`, commit documentale
+`abfd708f791bf66520fa720d954df43526d0fe67`.
+Le prove tecniche sono quelle dei checkpoint conclusivi 07 e 08, recuperati
+dalle conversazioni originali «Protezione lifecycle Core» e «Verifica sicurezza RLS».
+Questa revisione non costituisce una nuova lettura live di Retool o Supabase.
+I collaudi e i punteggi CQD precedenti conservati nel seguito appartengono
+ai rispettivi contesti storici; non certificano nuovamente l'intera app al 27 ottobre.
+
 
 ------------------------------------------------
-CQD — VALIDAZIONE DOCUMENTO
+CQD — VALIDAZIONE STORICA DELLA BASELINE PRECEDENTE
 ------------------------------------------------
 
 C (Completezza): 10/10  
@@ -484,7 +528,7 @@ Questo documento NON è fonte canonica completa per:
 - lifecycle evento nel dettaglio semantico completo
 - schema DB Supabase completo
 - preview/Sintesi/hint/warning nel dettaglio visuale completo
-- runtime Supabase / storage passivo completo
+- runtime Supabase / persistenza protetta completo
 - roadmap / priorità / gap governance
 
 Fonti canoniche collegate:
@@ -495,7 +539,7 @@ Fonti canoniche collegate:
 - 05_LOGOS_Database_Schema per schema DB, tabelle, campi e vincoli.
 - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, highlight, label visuali e micro-copy.
 - LOGOS_RETOOL_RUNTIME_REAL per manifest runtime Retool reale as-is.
-- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / persistenza protetta.
 
 Nota post Pacchetto B:
 
@@ -512,7 +556,7 @@ Applicazione:
 - Nessun routing
 - Navigazione tramite stato UI
 - Logica client-side JavaScript
-- Supabase come backend passivo
+- Supabase come backend con protezioni lifecycle e accesso
 
 ---
 
@@ -5274,7 +5318,7 @@ fetch eventi NEW
 
 Nota:
 
-database passivo
+database con protezioni lifecycle e accesso
 
 Supabase:
 
@@ -6355,6 +6399,10 @@ Le evoluzioni future collegate a Retool devono restare in:
 - 00_PROJECT_Gap_Register per gap e debiti
 - LOGOS_RETOOL_RUNTIME_REAL se cambia il runtime reale as-is
 - checkpoint operativo solo durante il nodo attivo
+
+## Revisione corrente
+
+v24 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
 CHANGELOG
 

@@ -1,9 +1,54 @@
-# LOGOS_RETOOL_RUNTIME_REAL_v21
+# LOGOS_RETOOL_RUNTIME_REAL
+Versione: v22
 
-DATA: 2026-06-15
+DATA: 2026-10-27
+
+## Fotografia documentale Retool dopo i nodi 07/08
+
+- App: Classic originale `Logos`, UUID `18ea4684-29de-11f1-b868-0b05f2d402b2`.
+- Stato: Draft; nessuna pubblicazione attestata.
+- Risorsa: `supabase_api_secure_test`; il checkpoint 08 attesta la migrazione
+  di nove binding REST e un PASS configurativo precedente.
+- Accesso: server-side privilegiato, coerente con service_role/BYPASSRLS.
+  Non fornisce isolamento RLS per persona tramite il solo login Retool.
+- Dipendenze legacy: tre app usano ancora `supabase_api`; la possibile
+  interruzione dopo l'hardening è stata accettata dall'utente.
+
+Il solo PASS di due query Query Library non era prova della migrazione
+dell'app Classic; l'attestazione 9/9 deriva dal successivo checkpoint 08.
+Non si ricostruiscono header, credenziali o export mancanti da queste prove.
+Il modello di fiducia e i rischi dei privilegi Retool Free rimangono quelli
+approvati; la sanitizzazione di un header non riduce i privilegi della risorsa.
+
+| Prova | Esito e perimetro |
+| --- | --- |
+| Nodo 07 | Salvataggio NEW verificato anche sul DB; annullamento e apertura collaudati dall'utente |
+| UI WRITTEN/ERROR nel nodo 07 | Non applicabile alla lista attuale che esponeva soltanto NEW |
+| Binding nel nodo 08 | 9/9 PASS configurativo precedente, come attestato dal checkpoint finale |
+| Dopo l'ultimo hardening events | Unico smoke test manuale READ-ONLY: Home, lista NEW con dati, progetti, entità PASS |
+| Scritture dopo l'ultimo hardening | Non nuovamente collaudate; prove precedenti valide soltanto nei loro contesti |
+| App legacy / readiness / pubblicazione | Nessun nuovo collaudo completo, nessuna certificazione produttiva o pubblicazione |
+
+Le protezioni DB e i loro limiti sono documentati nelle fonti madre
+`03_LOGOS_Event_Lifecycle.md` e `05_LOGOS_Database_Schema.md`.
+Gli script e i test precedenti nel seguito sono conservati nel loro contesto;
+questa revisione non costituisce una nuova acquisizione completa della Draft.
+
+### Provenienza e limiti della riconciliazione
+
+Riconciliazione documentale del 27 ottobre 2026, nodo
+`CP-LOGOS-DOC-RUNTIME-ALIGN-20261027-09`, sulle preimage locali della repository
+`moody58/LOGOS`, branch `main`, commit documentale
+`abfd708f791bf66520fa720d954df43526d0fe67`.
+Le prove tecniche sono quelle dei checkpoint conclusivi 07 e 08, recuperati
+dalle conversazioni originali «Protezione lifecycle Core» e «Verifica sicurezza RLS».
+Questa revisione non costituisce una nuova lettura live di Retool o Supabase.
+I collaudi e i punteggi CQD precedenti conservati nel seguito appartengono
+ai rispettivi contesti storici; non certificano nuovamente l'intera app al 27 ottobre.
+
 
 ------------------------------------------------
-CQD — VALIDAZIONE DOCUMENTO
+CQD — VALIDAZIONE STORICA DELLA BASELINE PRECEDENTE
 ------------------------------------------------
 
 C (Completezza): 10/10  
@@ -611,10 +656,9 @@ ma non deve perdere il dettaglio Retool necessario alla ricostruzione.
 DESCRIZIONE OPERATIVA DEL SISTEMA
 ------------------------------------------------
 
-Il sistema LOGOS è un Event Operating System client-side
-in cui tutta la logica applicativa è gestita in Retool tramite JavaScript.
+Il sistema LOGOS è un Event Operating System con logica di interpretazione e UI in Retool tramite JavaScript; il database applica anche protezioni lifecycle e accesso.
 
-Supabase funge da storage layer passivo.
+Supabase conserva i dati e applica le protezioni lifecycle e accesso documentate nelle fonti madre.
 
 Flusso attuale:
 
@@ -4835,7 +4879,7 @@ Per lo schema DB come modello documentale canonico la fonte è:
 
 - 05_LOGOS_Database_Schema
 
-Supabase è database passivo.
+Supabase è un database con protezioni lifecycle e accesso.
 
 Ruolo:
 
@@ -5015,7 +5059,7 @@ residuo UX command-like in edit mode non risolto tramite Hidden multipli
 PRINCIPI RUNTIME
 
 ✔ client-side logic
-✔ database passivo
+✔ database con protezioni lifecycle e accesso
 ✔ append-only controllato
 ✔ editing solo su NEW
 ✔ suggerire ≠ decidere
@@ -7538,6 +7582,10 @@ Regressioni:
 - Supabase invariato
 - ui_visibility_state non eliminato
 - nessun cleanup globale eseguito
+
+## Revisione corrente
+
+v22 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
 CHANGELOG
 
