@@ -1,5 +1,5 @@
 PROJECT — SESSION MANAGEMENT PROTOCOL
-Versione: v1.2
+Versione: v1.3
 
 Documento: 98_PROJECT_Session_Management_Protocol  
 
@@ -78,6 +78,41 @@ Divieto:
 - introdurre nuove direzioni
 
 I cambi di nodo, Roadmap o architettura richiedono mandato esplicito; non possono essere introdotti implicitamente durante l'esecuzione. Fermare soltanto l'azione incompatibile. Le decisioni strategiche esterne al mandato tornano in Regia con proposta circoscritta.
+
+------------------------------------------------
+CONTROLLO DI AVANZAMENTO E GESTIONE DELLO STALLO
+------------------------------------------------
+
+Prima di intraprendere un nuovo ciclo sul medesimo problema, confrontare
+il passo proposto con il mandato, i risultati ottenuti, le prove ancora
+valide e i criteri di chiusura.
+
+Costituiscono avanzamento effettivo una nuova prova pertinente, un
+risultato richiesto, la risoluzione di una dipendenza oppure una
+decisione necessaria e autorizzata. La sola ripetizione di analisi,
+letture, verifiche o formulazioni non costituisce avanzamento.
+
+Se due passaggi consecutivi equivalenti non producono avanzamento,
+a condizioni sostanzialmente immutate, attivare una diagnosi mirata
+dello stallo. La soglia e' un segnale diagnostico, non uno STOP
+automatico della microsessione.
+
+Identificare cio' che e' gia' dimostrato, la causa dell'assenza di
+progresso e l'eventuale nuova condizione necessaria. Non ripetere
+il passaggio senza un requisito nuovo o una variazione materiale.
+Proseguire le altre attivita' lecite e indipendenti, senza aggirare
+STOP, gate tecnici o consensi.
+
+Quando i criteri di chiusura risultano soddisfatti, concludere
+secondo il presente protocollo, senza introdurre ulteriori
+controlli, nodi o attivita' non richiesti. Se una dipendenza
+indispensabile impedisce la conclusione, produrre un checkpoint
+d'impedimento riutilizzabile, distinguendo la sessione dal nodo
+complessivo e indicando il prossimo passo eseguibile e la condizione
+necessaria per la ripresa.
+
+Il controllo e' interno e contestuale: non richiede report rituali
+a ogni messaggio e non implica un monitor autonomo.
 
 ------------------------------------------------
 CICLO OPERATIVO
@@ -219,6 +254,13 @@ Peggio:
 
 ❌ Regia lunga e incoerente  
 VERSION HISTORY
+
+v1.3 — 2026-10-27: nodo CP-LOGOS-EFFICACIA-PROTOCOLLI-20261027-01;
+recepito da AIOS Session Protocol v1.5 il controllo contestuale
+dell'avanzamento e dello stallo improduttivo. Riuso delle prove valide,
+nessuna ripetizione a condizioni immutate e chiusura secondo i criteri
+esistenti. Invariati gate, consensi, protezioni, ruoli e poteri operativi;
+nessun monitor autonomo.
 
 v1.2 — 2026-10-18: apertura e Core Boot, continuità e blocco di ripresa, esiti PASS/BLOCCATA/FALLITA distinti dal completamento del nodo e recap conclusivo per la Regia; nessun trasferimento o aggiornamento implicito.
 
