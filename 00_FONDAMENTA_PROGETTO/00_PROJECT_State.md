@@ -1,9 +1,40 @@
 # 00_PROJECT_State
-Versione: v36
+Versione: v37
 
 DATA: 2026-10-28
 
-## Nodo corrente — raccordo del contratto funzionale (28 ottobre 2026)
+## Stato corrente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
+
+Nodo di provenienza: `CP-LOGOS-CORE-GLOBAL-BASELINE-20261028-13`.
+Snapshot documentale usato per la qualifica: `moody58/LOGOS`, branch `main`, SHA `4ce064aad531c2999259cc6a8892d5cfda6d3597`.
+Fonte della matrice e dei pesi: `00_PROJECT_Roadmap.md` v28; perimetro e criterio di calcolo: `00_PROJECT_Functional_Contract.md` v1.1, §§10–11.
+
+| Campo | Valore della baseline candidata alla pubblicazione |
+|---|---|
+| Indicatore | LOGOS Core Global Completion |
+| Baseline | v1.0, 15 milestone, pesi 100% |
+| Prima misura | 35/100 = **35%**, efficace come valore ufficiale soltanto dopo verifica del lotto e pubblicazione manuale |
+| Valore precedente | DA BASELINARE |
+| Variazione | Prima misurazione: nessuna differenza percentuale retroattiva calcolabile da DA BASELINARE |
+| PASS (35 punti) | M01 8%, M02 4%, M03 7%, M08 8%, M09 5%, M11 3% |
+| Parziali (18 punti non conteggiati) | M04 7%, M06 8%, M12 3% |
+| Mancanti/non qualificati come completi (43 punti) | M05 10%, M07 9%, M10 9%, M13 8%, M14 7% |
+| Non determinabile come PASS (4 punti) | M15 4% |
+| Residuo complessivo non conteggiato | **65 punti**, anche quando esistono implementazioni parziali |
+| Fonte prove | Documenti tecnici Retool e Supabase, checkpoint storici nodi 07/08, prove pregresse Input/Matching, smoke test READ-ONLY post-hardening |
+| Stato Core | Draft; non qualificato come completo, nessuna release/replica definitiva attestata |
+| Runtime nel nodo 13 | Retool NON VERIFICATO LIVE; Supabase NON VERIFICATO LIVE; nessun test scrivente |
+| Dipendenze | P0-01; P1-01–P1-05 pertinenti; P2; Editor Base G11 candidato, non attivo |
+| Prossimo nodo implementativo | P1-01 minimo raccomandato, da scegliere e confermare separatamente; nessuna attivazione implicita |
+
+La qualificazione del presente contenuto **non certifica la sua pubblicazione**. Il valore ufficiale resta **DA BASELINARE finché il lotto non è applicato, verificato e pubblicato**. In seguito alla pubblicazione verificata di Roadmap v28 e State v37, la prima percentuale ufficiale diventa **35%**, riferita esclusivamente alla baseline v1.0 e ai PASS circoscritti; conservare il nuovo SHA effettivo nel checkpoint conclusivo. Nessun PASS viene esteso a capacità non collaudate; le percentuali storiche ~95% restano indicatori di layer diversi.
+
+Ogni futuro checkpoint di sviluppo confronta percentuale precedente/successiva sulla stessa baseline, milestone chiuse con relative prove, variazione e dipendenze. Un PASS tecnico privo di milestone globale completata lascia invariato il 35%. I pesi cambiano soltanto con decisione e nuova baseline comparabile.
+
+**Condizione di validità:** questo documento è preparato come postimage di consolidamento; il valore 35% è la prima misurazione *da rendere ufficiale* tramite pubblicazione verificata, non un nuovo test tecnico. Nessun dato corrente Retool/Supabase è stato acquisito in questo nodo. Riferimento autorevole di pesi, condizioni PASS e residui: Roadmap v28. Il nuovo SHA di pubblicazione va rilevato e registrato nel checkpoint finale, non anticipato nel testo.
+
+
+## Snapshot precedente — raccordo del contratto funzionale (nodo 12)
 
 CP-LOGOS-DOC-FUNCTIONAL-CONTRACT-20261028-12. Mandato esclusivamente documentale.
 Il contratto funzionale v1.0 e' pubblicato in
@@ -1828,6 +1859,14 @@ residuo accettato perché il blocco funzionale impedisce update_event e creazion
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v37 — 2026-10-28
+
+- preparato lo stato della baseline v1.0 approvata nel nodo 13: 15 milestone, 100 punti
+- prima misurazione candidata 35%, basata su 6 PASS storici circoscritti
+- distinti 65 punti residui non conteggiati: parziali, mancanti e non determinabili
+- valore ufficiale DA BASELINARE fino a verifica delle postimage e pubblicazione manuale
+- nessun nuovo test live, nessuna implementazione o attivazione di P1-01/Editor Base
 
 v36 — 2026-10-28
 

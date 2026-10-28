@@ -1,9 +1,88 @@
 # 00_PROJECT_Roadmap
-Versione: v27
+Versione: v28
 
 DATA: 2026-10-28
 
-## Raccordo corrente — contratto funzionale e avanzamento globale
+## Baseline globale del Core universale — v1.0 (nodo 13)
+
+**Nodo di origine:** `CP-LOGOS-CORE-GLOBAL-BASELINE-20261028-13`.
+**Snapshot documentale di provenienza:** `moody58/LOGOS`, `main`, commit `4ce064aad531c2999259cc6a8892d5cfda6d3597`.
+**Fonte madre di perimetro e calcolo:** `00_PROJECT_Functional_Contract.md` v1.1, sezioni 5–11.
+**Confine:** completamento e qualifica del Core universale, incluse release e replica C1/C2; escluse le implementazioni verticali ASPRI/ADEXIMA, le dashboard avanzate e le integrazioni future Siri/API.
+
+La presente baseline definisce 15 milestone verificabili per 100 punti percentuali. Il criterio è binario: una milestone conta il proprio peso soltanto quando il relativo risultato e tutte le condizioni di PASS sono sostenuti da prove sufficienti. Stati PARZIALE, MANCANTE e NON DETERMINABILE non producono credito percentuale. Il valore iniziale approvato per il consolidamento è 35/100, fondato su sei PASS circoscritti e prove storiche riutilizzabili. La misura diventa ufficiale soltanto dopo la verifica delle postimage effettivamente applicate e la pubblicazione manuale della Roadmap e dello State; prima di tale gate il valore ufficiale rimane DA BASELINARE.
+
+### Matrice v1.0: risultati, pesi e prove
+
+| ID | Risultato/criterio PASS specifico | CF/VF pertinenti | Peso | Stato alla baseline | Evidenza e limite | Dipendenze/residuo |
+|---|---|---|---:|---|---|---|
+| M01 | Input originale conservato, parsing e normalizzazione base coerenti; dati supportati correttamente trasferiti al salvataggio negli scenari base provati | CF-01; VF-01 limitata | 8% | PASS storico | Input System v20, Retool Runtime v22, prove pregresse di parsing/normalizzazione/save flow; non attestano interpretazione universale né nuove scritture dopo ultimo hardening | Capacità semantiche più ampie in M06; nessun intent engine globale implicito |
+| M02 | Comandi di primo livello distinti da eventi ordinari; comandi puri non persistiti come eventi, edit flow protetto da comandi riconosciuti | CF-01 | 4% | PASS storico | Input System v20, Retool Architecture v24, prove Command Intent e Input Context Consistency; solo primo livello controllato | Nuovi comandi solo quando richiesti da capacità approvate |
+| M03 | Matching Project/Entity, single-match e disambiguazione controllata funzionano nei casi di test; nessuna selezione ambigua salvata senza decisione | CF-02; VF-02 limitata | 7% | PASS storico | Match Engine v12, casi G22 e regressioni; non costituisce prova di FK, deduplicazione globale o gestione anagrafica completa | Integrità e CRUD in M04 |
+| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PARZIALE | Creazione base documentata; Editor Base G11 non applicato e P1-01 aperto | G11, P1-01, dati preesistenti, NULL legittimi |
+| M05 | Gerarchie e correlazioni con semantica e cardinalità esplicite; contenitori/figli, ruoli e legami occasionali recuperabili senza confusione; genealogia con due genitori rappresentabile | CF-03; VF-03, VF-04, VF-06 | 10% | MANCANTE come funzione qualificata | Parent fields storicamente dormienti; contratto dati nodo 03 candidato non integralmente approvato/implementato | P1-02, vincoli e modello correlazioni minimo, casi ASPRI/ADEXIMA |
+| M06 | Eventi economicamente e temporalmente classificati, importi/unità/date/durate sufficienti e interrogabili; spesa e incasso distinguibili in aggregazione | CF-04; VF-01, VF-07 limitate | 8% | PARZIALE | Parsing/amount/duration/type base documentati; la semantica analitica non è interamente verificata | Distinzione economica e persistenza strutturata per casi approvati, M13 |
+| M07 | Prezzo concordato, più versamenti, saldo residuo, stati delle obbligazioni e scadenze future rappresentabili e collegati agli oggetti giusti | CF-04; VF-05; scenari CF §7–8 | 9% | MANCANTE come funzione qualificata | Requisiti definiti nel contratto funzionale, non un modello persistente verificato | Relazioni M05, struttura obbligazioni/tempi, casi ASPRI |
+| M08 | Guardie verificabili per INSERT NEW, update NEW, stati terminali e protezione delle transizioni previste dal ledger | CF-05; VF-08 limitata | 8% | PASS storico | Nodo 07: 17 prove SQL transazionali con ROLLBACK e migrazione guardie; DELETE NEW consentito ai ruoli idonei, TRUNCATE non provato | Rettifiche definitive e idempotenza separatamente in M10 |
+| M09 | RLS/ACL ed EXECUTE nel perimetro Core controllato secondo il modello di fiducia approvato, senza attribuire a RLS un isolamento non posseduto | CF-05 e CF-08, sottoinsieme sicurezza | 5% | PASS tecnico storico | Nodo 08 PASS: RLS/ACL su quattro tabelle e RPC nel perimetro attestato; service_role BYPASSRLS, Security Advisor non ripetuto dopo ultimo delta | Isolamento dei binding per istanza e release in M14 |
+| M10 | Rettifiche definitive riconducibili agli originali, retry idempotenti ove necessari e garanzie transazionali sui flussi composti effettivamente richiesti | CF-05; VF-08 residua | 9% | MANCANTE come funzione qualificata | Guardie M08 non equivalgono a rettifiche/atomicità | P1-03, P1-04, contratto dati e casi reali |
+| M11 | Home e consultazione dell'elenco NEW con navigazione e selettori di base operativi | CF-06, sottoinsieme consultazione | 3% | PASS storico | Smoke test manuale READ-ONLY dopo ultimo hardening: Home, NEW, projects/entities; non certifica WRITTEN o revisione strutturata | M12 per dettaglio persistito, M13 per proiezioni |
+| M12 | Revisione NEW capace di mostrare dati strutturati effettivamente persistibili, lacune e associazioni, con controllo umano coerente | CF-06 | 3% | PARZIALE | UI di conferma presente; corrispondenza completa preview/persistenza ancora da qualificare | Contratti dati M04/M06 e revisione NEW |
+| M13 | Proiezioni e aggregazioni corrette degli eventi validi per progetto, entità e periodo, con trattamento coerente dei movimenti e delle rettifiche | CF-07; VF-05, VF-07 | 8% | MANCANTE come funzione qualificata | Contratto analitico e query/report affidabili non attestati | P1-05, M06/M07/M10, definizione inclusione dei ledger state |
+| M14 | Release versionata e replicabile del Core comune, binding validati fail-closed, compatibilità aggiornamenti e ripristino comprovato fra installazioni indipendenti | CF-08; VF-09 | 7% | MANCANTE come funzione qualificata | Modello A C1/C2 approvato; P5 PASS solo su app semplice; app Core originale Draft | P0-01 per fonte applicativa, P2, release, backup/restore, verifica isolamento |
+| M15 | Scenari end-to-end rappresentativi VF-01–VF-08 superati con dati e correlazioni reali o di prova qualificati, senza confondere Core e workflow verticali | CF-01–CF-07; VF-01–VF-08 integrati | 4% | NON DETERMINABILE COME PASS | Test isolati esistenti non certificano scenari integrati; nessun nuovo test scrivente nel nodo 13 | M04–M13, campioni operativi rappresentativi e criteri finali |
+| **Totale** | **15 milestone** | **CF-01–CF-08, VF-01–VF-09 complessivamente coperti** | **100%** | **6 PASS; 9 non PASS** | **35 punti candidati da prove esistenti** | **65 punti non ancora conteggiabili** |
+
+### Requisiti dati e vincoli di accettazione
+
+La verifica del dato segue il Contratto Funzionale §6: presenza del campo, dato realmente scritto, significato, cardinalità, vincoli, possibilità di lettura e aggregazione. La lista seguente è un insieme di **requisiti informativi**, non una proposta di nuove colonne SQL e non attesta l'esistenza di tutti i campi citati.
+
+| Milestone | Informazioni e vincoli necessari per il PASS |
+|---|---|
+| M01 | `raw_input`, valore interpretato, `amount`, `unit`, `event_date` e payload di scrittura coerenti per i casi supportati; input originale preservato. |
+| M02 | Distinzione evento/comando e assenza di evento generato da comando puro; creazioni strutturali soltanto dopo conferma. |
+| M03 | `projects.id`, `entities.id`, selezione coerente di `project_id`/`entity_id` e blocco delle ambiguità non risolte; nullable dove previsto. |
+| M04 | Identificativi persistenti; `name`, `type`, `status` pertinenti; regole sui duplicati, sui riferimenti inesistenti e su aggiornamenti/eliminazioni. |
+| M05 | Gerarchia stabile separata da correlazioni occasionali; `parent_project_id`/`parent_entity_id` non sufficienti per genealogia a due genitori; ruoli, cardinalità e letture definite. |
+| M06 | `events.type`, `amount`, `unit`, `event_date` e durata normalizzata, con distinzione spesa/incasso coerente e dato strutturato effettivamente persistito. |
+| M07 | Identità dell'obbligazione/prenotazione, soggetti associati, prezzo, versamenti, saldo, stato, date future/effettive e collegamenti non ambigui. |
+| M08 | `events.status` e transizioni ammesse; guardie al confine DB sui terminali; comportamento di DELETE NEW e TRUNCATE descritto nei limiti realmente provati. |
+| M09 | RLS, ACL, privilegi su tabelle e RPC, ruolo effettivo delle risorse; limiti di `service_role` e BYPASSRLS espliciti. |
+| M10 | Tracciamento originale/rettifica, operazioni ripetute senza duplicazioni incompatibili e confini transazionali dei flussi composti interessati. |
+| M11 | Recuperabilità verificata dell'elenco NEW e dei progetti/entità con navigazione e ricerca base; nessuna vista terminale implicita. |
+| M12 | Dati di preview e conferma riconciliabili con dati salvabili, stati, importi, associazioni e informazioni mancanti. |
+| M13 | Query/aggregazioni su eventi ammessi dal ledger, per progetto, entità e periodo; gestione di spese, incassi, durate e rettifiche. |
+| M14 | Identità d'istanza, binding fisso fail-closed, credenziali/risorse separate, compatibilità schema, migrazioni, backup e ripristino verificabili. |
+| M15 | Dataset di test rappresentativi con risultati attesi VF-01–VF-08: output integrati, isolamento Core/verticale e tracciabilità dei risultati. |
+
+Campo esistente ma mai valorizzato, testo libero non strutturato e soluzione soltanto documentata non soddisfano da soli il requisito. Ogni estensione schema richiede nodo, contratto e autorizzazione dedicati. I controlli su ASPRI e ADEXIMA sono scenari per il Core, non richiesta di attivare le due istanze.
+
+### Verifica anti-doppio conteggio
+
+- M01 copre l'acquisizione/normalizzazione base; M06 la semantica strutturata di economia e tempo. La stessa prova di parser non prova M06.
+- M02 riguarda il confine comandi/eventi, distinto da interpretazione di M01 e management di M04.
+- M03 riguarda match/disambiguazione, mentre M04 richiede anagrafiche e integrità dei riferimenti.
+- M05 riguarda gerarchie e correlazioni; M07 applica tali legami a obbligazioni e scadenze.
+- M08 riguarda guardie/transizioni del lifecycle; M09 riguarda permessi/RLS/ACL; M10 rettifiche, idempotenza e transazioni.
+- M11 copre la sola consultazione base NEW; M12 la revisione strutturata NEW.
+- M13 copre proiezioni affidabili, non UI grafica completa; M14 soltanto release/replica/binding; M15 accettazione end-to-end dei casi rappresentativi, non il re-test isolato delle altre milestone.
+
+### Misurazione iniziale e lavoro residuo
+
+Formula ufficiale rinviata a `00_PROJECT_Functional_Contract.md` §11.2: somma pesi PASS/somma pesi baseline × 100. Pesi PASS M01 8 + M02 4 + M03 7 + M08 8 + M09 5 + M11 3 = **35/100 = 35%**. I restanti 65 punti non sono sinonimo di 65% di sviluppo da zero: comprendono funzioni già parzialmente costruite, prive del PASS complessivo.
+
+Dipendenze preservate: P0-01 fonte e snapshot autorevole dell'app prima di modifiche Retool; P1-01 integrità riferimenti e valori base; P1-02 correlazioni; P1-03 rettifiche; P1-04 idempotenza/concorrenza/atomicità; P1-05 proiezione affidabile; P2 release/replica/compatibilità. Editor Base G11 resta candidato non implementato, da valutare separatamente. Il primo candidato implementativo raccomandato è la tranche minima P1-01 dopo verifica delle dipendenze, non attivata da questa baseline.
+
+**Limiti:** Retool e Supabase non verificati LIVE nel nodo 13; prove storiche conservate nei rispettivi checkpoint/documenti; nessuna nuova scrittura di test, nuova istanza o release. I PASS non attestano readiness produttiva e non devono essere allargati per inferenza. Nuova baseline/pesi richiedono nuova decisione esplicita e tracciata; i checkpoint futuri applicano il report del Contratto §11.4.
+
+### Efficacia e provenienza della baseline
+
+La struttura di 15 milestone con pesi invariati è stata **approvata dalla Regia** nella prosecuzione del nodo 13 il 28 ottobre 2026. Questa revisione documentale si fonda sulle preimage locali allegate, verificate identiche ai blob GitHub dello snapshot indicato; **la stesura della postimage non è prova della sua copia, verifica o pubblicazione**. Il valore del 35% diventa ufficiale al gate di consolidamento verificato e pubblicazione manuale di Roadmap e State. Prima di tale gate lo State ufficiale conserva `DA BASELINARE`.
+
+La prova storica delle milestone M01/M02/M03 risiede in Input System v20, Match Engine v12, Retool Architecture v24 e Retool Runtime v22; M08 nei checkpoint 07 e Lifecycle v14; M09 nel checkpoint 08, Database Schema v12 e Supabase Runtime v7; M11 nel collaudo READ-ONLY riferito dall'utente e nel Retool Runtime v22. Tutti restano riferiti ai propri istanti e limiti; nessun test Retool/Supabase è stato ripetuto nel nodo 13. I report successivi applicano il Contratto §11.4 senza contare un PASS di sessione come PASS automatico di milestone.
+
+
+## Snapshot precedente — raccordo del contratto funzionale (nodo 12)
 
 Nodo CP-LOGOS-DOC-FUNCTIONAL-CONTRACT-20261028-12; solo documentazione.
 Fonte dei requisiti stabili: 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md
@@ -1758,6 +1837,14 @@ ma non autorizzano output, dashboard, KPI o istanze verticali.
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v28 — 2026-10-28
+
+- approvata dalla Regia la baseline LOGOS Core Global Completion v1.0 con 15 milestone pesate (100%)
+- qualificati 6 PASS storici: M01, M02, M03, M08, M09, M11, per 35 punti candidati
+- distinti 18 punti parziali, 43 mancanti e 4 non determinabili come PASS
+- esplicitati criteri dati, verifiche VF, dipendenze e separazione anti-doppio conteggio
+- recepimento e 35% ufficiale condizionati a verifica postimage e pubblicazione manuale; nessuna modifica applicativa
 
 v27 — 2026-10-28
 
