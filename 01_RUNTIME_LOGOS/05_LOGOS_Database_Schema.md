@@ -1,7 +1,60 @@
 # 05_LOGOS_Database_Schema
-Versione: v12
+Versione: v13
 
-DATA: 2026-10-27
+DATA: 2026-10-28
+
+## Integrità referenziale minima degli eventi — nodo 14
+
+La tranche minima P1-01 del nodo `CP-LOGOS-CORE-REF-INTEGRITY-20261028-14`
+ha introdotto nel progetto `logos_template` (`utvwefciuxtwoqvvcwel`), schema
+`public`, la migrazione `logos_n14_events_reference_integrity_20261028`,
+versione Supabase `20261028094937`.
+
+| Vincolo | Riferimento | ON UPDATE | ON DELETE | Differibilità | Stato |
+| --- | --- | --- | --- | --- | --- |
+| `events_project_id_fkey` | `events.project_id → projects.id` | RESTRICT | RESTRICT | NOT DEFERRABLE | Validato |
+| `events_entity_id_fkey` | `events.entity_id → entities.id` | RESTRICT | RESTRICT | NOT DEFERRABLE | Validato |
+
+`project_id` ed `entity_id` restano nullable. Un riferimento non NULL deve
+corrispondere a un identificativo esistente. Le restrizioni impediscono
+l'aggiornamento dell'identificativo o l'eliminazione del record referenziato
+quando incompatibili con gli eventi collegati; non introducono cascade.
+Il matching, la risoluzione dell'ambiguità e la scelta dell'associazione
+restano nel frontend. Le FK verificano l'esistenza del riferimento, non
+la correttezza semantica della scelta né l'unicità dei nomi.
+
+### Evidenze trasferite e limiti
+
+Fonte: checkpoint conversazionale della microsessione tecnica del 28 ottobre
+2026, nodo 14, trasferito dall'utente nella continuazione documentale.
+T1 associazioni valide, T2 combinazioni NULL, T3 UUID inesistenti respinti,
+T4 dati storici conservati, T5 aggiornamenti validi/restrizioni, T6 lifecycle
+preservato e T7 RLS/ACL pertinenti conservate: PASS nel perimetro riferito.
+Le prove sintetiche SQL sono state annullate senza record persistenti.
+T8: due modifiche reali effettuate dall'utente nella Draft Retool senza errori,
+PASS circoscritto; non è un collaudo dell'intera app.
+
+Il controllo Supabase post-T8 riportato dal checkpoint attesta entrambe le
+FK validate e zero riferimenti orfani; conteggi e NULL sono fotografati in
+`LOGOS_SUPABASE_RUNTIME_REAL.md`. Non sono nuove letture LIVE di questa
+revisione. Nessuna modifica a colonne, RPC, policy RLS, trigger lifecycle,
+codice Retool o altre tabelle è attribuita al nodo 14.
+
+La tranche referenziale non completa la gestione anagrafica: Editor Base,
+regole sui duplicati e residui G11 restano distinti. M04 rimane PARZIALE;
+CF-02/VF-02 ricevono la sola evidenza referenziale. La baseline globale non
+acquista una nuova milestone PASS. Ulteriori modifiche DB richiedono il
+proprio mandato; questo aggiornamento documentale non esegue DDL.
+
+### Provenienza documentale
+
+Preimage locale completa v12, coerente con il blob canonico di
+`moody58/LOGOS`, `main`, SHA `dfd05371a9ee1951a417522cf75de8b5c878463c`.
+La presente v13 è una postimage proposta: applicazione documentale,
+verifica successiva e pubblicazione restano gate separati.
+Le sezioni di policy/export e lo storico successivi conservano il proprio
+istante; le affermazioni storiche di schema invariato non si estendono
+alla migrazione referenziale del nodo 14.
 
 ## Sicurezza e protezioni database consolidate dai nodi 07/08
 
@@ -1527,7 +1580,7 @@ nessuna validazione semantica completa tramite constraint; guardie lifecycle att
 inserimento consentito lato frontend se non bloccato da ambiguità project/entity non risolta
 update consentito sui NEW anche secondo la guardia database
 DB rifiuta le operazioni incompatibili con la guardia lifecycle
-qualità semantica e matching demandati a Retool; protezioni lifecycle e accesso anche nel DB
+qualità semantica e matching demandati a Retool; integrità referenziale, protezioni lifecycle e accesso anche nel DB
 
 Regole matching lato frontend:
 
@@ -1821,17 +1874,15 @@ RELAZIONI
 
 events → projects
 
-tramite project_id
-NON vincolata formalmente da FK applicativa documentata
+tramite project_id opzionale, protetto dalla FK validata events_project_id_fkey
 
 events → entities
 
-tramite entity_id
-NON vincolata formalmente da FK applicativa documentata
+tramite entity_id opzionale, protetto dalla FK validata events_entity_id_fkey
 
 Nota:
 
-integrità delle associazioni demandata al frontend; lifecycle protetto anche nel DB.
+scelta semantica delle associazioni demandata al frontend; esistenza dei riferimenti non NULL e lifecycle protetti anche nel DB.
 
 COMPORTAMENTO GLOBALE
 
@@ -1904,7 +1955,7 @@ evento NEW
 Il database:
 
 non interpreta dati
-non valida dati
+non esegue validazione semantica completa; verifica i riferimenti project/entity tramite FK
 non corregge dati
 non normalizza dati
 non decide type
@@ -2861,10 +2912,10 @@ command create project/entity non crea events
 command_intent_state non persistito
 feedback_mode non persistito
 
-RELAZIONI DEBOLI
-project/entity opzionali
-nessuna FK applicativa per le associazioni documentata; lifecycle protetto dai trigger
-integrità delle associazioni demandata al frontend; lifecycle protetto anche nel DB
+RELAZIONI OPZIONALI CON INTEGRITÀ REFERENZIALE
+project/entity opzionali: NULL resta ammesso
+events.project_id ed events.entity_id protetti dalle due FK validate del nodo 14
+scelta semantica delle associazioni nel frontend; riferimenti e lifecycle protetti anche nel DB
 match state non persistito
 singleMatch non persistito
 moreSpecificMatches non persistito
@@ -2894,7 +2945,7 @@ Limiti:
 - nessun alias system
 - nessuna relazione project/entity
 - nessuna gerarchia automatica
-- nessun vincolo DB nuovo
+- nessun vincolo DB introdotto dal nodo Create Suggestion; le FK evento appartengono al nodo 14
 
 TYPE UTILIZZATO A LIVELLO BASE
 
@@ -3014,8 +3065,8 @@ Motivazione:
 
 sistema ancora in fase evolutiva.
 
-La qualità viene migliorata progressivamente lato runtime,
-non imposta dal database.
+La qualità semantica viene migliorata progressivamente lato frontend;
+il database preserva anche l’integrità dei riferimenti mediante le FK del nodo 14.
 
 EVOLUZIONE FUTURA NON ATTIVA
 
@@ -3122,11 +3173,13 @@ vincolante in modo prematuro
 
 Principio:
 
-coerenza applicativa garantita dal frontend.
+scelta semantica e coerenza applicativa governate dal frontend;
+esistenza dei riferimenti non NULL garantita anche dalle FK del nodo 14.
 
 Rischio:
 
-incoerenze possibili se il frontend invia dati errati.
+incoerenze semantiche restano possibili con dati errati o associazioni a record
+esistenti ma non pertinenti; le FK non sostituiscono matching e controllo umano.
 
 Mitigazione attuale:
 
@@ -3149,6 +3202,10 @@ insert/update validati su casi reali
 raw_input preservato per debug/correzione futura
 
 ## Revisione corrente
+
+v13 — 2026-10-28 — Consolidamento proposto della tranche P1-01 referenziale del nodo 14: due FK evento validate, RESTRICT e nullable conservati; prove tecniche trasferite, nessun nuovo test live. Applicazione e pubblicazione documentali non attestate.
+
+### Revisione precedente
 
 v12 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 

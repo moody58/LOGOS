@@ -1,7 +1,55 @@
 # LOGOS_SUPABASE_RUNTIME_REAL
-Versione: v7
+Versione: v8
 
-DATA: 2026-10-27
+DATA: 2026-10-28
+
+## Fotografia documentale post-nodo 14 — integrità referenziale minima
+
+Progetto `logos_template`, ref `utvwefciuxtwoqvvcwel`, schema `public`.
+Migrazione applicata nella microsessione tecnica del 28 ottobre 2026:
+`logos_n14_events_reference_integrity_20261028`, versione `20261028094937`.
+
+| Vincolo validato | Riferimento | Regole |
+| --- | --- | --- |
+| `events_project_id_fkey` | `events.project_id → projects.id` | ON UPDATE RESTRICT; ON DELETE RESTRICT; NOT DEFERRABLE |
+| `events_entity_id_fkey` | `events.entity_id → entities.id` | ON UPDATE RESTRICT; ON DELETE RESTRICT; NOT DEFERRABLE |
+
+Entrambi i campi restano nullable. I riferimenti non NULL inesistenti sono
+respinti; non è introdotta una cancellazione o modifica a cascata.
+Matching e scelta semantica restano in Retool. Non sono state modificate
+colonne, RPC, policy RLS, trigger lifecycle, codice Retool o altre tabelle.
+Il dettaglio canonico del contratto è in `05_LOGOS_Database_Schema.md` v13
+proposta nel medesimo lotto.
+
+### Snapshot post-T8 trasferito — 28 ottobre 2026
+
+| Proprietà | Risultato riferito |
+| --- | --- |
+| Eventi / progetti / entità | 268 / 32 / 30 |
+| Riferimenti orfani | 0 |
+| Eventi senza progetto / senza entità | 190 / 221 |
+| FK evento | Entrambe presenti e validate |
+| RLS | Attiva su events, projects, entities |
+
+Fonte: checkpoint conversazionale del nodo
+`CP-LOGOS-CORE-REF-INTEGRITY-20261028-14`, trasferito dall'utente nella
+continuazione documentale. T1–T7 PASS nel perimetro tecnico riferito;
+prove SQL sintetiche annullate senza record persistenti. T8 PASS circoscritto:
+due modifiche reali dell'utente nella Draft Retool senza errori.
+Il dettaglio delle prove e dei limiti è nello Schema; nessun test viene
+ripetuto da questo consolidamento e nessuna nuova lettura LIVE è attestata.
+I conteggi sono una fotografia storica, non una misura permanente.
+
+La verifica referenziale contribuisce a CF-02/VF-02 senza completare
+anagrafiche, Editor Base o duplicati. M04 resta PARZIALE; nessun incremento
+della baseline globale è attribuito alle sole FK. Le altre FK descritte
+come assenti nel documento non sono incluse nella modifica del nodo 14.
+
+Preimage locale completa v7, coerente con il blob canonico di
+`moody58/LOGOS`, `main`, SHA `dfd05371a9ee1951a417522cf75de8b5c878463c`.
+Questa v8 è una postimage proposta; non attesta propria copia, verifica
+documentale o pubblicazione. Le prove 07/08 e i loro limiti, riportati
+sotto, restano riferiti ai rispettivi istanti.
 
 ## Fotografia documentale Supabase dopo i nodi 07/08
 
@@ -317,10 +365,15 @@ CHECK:
 
 - 2200_17534_1_not_null
 
+FOREIGN KEY VALIDATE:
+
+- events_project_id_fkey: project_id → projects.id
+- events_entity_id_fkey: entity_id → entities.id
+- entrambe ON UPDATE RESTRICT, ON DELETE RESTRICT, NOT DEFERRABLE
+- project_id ed entity_id restano nullable
+
 ASSENTI:
 
-- foreign key su project_id
-- foreign key su entity_id
 - unique constraints aggiuntivi
 - CHECK applicativi su status (la protezione lifecycle è nei trigger)
 - vincoli applicativi su type
@@ -369,7 +422,8 @@ non interpreta input_analysis_result,
 non interpreta preview_analysis_state,
 non governa visibility/readiness UI.
 
-La qualità dipende dal payload inviato da Retool.
+La qualità semantica dipende dal payload inviato da Retool; le FK verificano
+l’esistenza dei riferimenti project/entity non NULL.
 
 Gli helper Retool successivi al 2026-05-02 migliorano interpretazione, visibilità e controllo UI,
 ma non modificano il modello Supabase.
@@ -1038,7 +1092,7 @@ NEW
 Il database:
 
 non interpreta dati
-non interpreta semanticamente i dati; valida il lifecycle tramite trigger
+non interpreta semanticamente i dati; verifica i riferimenti project/entity tramite FK e valida il lifecycle tramite trigger
 non corregge dati
 non normalizza dati
 non gestisce lifecycle avanzato
@@ -1111,8 +1165,9 @@ DB CON PROTEZIONI LIFECYCLE E ACCESSO
 parsing e matching restano nel frontend
 guardie lifecycle e ACL/RLS attive
 
-NESSUNA VALIDAZIONE FORTE
-project_id/entity_id non vincolati
+VALIDAZIONE REFERENZIALE DISTINTA DALLA SEMANTICA
+project_id/entity_id nullable, protetti dalle FK validate del nodo 14
+la pertinenza semantica di un riferimento esistente resta responsabilità del frontend/utente
 status governato dai trigger lifecycle; non si aggiunge qui un CHECK
 type non validato
 
@@ -1161,8 +1216,8 @@ Il database LOGOS:
 
 è strutturalmente solido
 è progettato per scalabilità
-non impone vincoli rigidi
-delega la logica a Retool
+applica i vincoli referenziali RESTRICT del nodo 14 mantenendo associazioni nullable
+delega interpretazione, matching e scelta semantica a Retool
 applica anche protezioni lifecycle e accesso
 riceve dati più coerenti dopo Normalization Layer Base
 
@@ -1186,7 +1241,7 @@ update flow attivo
 lista aggiornata dopo save
 grande capacità inutilizzata
 
-⚠ qualità semantica e matching dipendono dal frontend; lifecycle e accesso sono protetti anche nel database
+⚠ qualità semantica e matching dipendono dal frontend; riferimenti, lifecycle e accesso sono protetti anche nel database
 
 ⚠ modifiche eventi non sono versionate
 
@@ -1226,6 +1281,10 @@ La fonte canonica per i dettagli Retool è LOGOS_RETOOL_RUNTIME_REAL.
 La fonte canonica per lo schema DB è 05_LOGOS_Database_Schema.
 
 ## Revisione corrente
+
+v8 — 2026-10-28 — Consolidamento proposto della fotografia post-nodo 14: FK events/project ed events/entity validate, RESTRICT, nullable e snapshot post-T8; prove trasferite, nessuna nuova lettura live. Applicazione e pubblicazione documentali non attestate.
+
+### Revisione precedente
 
 v7 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 

@@ -1,5 +1,5 @@
 # PROJECT_CHANGELOG
-Versione: v06
+Versione: v07
 
 DATA: 2026-10-28
 
@@ -38,6 +38,41 @@ correzioni e riallineamenti
 
 ### Removed
 elementi eliminati
+
+------------------------------------------------
+2026-10-28 — INTEGRITÀ REFERENZIALE MINIMA CORE / NODO 14
+------------------------------------------------
+
+### Changed
+
+- Nodo CP-LOGOS-CORE-REF-INTEGRITY-20261028-14: applicata nella fase tecnica
+  la migrazione logos_n14_events_reference_integrity_20261028, versione
+  Supabase 20261028094937, su logos_template / utvwefciuxtwoqvvcwel.
+- events_project_id_fkey ed events_entity_id_fkey validate: riferimenti da
+  events a projects/entities, ON UPDATE RESTRICT, ON DELETE RESTRICT,
+  NOT DEFERRABLE. project_id/entity_id restano nullable.
+
+### Fixed
+
+- Tranche minima P1-01 referenziale completata tecnicamente: UUID inesistenti
+  respinti, associazioni ammesse e NULL preservati nel perimetro collaudato.
+- Proposto il raccordo di Schema v13, Supabase Runtime v8, State v38 e
+  Roadmap v29; Gap Register v23 KEEP. Nessuna modifica al contratto funzionale,
+  Kernel, Retool Runtime, README o istruzioni/tab del progetto.
+
+### Prove e limiti
+
+- T1–T7 PASS e T8 PASS circoscritto a due modifiche reali dell'utente nella
+  Draft Retool, trasferiti dal checkpoint conversazionale del 28 ottobre.
+  Nessun nuovo test live nella fase documentale; prove SQL sintetiche
+  annullate senza record persistenti secondo il checkpoint.
+- Nessuna modifica a colonne, RPC, policy RLS, trigger lifecycle, codice
+  Retool o altre tabelle attribuita al nodo 14.
+- M04 PARZIALE; CF-02/VF-02 solo componente referenziale; Editor Base G11 e
+  duplicati restano residui. Baseline v1.0 invariata: 35% → 35%, variazione 0.
+- Il presente lotto è proposto: copia/applicazione documentale, verifica,
+  pubblicazione manuale e trasferimento del recap alla Regia non attestati.
+  Le voci successive conservano gli esiti e i limiti dei rispettivi nodi.
 
 ------------------------------------------------
 2026-10-28 — CONTRATTO FUNZIONALE DEL CORE / RACCORDO DOCUMENTALE
@@ -297,6 +332,12 @@ Non include:
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v07 — 2026-10-28
+
+- registrata la modifica tecnica referenziale del nodo 14 da checkpoint trasferito
+- descritto il lotto documentale proposto senza attestare propria applicazione/pubblicazione
+- preservati M04 PARZIALE, residui G11/duplicati e misura 35% → 35%
 
 v06 — 2026-10-28
 

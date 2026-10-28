@@ -1,9 +1,49 @@
 # 00_PROJECT_State
-Versione: v37
+Versione: v38
 
 DATA: 2026-10-28
 
-## Stato corrente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
+## Nodo corrente — integrità referenziale minima Core (nodo 14)
+
+Nodo confermato: `CP-LOGOS-CORE-REF-INTEGRITY-20261028-14`.
+La microsessione tecnica del 28 ottobre 2026 ha conseguito PASS nel proprio
+perimetro; questa è la prosecuzione documentale dello stesso nodo.
+
+| Ambito | Stato corrente |
+| --- | --- |
+| Risultato tecnico | Due FK validate da events verso projects/entities, UPDATE/DELETE RESTRICT, NOT DEFERRABLE; project_id/entity_id restano nullable |
+| Tranche P1-01 | Integrità referenziale minima completata tecnicamente; non equivale a P1-01 integralmente chiuso |
+| Prove | T1–T7 PASS trasferiti dal checkpoint; T8 PASS circoscritto a due modifiche reali dell'utente nella Draft Retool |
+| Consolidamento documentale | Postimage proposte nel presente lotto; copia/applicazione, verifica e pubblicazione ancora pendenti |
+| Baseline | LOGOS Core Global Completion v1.0, pesi invariati; Roadmap v28 pubblicata e v29 proposta per il solo raccordo |
+| Misura precedente → successiva | **35% → 35%; variazione 0 punti percentuali** |
+| Milestone | Nessuna nuova milestone PASS; M04 resta PARZIALE |
+| CF-02 / VF-02 | Riconosciuta la sola verifica referenziale, non la gestione anagrafica completa |
+| Residui | Editor Base G11 e gestione duplicati non completati; ulteriori residui P1-01 da qualificare nei mandati pertinenti |
+| Prossimo passo | Review del lotto, qualificazione della corsia e successivo consenso puntuale prima di qualsiasi applicazione |
+
+Fonte tecnica: checkpoint conversazionale del nodo 14 trasferito dall'utente
+nel blocco di continuazione. Migrazione
+`logos_n14_events_reference_integrity_20261028` / `20261028094937`, progetto
+`logos_template` / `utvwefciuxtwoqvvcwel`. Dettaglio tecnico nei documenti
+`05_LOGOS_Database_Schema.md` e `LOGOS_SUPABASE_RUNTIME_REAL.md` del lotto.
+Nessuna nuova lettura LIVE Retool/Supabase o ripetizione T1–T8 in questa fase.
+Il collaudo T8 non certifica ogni flusso dell'app né readiness produttiva.
+
+Fonte della misura: baseline v1.0 del nodo 13, State v37 e Roadmap v28 su
+`moody58/LOGOS`, `main`, SHA `dfd05371a9ee1951a417522cf75de8b5c878463c`;
+preimage locali complete coerenti con i rispettivi blob canonici.
+Il valore 35% precedente è ripreso dal mandato di continuità: le FK non
+soddisfano da sole tutti i criteri di M04 e non producono credito aggiuntivo.
+Questa proposta v38 non attesta la propria applicazione o pubblicazione;
+nessun nuovo nodo è aperto e il recap per Regia rimane da trasferire.
+
+Gli snapshot seguenti conservano il testo e le condizioni dei nodi di
+origine, incluse le formulazioni allora candidate della baseline e i
+riferimenti DA BASELINARE. Non sostituiscono il quadro corrente sopra.
+La sezione OBIETTIVO IMMEDIATO è raccordata alla presente continuazione.
+
+## Snapshot precedente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
 
 Nodo di provenienza: `CP-LOGOS-CORE-GLOBAL-BASELINE-20261028-13`.
 Snapshot documentale usato per la qualifica: `moody58/LOGOS`, branch `main`, SHA `4ce064aad531c2999259cc6a8892d5cfda6d3597`.
@@ -1186,14 +1226,14 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare il raccordo documentale del nodo 12: review delle sei postimage,
-scelta puntuale del percorso per target, consenso specifico, applicazione,
-verifica appropriata e review; commit/push manuali e nuovo SHA/rebind se pubblicato.
-Nessun Check/Apply/Verify nativo attestato; R01 conserva la dipendenza Python
-divergente, R02 non adottato. Nessuna commutazione automatica verso la copia.
-Baseline percentuale e prossimo nodo funzionale restano da confermare nel
-mandato pertinente; nessuna nuova autorizzazione organizzativa necessaria
-per i passaggi gia' autorizzati del presente nodo. Gap Register v23: KEEP.
+Completare la preparazione documentale del nodo 14 sugli originali locali:
+postimage integrali, diff, hash, manifest, qualificazione della corsia e review.
+Check soltanto dove realmente ammissibile; copia/Apply, verifica e pubblicazione
+richiedono i gate successivi e non sono autorizzati dalla preparazione.
+R01 conserva il limite documentato della dipendenza Python divergente; R02 non
+è adottato. Nessuna riparazione, reinstallazione o commutazione automatica.
+Baseline v1.0: 35% → 35%, M04 PARZIALE; Gap Register v23 KEEP.
+Nessun nuovo nodo funzionale o ritorno in Regia per passi già autorizzati.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1859,6 +1899,13 @@ residuo accettato perché il blocco funzionale impedisce update_event e creazion
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v38 — 2026-10-28
+
+- registrato PASS tecnico trasferito del nodo 14 e completamento della sola tranche referenziale P1-01
+- distinti consolidamento documentale proposto, applicazione, verifica e pubblicazione ancora pendenti
+- misura baseline v1.0 invariata 35% → 35%; M04 PARZIALE, CF-02/VF-02 solo componente referenziale
+- conservati residui G11/Editor Base/duplicati, snapshot storici e prove valide; nessun nuovo test live
 
 v37 — 2026-10-28
 

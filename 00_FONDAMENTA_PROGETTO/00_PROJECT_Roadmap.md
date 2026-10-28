@@ -1,7 +1,34 @@
 # 00_PROJECT_Roadmap
-Versione: v28
+Versione: v29
 
 DATA: 2026-10-28
+
+## Raccordo corrente — tranche referenziale P1-01, nodo 14
+
+`CP-LOGOS-CORE-REF-INTEGRITY-20261028-14`: PASS tecnico trasferito dal
+checkpoint conversazionale del 28 ottobre 2026. La prosecuzione corrente
+prepara il consolidamento documentale, senza autorizzare copia/Apply,
+modifiche applicative o nuovi nodi.
+
+| Riferimento | Delta e residuo |
+| --- | --- |
+| P1-01 | Completata tecnicamente la tranche minima events.project_id/entity_id → projects/entities: due FK validate, RESTRICT, campi nullable. Non è chiuso tutto il requisito di integrità e valori base |
+| CF-02 / VF-02 | Verifica referenziale riconosciuta; gestione anagrafica completa non attestata |
+| M04 | Resta PARZIALE: Editor Base G11 e protezione/gestione duplicati non completati |
+| M03 / altre milestone | Nessun nuovo PASS o doppio conteggio; matching e integrità referenziale restano capacità distinte |
+| Sequenza | Nessuna nuova priorità o attivazione implicita. Restano le dipendenze funzionali P1/P2 e i gate fonte Retool pertinenti |
+
+Baseline LOGOS Core Global Completion v1.0 e pesi invariati; il PASS di
+questa tranche non produce incremento percentuale. Il valore corrente e
+il confronto 35% → 35% sono nello State; la matrice sotto conserva criteri,
+pesi e residui. Le prove T1–T7 e il collaudo utente T8 circoscritto sono
+trasferiti, non ripetuti. Dettagli e limiti nei due documenti database.
+
+Snapshot documentale: `moody58/LOGOS`, `main`,
+`dfd05371a9ee1951a417522cf75de8b5c878463c`; preimage locale completa v28.
+La proposta v29 non certifica la propria applicazione o pubblicazione.
+Le sezioni esplicitamente storiche conservano le condizioni dei nodi
+precedenti; il prossimo lavoro resta il consolidamento del nodo 14.
 
 ## Baseline globale del Core universale — v1.0 (nodo 13)
 
@@ -19,7 +46,7 @@ La presente baseline definisce 15 milestone verificabili per 100 punti percentua
 | M01 | Input originale conservato, parsing e normalizzazione base coerenti; dati supportati correttamente trasferiti al salvataggio negli scenari base provati | CF-01; VF-01 limitata | 8% | PASS storico | Input System v20, Retool Runtime v22, prove pregresse di parsing/normalizzazione/save flow; non attestano interpretazione universale né nuove scritture dopo ultimo hardening | Capacità semantiche più ampie in M06; nessun intent engine globale implicito |
 | M02 | Comandi di primo livello distinti da eventi ordinari; comandi puri non persistiti come eventi, edit flow protetto da comandi riconosciuti | CF-01 | 4% | PASS storico | Input System v20, Retool Architecture v24, prove Command Intent e Input Context Consistency; solo primo livello controllato | Nuovi comandi solo quando richiesti da capacità approvate |
 | M03 | Matching Project/Entity, single-match e disambiguazione controllata funzionano nei casi di test; nessuna selezione ambigua salvata senza decisione | CF-02; VF-02 limitata | 7% | PASS storico | Match Engine v12, casi G22 e regressioni; non costituisce prova di FK, deduplicazione globale o gestione anagrafica completa | Integrità e CRUD in M04 |
-| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PARZIALE | Creazione base documentata; Editor Base G11 non applicato e P1-01 aperto | G11, P1-01, dati preesistenti, NULL legittimi |
+| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PARZIALE | Creazione base documentata; tranche referenziale P1-01 nodo 14 PASS trasferito, due FK evento validate; Editor Base G11 e duplicati non completati | G11, residui P1-01/valori base, dati preesistenti, NULL legittimi |
 | M05 | Gerarchie e correlazioni con semantica e cardinalità esplicite; contenitori/figli, ruoli e legami occasionali recuperabili senza confusione; genealogia con due genitori rappresentabile | CF-03; VF-03, VF-04, VF-06 | 10% | MANCANTE come funzione qualificata | Parent fields storicamente dormienti; contratto dati nodo 03 candidato non integralmente approvato/implementato | P1-02, vincoli e modello correlazioni minimo, casi ASPRI/ADEXIMA |
 | M06 | Eventi economicamente e temporalmente classificati, importi/unità/date/durate sufficienti e interrogabili; spesa e incasso distinguibili in aggregazione | CF-04; VF-01, VF-07 limitate | 8% | PARZIALE | Parsing/amount/duration/type base documentati; la semantica analitica non è interamente verificata | Distinzione economica e persistenza strutturata per casi approvati, M13 |
 | M07 | Prezzo concordato, più versamenti, saldo residuo, stati delle obbligazioni e scadenze future rappresentabili e collegati agli oggetti giusti | CF-04; VF-05; scenari CF §7–8 | 9% | MANCANTE come funzione qualificata | Requisiti definiti nel contratto funzionale, non un modello persistente verificato | Relazioni M05, struttura obbligazioni/tempi, casi ASPRI |
@@ -71,7 +98,7 @@ Campo esistente ma mai valorizzato, testo libero non strutturato e soluzione sol
 
 Formula ufficiale rinviata a `00_PROJECT_Functional_Contract.md` §11.2: somma pesi PASS/somma pesi baseline × 100. Pesi PASS M01 8 + M02 4 + M03 7 + M08 8 + M09 5 + M11 3 = **35/100 = 35%**. I restanti 65 punti non sono sinonimo di 65% di sviluppo da zero: comprendono funzioni già parzialmente costruite, prive del PASS complessivo.
 
-Dipendenze preservate: P0-01 fonte e snapshot autorevole dell'app prima di modifiche Retool; P1-01 integrità riferimenti e valori base; P1-02 correlazioni; P1-03 rettifiche; P1-04 idempotenza/concorrenza/atomicità; P1-05 proiezione affidabile; P2 release/replica/compatibilità. Editor Base G11 resta candidato non implementato, da valutare separatamente. Il primo candidato implementativo raccomandato è la tranche minima P1-01 dopo verifica delle dipendenze, non attivata da questa baseline.
+Dipendenze preservate: P0-01 fonte e snapshot autorevole dell'app prima di modifiche Retool; P1-01 integrità riferimenti e valori base; P1-02 correlazioni; P1-03 rettifiche; P1-04 idempotenza/concorrenza/atomicità; P1-05 proiezione affidabile; P2 release/replica/compatibilità. Editor Base G11 resta candidato non implementato, da valutare separatamente. La tranche minima referenziale P1-01 è stata successivamente completata tecnicamente nel nodo 14; restano il consolidamento documentale e i residui distinti. Nessun ulteriore nodo è attivato da questo raccordo.
 
 **Limiti:** Retool e Supabase non verificati LIVE nel nodo 13; prove storiche conservate nei rispettivi checkpoint/documenti; nessuna nuova scrittura di test, nuova istanza o release. I PASS non attestano readiness produttiva e non devono essere allargati per inferenza. Nuova baseline/pesi richiedono nuova decisione esplicita e tracciata; i checkpoint futuri applicano il report del Contratto §11.4.
 
@@ -1486,15 +1513,15 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-CP-LOGOS-DOC-FUNCTIONAL-CONTRACT-20261028-12 — raccordo documentale in corso.
-Completare review delle sei postimage, scelta del percorso specifico per target,
-consenso puntuale, applicazione autorizzata, verifica appropriata e review;
-commit/push manuali e nuovo SHA/rebind se pubblicato. Il trasferimento del
-checkpoint alla Regia rimane distinto dalla pubblicazione e dalla chiusura.
-Prossimo nodo funzionale DA CONFERMARE; Editor Base non attivo.
-La baseline di LOGOS Core Global Completion resta DA BASELINARE.
-Gap Register v23: KEEP; nessun nuovo ID o chiusura funzionale.
-Il blocco R01 non autorizza copia manuale automatica, cambio di profilo o R02.
+CP-LOGOS-CORE-REF-INTEGRITY-20261028-14 — continuazione documentale in corso.
+PASS tecnico già conseguito nel perimetro trasferito. Preparare e revisionare
+le cinque postimage, diff e manifest; qualificare la corsia per ciascun target.
+Check solo dove ammissibile; nessuna copia/Apply o pubblicazione autorizzata
+in questa fase. Seguono consenso specifico e gate della corsia effettiva.
+M04 PARZIALE; baseline v1.0 e pesi invariati. Gap Register v23 KEEP;
+G11/Editor Base/duplicati restano aperti. Nessun prossimo nodo funzionale
+assegnato e nessun nuovo ID creato. R01/R02 non vengono riparati o adottati.
+Il trasferimento del checkpoint alla Regia rimane distinto dalla pubblicazione.
 
 ------------------------------------------------
 BACKLOG POST READINESS — NESSUN PROSSIMO NODO PREASSEGNATO
@@ -1837,6 +1864,13 @@ ma non autorizzano output, dashboard, KPI o istanze verticali.
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v29 — 2026-10-28
+
+- riconosciuto PASS tecnico trasferito della tranche referenziale P1-01 del nodo 14
+- aggiornata evidenza M04 mantenendo PARZIALE, peso 7% e residui G11/duplicati
+- baseline v1.0 e pesi invariati, nessun nuovo PASS o incremento percentuale
+- raccordato il nodo attivo alla preparazione documentale; nessuna applicazione/pubblicazione o nuova priorità attestata
 
 v28 — 2026-10-28
 
