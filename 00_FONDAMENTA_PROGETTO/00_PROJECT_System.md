@@ -1,6 +1,7 @@
-# 00_PROJECT_System_v08
+# 00_PROJECT_System
+Versione: v09
 
-DATA: 2026-05-25
+DATA: 2026-10-28
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -51,6 +52,12 @@ Questo documento NON governa:
 
 Fonti competenti:
 
+- 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md per requisiti
+  funzionali stabili del prodotto, capacita' universali, requisiti dati,
+  criteri di accettazione/completamento e metodo di misurazione globale
+- 00_FONDAMENTA_PROGETTO/00_PROJECT_Core_Architectural_Baseline.md per
+  decisioni e invarianti architetturali approvate, con i propri limiti storici
+
 - 00_PROJECT_State per stato corrente e prossimo nodo consigliato
 - 00_PROJECT_Roadmap per sequenza operativa e priorità
 - 00_PROJECT_Gap_Register per gap, debiti e futuri
@@ -65,6 +72,17 @@ Regola:
 State, Gap Register o runtime manifest.
 
 Deve restare documento di architettura alta.
+
+Il contratto funzionale non sostituisce System e System non ne duplica i
+requisiti. La loro descrizione non prova implementazione, collaudo o readiness.
+Per LOGOS Core Global Completion il metodo risiede nel contratto funzionale;
+State conserva valore corrente, baseline e istante; Roadmap milestone,
+dipendenze e residui. Il valore iniziale e' DA BASELINARE.
+
+Limite delle sezioni tecniche sottostanti: conservano lo snapshot sistemico
+del 25 maggio 2026. I richiami a database passivo, candidati e risultati di
+quel periodo non sostituiscono State e documenti tecnici correnti post-hardening.
+Questo raccordo non aggiorna il runtime descritto e non ripete verifiche live.
 
 ------------------------------------------------
 OBIETTIVO SISTEMA
@@ -1705,6 +1723,9 @@ DOCUMENTI TECNICI COLLEGATI
 
 Core / governance:
 
+- 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md
+- 00_FONDAMENTA_PROGETTO/00_PROJECT_Core_Architectural_Baseline.md
+
 - 00_PROJECT_State
 - 00_PROJECT_Roadmap
 - 00_PROJECT_Gap_Register
@@ -1920,3 +1941,11 @@ v08 — 2026-05-25
 - nessuna modifica save flow
 - nessuna modifica payload
 - nessuna anticipazione output / KPI / dashboard
+
+v09 — 2026-10-28
+
+- raccordato il contratto funzionale come fonte dei requisiti stabili e dei
+  criteri di completezza/misurazione; distinta la baseline architetturale
+- preservata la responsabilita' di architettura alta di System e lo storico
+- esplicitato il limite temporale dello snapshot tecnico conservato
+- nessuna modifica runtime o nuova verifica live; pubblicazione da verificare

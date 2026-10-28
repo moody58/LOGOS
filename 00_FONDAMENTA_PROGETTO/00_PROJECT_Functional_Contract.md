@@ -1,12 +1,12 @@
 # LOGOS — Contratto Funzionale del Core Universale
+Versione: v1.1
 
-**Documento:** `00_PROJECT_Functional_Contract.md`  
-**Versione:** v1.0  
-**Data:** 28 ottobre 2026  
-**Progetto:** LOGOS — Event Operating System  
-**Repository:** `moody58/LOGOS`  
-**Percorso:** `00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md`  
-**Stato:** Testo finale per recepimento canonico; pubblicazione non ancora attestata.
+**Documento:** `00_PROJECT_Functional_Contract.md`
+**Data:** 28 ottobre 2026
+**Progetto:** LOGOS — Event Operating System
+**Repository:** `moody58/LOGOS`
+**Percorso:** `00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md`
+**Stato:** v1.0 pubblicata su `main` al commit `afc0c26a92aaf2a1256c55605eb2f9b776e5da41`; presente v1.1: raccordo editoriale, subordinato a review, applicazione e pubblicazione proprie.
 
 ## 1. Scopo e responsabilità
 
@@ -395,8 +395,12 @@ La presente versione non sostituisce le prove live né certifica la readiness pr
 
 ## 15. Storico revisioni
 
+**v1.1 — 28 ottobre 2026**
+
+Correzione editoriale dello stato di pubblicazione della v1.0 e dei relativi riferimenti; versione in seconda riga e rimozione dei soli spazi finali dell’intestazione. Requisiti, decisioni, criteri e metodo di misurazione invariati. La presente voce non attesta applicazione o pubblicazione della v1.1.
+
 **v1.0 — 28 ottobre 2026**
 
 Prima versione del contratto funzionale: visione, modello di interazione, confini Core/istanze, requisiti dati, scenari ASPRI/ADEXIMA, criteri di completamento e metodo per misurare l'avanzamento globale.
 
-Pubblicazione canonica e commit SHA: da attestare dopo il recepimento.
+Pubblicazione canonica v1.0 attestata su `moody58/LOGOS`, branch `main`, commit `afc0c26a92aaf2a1256c55605eb2f9b776e5da41`.

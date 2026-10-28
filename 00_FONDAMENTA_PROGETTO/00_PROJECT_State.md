@@ -1,10 +1,53 @@
 # 00_PROJECT_State
-Versione: v35
+Versione: v36
 
 DATA: 2026-10-28
 
+## Nodo corrente — raccordo del contratto funzionale (28 ottobre 2026)
+
+CP-LOGOS-DOC-FUNCTIONAL-CONTRACT-20261028-12. Mandato esclusivamente documentale.
+Il contratto funzionale v1.0 e' pubblicato in
+00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md, main,
+afc0c26a92aaf2a1256c55605eb2f9b776e5da41. La creazione e' conclusa;
+la correzione editoriale v1.1 e i raccordi di questo lotto hanno gate propri.
+Il nodo 10 e' stato pubblicato a ef377a38f77c995af29e16be06741b9eb3cd0073.
+Gli snapshot sottostanti conservano provenienza, risultati e limiti storici.
+
+### LOGOS Core Global Completion
+
+| Campo | Stato corrente |
+|---|---|
+| Stato globale | Core non ancora qualificato come completo; app Draft secondo le prove documentate |
+| Valore ufficiale | DA BASELINARE |
+| Baseline di misurazione / versione | Non definita; denominatore, milestone e pesi da approvare nel mandato pertinente |
+| Rilevazione documentale | 28 ottobre 2026, snapshot main afc0c26a92aaf2a1256c55605eb2f9b776e5da41; nessuna misurazione percentuale eseguita |
+| Percentuale precedente / successiva del presente raccordo | DA BASELINARE / DA BASELINARE |
+| Variazione percentuale | NON CALCOLABILE in assenza di baseline; nessun incremento dedotto dal PASS documentale |
+| Milestone della baseline verificate | Non classificabili finche' la baseline non e' definita; prove valide precedenti da riutilizzare |
+| Lavoro residuo / dipendenze | Roadmap: raccordo CF-01–CF-08 / VF-01–VF-09, P0/P1/P2 e backlog; nessun nuovo nodo attivato |
+
+Fonte madre del metodo: 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md,
+sezioni 10–11. State conserva soltanto valore corrente, versione della baseline
+e istante; non introduce pesi o criteri alternativi. Il ~95% e le percentuali
+per layer conservati sotto sono indicatori storici di altro perimetro:
+non rappresentano la completezza del Core, non sono la baseline iniziale
+e non possono essere sommati o mediati per ottenere il nuovo indicatore.
+
+Ogni futuro checkpoint conclusivo di sviluppo deve riportare stato globale,
+percentuale precedente e successiva, milestone verificate con prove,
+avanzamento reale e variazione motivata, lavoro residuo e dipendenze,
+oltre a baseline/versione, fonti, SHA e provenienza secondo il contratto §11.4.
+Senza baseline mantenere DA BASELINARE e variazione NON CALCOLABILE.
+Un PASS tecnico puo' lasciare invariata la percentuale e non chiude da solo
+una milestone globale. Nessuna prova storica valida viene azzerata.
+
+Retool/Supabase NON VERIFICATI LIVE in questo nodo. Nessuna implementazione,
+release, dashboard, istanza verticale o attivazione dell'Editor Base.
+Il presente contenuto e' una proposta: non attesta propria applicazione,
+verifica successiva o pubblicazione; nodo 12 aperto fino ai gate richiesti.
+
 ------------------------------------------------
-NODO CORRENTE — ALLINEAMENTO GOVERNANCE POST-HARDENING
+SNAPSHOT STORICO — ALLINEAMENTO GOVERNANCE POST-HARDENING (NODO 10)
 ------------------------------------------------
 
 CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10.
@@ -1039,7 +1082,7 @@ Fonte canonica:
 - LOGOS_RETOOL_RUNTIME_REAL per runtime reale as-is.
 
 ------------------------------------------------
-STATO LAYER SISTEMA
+STATO LAYER SISTEMA — INDICATORI STORICI, NON CORE GLOBAL COMPLETION
 ------------------------------------------------
 
 Layer 1 — Input: ~99%
@@ -1056,9 +1099,11 @@ Layer 6 — Output: 0%
 
 ---
 
-STATO COMPLESSIVO:
+STATO COMPLESSIVO STORICO (PERIMETRO PRECEDENTE):
 
 ~95%
+
+Non usare come valore di LOGOS Core Global Completion: DA BASELINARE.
 
 ------------------------------------------------
 FASE ATTUALE
@@ -1110,14 +1155,14 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare l'allineamento documentale del nodo 10: review di State v35,
-Roadmap v26 e Changelog v05; applicazione solo con percorso qualificato e consenso
-specifico, verifica appropriata, commit/push manuali e verifica del nuovo SHA.
-Gap Register v23 e checkpoint storico Fonti Canoniche: KEEP.
-Il percorso nativo R01 resta impedito dalla dipendenza Python divergente;
-nessuna commutazione automatica alla copia manuale dei target protetti.
-Dopo il consolidamento, confermare il prossimo nodo funzionale con la Regia;
-nessuna nuova autorizzazione organizzativa richiesta per completare il mandato attuale.
+Completare il raccordo documentale del nodo 12: review delle sei postimage,
+scelta puntuale del percorso per target, consenso specifico, applicazione,
+verifica appropriata e review; commit/push manuali e nuovo SHA/rebind se pubblicato.
+Nessun Check/Apply/Verify nativo attestato; R01 conserva la dipendenza Python
+divergente, R02 non adottato. Nessuna commutazione automatica verso la copia.
+Baseline percentuale e prossimo nodo funzionale restano da confermare nel
+mandato pertinente; nessuna nuova autorizzazione organizzativa necessaria
+per i passaggi gia' autorizzati del presente nodo. Gap Register v23: KEEP.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1783,6 +1828,14 @@ residuo accettato perché il blocco funzionale impedisce update_event e creazion
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v36 — 2026-10-28
+
+- raccordato il contratto funzionale v1.0 pubblicato e introdotto il valore
+  corrente LOGOS Core Global Completion: DA BASELINARE
+- distinti indicatori storici, prove riutilizzabili e futura baseline approvata
+- richiamato il report obbligatorio dei checkpoint conclusivi di sviluppo
+- nodo 12 documentale aperto; nessuna propria applicazione/pubblicazione attestata
 
 v35 — 2026-10-28
 

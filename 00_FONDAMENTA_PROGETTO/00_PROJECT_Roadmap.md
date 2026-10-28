@@ -1,9 +1,65 @@
 # 00_PROJECT_Roadmap
-Versione: v26
+Versione: v27
 
 DATA: 2026-10-28
 
-## Allineamento corrente — dipendenze post-hardening (28 ottobre 2026)
+## Raccordo corrente — contratto funzionale e avanzamento globale
+
+Nodo CP-LOGOS-DOC-FUNCTIONAL-CONTRACT-20261028-12; solo documentazione.
+Fonte dei requisiti stabili: 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md
+v1.0 pubblicata su main afc0c26a92aaf2a1256c55605eb2f9b776e5da41.
+La sua valutazione funzionale e creazione sono concluse, non si ripetono.
+Il nodo 10 e' pubblicato a ef377a38f77c995af29e16be06741b9eb3cd0073;
+il blocco post-hardening seguente conserva le dipendenze, senza riattivare quel nodo.
+
+### Requisiti, accettazione e dipendenze
+
+Il raccordo seguente non e' una baseline di milestone pesate e non assegna
+nuove percentuali o attestazioni d'implementazione. CF e VF sono gli ID gia'
+definiti dal contratto; P0/P1/P2 e gap mantengono natura e limiti precedenti.
+
+| Requisito del contratto | Verifiche pertinenti | Lavoro residuo / dipendenze da qualificare nei mandati competenti |
+|---|---|---|
+| CF-01 Acquisizione e interpretazione | VF-01 | Riusare prove input valide; qualificare capacita' e dati richiesti dal caso d'uso; P0-01 prima di modifiche Retool |
+| CF-02 Progetti ed entita' | VF-02 | G11 implementativo aperto; Readiness conclusa, Editor Base non attivo; P1-01 per integrita' e valori di base |
+| CF-03 Gerarchie e correlazioni | VF-03, VF-04, VF-06 | Modello minimo, cardinalita' e ruoli da qualificare; P1-02 e contratto dati nodo 03 candidato; parent non equivale a genealogia |
+| CF-04 Eventi, economia, tempi e scadenze | VF-01, VF-05, VF-07 | Struttura di obbligazioni, versamenti, attivita' e scadenze da qualificare; G13/G08A nei soli casi pertinenti; dipendenze P1-01/P1-02/P1-05 |
+| CF-05 Lifecycle, affidabilita' e rettifiche | VF-08 | Conservare PASS 07/08 nei loro limiti; P1-01/P1-03/P1-04 restano distinti; nessuna garanzia universale dedotta dall'hardening |
+| CF-06 Consultazione e gestione | VF-02 e criteri di CF-06 | Verificare recuperabilita' e dati strutturati dei NEW; revisione/conferma semplificata solo dopo prove sufficienti |
+| CF-07 Proiezione e analisi minima | VF-05, VF-07, VF-08 | P1-05 e semantica ledger/rettifiche prima dei report dipendenti; contratto analitico e correttezza dati precedono dashboard |
+| CF-08 Distribuzione e continuita' | VF-09 | P2, C1/C2, compatibilita', backup/ripristino; release e replica dopo completamento necessario del Core; nessuna istanza attivata |
+
+ASPRI e ADEXIMA restano scenari di accettazione del Core e future installazioni,
+non mandati verticali. CF-01–CF-08 non si trasformano automaticamente in otto
+nodi o otto milestone equivalenti. Le verifiche dati seguono il contratto §6;
+campo esistente o requisito documentato non significano funzione completata.
+
+### Milestone e avanzamento
+
+LOGOS Core Global Completion: DA BASELINARE; valore corrente soltanto in State.
+Metodo e criteri nel contratto §§10–11. Prima di un calcolo occorre una baseline
+approvata con milestone, criteri, pesi e prove; questo lotto non la definisce.
+La futura baseline dovra' collegare ogni milestone ai requisiti CF/VF pertinenti,
+alle evidenze valide riutilizzate, al residuo e alle dipendenze sopra indicate,
+senza duplicare il metodo di misura o inventare un denominatore.
+
+Ogni futuro checkpoint conclusivo di sviluppo deve rendere ricostruibili
+stato globale, percentuale precedente/successiva, milestone verificate,
+avanzamento reale e variazione motivata, lavoro residuo e dipendenze, con
+baseline/versione, fonti e SHA secondo il contratto §11.4. Senza baseline:
+DA BASELINARE / DA BASELINARE e variazione NON CALCOLABILE. Un PASS senza
+milestone globale verificata non produce automaticamente un incremento.
+
+Sequenza preservata: predisposizione minima → completamento funzionale Core →
+stabilizzazione/release/replica qualificate → installazioni indipendenti.
+Il vincolo sulle dashboard non rinvia la qualifica dei dati e del contratto
+analitico necessari a CF-07. Nessun requisito del contratto autorizza da solo
+modifiche runtime, schema, nuove funzioni o apertura di candidati storici.
+Il nodo funzionale successivo resta da confermare; nessuna baseline o
+implementazione si avvia implicitamente. Il raccordo proposto non attesta
+propria applicazione, Check, verifica o pubblicazione.
+
+## Snapshot precedente — dipendenze post-hardening (nodo 10)
 
 Nodo documentale CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10.
 La sequenza funzionale e il backlog sottostanti sono preservati; le dipendenze
@@ -1351,14 +1407,15 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10 — allineamento documentale in corso.
-Completare review, consenso specifico, applicazione nel percorso qualificato,
-verifica e pubblicazione manuale; poi verificare nuovo SHA e dichiarare rebind.
-Il trasferimento del checkpoint alla Regia non è un prerequisito di completamento.
-Prossimo nodo funzionale DA CONFERMARE; nessuna attivazione dell'Editor Base.
-Usare le dipendenze P0/P1/P2 iniziali senza alterare il backlog funzionale.
-Gap Register v23 e checkpoint Fonti Canoniche v1.0 conservati invariati.
-Il blocco tecnico R01 non autorizza automaticamente copia manuale o adozione R02.
+CP-LOGOS-DOC-FUNCTIONAL-CONTRACT-20261028-12 — raccordo documentale in corso.
+Completare review delle sei postimage, scelta del percorso specifico per target,
+consenso puntuale, applicazione autorizzata, verifica appropriata e review;
+commit/push manuali e nuovo SHA/rebind se pubblicato. Il trasferimento del
+checkpoint alla Regia rimane distinto dalla pubblicazione e dalla chiusura.
+Prossimo nodo funzionale DA CONFERMARE; Editor Base non attivo.
+La baseline di LOGOS Core Global Completion resta DA BASELINARE.
+Gap Register v23: KEEP; nessun nuovo ID o chiusura funzionale.
+Il blocco R01 non autorizza copia manuale automatica, cambio di profilo o R02.
 
 ------------------------------------------------
 BACKLOG POST READINESS — NESSUN PROSSIMO NODO PREASSEGNATO
@@ -1701,6 +1758,13 @@ ma non autorizzano output, dashboard, KPI o istanze verticali.
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v27 — 2026-10-28
+
+- raccordati requisiti CF-01–CF-08, verifiche VF e dipendenze esistenti
+- distinta la matrice requisiti dalla futura baseline di milestone e pesi
+- richiamato il report globale a ogni checkpoint conclusivo di sviluppo
+- preservati backlog, sequenza e gate; nessuna implementazione/pubblicazione attestata
 
 v26 — 2026-10-28
 

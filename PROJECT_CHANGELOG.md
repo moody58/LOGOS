@@ -1,5 +1,5 @@
 # PROJECT_CHANGELOG
-Versione: v05
+Versione: v06
 
 DATA: 2026-10-28
 
@@ -38,6 +38,42 @@ correzioni e riallineamenti
 
 ### Removed
 elementi eliminati
+
+------------------------------------------------
+2026-10-28 — CONTRATTO FUNZIONALE DEL CORE / RACCORDO DOCUMENTALE
+------------------------------------------------
+
+### Added
+
+- Contratto funzionale v1.0 pubblicato in
+  00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md,
+  main afc0c26a92aaf2a1256c55605eb2f9b776e5da41, nodo 11.
+  Visione, requisiti universali, criteri dati/accettazione/completamento e
+  metodo LOGOS Core Global Completion; requisito distinto da implementazione.
+
+### Changed
+
+- Nodo 10: State v35, Roadmap v26 e Changelog v05 pubblicati al commit
+  ef377a38f77c995af29e16be06741b9eb3cd0073; Gap Register v23 KEEP.
+- Nodo 12: raccordo proposto di Kernel v07, System v09, State v36 e Roadmap v27
+  alla fonte funzionale; valore iniziale DA BASELINARE, senza percentuali inventate.
+- Richiamato il report globale nei checkpoint conclusivi di sviluppo:
+  stato, percentuali precedente/successiva, milestone/prove, avanzamento reale,
+  lavoro residuo e dipendenze. Il ~95% rimane storico e non misura il Core.
+
+### Fixed
+
+- Contratto v1.1 candidato: corretti i riferimenti editoriali alla pubblicazione
+  della v1.0, versione in seconda riga e spazi finali di intestazione;
+  requisiti e metodo invariati. Creazione e commit originari non riaperti.
+
+### Limiti
+
+- Il presente lotto non attesta la propria applicazione, verifica o pubblicazione.
+- Nessuna baseline pesata, modifica Retool/Supabase/SQL, nuova funzione,
+  Editor Base, dashboard, release o istanza verticale. Prove pregresse preservate.
+- Percorsi e consensi del Modello D restano specifici per target;
+  dipendenza Python R01 divergente, nessun Check/Apply/Verify nativo eseguito.
 
 ------------------------------------------------
 2026-10-27 — CORE UNIVERSALE / HARDENING E CONSOLIDAMENTO DOCUMENTALE
@@ -261,6 +297,12 @@ Non include:
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v06 — 2026-10-28
+
+- registrata la pubblicazione del contratto v1.0 e del nodo governance 10
+- descritto il raccordo candidato del nodo 12 e l'indicatore DA BASELINARE
+- distinti preparazione, applicazione, verifica e pubblicazione; storico preservato
 
 v05 — 2026-10-28
 

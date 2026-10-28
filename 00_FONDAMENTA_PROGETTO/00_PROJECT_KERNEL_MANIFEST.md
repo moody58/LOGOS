@@ -1,6 +1,7 @@
-# 00_PROJECT_KERNEL_MANIFEST_v06
+# 00_PROJECT_KERNEL_MANIFEST
+Versione: v07
 
-DATA: 2026-10-16
+DATA: 2026-10-28
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -91,6 +92,7 @@ Documenti kernel attivi:
 - 00_PROJECT_State
 - 00_PROJECT_Roadmap
 - 00_PROJECT_System
+- 00_PROJECT_Functional_Contract
 - 00_PROJECT_Gap_Register
 - 00_PROJECT_KERNEL_MANIFEST
 
@@ -232,6 +234,19 @@ Funzione:
 - evitare ricalcolo di decisioni consolidate
 - mantenere esempi, vincoli e limiti necessari
 
+Contratto funzionale canonico:
+
+- 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md
+
+Fonte madre dei requisiti funzionali stabili del prodotto, capacita' universali,
+requisiti dati, criteri di accettazione e completamento del Core; governa inoltre
+metodo, perimetro e criteri di LOGOS Core Global Completion (sezioni 10–11).
+La pubblicazione di un requisito non ne dimostra implementazione o verifica.
+System conserva identita' e architettura alta; la baseline architetturale
+conserva decisioni e invarianti. State conserva il valore corrente e la baseline
+di misurazione; Roadmap milestone, dipendenze e lavoro residuo; i checkpoint
+conservano le prove. Non duplicare il contratto in questi documenti.
+
 Manifest runtime reali:
 
 - LOGOS_RETOOL_RUNTIME_REAL
@@ -284,6 +299,7 @@ Percorsi canonici nella repository:
 | Gap Register | 00_FONDAMENTA_PROGETTO/00_PROJECT_Gap_Register.md |
 | Regia | 00_FONDAMENTA_PROGETTO/00_PROJECT_Regia.md |
 | System | 00_FONDAMENTA_PROGETTO/00_PROJECT_System.md |
+| Contratto funzionale del Core | 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md |
 | Input System | 01_RUNTIME_LOGOS/01_LOGOS_Input_System.md |
 | Match Engine | 01_RUNTIME_LOGOS/02_LOGOS_Match_Engine.md |
 | Event Lifecycle | 01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md |
@@ -518,6 +534,20 @@ Lifecycle evento / edit / no-op / processing:
 - 05_LOGOS_Database_Schema se coinvolge campi persistiti
 - LOGOS_RETOOL_RUNTIME_REAL se serve runtime reale
 
+Requisiti funzionali / completezza Core / baseline e avanzamento globale:
+
+- 00_FONDAMENTA_PROGETTO/00_PROJECT_Functional_Contract.md, integralmente
+- State e Roadmap per valore corrente, milestone, dipendenze e residui
+- Gap Register se il nodo coinvolge gap, debiti o pianificazione
+- System e baseline architetturale quando pertinenti ai confini Core/istanze
+- documenti tecnici madre e prove soltanto per le capacita' coinvolte
+
+Per ogni futuro checkpoint conclusivo di sviluppo acquisire il contratto
+funzionale e la baseline di misurazione, se definita, per il report richiesto
+dalla sezione 11.4. Baseline assente: riportare DA BASELINARE, senza percentuali
+inventate o recuperate dal valore storico ~95%. Non aprire una baseline o
+un nodo funzionale implicitamente. Il Core Boot obbligatorio resta invariato.
+
 Gap / roadmap / pianificazione:
 
 - 00_PROJECT_State
@@ -629,3 +659,8 @@ Nessun trasferimento automatico di permessi o ampliamento del motore.
 
 Revisione v06 — 2026-10-16: aggiunte le fonti canoniche Brand Identity e Typography
 e la loro lettura nella Session Boot Matrix per i nodi pertinenti. Core Boot e gerarchia invariati.
+
+Revisione v07 — 2026-10-28: riconosciuto il contratto funzionale canonico,
+distinte responsabilita' e criteri di lettura per requisiti, completezza Core
+e checkpoint conclusivi di sviluppo. Core Boot e gerarchie invariati;
+nessuna baseline percentuale, implementazione o pubblicazione attestata.
