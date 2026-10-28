@@ -1,6 +1,54 @@
-# 00_PROJECT_Roadmap_v25
+# 00_PROJECT_Roadmap
+Versione: v26
 
-DATA: 2026-10-15
+DATA: 2026-10-28
+
+## Allineamento corrente — dipendenze post-hardening (28 ottobre 2026)
+
+Nodo documentale CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10.
+La sequenza funzionale e il backlog sottostanti sono preservati; le dipendenze
+seguenti ne condizionano l'esecuzione, senza autorizzare nuove implementazioni.
+Snapshot: moody58/LOGOS main c2788ef4adf9c1121e985d0bbfca53c388fda82c.
+Fonti: piano del nodo 06 e riconciliazione del nodo 10, decisioni riportate nel
+blocco di ripresa, baseline architetturale v1.0 e checkpoint conclusivo 09.
+
+### Sequenza vincolante
+
+Predisposizione strutturale minima → completamento funzionale del Core comune →
+stabilizzazione, release e replica qualificate → installazioni ASPRI/ADEXIMA
+indipendenti con database e risorse propri. Modello A C1/C2 approvato;
+implementazione del contratto d'istanza distinta dalla sua approvazione.
+Nessuna release definitiva o istanza verticale è creata da questo allineamento.
+
+| Classe | Requisito e stato | Dipendenza operativa |
+|---|---|---|
+| P0-01 | Fonte autorevole e snapshot di sviluppo dell'app originale Logos; non dichiarato globalmente concluso | Qualificare identità e contenuto pertinente prima di successive modifiche Retool; non è una release distribuibile |
+| P0-02 | Guardie lifecycle: nodo 07 PASS nel perimetro collaudato; nodo 08 PASS tecnico RLS/ACL | Riutilizzare le prove; nessuna riapertura automatica. Scritture dopo l'ultimo hardening non nuovamente collaudate |
+| P1-01 | Integrità dei riferimenti e valori di base ancora da qualificare | Prima dei flussi che richiedono integrità referenziale o modificano/eliminano riferimenti; verificare dati esistenti e mantenere associazioni opzionali ove consentite |
+| P1-02 | Correlazione universale: candidato del contratto dati nodo 03 | Prima delle funzionalità multi-evento/multi-soggetto; decisione sul contratto e cardinalità necessarie |
+| P1-03 | Rettifiche definitive: candidato, non implementato | Prima di rettifiche post-conferma e relativa contabilità; dipende dal lifecycle e dal contratto approvato |
+| P1-04 | Idempotenza, concorrenza e atomicità non attestate come capacità universali | Prima dell'uso dei flussi reali/composti interessati; per rettifiche composte dipende da P1-03 |
+| P1-05 | Proiezione affidabile degli eventi effettivi da qualificare | Prima dei report/KPI dipendenti; richiede semantica del ledger e trattamento delle rettifiche |
+| P2 | Binding e compatibilità per installazione, release, replica, aggiornamenti, backup e ripristino | Dopo il completamento necessario del Core e prima della distribuzione definitiva; C1/C2 e compatibilità schema sono requisiti, non prove di implementazione |
+
+P0/P1/P2 sono riferimenti del piano, non nuovi Gap ID. Un P1 si affronta al
+momento della funzionalità dipendente, non diventa automaticamente il prossimo nodo.
+Il contratto dati nodo 03 è completato come candidato, non integralmente approvato
+o implementato. Le garanzie del nodo 07 non chiudono automaticamente tutti i delta.
+La prova P5 su app semplice non qualifica la replica del Core completo.
+
+### Stato e prossimo lavoro
+
+Nodo 09 PASS documentale: cinque file tecnici pubblicati allo SHA indicato.
+App Logos ancora in Draft; ultimo collaudo post-hardening READ-ONLY. Nessuna
+readiness produttiva complessiva attestata, nessuna nuova lettura live in questo nodo.
+Prossimo nodo funzionale da confermare dopo l'allineamento; Editor Base non attivo.
+La preparazione di questa v26 non ne attesta applicazione, Check o pubblicazione.
+
+Le sezioni di REENTRY e i risultati dei cicli precedenti conservati sotto sono
+storici: riferimenti a 403, documenti allora invariati e prossimi nodi di quelle
+sessioni non sostituiscono il quadro corrente sopra. Il backlog mantiene i suoi
+vincoli funzionali e non autorizza attività implicite.
 
 ------------------------------------------------
 ALLINEAMENTO REENTRY / REGOLA DI RIPRESA
@@ -1303,38 +1351,14 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-REENTRY / STATE RECONSTRUCTION — ALLINEAMENTO DOCUMENTALE COMPLETATO
-
-Ultimo nodo completato: PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE.
-Esito: GO storico per Editor Base limitato; NO-GO guided event mode completa; nessuna modifica runtime prodotta dalla Readiness.
-
-PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT è stato aperto solo nella conversazione.
-Nessun codice applicato, nessun test del pacchetto proposto eseguito: il candidato non è attivo.
-
-Prossimo nodo operativo:
-DA DEFINIRE E CONFERMARE CON L'UTENTE DOPO L'ALLINEAMENTO DOCUMENTALE.
-
-Sequenza alla ripresa:
-1. acquisire lo State, la Roadmap e il Gap Register correnti allo SHA del boot;
-   per eventuali scritture acquisire i file locali completi, poi commit/push manuali
-2. chiarire con l'utente scopo, risultato atteso e perimetro del prossimo lavoro
-3. confermare un solo nodo
-4. aprire una nuova micro-sessione con Core Boot e soli documenti necessari secondo il Kernel Manifest
-
-Questo ciclo aggiorna esclusivamente i tre documenti di governance, consegnati come file scaricabili.
-Database Schema v11, runtime manifest e documenti tecnici restano invariati.
-Retool e Supabase non sono stati modificati né ispezionati live nel ciclo.
-Il runtime documentato resta precedente al pacchetto Editor Base proposto e mai applicato.
-GitHub non è stato modificato: la scrittura tramite integrazione è stata rifiutata con errore 403.
-
-Checkpoint:
-- Data Structure: già assorbito, archiviabile
-- Readiness: esito e vincoli assorbiti; checkpoint originale da conservare come riferimento storico, senza ricrearlo
-
-La regola corrente di acquisizione e copia e' nel Kernel Manifest: documenti
-consolidati da GitHub, preimage locali per le scritture, allegati persistenti
-ordinariamente riservati ai checkpoint attivi. Nessuna ricarica sistematica dei documenti.
-Le fonti nuove non aggiornano automaticamente la sessione già avviata.
+CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10 — allineamento documentale in corso.
+Completare review, consenso specifico, applicazione nel percorso qualificato,
+verifica e pubblicazione manuale; poi verificare nuovo SHA e dichiarare rebind.
+Il trasferimento del checkpoint alla Regia non è un prerequisito di completamento.
+Prossimo nodo funzionale DA CONFERMARE; nessuna attivazione dell'Editor Base.
+Usare le dipendenze P0/P1/P2 iniziali senza alterare il backlog funzionale.
+Gap Register v23 e checkpoint Fonti Canoniche v1.0 conservati invariati.
+Il blocco tecnico R01 non autorizza automaticamente copia manuale o adozione R02.
 
 ------------------------------------------------
 BACKLOG POST READINESS — NESSUN PROSSIMO NODO PREASSEGNATO
@@ -1677,6 +1701,13 @@ ma non autorizzano output, dashboard, KPI o istanze verticali.
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v26 — 2026-10-28
+
+- recepite dipendenze P0/P1/P2 post-hardening preservando sequenza e backlog
+- distinti lifecycle concluso, gate fonte/snapshot e contratto dati candidato
+- release/replica definitive rinviate al completamento necessario del Core
+- nessun nuovo nodo funzionale, implementazione o pubblicazione attestati
 
 v01 — 2026-04-02
 

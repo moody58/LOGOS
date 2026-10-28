@@ -1,6 +1,7 @@
-# PROJECT_CHANGELOG_v04
+# PROJECT_CHANGELOG
+Versione: v05
 
-DATA: 2026-10-16
+DATA: 2026-10-28
 
 ------------------------------------------------
 SCOPO
@@ -37,6 +38,35 @@ correzioni e riallineamenti
 
 ### Removed
 elementi eliminati
+
+------------------------------------------------
+2026-10-27 — CORE UNIVERSALE / HARDENING E CONSOLIDAMENTO DOCUMENTALE
+------------------------------------------------
+
+### Changed
+
+- Modello A C1/C2 approvato: Core comune versionato per ASPRI/ADEXIMA,
+  installazioni indipendenti con database e risorse propri; nessuna multi-tenancy.
+- Baseline architetturale v1.0 consolidata; contratto dati nodo 03 completato
+  come candidato, non integralmente approvato o implementato.
+- Nodo 07 lifecycle PASS: guardie database sulle transizioni e sui terminali.
+- Nodo 08 RLS/ACL PASS tecnico nel perimetro autorizzato; mantenuti i limiti
+  della connessione Retool server-side privilegiata e del modello di fiducia.
+
+### Fixed
+
+- Nodo 09 PASS documentale: pubblicati cinque documenti tecnici al commit
+  c2788ef4adf9c1121e985d0bbfca53c388fda82c (Lifecycle v14, Schema v12,
+  Retool Architecture v24, Supabase Runtime v7, Retool Runtime v22).
+  Il nodo 09 non ha effettuato nuove modifiche o verifiche live applicative.
+
+### Limiti
+
+- Logos resta in Draft; nessuna release definitiva o installazione verticale.
+- Replica del Core completo non qualificata; ultimo collaudo post-hardening
+  READ-ONLY, scritture non nuovamente collaudate dopo l'ultimo delta.
+- R01 mantiene una dipendenza Python divergente; qualifica isolata R02 non
+  equivale ad adozione del catalogo né al ripristino della corsia nativa.
 
 ------------------------------------------------
 2026-10-16 — BRAND IDENTITY & TYPOGRAPHY / CONSOLIDAMENTO DOCUMENTALE
@@ -231,6 +261,12 @@ Non include:
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v05 — 2026-10-28
+
+- registrate sinteticamente le milestone del 27 ottobre e i limiti post-hardening
+- allineamento governance nodo 10 candidato; nessuna propria Apply/publicazione attestata
+- storico precedente preservato integralmente
 
 v04 — 2026-10-16
 

@@ -1,12 +1,74 @@
-# 00_PROJECT_State_v34
+# 00_PROJECT_State
+Versione: v35
 
-DATA: 2026-10-16
+DATA: 2026-10-28
 
 ------------------------------------------------
-NODO ATTIVO:
+NODO CORRENTE — ALLINEAMENTO GOVERNANCE POST-HARDENING
 ------------------------------------------------
 
-BRAND IDENTITY & FONT — CONSOLIDAMENTO DOCUMENTALE
+CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10.
+Mandato documentale: allineare State e Roadmap ai risultati del 27 ottobre;
+nessuna modifica runtime, release o installazione verticale autorizzata.
+La revisione del contenuto non attesta la propria applicazione o pubblicazione.
+Il prossimo nodo funzionale resta da confermare: l'Editor Base non viene attivato.
+
+## Stato consolidato al 27 ottobre 2026
+
+- APPROVATO: Modello A e contratto C1/C2; Core comune versionato per ASPRI e
+  ADEXIMA, installazioni con database Supabase e risorse Retool indipendenti.
+  Configurazione fissa per installazione e fail-closed; nessuna multi-tenancy.
+- DOCUMENTATO: baseline architetturale v1.0 in
+  00_PROJECT_Core_Architectural_Baseline.md; valutazione favorevole con condizioni,
+  distinta dalla qualifica produttiva e dall'implementazione di C1/C2.
+- CANDIDATO: contratto dati del nodo 03 completato; non integralmente approvato
+  né implementato. Correlazioni, rettifiche, idempotenza e proiezioni affidabili
+  restano subordinati alle decisioni e alle funzionalità dipendenti.
+- IMPLEMENTATO E VERIFICATO STORICAMENTE: nodo 07 lifecycle PASS; guardie DB
+  sulle transizioni e sui terminali. NEW resta modificabile nel perimetro
+  consentito. DELETE NEW non è vietato in generale dalla guardia.
+- PASS TECNICO STORICO: nodo 08 RLS/ACL nel perimetro autorizzato. La risorsa
+  server-side privilegiata non offre isolamento RLS per persona tramite il
+  solo login Retool; restano i limiti del modello di fiducia approvato.
+- PUBBLICATO: nodo 09 PASS documentale, cinque file tecnici consolidati al commit
+  c2788ef4adf9c1121e985d0bbfca53c388fda82c: Lifecycle v14, Database Schema v12,
+  Retool Architecture v24, Supabase Runtime v7, Retool Runtime v22.
+
+## Collaudo, distribuzione e limiti
+
+App Classic originale Logos in Draft; nessuna release definitiva, nessuna
+installazione ASPRI/ADEXIMA creata e nessuna replica del Core completo qualificata.
+Il collaudo finale post-hardening del nodo 08 era READ-ONLY, riferito dall'utente:
+Home, lista NEW, selettori progetti/entità PASS. Scritture dopo l'ultimo hardening
+non nuovamente collaudate; nessun nuovo Security Advisor dopo l'ultimo delta events.
+I test precedenti conservano il proprio perimetro e istante: non certificano
+nuovamente l'intera app né readiness produttiva. Retool/Supabase NON VERIFICATI
+LIVE in questo nodo documentale.
+
+## Dipendenze e continuità
+
+P0-02 lifecycle trattato nel nodo 07; P0-01 fonte/snapshot dell'app da qualificare
+per successive modifiche Retool. Non dichiarare tutti i P0 conclusi dal solo
+hardening. Le dipendenze P1/P2 sono ordinate nella Roadmap, senza aprire nuovi nodi.
+Sequenza: predisposizione minima → completamento funzionale del Core →
+stabilizzazione/release/replica → installazioni indipendenti.
+Readiness project/entity completata; Editor Base mai applicato o testato secondo
+le fonti consolidate. Backlog funzionale preservato, priorità da confermare.
+
+## Provenienza e procedura
+
+Snapshot documentale moody58/LOGOS, main,
+c2788ef4adf9c1121e985d0bbfca53c388fda82c; blocco di ripresa della Regia del
+28 ottobre e checkpoint conclusivo 09 recuperato dalla chat originale.
+Nessuna nuova verifica applicativa; dettaglio tecnico nei cinque documenti madre
+pubblicati. Il checkpoint Fonti Canoniche del 30 settembre resta storico e invariato.
+Runtime documentale vigente v1.6, Modello D: il limite del marker P6 permane;
+R01 ha una dipendenza Python divergente e R02 non è adottato. Questa revisione
+non ripara il motore, non cambia profili e non autorizza copia o Apply.
+
+------------------------------------------------
+SNAPSHOT STORICO — BRAND IDENTITY & FONT — 2026-10-16
+------------------------------------------------
 
 Pubblicazione iniziale dei sei file (due documenti originari e quattro PNG) registrata nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6`.
 Consolidamento documentale: Visual Identity v1.1 e Typography System v1.2. Il commit iniziale pubblicava le versioni originarie Visual Identity v1.0 e Typography v1.1. Identità, palette, artwork, PNG, Source Sans 3, IBM Plex Mono e criteri approvati invariati.
@@ -441,7 +503,7 @@ Risultato:
 - Readiness successivamente completata senza modifiche runtime; prossimo nodo alla ripresa da confermare
 
 ------------------------------------------------
-CQD — VALIDAZIONE DOCUMENTO
+CQD — VALIDAZIONE STORICA DELLA REVISIONE PRECEDENTE
 ------------------------------------------------
 
 - documento completo preservato; aggiornati soltanto intestazione, esito documentale, richiamo CQD, obiettivo immediato e storico della revisione
@@ -466,8 +528,13 @@ Logica: Client-side (JavaScript)
 Modello dati: Event Ledger (append-only controllato)  
 
 ------------------------------------------------
-STATO GENERALE SISTEMA
+STATO GENERALE SISTEMA — BASELINE STORICA PRE-HARDENING
 ------------------------------------------------
+
+Le attestazioni, percentuali e catene sotto descrivono la baseline funzionale
+precedente. Il quadro corrente, le guardie DB e i limiti produttivi sono nella
+sezione iniziale v35; «produzione reale», «DB invariato» e «storage passivo»
+non costituiscono attestazioni correnti. I candidati non sono nodi attivati.
 
 Sistema funzionante end-to-end:
 
@@ -1043,26 +1110,14 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Consolidare l'allineamento documentale della procedura P6 già integrata e verificata,
-distinguendo preparazione in Work e recepimento effettivo dei file sul PC.
-
-Completare la verifica delle istruzioni nelle tab ChatGPT di LOGOS e AIOS.
-Ripristinare poi le regie con fonti aggiornate e nuovo boot, senza riaprire le qualifiche concluse.
-Valutare in seguito la portabilità documentale verso ADEXIMA con accesso e binding specifici.
-Il limite del marker iniziale dei documenti versionati va risolto nel percorso autorizzato;
-la preparazione di questo testo non certifica un Apply qualificato sulla prima riga.
-
-Per lo stato prodotto resta valido: Readiness completata; Editor Base mai applicato né testato.
-Prossimo nodo di sviluppo: da definire e confermare con l'utente in regia, chiarendo scopo e perimetro.
-
-Fonti per la ripresa:
-- versione di questo State effettivamente recepita, non la sola versione candidata
-- Roadmap v24 e Gap Register v22
-- Kernel Manifest e istruzioni canoniche al commit acquisito dal nuovo boot
-- ultimo checkpoint pertinente, senza assumere una sincronizzazione automatica delle chat
-
-I documenti tecnici del futuro nodo saranno scelti dopo la sua conferma.
-Nessun boot implementativo Editor Base o avvio di istanze verticali è imposto da questo allineamento.
+Completare l'allineamento documentale del nodo 10: review di State v35,
+Roadmap v26 e Changelog v05; applicazione solo con percorso qualificato e consenso
+specifico, verifica appropriata, commit/push manuali e verifica del nuovo SHA.
+Gap Register v23 e checkpoint storico Fonti Canoniche: KEEP.
+Il percorso nativo R01 resta impedito dalla dipendenza Python divergente;
+nessuna commutazione automatica alla copia manuale dei target protetti.
+Dopo il consolidamento, confermare il prossimo nodo funzionale con la Regia;
+nessuna nuova autorizzazione organizzativa richiesta per completare il mandato attuale.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1728,6 +1783,13 @@ residuo accettato perché il blocco funzionale impedisce update_event e creazion
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v35 — 2026-10-28
+
+- allineati stato corrente, architettura approvata e limiti post-hardening 07/08/09
+- contratto dati candidato distinto da approvazione, implementazione e collaudo
+- preservati backlog, snapshot storici e checkpoint Fonti Canoniche; nessuna release
+- questa voce non attesta la propria applicazione o pubblicazione
 
 v01 — 2026-04-01  
 documento iniziale  
