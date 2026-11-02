@@ -1,9 +1,108 @@
 # LOGOS_RETOOL_RUNTIME_REAL
-Versione: v22
+Versione: v24
 
-DATA: 2026-10-27
+DATA: 2026-11-02
 
-## Fotografia documentale Retool dopo i nodi 07/08
+## Editor Project / Entity Base — fotografia N16 consolidabile
+
+Applicazione: `Logos` Classic, UUID
+`18ea4684-29de-11f1-b868-0b05f2d402b2`, mantenuta in **Draft**;
+nessuna pubblicazione di release attestata. Baseline applicativa statica
+`Logos (35).json`, SHA-256
+`96ce6bd2741ecc13f6855487f572068b451322a12e6483f6a3b747df948195da`,
+145 oggetti/plugin dopo la rimozione di due sole query diagnostiche temporanee.
+Il JSON è stato acquisito integralmente anche in A4 dal file locale indicato
+dall'utente; hash corrispondente alle prove A1/A2. È una fonte statica storica,
+non un nuovo export live della Draft.
+
+| Capacità o prova | Stato N16, livello di evidenza |
+| --- | --- |
+| Anagrafiche | Schede Project/Entity, ricerca e selezione per UUID, dettagli, Editor Nome/Tipologia e Stato visualizzato in sola lettura; collaudi storici Q1–Q2B e manuali A3 |
+| Salvataggio Nome | Project ed Entity: **PASS LIVE storico** R03 con SELECT Supabase, chiusura automatica Editor e selezione preservata |
+| Salvataggio Tipologia | **PASS LIVE A1** il 02/11/2026 su `projects.id=4541dfb7-7824-4510-a2b5-f6dc968c6037` ed `entities.id=0996b93d-dc44-4e86-ba9d-88b6a800bc1e`; `type` da `NULL` a `generic`, UUID/Nome/Stato invariati; SELECT indipendente alle 18:19:26 Europe/Rome |
+| Protezioni A2 | **PASS circoscritto** per no-op, Nomi invalidi, snapshot, omonimie pre-save, PATCH condizionale, errori e verifica post-save; fonti STATICHE e MOCK (28 casi ordinari + 2 concorrenti), non nuove prove LIVE |
+| UX A3 | **8/8 PASS manuali dichiarati dall'utente** su desktop e Safari iPhone; consultazione, navigazione, apertura e Annulla degli Editor; senza scritture |
+| Limite concorrente | **NON PROTETTO**: omonimie normalizzate su UUID diversi possono essere create da Save concorrenti; accettato dalla discussione madre, nessuna correzione atomica A2-C |
+| Stato | Project del test `ACTIVE`; Entity del test `NULL`; `status` non modificato da Salva, né normalizzato; modifica dello Stato non presente nell'Editor Base |
+
+Componenti/query presenti nell'export statico: `btn_save_project_anag`,
+`btn_save_entity_anag`, `update_project_anag`, `update_entity_anag`,
+`save_snapshot_project_anag`, `save_snapshot_entity_anag`,
+`projects_duplicate_check_anag`, `entities_duplicate_check_anag`,
+`table_projects_anag` e `table_entities_anag`. La logica di Save
+controlla record selezionato/UUID, preimage `name/type/status`, snapshot
+completo con `count=exact`, normalizzazione omonimie, PATCH condizionale,
+post-GET e refresh, con chiusura soltanto su esito verificato.
+
+**Provenienza LIVE storica:** Retool Classic e identificativo verificati nei
+sottolotti A1/A2/A3; Supabase `logos_template`
+(`utvwefciuxtwoqvvcwel`) verificato LIVE in A1/A2. Ultima SELECT A2
+del 02/11/2026 18:31:46 Europe/Rome confermava Project
+`Nome Test R03 UX` / `generic` / `ACTIVE`, Entity
+`TEST Entity Create Suggestion R03 UX` / `generic` / `NULL`.
+La preparazione A4 **non** esegue nuove interrogazioni LIVE Retool/Supabase
+né può attestare la configurazione corrente della Draft oltre alle fonti
+storiche e alla dichiarazione di continuità dell'utente.
+La decodifica statica è stata riscontrata mediante Cognitect transit-js
+0.8.874; proprietà documentate dei 37 oggetti del perimetro coincidenti
+con l'inventario. Per il limite degli escape negli avvisi Text Stato/omonimie
+vedere 04_LOGOS_Retool_Architecture: non è attestata l'equivalenza
+funzionale della normalizzazione UX e Save dal solo export.
+
+**Limiti residui:** `UNIQUE(name)` esatta su Project, non su equivalenze
+normalizzate; nessuna UNIQUE Entity; A2 evidenzia anche il limite difensivo
+per un `type` artificiosamente iniettato fuori dalla Select ordinaria.
+UX-06, stato `ACTIVE` iniziale delle nuove Entity, politica generale per i `NULL`
+storici (distinta dalla preservazione già presente nell'Editor Base), «Altre opzioni» Command Intent e creazione diretta da Anagrafiche
+rimangono non implementati/da qualificare nei perimetri competenti.
+
+### Inventario statico corrente del percorso N16
+
+L'export contiene 145 oggetti/plugin complessivi: 106 widget, 24 datasource,
+8 state, 3 function, 2 frame, 1 screen, 1 setting. Le RESTQuery sono 15:
+le nove preesistenti e le sei operative *_anag aggiunte nel percorso N16.
+Le diciture e i conteggi anteriori appartengono alle rispettive baseline.
+
+| Gruppo | Oggetti presenti |
+| --- | --- |
+| Vista e titoli | container_anagrafiche; Anagrafiche; projects_container_title; entity_container_title |
+| Navigazione | btn_nav_anagrafiche; container_app_nav preesistente con visibilità estesa |
+| Ricerca e selezione | table_projects_anag; table_entities_anag; input_search_projects_anag; input_search_entities_anag |
+| Dettagli | text_project_detail_anag; text_entity_detail_anag |
+| State preimage | state_edit_project_anag; state_edit_entity_anag |
+| Apertura e contenitori Editor | btn_edit_project_anag; btn_edit_entity_anag; container_edit_project_anag; container_edit_entity_anag |
+| Campi e Stato | input_edit_project_name_anag; input_edit_entity_name_anag; select_edit_project_type_anag; select_edit_entity_type_anag; text_edit_project_status_anag; text_edit_entity_status_anag |
+| Uscita e salvataggio | btn_cancel_project_anag; btn_cancel_entity_anag; btn_save_project_anag; btn_save_entity_anag |
+| GET UI omonimie | projects_duplicate_check_anag; entities_duplicate_check_anag |
+| GET qualificate pre/post Save | save_snapshot_project_anag; save_snapshot_entity_anag |
+| PATCH | update_project_anag; update_entity_anag |
+| Letture preesistenti riutilizzate e adeguate | projects_list; entities_list: id/name/type/status, order=name |
+
+Le sei query nuove *_anag sono manuali e usano la risorsa
+supabase_api_secure_test. Gli snapshot GET hanno limit=1000 e count=exact,
+restituiscono data+metadata; gli avvisi omonimie leggono le query dedicate.
+Le PATCH ricevono patchPath/patchBody dall'handler e restituiscono
+data+metadata con return=representation. Per contratto completo, proprietà,
+concorrenza, notifiche ed errori vedere la sezione N16 di
+04_LOGOS_Retool_Architecture: questa fotografia non ne duplica il codice.
+
+Gli handler tabelle/ricerca invalidano la selezione o lo state Editor;
+la navigazione azzera gli Editor, aggiorna le liste e poi clearSelection.
+I due Salva hanno guardie Disabled e Click, GET qualificata pre-save,
+PATCH id+preimage e GET post-save; la chiusura è condizionata al refresh
+coerente e allo stesso UUID ancora selezionato. Il commento storico
+«Non chiudere ... l'Editor» rimasto nel codice non descrive il ramo positivo
+R03 successivo: è il codice eseguibile del ramo listRefreshed a governarlo.
+Con persistenza verificata ma lista non aggiornata compare invece
+«Salvato, elenco da ricaricare», senza chiusura automatica.
+
+test_snapshot_r03 e diag_entity_filter_r03 sono assenti dall'export finale.
+L'assenza è statica; la storia dell'eliminazione è attestata dal checkpoint
+R03. Non è stata ripetuta alcuna pulizia in A4. Le proprietà degli altri
+oggetti dell'app sono conservate nell'export, senza attribuire al solo
+inventario una nuova verifica funzionale di tutti i flussi.
+
+## Snapshot storico — fotografia documentale Retool dopo i nodi 07/08 (27 ottobre 2026)
 
 - App: Classic originale `Logos`, UUID `18ea4684-29de-11f1-b868-0b05f2d402b2`.
 - Stato: Draft; nessuna pubblicazione attestata.
@@ -1684,6 +1783,7 @@ const nextValue = window[key];
 delete window[key];
 
 return Boolean(nextValue);
+```
 
 PRE-PROCESSING
 
@@ -3487,6 +3587,8 @@ const valueRowIcon =
       ? "⏱️"
       : "🔢";
 
+```
+
 MATCH ENGINE UNIFICATION — ESEMPI:
 
 villa 2 mario
@@ -4454,6 +4556,7 @@ Voci:
 
 - Home
 - Eventi
+- Anagrafiche
 - Dashboard
 
 Stato Dashboard:
@@ -4477,15 +4580,20 @@ Events list:
 
 - nav visibile in alto
 
+Anagrafiche:
+
+- nav visibile
+
 Feedback:
 
 - nav nascosta
 
-Hidden logic consolidata post UI Readiness:
+Hidden logic corrente, con estensione Anagrafiche N16 rispetto alla baseline UI Readiness:
 
 {{
   !(
     ui_state.value?.view === "events" ||
+    ui_state.value?.view === "anagrafiche" ||
     (ui_state.value?.view === "home" && !input_home.value)
   )
 }}
@@ -4590,6 +4698,7 @@ await editing_event.trigger();
 // attiva edit mode
 window.__logos_edit_mode_value = true;
 await edit_mode.trigger();
+```
 
 Risultato:
 
@@ -4706,7 +4815,24 @@ button_input_confirm blocca update_event tramite EDIT MODE COMMAND GUARD.
 
 Per usare comandi strutturali, l’utente deve prima premere Annulla modifica.
 
-QUERY
+QUERY — INVENTARIO BASE CON INTEGRAZIONE N16
+
+GET ANAGRAFICHE N16:
+
+projects_duplicate_check_anag
+entities_duplicate_check_anag
+save_snapshot_project_anag
+save_snapshot_entity_anag
+
+PATCH ANAGRAFICHE N16:
+
+update_project_anag
+update_entity_anag
+
+STATE EDITOR N16:
+
+state_edit_project_anag
+state_edit_entity_anag
 
 GET:
 
@@ -4766,6 +4892,36 @@ button_input_confirm contiene EDIT MODE COMMAND GUARD.
 text_edit_mode_notice contiene micro-copy contestuale per command rilevato in edit mode.
 
 COMPONENTI UI RILEVANTI:
+
+ANAGRAFICHE N16 (contratto in Architecture, inventario in apertura):
+
+container_anagrafiche
+Anagrafiche
+table_projects_anag
+table_entities_anag
+btn_nav_anagrafiche
+projects_container_title
+entity_container_title
+input_search_projects_anag
+input_search_entities_anag
+text_entity_detail_anag
+text_project_detail_anag
+btn_edit_project_anag
+btn_edit_entity_anag
+container_edit_project_anag
+input_edit_project_name_anag
+select_edit_project_type_anag
+text_edit_project_status_anag
+btn_cancel_project_anag
+btn_save_project_anag
+container_edit_entity_anag
+input_edit_entity_name_anag
+select_edit_entity_type_anag
+text_edit_entity_status_anag
+btn_cancel_entity_anag
+btn_save_entity_anag
+
+BASELINE DEGLI ALTRI FLUSSI:
 
 select1
 select_project
@@ -5061,7 +5217,7 @@ PRINCIPI RUNTIME
 ✔ client-side logic
 ✔ database con protezioni lifecycle e accesso
 ✔ append-only controllato
-✔ editing solo su NEW
+✔ editing degli eventi solo su NEW; l'Editor anagrafiche Project/Entity N16 segue il proprio contratto Nome/Tipologia con Stato in sola lettura
 ✔ suggerire ≠ decidere
 ✔ input non bloccante
 ✔ salvataggio amount/unit/event_date da ui_state.parsed
@@ -7583,7 +7739,9 @@ Regressioni:
 - ui_visibility_state non eliminato
 - nessun cleanup globale eseguito
 
-## Revisione corrente
+## Revisioni precedenti v23/v22
+
+v23 — 2026-11-02 — Fotografia documentale Editor Base N16 da checkpoint ed export statico: Nome/Tipologia PASS LIVE storico, A2 PASS circoscritto, A3 8/8 manuale, Stato read-only e omonimie concorrenti non atomiche; nessuna nuova acquisizione LIVE in A4.
 
 v22 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
@@ -8298,3 +8456,13 @@ v20 — 2026-06-04
 - nessun fuzzy matching
 - nessun alias system globale
 - nessun Input Analysis Model completo
+
+v24 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per review.
+
+- Revisione della preimage locale confermata dall'utente, inclusi i delta non
+  approvati del primo lotto; nessuna loro approvazione implicita.
+- Riconciliate le affermazioni operative pertinenti a N16 e qualificato lo
+  storico; preservati i contenuti estranei al mandato e le revisioni anteriori.
+- Aggiornato l'inventario statico N16 e distinto dalle fotografie tecniche precedenti.
+- Preparazione per review: nessuna copia/Apply, nuova verifica live,
+  pubblicazione o completamento definitivo A4 attestati.

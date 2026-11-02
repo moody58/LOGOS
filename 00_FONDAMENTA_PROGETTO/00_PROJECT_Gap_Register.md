@@ -1,6 +1,37 @@
-# 00_PROJECT_Gap_Register_v23
+# 00_PROJECT_Gap_Register
+Versione: v25
 
-DATA: 2026-10-15
+DATA: 2026-11-02
+
+------------------------------------------------
+RACCORDO CORRENTE — N16 / G11 (2 NOVEMBRE 2026)
+------------------------------------------------
+
+G11 — Data Structure / Entity Hierarchy: **INTEGRATO BASE per la tranche
+Editor Project/Entity Nome/Tipologia; macro-gap ancora INTEGRATO PARZIALE**.
+La Readiness storica è completata e non va riaperta. L'Editor Base ora
+esiste ed è stato collaudato: R03 Nome PASS LIVE, A1 Tipologia PASS LIVE,
+A2 protezioni PASS circoscritto, A3 navigazione e mobile PASS 8/8 manuale.
+Il consolidamento documentale A4 resta in review: il nodo N16 è aperto
+fino alla verifica/pubblicazione del lotto.
+
+**Residuo R-A2-01 (accettato, non protetto):** controllo omonimie
+normalizzate basato su snapshot pre-save, senza atomicità contro rinomine
+concorrenti di UUID distinti. `projects.name` ha UNIQUE esatto, non
+normalizzato; `entities.name` non ha UNIQUE. La correzione A2-C è esclusa
+dalla decisione della discussione madre: nessuna attivazione implicita.
+
+**Residui funzionali:** Stato visibile ma non editabile nell'Editor Base;
+UX-06 sugli inattivi, default `ACTIVE` per nuove Entity, significato dei
+`status=NULL` storici, limite difensivo A2 su un `type` artificialmente
+iniettato fuori dalla UI; «Altre opzioni» nel Command Intent e possibile
+creazione da Anagrafiche senza duplicazioni sono miglioramenti differiti.
+Parent, metadata avanzati, alias, merge, fuzzy/G10A, Data Hygiene e guided
+event mode completa non risultano integrati dalla tranche N16.
+
+Fonte: checkpoint N16 Q1/Q2A/Q2B, R03, A1, A2, A3; prove LIVE,
+statiche, MOCK e manuali distinte. M04 rimane PARZIALE e l'avanzamento Core
+v1.0 resta 35% → 35%. Nessun nuovo ID gap o nodo creato.
 
 ------------------------------------------------
 SCOPO
@@ -71,7 +102,7 @@ Questo registro mantiene:
 - fonte canonica per il dettaglio completo
 
 ------------------------------------------------
-GAP ATTIVO DEL NODO CORRENTE
+SNAPSHOT STORICO — REENTRY 2026-09-30
 ------------------------------------------------
 
 REENTRY / STATE RECONSTRUCTION — ALLINEAMENTO DOCUMENTALE COMPLETATO
@@ -646,7 +677,7 @@ NOME:
 Data Structure / Entity Hierarchy
 
 STATO:
-POLICY E READINESS CONSOLIDATE — EDITOR BASE NON IMPLEMENTATO / PROSSIMO NODO DA CONFERMARE
+INTEGRATO PARZIALE — EDITOR BASE N16 INTEGRATO BASE E COLLAUDATO; RESIDUI G11 APERTI
 
 DESCRIZIONE:
 
@@ -660,12 +691,13 @@ La policy stabilisce:
 - chiavi DB type in inglese + label UI italiane
 - parent_project_id / parent_entity_id = capacità dormienti per gerarchie stabili future
 - metadata = campo strategico per profili guidati futuri
-- duplicati = alert/prevenzione futura, non merge automatico
+- duplicati = prevenzione base N16 tramite snapshot; atomicità fra UUID distinti non implementata, nessun merge automatico
 - alias = futuro modello dedicato, non parent
 - Data Hygiene storico = da rimandare a fine sviluppo core / pre-analisi dati
 - LOGOS = vertical-ready, non vertical-hardcoded
 
-Stato reale export Supabase recepito:
+Fotografia storica dell'export Supabase recepito nel giugno 2026
+(non descrive la distribuzione corrente dei dati dopo N16):
 
 - projects presenti e usati, ma parent_project_id vuoto e type quasi non valorizzato
 - entities presenti e usate, ma parent_entity_id vuoto, metadata {}, status vuoto e type quasi non valorizzato
@@ -700,16 +732,15 @@ Tranche emersa:
 
 PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
-Stato: CHAT APERTA / CODICE MAI APPLICATO / TEST NON ESEGUITI.
+Stato corrente: **EDITOR BASE IMPLEMENTATO E COLLAUDATO (N16)**; A4 documentale in review. La frase storica di candidatura non descrive più il runtime presente.
 
-Perimetro proposto:
-- completare editor project/entity esistente
-- preservare name e alert/protezione duplicato esatto già presenti a livello base
-- introdurre gestione type in liste/UI/insert con chiavi DB e label italiane
+Perimetro storico emerso dalla Readiness, ora da distinguere dall'implementazione:
+- Editor Nome/Tipologia e controlli base realizzati e collaudati in N16
+- UUID e Stato preservati nei salvataggi provati; Stato non editabile
+- Select con chiavi DB e label italiane; nessuna attestazione di modifica
+  generalizzata delle query insert o della gestione Stato dei nuovi record
 
-Il gap implementativo resta aperto.
-Il candidato non è automaticamente riconfermato come prossimo nodo alla ripresa.
-La scelta verrà chiarita con l'utente dopo l'allineamento documentale, con scopo e risultato espliciti.
+La tranche Editor Base è stata implementata e collaudata; rimane aperto il macro-gap G11 per capacità non coperte, inclusi Stato/UX-06, omonimie concorrenti e funzioni avanzate. Non è aperto alcun nuovo nodo implicito.
 
 Fuori scope della prima tranche:
 - parent operativo completo
@@ -728,6 +759,8 @@ Fonte canonica:
 - 05_LOGOS_Database_Schema
 - 00_PROJECT_Roadmap
 - 00_PROJECT_State
+- 04_LOGOS_Retool_Architecture per il contratto tecnico dell'Editor Base N16
+- LOGOS_RETOOL_RUNTIME_REAL per inventario e fotografia statica qualificata
 
 ---
 
@@ -1365,7 +1398,7 @@ L'ordine di backlog precedente resta riferimento storico; priorità e prossimo p
 Readiness G11: COMPLETATA, esclusa dai lavori futuri da riaprire automaticamente.
 
 Backlog non attivato:
-1. G11 — PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT, candidato storico non implementato/testato e da riconfermare
+1. G11 — Editor Base N16 già collaudato; solo residui macro-gap (Stato/UX-06, concorrenza omonimie accettata, gerarchie/metadata avanzati) da valutare in successivi mandati confermati
 2. G35 — Status Semantics Alignment
 3. G38 — Preview / Missing Association Notice Cleanup
 4. G17 — Preview Model / Hint State Consolidation
@@ -2151,3 +2184,19 @@ v22 — 2026-09-30
 - storico revisioni precedente preservato integralmente
 
 v23 — 2026-10-15: allineamento del solo richiamo alle fonti/copie/checkpoint; sequenza prodotto, gap e priorita' invariati.
+v24 — 2026-11-02
+
+- riconciliato G11 con Editor Base N16 realizzato e collaudato A1/A2/A3, macro-gap ancora parziale
+- preservato il rischio concorrente R-A2-01 accettato e NON coperto, limiti di Stato/UX e miglioramenti differiti
+- riclassificati REENTRY e candidatura Editor Base come fotografia storica; nessun nodo o gap aggiuntivo aperto
+
+
+v25 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per review.
+
+- Revisione della preimage locale confermata dall'utente, inclusi i delta non
+  approvati del primo lotto; nessuna loro approvazione implicita.
+- Riconciliate le affermazioni operative pertinenti a N16 e qualificato lo
+  storico; preservati i contenuti estranei al mandato e le revisioni anteriori.
+- Preservati A1 PASS, A2 PASS circoscritto, A3 8/8, A4 aperto, Core 35% e M04 PARZIALE.
+- Preparazione per review: nessuna copia/Apply, nuova verifica live,
+  pubblicazione o completamento definitivo A4 attestati.

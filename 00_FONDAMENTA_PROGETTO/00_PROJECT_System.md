@@ -1,7 +1,7 @@
 # 00_PROJECT_System
-Versione: v09
+Versione: v10
 
-DATA: 2026-10-28
+DATA: 2026-11-02
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -77,12 +77,15 @@ Il contratto funzionale non sostituisce System e System non ne duplica i
 requisiti. La loro descrizione non prova implementazione, collaudo o readiness.
 Per LOGOS Core Global Completion il metodo risiede nel contratto funzionale;
 State conserva valore corrente, baseline e istante; Roadmap milestone,
-dipendenze e residui. Il valore iniziale e' DA BASELINARE.
+dipendenze e residui. L'indicatore nasceva DA BASELINARE; il valore corrente risiede nello State,
+che per N16 conserva 35% sulla baseline v1.0, M04 PARZIALE.
 
 Limite delle sezioni tecniche sottostanti: conservano lo snapshot sistemico
 del 25 maggio 2026. I richiami a database passivo, candidati e risultati di
 quel periodo non sostituiscono State e documenti tecnici correnti post-hardening.
-Questo raccordo non aggiorna il runtime descritto e non ripete verifiche live.
+Le parti storiche restano tali; la presente revisione aggiorna soltanto
+la capacità architetturale di gestione anagrafica Base introdotta da N16.
+Non aggiorna o ricertifica gli altri layer e non ripete verifiche live.
 
 ------------------------------------------------
 OBIETTIVO SISTEMA
@@ -148,6 +151,9 @@ Logica:
 - ui_visibility_state lato Retool come residuo tecnico deprecabile / rollback, non più fonte primaria degli Hidden principali migrati
 - feedback temporaneo lato Retool
 - navigation dock lato Retool
+- consultazione e modifica anagrafica Base Project/Entity lato Retool:
+  ricerca, selezione UUID, dettaglio, modifica Nome/Tipologia e salvataggio
+  condizionale; Stato in sola lettura, distinto dall'editing degli eventi
 
 Nota canonica:
 
@@ -349,15 +355,19 @@ LIVELLI ATTUALI:
 13. PROCESSING LAYER
 14. UX MOBILE / NAVIGATION / FEEDBACK LAYER
 15. DOCUMENTATION ARCHITECTURE / CANONICAL SOURCES LAYER
+16. PROJECT / ENTITY MANAGEMENT BASE — N16
 
 LIVELLI FUTURI:
 
-16. PREVIEW MODEL / HINT STATE CONSOLIDATION
-17. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
-18. MATCH ENGINE EVOLUTION ADVANCED
-19. DATA STRUCTURE / ENTITY HIERARCHY
-20. ECONOMIC DIRECTION ADVANCED
-21. OUTPUT / ANALYTICS LAYER
+17. PREVIEW MODEL / HINT STATE CONSOLIDATION
+18. INPUT ANALYSIS MODEL / SINGLE INTERPRETATION LAYER
+19. MATCH ENGINE EVOLUTION ADVANCED — OLTRE IL PRIMO LIVELLO
+20. DATA STRUCTURE / ENTITY HIERARCHY — GERARCHIE E METADATA AVANZATI
+21. ECONOMIC DIRECTION ADVANCED
+22. OUTPUT / ANALYTICS LAYER
+
+La gestione anagrafica Base è attiva nel perimetro N16; non rende attive
+le gerarchie/metadata avanzati e non completa il macro-gap G11 o M04.
 
 Nota post Visibility Migration Completion:
 
@@ -466,6 +476,7 @@ Output:
   unit,
   event_date
 }
+```
 
 Consumo:
 
@@ -1289,7 +1300,31 @@ Regole:
 - text_edit_mode_notice non modifica eventi
 - container_app_nav non abilita output/KPI
 
-FLOW COMPLETO SISTEMA
+------------------------------------------------
+16 — PROJECT / ENTITY MANAGEMENT BASE — N16
+------------------------------------------------
+
+Capacità architetturale documentata: consultare, ricercare e selezionare
+Project/Entity per UUID; modificare Nome e Tipologia su record esistenti.
+Lo Stato è visualizzato, preservato e non editabile nella tranche Base.
+
+Il percorso è distinto dalla creazione anagrafica tramite Command Intent
+e suggerimenti, dall'associazione agli eventi e dall'editing dei NEW.
+I salvataggi confrontano una preimage, usano aggiornamento condizionale
+e rilettura di verifica; dopo esito positivo aggiornano il dettaglio,
+chiudono l'Editor e mantengono la selezione nel perimetro collaudato.
+La protezione dalle omonimie normalizzate non è atomica fra UUID diversi:
+il limite è accettato, non trasformato in garanzia del database.
+
+Prove: R03 e A1 persistenza storica; A2 PASS circoscritto; A3 8/8 manuali
+su desktop e Safari iPhone. Nessuna nuova verifica live in A4.
+Inventario, query, handler e limiti tecnici: 04_LOGOS_Retool_Architecture;
+fotografia dell'export: LOGOS_RETOOL_RUNTIME_REAL. Gestione modificabile dello Stato, trattamento degli inattivi, politica
+generale sui NULL storici e default ACTIVE per nuove Entity restano
+capacità differite; la preservazione dei NULL nei salvataggi già provati
+rimane attestata nei checkpoint pertinenti.
+
+FLOW COMPLETO SISTEMA — SNAPSHOT STORICO DEL FLOW EVENTI PRE-N16
 
 CREATE FLOW:
 
@@ -1562,7 +1597,7 @@ Tabelle non operative:
 
 system_logs
 
-STATO ARCHITETTURALE
+STATO ARCHITETTURALE — SNAPSHOT STORICO PRE-N16
 
 ✔ sistema coerente end-to-end
 ✔ flusso create funzionante
@@ -1626,6 +1661,10 @@ alias / fuzzy / ranking avanzato
 data structure avanzata
 economic direction advanced
 output
+
+Capacità N16 aggiunta al quadro alto: gestione anagrafica Base
+Nome/Tipologia con identità UUID; Stato read-only, nessuna garanzia atomica
+sui nomi normalizzati. Le attestazioni precedenti restano storiche.
 
 Layer esistenti ma parziali:
 
@@ -1949,3 +1988,13 @@ v09 — 2026-10-28
 - preservata la responsabilita' di architettura alta di System e lo storico
 - esplicitato il limite temporale dello snapshot tecnico conservato
 - nessuna modifica runtime o nuova verifica live; pubblicazione da verificare
+
+v10 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per review.
+
+- Revisione della preimage locale confermata dall'utente, inclusi i delta non
+  approvati del primo lotto; nessuna loro approvazione implicita.
+- Riconciliate le affermazioni operative pertinenti a N16 e qualificato lo
+  storico; preservati i contenuti estranei al mandato e le revisioni anteriori.
+- Introdotta la capacità architetturale di gestione anagrafica Base, senza inventario di query.
+- Preparazione per review: nessuna copia/Apply, nuova verifica live,
+  pubblicazione o completamento definitivo A4 attestati.

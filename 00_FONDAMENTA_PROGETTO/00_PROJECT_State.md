@@ -1,13 +1,58 @@
 # 00_PROJECT_State
-Versione: v38
+Versione: v40
 
-DATA: 2026-10-28
+DATA: 2026-11-02
 
-## Nodo corrente — integrità referenziale minima Core (nodo 14)
+## Stato corrente — N16 Project/Entity Editor Base (consolidamento A4)
+
+Nodo di sviluppo: `CP-LOGOS-DEV-EDITOR-BASE-20261028-16`; verifica
+funzionale e UX conclusa il **2 novembre 2026**, consolidamento documentale
+**A4 in preparazione/review**. Il nodo N16 non è dichiarato chiuso fino
+all'applicazione, alla verifica e alla pubblicazione del lotto approvato.
+
+| Area | Risultato e grado di prova |
+| --- | --- |
+| Editor Base | Vista Anagrafiche Project/Entity, ricerca/selezione per UUID, dettaglio, modifica Nome e Tipologia, controlli omonimie e Salva; esiti dei checkpoint N16 Q1–R03 e A1–A3 |
+| R03 / persistenza Nome | PASS LIVE storico per Project ed Entity, verifica Supabase indipendente; salvataggio confermato, Editor chiuso, selezione mantenuta; due query diagnostiche eliminate nell'export `Logos (35).json` |
+| A1 / persistenza Tipologia | **PASS LIVE** Project ed Entity: `type NULL → generic` su due UUID esistenti; `name`, `id`, `status` invariati; SELECT Supabase indipendente 02/11/2026 ore 18:19:26 Europe/Rome |
+| A2 / protezioni | **PASS CIRCOSCRITTO** dei criteri residui: analisi statica, prove pregresse, 28 simulazioni ordinarie e 2 scenari concorrenti; test MOCK non considerati LIVE |
+| A3 / navigazione e mobile | **PASS 8/8** da collaudi manuali dichiarati dall'utente su Retool Anteprima desktop e Safari iPhone; nessuna scrittura in A3 |
+| Stato anagrafiche | Visualizzato ma **non modificabile** dall'Editor Base; `Entity.status=NULL` storico conservato, nessun default `ACTIVE` introdotto o normalizzazione automatica |
+| Regola omonimie | Blocchi pre-save su snapshot per nomi normalizzati di UUID diversi. **NON atomici** contro due salvataggi concorrenti: rischio R-A2-01 accettato dalla discussione madre dopo STP; correzione A2-C non autorizzata |
+| Milestone e Core | **M04 PARZIALE**, LOGOS Core Global Completion v1.0 **35% → 35%**, +0 punti; 15 milestone e pesi invariati |
+| App e dati | App Retool Classic `Logos` in Draft; `logos_template`. Nessuna release e nessuna nuova modifica Retool/Supabase nel consolidamento A4 |
+
+Restano **differiti, non implementati automaticamente**: gestione avanzata degli
+stati (UX-06: inattivi consultabili, fuori preselezioni automatiche, associazione
+con avviso/conferma e riattivazione controllata), default `ACTIVE` delle nuove
+Entity e semantica dei `NULL` storici, «Altre opzioni» nel Command Intent,
+eventuale creazione diretta da Anagrafiche senza duplicare i flussi, parent,
+metadata, alias, merge e funzioni verticali. Il limite difensivo A2 sugli input
+`type` artificialmente iniettati fuori dalla Select ordinaria resta documentato.
+
+**Provenienza:** checkpoint `CP_LOGOS_N16_R03_UX_INTERMEDIO_20261030.md`,
+`CHECKPOINT_LOGOS_N16_A1_TIPOLOGIA_PASS_20261102.md`,
+`CHECKPOINT_LOGOS_N16_A2_CONCLUSIVO_PASS_20261102.md`,
+`CHECKPOINT_LOGOS_N16_A3_CONCLUSIVO_PASS_20261102.md`, e checkpoint storici
+Q1/Q2A/Q2B nello `05_WORKSPACE.zip` fornito dall'utente. GitHub
+`moody58/LOGOS`, `main`, commit documentale base
+`ab67cf84fbb1b8e6d0eb2fa8ed21801a3250ced1`; preimage effettive della working copy
+`C:\AIOS_GITHUB\LOGOS`, acquisite il 2 novembre 2026 e confermate
+esplicitamente dall'utente anche per i delta locali N16 non approvati.
+Gli ZIP appartengono alla provenienza del primo lotto superato. La preparazione documentale non è
+un nuovo collaudo LIVE della Draft o del database e non certifica l'intero Core.
+
+La procedura prevede review delle postimage complete e dei diff in VS Code,
+consenso alla copia manuale, verifica dei file effettivamente sostituiti e
+commit/push manuali. Gli undici checkpoint non vengono rimossi né archiviati
+prima del consolidamento e di una decisione distinta sulla loro destinazione.
+
+## Snapshot precedente — integrità referenziale minima Core (nodo 14)
 
 Nodo confermato: `CP-LOGOS-CORE-REF-INTEGRITY-20261028-14`.
 La microsessione tecnica del 28 ottobre 2026 ha conseguito PASS nel proprio
-perimetro; questa è la prosecuzione documentale dello stesso nodo.
+perimetro; la prosecuzione documentale qui descritta appartiene allo
+snapshot del nodo 14, precedente a N16.
 
 | Ambito | Stato corrente |
 | --- | --- |
@@ -41,7 +86,7 @@ nessun nuovo nodo è aperto e il recap per Regia rimane da trasferire.
 Gli snapshot seguenti conservano il testo e le condizioni dei nodi di
 origine, incluse le formulazioni allora candidate della baseline e i
 riferimenti DA BASELINARE. Non sostituiscono il quadro corrente sopra.
-La sezione OBIETTIVO IMMEDIATO è raccordata alla presente continuazione.
+La sezione OBIETTIVO IMMEDIATO descrive invece il mandato corrente N16/A4.
 
 ## Snapshot precedente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
 
@@ -125,7 +170,8 @@ CP-LOGOS-DOC-GOVERNANCE-ALIGN-20261028-10.
 Mandato documentale: allineare State e Roadmap ai risultati del 27 ottobre;
 nessuna modifica runtime, release o installazione verticale autorizzata.
 La revisione del contenuto non attesta la propria applicazione o pubblicazione.
-Il prossimo nodo funzionale resta da confermare: l'Editor Base non viene attivato.
+Alla data dello snapshot precedente l'Editor Base non era attivato.
+Il successivo N16 ne ha realizzato e collaudato la tranche Base.
 
 ## Stato consolidato al 27 ottobre 2026
 
@@ -166,8 +212,9 @@ per successive modifiche Retool. Non dichiarare tutti i P0 conclusi dal solo
 hardening. Le dipendenze P1/P2 sono ordinate nella Roadmap, senza aprire nuovi nodi.
 Sequenza: predisposizione minima → completamento funzionale del Core →
 stabilizzazione/release/replica → installazioni indipendenti.
-Readiness project/entity completata; Editor Base mai applicato o testato secondo
-le fonti consolidate. Backlog funzionale preservato, priorità da confermare.
+Fotografia del 27 ottobre 2026: Readiness completata, Editor Base non ancora
+applicato o testato nelle fonti allora consolidate. Superata per la tranche
+Base dalle prove N16; backlog avanzato preservato, senza nuova priorità.
 
 ## Provenienza e procedura
 
@@ -222,7 +269,7 @@ Allineamento e ripresa:
 - installazione della procedura nella repository ADEXIMA soltanto da valutare in un nodo distinto, con accesso e binding specifici; non costituisce avvio dell'istanza applicativa LOGOS/ADEXIMA
 
 Stato funzionale del prodotto preservato:
-- Readiness completata; Editor Base mai applicato né testato secondo la ricostruzione documentale consolidata
+- Fotografia storica del ciclo P6: Readiness completata; Editor Base allora non applicato né testato; tranche Base successivamente realizzata in N16
 - prossimo nodo di sviluppo DA DEFINIRE E CONFERMARE CON L'UTENTE
 - nessuna operazione su Retool, Supabase, DB, parser, matching, preview, payload o save flow nel ciclo documentale P6
 - nessuna nuova verifica live del prodotto; percentuali, test e conteggi storici sottostanti non sono nuove misurazioni
@@ -267,7 +314,7 @@ Fonti e verifiche realmente effettuate:
 - nessuna verifica live del codice Retool
 
 Stato funzionale LOGOS:
-- Readiness completata; Editor Base mai applicato né testato
+- Fotografia storica del nodo fonti: Readiness completata; Editor Base allora non applicato né testato, prima di N16
 - runtime Retool/Supabase e schema DB invariati da questo nodo
 - nessuna migrazione, modifica query, RLS, parser, matching, preview, payload o save flow
 - prossimo nodo di sviluppo ancora DA DEFINIRE E CONFERMARE CON L'UTENTE
@@ -553,8 +600,9 @@ nessuna modifica runtime, Retool, Supabase, input, matching, lifecycle, preview 
 Transizione post nodo Data Structure:
 
 La Readiness indicata nella v30 come passo successivo è stata completata.
-Il candidato implementativo emerso è l'Editor Base, mai applicato né testato.
-Il prossimo nodo alla ripresa resta da definire e confermare dopo l'allineamento documentale.
+Nella fotografia post-Readiness l'Editor Base era candidato, non applicato
+né testato. N16 ha successivamente realizzato e collaudato la tranche Base;
+il lavoro corrente è A4 documentale, senza nuovo nodo funzionale implicito.
 
 ------------------------------------------------
 FASE:
@@ -647,7 +695,7 @@ STATO GENERALE SISTEMA — BASELINE STORICA PRE-HARDENING
 
 Le attestazioni, percentuali e catene sotto descrivono la baseline funzionale
 precedente. Il quadro corrente, le guardie DB e i limiti produttivi sono nella
-sezione iniziale v35; «produzione reale», «DB invariato» e «storage passivo»
+sezione iniziale corrente N16/A4 e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
 non costituiscono attestazioni correnti. I candidati non sono nodi attivati.
 
 Sistema funzionante end-to-end:
@@ -729,7 +777,7 @@ Debiti principali:
 
 Fonte completa:
 
-- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per stato sintetico corrente
+- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale N16/A4
 - 01_LOGOS_Input_System per input/parser/input_analysis_result
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
@@ -740,8 +788,12 @@ Fonte completa:
 - LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase as-is
 
 ------------------------------------------------
-SNAPSHOT FUNZIONALE CONSOLIDATO
+SNAPSHOT FUNZIONALE CONSOLIDATO — BASELINE STORICA PRE-N16
 ------------------------------------------------
+
+La numerazione dei layer sottostante conserva la fotografia precedente;
+non include l'Editor N16. Capacità corrente in apertura e architettura alta
+in System; nessun ricalcolo delle percentuali storiche dei singoli layer.
 
 Il sistema LOGOS è stabilizzato su venticinque layer fondamentali.
 
@@ -774,7 +826,7 @@ Layer completati:
 25. DATA STRUCTURE / ENTITY HIERARCHY — POLICY DECISION MODEL
 
 ------------------------------------------------
-CATENE RUNTIME ATTUALI — SINTESI NON INTERPRETATIVA
+CATENE RUNTIME — SINTESI STORICA PRE-N16, NON INTERPRETATIVA
 ------------------------------------------------
 
 Catena input / parsing / dati strutturati:
@@ -1174,10 +1226,10 @@ STATO COMPLESSIVO STORICO (PERIMETRO PRECEDENTE):
 
 ~95%
 
-Non usare come valore di LOGOS Core Global Completion: DA BASELINARE.
+Non usare il ~95% come valore di LOGOS Core Global Completion. DA BASELINARE era il riferimento della fotografia precedente; il mandato N16/A4 conserva Core v1.0 al 35%, invariato.
 
 ------------------------------------------------
-FASE ATTUALE
+FASE DELLA FOTOGRAFIA STORICA PRE-N16
 ------------------------------------------------
 
 ✔ INPUT RELIABILITY — COMPLETATA  
@@ -1226,14 +1278,14 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare la preparazione documentale del nodo 14 sugli originali locali:
-postimage integrali, diff, hash, manifest, qualificazione della corsia e review.
-Check soltanto dove realmente ammissibile; copia/Apply, verifica e pubblicazione
-richiedono i gate successivi e non sono autorizzati dalla preparazione.
-R01 conserva il limite documentato della dipendenza Python divergente; R02 non
-è adottato. Nessuna riparazione, reinstallazione o commutazione automatica.
-Baseline v1.0: 35% → 35%, M04 PARZIALE; Gap Register v23 KEEP.
-Nessun nuovo nodo funzionale o ritorno in Regia per passi già autorizzati.
+Completare N16/A4 sui sei documenti del mandato: riconciliare i delta locali,
+le sezioni operative precedenti e le evidenze dell'export `Logos (35).json`;
+preparare postimage complete, diff, inventario tecnico, tracciabilità e manifest
+per la review in VS Code. Il primo lotto resta superato e non approvato.
+Nessuna copia/Apply, modifica applicativa, commit o push autorizzati.
+La corsia va qualificata per target; copia personale, verifica assistita
+e pubblicazione richiedono i passaggi successivi. Core v1.0 35% invariato,
+M04 PARZIALE; A1 PASS, A2 PASS circoscritto, A3 PASS preservati.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1330,7 +1382,7 @@ Priorità aggiornata:
 23. input context consistency — edit / suggestion / command boundary ✔
 24. data structure / entity hierarchy — policy decision model ✔
 25. project / entity guided mode — readiness & minimum scope ✔ (decisionale, runtime invariato)
-26. project / entity editor base — name + type + duplicate alert (candidato storico, non implementato/testato, da riconfermare)
+26. project / entity editor base — name + type + duplicate alert (tranche Base realizzata e collaudata in N16: A1 PASS, A2 PASS circoscritto, A3 PASS; consolidamento A4 aperto; evoluzioni rinviate senza nuovi nodi impliciti)
 27. preview model / hint state consolidation
 28. input analysis model completo / single interpretation layer avanzato
 29. economic direction advanced
@@ -1350,7 +1402,7 @@ Il sistema attuale è:
 BACKLOG DI RIFERIMENTO — PRIORITÀ ALLA RIPRESA DA CONFERMARE:
 
 1. Project / Entity Guided Mode — Readiness & Minimum Scope: completato, non più lavoro futuro
-2. Project / Entity Editor Base — Name + Type + Duplicate Alert: candidato storico, non implementato/testato
+2. Project / Entity Editor Base — Name + Type + Duplicate Alert: tranche Base realizzata e collaudata in N16; A4 documentale aperto, evoluzioni successive rinviate
 3. Preview / status / hint cleanup se necessario
 4. input analysis model / single interpretation layer avanzato
 5. economic direction advanced
@@ -1461,16 +1513,18 @@ Esito: GO per Editor Base limitato; NO-GO guided event mode completa; runtime in
 2. PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
 Stato:
-CANDIDATO STORICO POST READINESS — NON IMPLEMENTATO / NON TESTATO / DA RICONFERMARE.
+TRANCHE BASE REALIZZATA E COLLAUDATA IN N16; CONSOLIDAMENTO A4 APERTO.
+A1 PASS, A2 PASS circoscritto con limite concorrente non atomico accettato, A3 PASS 8/8.
+La precedente candidatura post-Readiness è superata per questa tranche; non va riaperta.
 
-Scopo emerso dalla Readiness:
+Scopo storico emerso dalla Readiness, ora coperto dalla tranche Base N16:
 - completare in modo limitato l'editor project/entity esistente
 - preservare gestione name e alert/protezione duplicato esatto già presenti
 - gestire type con chiavi tecniche DB e label italiane
 
-Fuori scope del candidato: parent, metadata avanzato, alias, merge, fuzzy/G10A, Data Hygiene, guided event mode completa, dashboard/KPI/output e verticalizzazioni.
+Fuori scope della tranche Base: parent, metadata avanzato, alias, merge, fuzzy/G10A, Data Hygiene, guided event mode completa, dashboard/KPI/output e verticalizzazioni. Gestione modificabile dello Stato, politica generale sui NULL storici, default ACTIVE per nuove Entity, inattivi, Altre opzioni e altre evoluzioni restano rinviati senza nuovi nodi implicitamente approvati.
 
-L'apertura della vecchia chat non costituisce implementazione e non autorizza il recupero automatico dei suoi comandi.
+L'apertura della vecchia chat, precedente a N16, non costituiva implementazione. Le prove della tranche realizzata sono i checkpoint N16, non i comandi storici; nessun loro recupero automatico è autorizzato.
 
 ---
 
@@ -1899,6 +1953,12 @@ residuo accettato perché il blocco funzionale impedisce update_event e creazion
 ------------------------------------------------
 CHANGELOG
 ------------------------------------------------
+
+v39 — 2026-11-02
+
+- preparato raccordo documentale N16: R03 e A1 persistenza Nome/Tipologia PASS LIVE storico, A2 protezioni PASS circoscritto, A3 UX desktop/mobile PASS 8/8 manuale
+- registrato limite non atomico delle omonimie concorrenti accettato, senza dichiararlo protezione verificata; preservati residui stato/UX
+- mantenuto Core Completion v1.0 35% → 35% e M04 PARZIALE; A4 review/copia/pubblicazione pendenti
 
 v38 — 2026-10-28
 
@@ -2813,3 +2873,14 @@ v34 — 2026-10-16
 - registrata la pubblicazione iniziale dei sei file nella baseline `f4e02738dd43668c7ce6e16821e81c02846423d6` e il successivo consolidamento documentale Visual Identity v1.1 / Typography System v1.2
 - preservati identità, colori, artwork, PNG, font e criteri approvati; il commit iniziale contiene Visual Identity v1.0 e Typography v1.1, non le revisioni successive
 - dichiarati i limiti P6 sui nuovi pathname e sul marker versionato
+
+
+v40 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per review.
+
+- Revisione della preimage locale confermata dall'utente, inclusi i delta non
+  approvati del primo lotto; nessuna loro approvazione implicita.
+- Riconciliate le affermazioni operative pertinenti a N16 e qualificato lo
+  storico; preservati i contenuti estranei al mandato e le revisioni anteriori.
+- Preservati A1 PASS, A2 PASS circoscritto, A3 8/8, A4 aperto, Core 35% e M04 PARZIALE.
+- Preparazione per review: nessuna copia/Apply, nuova verifica live,
+  pubblicazione o completamento definitivo A4 attestati.
