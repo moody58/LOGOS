@@ -1,10 +1,23 @@
 # 00_PROJECT_Gap_Register
-Versione: v25
+Versione: v26
 
-DATA: 2026-11-02
+DATA: 2026-11-09
 
 ------------------------------------------------
-RACCORDO CORRENTE — N16 / G11 (2 NOVEMBRE 2026)
+RACCORDO CORRENTE — N18 / G03 E G11 (9 NOVEMBRE 2026)
+------------------------------------------------
+
+**G03 — Project/Entity Create Suggestion: INTEGRATO BASE, esteso e collaudato in N18.** Quattro percorsi Project/Entity inline e Command Intent convergono su `create_anagrafica` in `page1`, Nome/Tipologia obbligatori e `ACTIVE` esplicito, due INSERT riutilizzate, preflight omonimie e verifica post-INSERT. Cinque creazioni autorizzate confermate; evento non salvato automaticamente. Non è una garanzia atomica sulle omonimie concorrenti.
+
+**G11 — Data Structure/Entity Hierarchy: INTEGRATO PARZIALE.** N16 Editor Base PASS, A4 pubblicato a `dab06fa7df871b482bad691e530c62f5fd8b0260`; N18 estende la creazione canonica, ma non completa M04. Il default `ACTIVE` dei **nuovi** Project ed Entity nei quattro percorsi N18 è attivo, mentre stato Editor, filtro matching/associazioni su `INACTIVE`/`NULL`, riattivazione e deroga UX-06 sono ancora da implementare secondo il contratto N17. Nessuna migrazione di record legacy o nuova regola DB.
+
+**R1 osservato:** avviso «Villa selezionato» proveniente da `preview_analysis_state` dopo la corretta selezione T1B, senza correzione autorizzata. Il riferimento al preesistente G35 non ne attesta automaticamente l'assorbimento o la risoluzione. **R2 di sessione:** `projects_list` Dirty in una vecchia scheda Chrome, distinto dalla versione Draft salvata con `enableTransformer: false`; non trattarlo come query canonica modificata. Limiti di osservazione: toast T2 e feedback transitorio T3; nessun guasto inferibile. Concorrenza N16/A2 **non atomica** resta accettata.
+
+**Prove/provenienza:** checkpoint N18 Apply statico, Apply/collaudo T1–T4, T1B conclusivo, linting/salvataggi; N16/A4 e N17 distinti. Eventi **268 → 268**, linting **13 → 11**. **Core 35% → 35%, M04 PARZIALE**. Nessun nuovo Gap ID, nuova priorità, nodo o correzione applicativa creati dal solo raccordo documentale.
+
+------------------------------------------------
+
+SNAPSHOT N16 — G11 (2 NOVEMBRE 2026, ANTECEDENTE A N18)
 ------------------------------------------------
 
 G11 — Data Structure / Entity Hierarchy: **INTEGRATO BASE per la tranche
@@ -12,8 +25,7 @@ Editor Project/Entity Nome/Tipologia; macro-gap ancora INTEGRATO PARZIALE**.
 La Readiness storica è completata e non va riaperta. L'Editor Base ora
 esiste ed è stato collaudato: R03 Nome PASS LIVE, A1 Tipologia PASS LIVE,
 A2 protezioni PASS circoscritto, A3 navigazione e mobile PASS 8/8 manuale.
-Il consolidamento documentale A4 resta in review: il nodo N16 è aperto
-fino alla verifica/pubblicazione del lotto.
+Il consolidamento documentale A4 è stato pubblicato il 2 novembre 2026 al commit dab06fa7df871b482bad691e530c62f5fd8b0260. Il lavoro corrente è N18/DOC-01; non riaprire le prove N16.
 
 **Residuo R-A2-01 (accettato, non protetto):** controllo omonimie
 normalizzate basato su snapshot pre-save, senza atomicità contro rinomine
@@ -22,8 +34,7 @@ normalizzato; `entities.name` non ha UNIQUE. La correzione A2-C è esclusa
 dalla decisione della discussione madre: nessuna attivazione implicita.
 
 **Residui funzionali:** Stato visibile ma non editabile nell'Editor Base;
-UX-06 sugli inattivi, default `ACTIVE` per nuove Entity, significato dei
-`status=NULL` storici, limite difensivo A2 su un `type` artificialmente
+UX-06 sugli inattivi e significato dei `status=NULL` storici restano requisiti decisionali N17 da implementare; il default `ACTIVE` è già operativo nei quattro percorsi N18. Restano il limite difensivo A2 su un `type` artificialmente
 iniettato fuori dalla UI; «Altre opzioni» nel Command Intent e possibile
 creazione da Anagrafiche senza duplicazioni sono miglioramenti differiti.
 Parent, metadata avanzati, alias, merge, fuzzy/G10A, Data Hygiene e guided
@@ -732,7 +743,11 @@ Tranche emersa:
 
 PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
-Stato corrente: **EDITOR BASE IMPLEMENTATO E COLLAUDATO (N16)**; A4 documentale in review. La frase storica di candidatura non descrive più il runtime presente.
+Stato attestato: **EDITOR BASE IMPLEMENTATO E COLLAUDATO (N16)**;
+A4 documentale è stato successivamente pubblicato a `dab06fa7df871b482bad691e530c62f5fd8b0260`.
+La creazione canonica N18 sui quattro percorsi è PASS; G11 resta
+INTEGRATO PARZIALE per gli altri requisiti. La candidatura storica non
+descrive più il runtime presente.
 
 Perimetro storico emerso dalla Readiness, ora da distinguere dall'implementazione:
 - Editor Nome/Tipologia e controlli base realizzati e collaudati in N16
@@ -1322,7 +1337,9 @@ STATO: INTEGRATO BASE
 Fonte canonica: 01_LOGOS_Input_System, 02_LOGOS_Match_Engine, 04_LOGOS_Retool_Architecture, 05_LOGOS_Database_Schema
 
 Nota:
-il comportamento base di creazione project/entity resta in G03.
+il comportamento base di creazione project/entity resta in G03;
+la creazione canonica N18 è ora collaudata nei quattro percorsi, con
+Nome/Tipologia obbligatori e ACTIVE esplicito (dettaglio nelle madri Retool).
 La policy match presente + suggestion extension è stata completata in G22.
 
 G07 — Preview Alignment
@@ -1392,8 +1409,10 @@ Fonte canonica: 04_LOGOS_Retool_Architecture, LOGOS_RETOOL_RUNTIME_REAL
 ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
-Nessun prossimo nodo assegnato durante il REENTRY.
-L'ordine di backlog precedente resta riferimento storico; priorità e prossimo passo saranno confermati con l'utente dopo l'allineamento.
+Nel REENTRY storico non era stato assegnato un prossimo nodo.
+L'ordine di backlog precedente resta riferimento storico: il mandato corrente
+è N18/DOC-01, come descritto nel raccordo iniziale; nessun nodo successivo
+è assegnato implicitamente da questo elenco.
 
 Readiness G11: COMPLETATA, esclusa dai lavori futuri da riaprire automaticamente.
 
@@ -2200,3 +2219,9 @@ v25 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per revie
 - Preservati A1 PASS, A2 PASS circoscritto, A3 8/8, A4 aperto, Core 35% e M04 PARZIALE.
 - Preparazione per review: nessuna copia/Apply, nuova verifica live,
   pubblicazione o completamento definitivo A4 attestati.
+
+v26 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o pubblicata. Revisione R04: riconciliazione integrale delle sezioni preesistenti e dei rinvii, con matrice dedicata; copertura tecnica N18 e Source Coverage R03 preservate.
+
+- G03 esteso ai quattro percorsi e al contratto create_anagrafica; G11 resta INTEGRATO PARZIALE.
+- R1/R2, default ACTIVE verificato e residui N17 distinti, limite di concorrenza preservato. Nessun nuovo Gap ID.
+- Core 35%, M04 PARZIALE; nessuna operazione Retool/Supabase.

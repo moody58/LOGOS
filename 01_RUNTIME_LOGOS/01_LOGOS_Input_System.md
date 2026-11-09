@@ -1,6 +1,19 @@
-# 01_LOGOS_Input_System_v20
+# 01_LOGOS_Input_System_v21
+Versione: v21
 
-DATA: 2026-06-15
+DATA: 2026-11-09
+
+## Raccordo corrente N18 — creazione da input inline e Command Intent
+
+L'implementazione Retool Classic N18, collaudata il **6 novembre 2026**, unifica le quattro conferme Crea già presenti nell'input evento e nel Command Intent attraverso **`page1.create_anagrafica`**. Due percorsi inline (Project/Entity) e due Command Intent (Project/Entity) richiedono sempre **Nome** e **Tipologia**; i quattro Select di Tipologia sono distinti ma la procedura applicativa è una. `insert_project` e `insert_entity` rimangono gli unici due endpoint fisici di creazione, con `status: "ACTIVE"` esplicito.
+
+Lato input, `create_suggestion_state` continua a proporre l'azione senza creare record; il pulsante Crea richiama la procedura condivisa che valida la scelta, verifica omonimie su snapshot completo, controlla la rappresentazione dell'unica riga restituita e ricarica l'elenco. **Project inline:** refresh della lista, `project_state.trigger()` e **poi** `select_project.setValue(nuovo UUID)` (ordine verificato in T1B), quindi aggiornamento dei suggerimenti. **Entity inline:** selezione della nuova Entity verificata in T2; l’handler non rilancia entity_state. Nei due inline, dopo una creazione verificata, chiusura del form, dismissal, reset Nome/Tipologia e ricalcolo suggerimenti avvengono anche con refresh fallito; soltanto la nuova selezione dipende dal refresh. Il toast è success con refresh ok, warning «elenco da ricaricare» altrimenti. **Command Intent:** Nome risolto con priorità candidateName, guard canExecute, quattro Tipologie e Select decisionali azzerati dopo successo; feedback `project_created`/`entity_created` applicato allo state prima della visualizzazione, micro-tick 0 e ritorno Home a 1800 ms. Anche con refresh fallito il cleanup/routing rimane e cambia feedback_summary.text. Le sequenze complete e i codici di esito sono nella madre Retool Architecture.
+
+**Associazione vs evento:** la creazione aggiorna la disponibilità/selezione del Project/Entity ma **non conferma né salva l'evento**. Nelle cinque INSERT N18 verificate con SELECT indipendenti, `public.events` è rimasta a **268 → 268**. Comandi strutturali puri non diventano eventi. Resta possibile salvare l'evento solo con successiva conferma esplicita dell'utente nel normale flusso, soggetta alle guardie già documentate. L'app è ancora Draft; nessun Publish. I dettagli di query, componenti, cataloghi e preflight appartengono alle madri `04_LOGOS_Retool_Architecture.md` e `LOGOS_RETOOL_RUNTIME_REAL.md`.
+
+**Limiti:** T2 toast e T3 feedback transitori non catturati; messaggio «Villa selezionato» di `preview_analysis_state` incoerente dopo T1B (**R1**, nessun fix); copia Chrome locale Dirty di `projects_list` distinta dalla Draft salvata (**R2**, nessun salvataggio/scarto). Il preflight non offre protezione atomica fra creatori concorrenti. Della policy decisionale N17 è operativo in N18 il default `ACTIVE` dei quattro percorsi di creazione; gli altri requisiti `INACTIVE`/`NULL` e UX-06 **restano futuri e non implementati**. Il linting finale N18 è 11, distinto dalle vecchie fotografie di 0.
+
+**Fonte:** checkpoint N18 Apply statico, Apply/collaudo T1–T4, T1B e linting 5–6 novembre 2026; provenienze N16/A4 e N17 separate. Nella revisione DOC-01 del 9 novembre sono stati riletti in sola lettura gli otto handler e create_anagrafica nella Draft salvata. Nessun nuovo collaudo, Run/Test/Save/Publish o lettura Supabase.
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -37,7 +50,7 @@ Il documento è utilizzato per:
 - create_suggestion_state
 - insert_project / insert_entity
 - entity autofill controlled minimal
-- separazione tra input evento e futuro command intent
+- separazione tra input evento e Command Intent base implementato; intent avanzati futuri
 - UX Mobile Coherence Pass
 - Home mobile rifinita
 - Dati evento compatti con label inline
@@ -85,7 +98,7 @@ Il documento è utilizzato per:
 - ui_visibility_mode confermato come latch leggero empty / event / command
 - routing principale app confermato su ui_state.view
 - Linting / Retool Query Safety Pass
-- linting Retool azzerati
+- linting Retool azzerati (risultato storico pre-N18; finale N18: 11 residui qualificati)
 - typing_state eliminato come query legacy unused
 - handle_event_success eliminato come query legacy unused
 - container_input stabilizzato progressivamente e poi migrato a input_analysis_result per gli Hidden principali del flow input
@@ -160,7 +173,7 @@ Fonti canoniche collegate:
 - 05_LOGOS_Database_Schema per schema DB, tabelle, campi e vincoli.
 - 06_LOGOS_View_Preview_System per Sintesi, preview, hint, warning, label visuali e micro-copy.
 - LOGOS_RETOOL_RUNTIME_REAL per runtime Retool reale as-is.
-- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase / storage passivo.
+- LOGOS_SUPABASE_RUNTIME_REAL per runtime Supabase, persistenza e protezioni DB documentate.
 
 Nota post Pacchetto B:
 
@@ -263,9 +276,10 @@ input libero
 → match state
 → create_suggestion_state
 → suggestion visibile
-→ conferma utente
-→ insert_project / insert_entity
-→ select_project / select_entity valorizzata
+→ conferma utente con Nome e Tipologia validi
+→ page1.create_anagrafica (preflight e verifica)
+→ insert_project / insert_entity (riuso, `ACTIVE` esplicito)
+→ select_project / select_entity valorizzata dopo refresh coerente
 → eventuale Conferma evento manuale
 
 Regole:
@@ -345,8 +359,9 @@ Regole:
 - command_intent_state non modifica parser
 - command_intent_state non modifica matching
 - command_intent_state non sostituisce create_suggestion_state
-- insert_project / insert_entity restano le query operative di creazione
-- select_project / select_entity restano fonti salvabili finali per gli eventi
+- insert_project / insert_entity restano le due query POST operative, richiamate da `page1.create_anagrafica` in N18
+- `select_project.value` e `select_entity.value` rimangono le fonti finali salvabili per l’evento; i match state non le sostituiscono
+- nei soli percorsi di creazione inline N18 la nuova assegnazione automatica dell’UUID è condizionata al refresh coerente; nessun auto-save evento
 - “modifica evento” non apre un edit flow parallelo
 - “modifica evento” guida l’utente alla lista eventi
 - “modifica”, “correggi” e “cambia” sono guide non operative generiche
@@ -682,11 +697,15 @@ input_new_project_name
 input_new_entity_name
 → campo micro-editor per creazione entity inline
 
+create_anagrafica (scope page1)
+→ verifica Nome/Tipologia, preflight e rappresentazione POST per i quattro percorsi N18
+→ chiama una delle due query fisiche esistenti
+
 insert_project
-→ crea project solo previa conferma utente
+→ crea project ACTIVE solo previa conferma utente, tramite query condivisa
 
 insert_entity
-→ crea entity solo previa conferma utente
+→ crea entity ACTIVE solo previa conferma utente, tramite query condivisa
 
 container_command_intent
 → UI dedicata ai comandi riconosciuti
@@ -716,11 +735,11 @@ input_command_entity_name
 
 btn_command_create_project
 → crea project da command solo previa conferma
-→ riusa insert_project
+→ riusa create_anagrafica e indirettamente insert_project
 
 btn_command_create_entity
 → crea entity da command solo previa conferma
-→ riusa insert_entity
+→ riusa create_anagrafica e indirettamente insert_entity
 
 btn_command_go_events
 → guida alla lista eventi dal command “modifica evento”
@@ -788,8 +807,8 @@ input_home
 → select_project / select_entity
 → select1 / type classification base
 → confirm guard tramite button_input_confirm.Disabled se input evento ordinario
-→ eventuale creazione inline project/entity previa conferma utente
-→ eventuale creazione project/entity da command previa conferma utente
+→ eventuale creazione inline project/entity con Nome/Tipologia e query condivisa N18, previa conferma utente
+→ eventuale creazione project/entity da command con Nome/Tipologia e query condivisa N18, previa conferma utente
 → conferma evento manuale se input evento ordinario
 → no-op edit guard se in edit mode
 → feedback_summary costruito prima del reset input/select
@@ -893,22 +912,20 @@ Edit senza modifiche:
 → Lista eventi immediata
 
 Command create project:
-→ btn_command_create_project
-→ input_new_project_name valorizzato
-→ insert_project
-→ projects_list refresh
-→ feedback_mode = project_created
-→ feedback 1800 ms
-→ Home
+→ btn_command_create_project: Nome da candidateName/input command e guardia canExecute
+→ Tipologia da select_command_project_type
+→ page1.create_anagrafica → insert_project ACTIVE verificata → tentativo refresh
+→ solo a creazione confermata: cleanup di input/suggestion, quattro Tipologie e Select evento
+→ feedback_mode = project_created, testo distinto se refresh fallito, stato prima del container
+→ feedback 1800 ms → Home; nessuna selezione automatica inline né salvataggio evento
 
 Command create entity:
-→ btn_command_create_entity
-→ input_new_entity_name valorizzato
-→ insert_entity
-→ entities_list refresh
-→ feedback_mode = entity_created
-→ feedback 1800 ms
-→ Home
+→ btn_command_create_entity: Nome da candidateName/input command e guardia canExecute
+→ Tipologia da select_command_entity_type
+→ page1.create_anagrafica → insert_entity ACTIVE verificata → tentativo refresh
+→ solo a creazione confermata: cleanup di input/suggestion, quattro Tipologie e Select evento
+→ feedback_mode = entity_created, testo distinto se refresh fallito, stato prima del container
+→ feedback 1800 ms → Home; nessuna selezione automatica inline né salvataggio evento
 
 Command guida modifica evento:
 → btn_command_go_events
@@ -980,12 +997,13 @@ Regola anti-loop aggiornata:
 ui_visibility_state non è più sorgente di input_analysis_result.
 Non introdurre dipendenze inverse o circolari.
 
-Dopo insert_project / insert_entity:
+Dopo creazione verificata tramite page1.create_anagrafica:
 
-- viene aggiornata la lista projects/entities
-- viene valorizzata la select relativa
-- l’evento resta non salvato
-- l’utente deve ancora confermare manualmente l’evento
+- viene tentato il refresh della lista pertinente; il suo fallimento è distinto dall’esito della POST
+- nei soli percorsi inline il nuovo UUID viene selezionato soltanto con refresh coerente; chiusura/reset del form non dipendono da tale condizione
+- nei percorsi Command Intent sono invece azzerati i Select evento e avviati feedback strutturale e ritorno Home
+- l’evento resta non salvato; un eventuale evento richiede una successiva conferma manuale nel relativo flusso
+- per errori prima della POST, esito incerto e refresh fallito vale il contratto N18 di Architecture
 
 ---
 
@@ -2107,6 +2125,7 @@ const nextValue = window[key];
 delete window[key];
 
 return Boolean(nextValue);
+```
 
 EDITING_EVENT
 
@@ -3692,11 +3711,12 @@ Comportamento:
 - project_state riconosce Villa come match base
 - create_suggestion_state propone Villa Sierri 15 come possibile nuovo project
 - input_new_project_name viene precompilato
-- utente conferma Crea progetto
-- insert_project crea il record
-- projects_list viene aggiornata
-- select_project viene valorizzata
-- evento resta da confermare manualmente
+- utente conferma Nome e Tipologia nel form inline
+- btn_create_project_inline chiama page1.create_anagrafica, con preflight e POST insert_project ACTIVE verificata
+- a creazione confermata il form viene chiuso e Nome/Tipologia azzerati, anche con refresh fallito
+- solo con refresh coerente viene selezionato il nuovo UUID, dopo project_state.trigger()
+- create_suggestion_state viene ricalcolato; feedback differenziato sul refresh
+- evento resta da confermare manualmente; non ripetere la POST a fronte del solo refresh fallito
 
 Nota post G22:
 
@@ -3770,11 +3790,12 @@ Comportamento:
 - entity_state non trova match
 - create_suggestion_state propone creazione entity
 - input_new_entity_name può essere precompilato se candidate sicura
-- utente conferma Crea entità
-- insert_entity crea il record
-- entities_list viene aggiornata
-- select_entity viene valorizzata
-- evento resta da confermare manualmente
+- utente conferma Nome e Tipologia nel form inline
+- btn_create_entity_inline chiama page1.create_anagrafica, con preflight e POST insert_entity ACTIVE verificata
+- a creazione confermata il form viene chiuso e Nome/Tipologia azzerati, anche con refresh fallito
+- solo con refresh coerente viene selezionato il nuovo UUID
+- create_suggestion_state viene ricalcolato; feedback differenziato sul refresh
+- evento resta da confermare manualmente; non ripetere la POST a fronte del solo refresh fallito
 
 ---
 
@@ -3861,8 +3882,8 @@ Non implementa:
 - Cambia / Scegli nella Sintesi realmente cliccabili
 - Azioni rapide operative
 - Dashboard reale
-- suggestion create vs edit consistency
-- project creation override con match generico
+- suggestion create vs edit consistency oltre la parte base command/edit trattata in Input Context Consistency
+- evoluzioni avanzate dell’override; il caso base match presente + suggestion extension è già coperto da G22
 - Icon System completamente standardizzato
 - polish finale font/spaziature
 
@@ -3916,7 +3937,7 @@ input_analysis_result governa la visibilità di:
 - sintesi
 - Dati evento
 
-button_input_confirm resta fuori dalla migrazione corrente.
+Nella tranche Controlled UI Consumption button_input_confirm era ancora fuori dalla migrazione. La successiva Visibility Migration Completion ha migrato il suo Hidden a input_analysis_result.readiness.canShowConfirm; Disabled e payload restano separati, come descritto nelle sezioni dedicate.
 
 I comandi puri restano esclusi dal salvataggio evento.
 
@@ -3928,25 +3949,25 @@ crea
 
 crea progetto
 → input_command_project_name
-→ Crea progetto disabilitato finché manca il nome
+→ Crea progetto disabilitato finché mancano Nome o Tipologia validi, oltre alle guardie del percorso N18
 
 crea progetto [nome]
-→ riepilogo progetto
-→ btn_command_create_project
-→ insert_project
-→ feedback project_created
-→ Home
+→ riepilogo progetto e scelta Tipologia
+→ btn_command_create_project: canExecute e input validi
+→ page1.create_anagrafica → insert_project ACTIVE verificata e tentativo refresh
+→ se creazione confermata: cleanup e feedback project_created (testo diverso se refresh fallito)
+→ Home; nessun evento creato
 
 crea entità
 → input_command_entity_name
-→ Crea entità disabilitato finché manca il nome
+→ Crea entità disabilitato finché mancano Nome o Tipologia validi, oltre alle guardie del percorso N18
 
 crea entità [nome]
-→ riepilogo entità
-→ btn_command_create_entity
-→ insert_entity
-→ feedback entity_created
-→ Home
+→ riepilogo entità e scelta Tipologia
+→ btn_command_create_entity: canExecute e input validi
+→ page1.create_anagrafica → insert_entity ACTIVE verificata e tentativo refresh
+→ se creazione confermata: cleanup e feedback entity_created (testo diverso se refresh fallito)
+→ Home; nessun evento creato
 
 crea progetto villa
 → elemento già presente
@@ -4282,7 +4303,7 @@ button_input_confirm.Disabled non usa più matches.length > 1.
 
 BUTTON_INPUT_CONFIRM — FLOW FINALE
 
-Codice logico finale:
+Estratti logici storici del save flow, conservati dalla baseline precedente a N18. Non costituiscono una trascrizione completa e aggiornata di button_input_confirm: le integrazioni successive (EDIT MODE COMMAND GUARD, feedback_summary e routing) sono descritte nelle note e nelle sezioni dedicate. N18 non modifica il salvataggio evento.
 
 ```js
 // --- INSERT / UPDATE SWITCH ---
@@ -4304,6 +4325,7 @@ const payload = {
 
 const wasEditMode = edit_mode.data;
 const originalEvent = editing_event.data;
+```
 
 Nota post Input Context Consistency:
 
@@ -4328,6 +4350,7 @@ La guard non modifica button_input_confirm.Disabled.
 La guard non modifica insert_event/update_event.
 La guard impedisce solo l’esecuzione di update_event quando il command riconosciuto è fresco e coerente con l’input corrente.
 
+```js
 const normalizeComparable = (value) => {
   if (value === undefined || value === "") return null;
   return value;
@@ -4439,6 +4462,8 @@ if (wasEditMode) {
   await editing_event.trigger();
 }
 
+```
+
 Aggiornamento UX Mobile Coherence Pass:
 
 Il codice runtime effettivo di button_input_confirm è stato aggiornato per:
@@ -4454,7 +4479,7 @@ Il codice runtime effettivo di button_input_confirm è stato aggiornato per:
 
 Regola:
 
-Questo blocco è fonte runtime del salvataggio evento.
+Le regole descritte sono il contratto documentato del salvataggio evento; gli estratti soprastanti sono storici e non uno script completo da copiare. Per componenti e wiring vedere Architecture, per la fotografia qualificata Retool Runtime Real.
 Il feedback_summary è solo UI temporanea e non viene salvato nel DB.
 
 Risultato:
@@ -4553,22 +4578,20 @@ non una pagina finale bloccante.
 COMMAND CREATE PROJECT:
 
 btn_command_create_project
-→ insert_project
-→ projects_list refresh
-→ feedback_mode = project_created
-→ feedback_summary strutturale progetto
-→ feedback 1800 ms
-→ Home
+→ page1.create_anagrafica con Nome/Tipologia e guardie Command Intent
+→ POST insert_project ACTIVE verificata e tentativo refresh
+→ creazione confermata: cleanup input/Select e feedback_mode = project_created
+→ feedback_summary strutturale, con testo di ricarica se refresh fallito
+→ stato feedback prima del container, micro-tick 0, feedback 1800 ms → Home
 
 COMMAND CREATE ENTITY:
 
 btn_command_create_entity
-→ insert_entity
-→ entities_list refresh
-→ feedback_mode = entity_created
-→ feedback_summary strutturale entità
-→ feedback 1800 ms
-→ Home
+→ page1.create_anagrafica con Nome/Tipologia e guardie Command Intent
+→ POST insert_entity ACTIVE verificata e tentativo refresh
+→ creazione confermata: cleanup input/Select e feedback_mode = entity_created
+→ feedback_summary strutturale, con testo di ricarica se refresh fallito
+→ stato feedback prima del container, micro-tick 0, feedback 1800 ms → Home
 
 Feedback strutturale:
 
@@ -4814,6 +4837,7 @@ await edit_mode.trigger();
 
 window.__logos_editing_event_value = null;
 await editing_event.trigger();
+```
 
 Risultato:
 
@@ -6555,7 +6579,7 @@ save readiness completa non centralizzata
 rendering progressivo input evento normale ridotto tramite UI Readiness e input_analysis_result
 micro-flash feedback project/entity ancora presente
 flash residui digitazione/cambio schermata ancora presenti
-linting Retool azzerati
+linting Retool azzerati (risultato storico pre-N18; finale N18: 11 residui qualificati)
 typing_state eliminato
 handle_event_success eliminato
 “modifica”, “correggi”, “cambia” riconosciuti come guida generica non operativa
@@ -7313,3 +7337,8 @@ v19 — 2026-06-04
 - nessun fuzzy matching
 - nessun alias system globale
 - nessun Input Analysis Model completo
+
+v21 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o pubblicata. Revisione R04: riconciliazione integrale delle sezioni preesistenti e dei rinvii, con matrice dedicata; copertura tecnica N18 e Source Coverage R03 preservate.
+
+- Allineati input suggestion e Command Intent alla procedura condivisa N18 e al default ACTIVE sui quattro percorsi.
+- Documentati ordine della selezione T1B, invarianti evento, residui R1/R2 e limiti N17 non implementati.

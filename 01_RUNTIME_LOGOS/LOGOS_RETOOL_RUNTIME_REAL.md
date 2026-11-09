@@ -1,9 +1,43 @@
 # LOGOS_RETOOL_RUNTIME_REAL
-Versione: v24
+Versione: v25
 
-DATA: 2026-11-02
+DATA: 2026-11-09
 
-## Editor Project / Entity Base — fotografia N16 consolidabile
+## Fotografia N18 — creazione canonica nella Draft Retool Classic (6 novembre 2026)
+
+**App `Logos`** UUID `18ea4684-29de-11f1-b868-0b05f2d402b2`, **Draft senza Publish**. Le osservazioni in questo paragrafo derivano dai checkpoint di Apply/collaudo e dal controllo mirato dell'editor del 5–6 novembre; **non è stato acquisito un nuovo export completo dell'app post-N18**. `Logos (35).json` è la fotografia N16 acquisita il 30 ottobre; `Logos (36).json` è la preimage N18 acquisita il 5 novembre. I due file locali da 454054 byte sono stati confrontati byte per byte in DOC-01: identici, entrambi SHA-256 `96ce6bd2741ecc13f6855487f572068b451322a12e6483f6a3b747df948195da`. Le provenienze rimangono distinte. I 145 plugin sono **pre-N18**: non è l’inventario completo della Draft finale.
+
+| Oggetti nel lotto N18 | Stato documentato |
+| --- | --- |
+| Nuova query JS `page1.create_anagrafica` | Unica procedura creazione Project/Entity, parametri `anagKind`, `anagName`, `anagType` via `additionalScope`, validazione, snapshot qualificato, POST existing, verifica riga e refresh |
+| Quattro nuovi Select Tipologia | `select_new_project_type_inline`, `select_new_entity_type_inline`, `select_command_project_type`, `select_command_entity_type`; scelte valide per il tipo, nessuna selezione predefinita |
+| Due query INSERT esistenti modificate | `insert_project`, `insert_entity`: Nome/Tipologia/`ACTIVE` nel Raw body, `Prefer: return=representation`, notifica nativa di successo disattivata, errore attiva |
+| Quattro handler Crea modificati | `btn_create_project_inline`, `btn_create_entity_inline`, `btn_command_create_project`, `btn_command_create_entity`; unica query, guardie Nome/Tipologia e percorso/routing contestuale |
+| Quattro handler Annulla modificati | `btn_cancel_project_inline`, `btn_cancel_entity_create`, `btn_cancel_project_create`, `btn_cancel_input_home` con reset degli appositi Select |
+
+**Classi e proprietà del delta:** i due datasource esistenti sono RESTQuery e gli otto pulsanti ButtonWidget2, dalla baseline. La nuova query è Run JS Code (javascript), scope page1; i quattro nuovi controlli hanno classe UI Select attestata, senza nuovo export del relativo subtype serializzato. Quattro Crea modificano `events` e `disabled`; quattro Annulla modificano soltanto `events`; due INSERT modificano `body` e `showSuccessToaster`. Il dettaglio per identità è nella matrice di review e nel contratto tecnico madre. Nome, Hidden preesistenti e trenta template del contenitore non interessati sono conservati nel confronto statico originario.
+
+**Bilancio iniziale Apply N18:** 5 oggetti aggiunti, 10 oggetti modificati; successive rettifiche **mirate sugli oggetti già compresi nel lotto**: spostamento della sola query condivisa da Global a `page1`, ordine `project_state.trigger()` prima di `select_project.setValue()` in `btn_create_project_inline`, formattazione innocua del sorgente `create_anagrafica`. Nessun oggetto extra o nuova DDL attribuiti a queste correzioni.
+
+### Rilevazioni funzionali conservate
+
+| Prova | Evidenza runtime/Supabase del 6 novembre 2026 |
+| --- | --- |
+| T1 Project inline | Una INSERT `ACTIVE`, Nome/Tipologia e form chiuso PASS; selezione automatica inizialmente FAIL; interferenza documentata fra ricalcolo e Default value reattivo, senza campionamento del singolo istante di sovrascrittura |
+| T1B Project inline | **PASS** selezione automatica `select_project.value` corrispondente alla SELECT Supabase, UUID `40a4ffd2-8acc-4d9c-a97e-af060f6f4a20`; toast «Progetto creato», form chiuso |
+| T2 Entity inline | INSERT `ACTIVE`, chiusura form e selezione Entity PASS; toast transitorio non osservato direttamente |
+| T3 Project Command Intent | INSERT `ACTIVE` e ritorno Home PASS; feedback transitorio non osservato direttamente |
+| T4 Entity Command Intent | INSERT `ACTIVE`, feedback «Entità creata» con Nome e ritorno Home PASS |
+| Dati evento | `public.events` **268 → 268** nelle SELECT indipendenti: nessun auto-save evento nelle cinque creazioni |
+| Linting | **13 → 11**; due soli warning di formattazione eliminati con AST identico; gli 11 residui di `additionalScope` e chiamanti sono qualificati, non un azzeramento artificiale |
+
+**Cronologia dei gate N18:** prima dei test riusciti, `insert_entity.enableTransformer` è stato riportato da true nella copia pendente a false, salvato e verificato dopo riapertura, preservando body/header/notifiche N18. R2 resta soltanto la vecchia copia Dirty di projects_list, non quel caso risolto. Un primo tentativo T1 prima della correzione Global→page1 si fermò prima di snapshot e INSERT, con zero righe create; le cinque INSERT effettive sono quelle successive già elencate. Lo spostamento preservò sorgente e 122 voci osservate; manuale, page load disattivo e timeout 10000 ms. La diagnosi della selezione riconosce l’interferenza project_state/Default value, non l’istante esatto della sovrascrittura. Fonti intermedie: COLLAUDO_T1_BLOCCATO_SCOPE, SCOPE_APPLICATO_T1_SELEZIONE e DIAGNOSI_SELEZIONE_T1, 6 novembre.
+
+**R1 — UI:** `preview_analysis_state` conserva dopo T1B la dicitura «Villa selezionato», incoerente con Select e Sintesi che indicavano il Project appena creato. **R2 — stato editor:** `projects_list` in una vecchia scheda Chrome ha una copia Dirty con transformer visibile; versione salvata della Draft `enableTransformer: false` confermata, nessun Save/Save & Run/scarto. R1 e R2 non sono implementazioni o correzioni N18. Il limite di omonimie concorrenti su normalizzazione resta accettato, non protetto atomicamente.
+
+Le decisioni N17 su stato Editor, filtri `INACTIVE`/`NULL` e associazione eccezionale UX-06 **non sono implementazioni** dell'N18. Nessun test in questo sottolotto documentale né modifiche DB/Retool. Il 9 novembre sono stati riletti in sola lettura gli otto script finali e il sorgente condiviso: chiusura/reset inline indipendenti dal refresh, selezione condizionata, cleanup e feedback Command Intent con testo differenziato. Non sono stati attivati Run, Test, Save o Publish e la vecchia copia Dirty non è stata toccata. Per preflight, risposte e ordine delle query si rimanda a `04_LOGOS_Retool_Architecture.md`, senza duplicarne il contratto completo. L'identificativo, le prove e i contatori del paragrafo N16 seguente restano **snapshot precedenti** alla Draft N18.
+
+## Snapshot storico N16 — Editor Project/Entity Base (2 novembre 2026)
 
 Applicazione: `Logos` Classic, UUID
 `18ea4684-29de-11f1-b868-0b05f2d402b2`, mantenuta in **Draft**;
@@ -52,11 +86,13 @@ funzionale della normalizzazione UX e Save dal solo export.
 **Limiti residui:** `UNIQUE(name)` esatta su Project, non su equivalenze
 normalizzate; nessuna UNIQUE Entity; A2 evidenzia anche il limite difensivo
 per un `type` artificiosamente iniettato fuori dalla Select ordinaria.
-UX-06, stato `ACTIVE` iniziale delle nuove Entity, politica generale per i `NULL`
-storici (distinta dalla preservazione già presente nell'Editor Base), «Altre opzioni» Command Intent e creazione diretta da Anagrafiche
-rimangono non implementati/da qualificare nei perimetri competenti.
+Alla data della fotografia N16, UX-06, default `ACTIVE` iniziale
+delle nuove Entity, politica generale per i `NULL` storici e «Altre opzioni»
+Command Intent erano ancora da qualificare. **N18 ha poi verificato `ACTIVE`
+per i quattro percorsi di creazione controllati**, ma non ha implementato
+UX-06, transizioni dello Stato, politica `NULL` o creazione diretta da Anagrafiche.
 
-### Inventario statico corrente del percorso N16
+### Inventario statico storico del percorso N16
 
 L'export contiene 145 oggetti/plugin complessivi: 106 widget, 24 datasource,
 8 state, 3 function, 2 frame, 1 screen, 1 setting. Le RESTQuery sono 15:
@@ -932,7 +968,7 @@ INPUT
 ✔ nessun loop input_analysis_result / ui_visibility_state
 ✔ graph Retool verificato
 ✔ Linting / Retool Query Safety Pass completato
-✔ linting Retool azzerati
+✔ linting Retool azzerati (risultato storico pre-N18; finale N18: 11 residui qualificati)
 ✔ typing_state eliminato
 ✔ handle_event_success eliminato
 ✔ Performance unused query risolta
@@ -2599,14 +2635,16 @@ Il container non deve apparire vuoto.
 
 PROJECT CREATE FLOW:
 
-1. utente clicca Crea progetto
-2. input_new_project_name viene precompilato se candidate sicura
-3. utente conferma Crea progetto
-4. insert_project crea record in projects
-5. projects_list viene aggiornata
-6. select_project viene valorizzata con nuovo id
-7. micro-editor si chiude
-8. evento NON viene salvato automaticamente
+1. utente apre Crea progetto; il Nome può essere precompilato dalla suggestion
+2. utente conferma Nome e sceglie una Tipologia valida nel Select inline
+3. btn_create_project_inline chiama page1.create_anagrafica con anagKind, anagName e anagType
+4. la procedura valida input e snapshot completo, blocca omonimie e verifica la rappresentazione della POST insert_project con status ACTIVE
+5. se la creazione è confermata, il form viene chiuso e Nome/Tipologia azzerati anche se il refresh fallisce
+6. soltanto con refresh coerente project_state viene ricalcolato prima di assegnare il nuovo UUID a select_project
+7. create_suggestion_state viene ricalcolato e il feedback distingue CREATED da CREATED_REFRESH_FAILED
+8. evento NON salvato automaticamente; refresh fallito non autorizza una nuova POST
+
+Per guardie, ordine esatto e rami di errore vedere il contratto N18 in apertura di Architecture.
 
 PROJECT MATCH PRESENT / USER OVERRIDE — G22:
 
@@ -2632,14 +2670,16 @@ La suggestion ignorata non blocca il salvataggio.
 
 ENTITY CREATE FLOW:
 
-1. utente clicca Crea entità
-2. input_new_entity_name viene mostrato / precompilato se candidate sicura
-3. utente conferma Crea entità
-4. insert_entity crea record in entities
-5. entities_list viene aggiornata
-6. select_entity viene valorizzata con nuovo id
-7. micro-editor si chiude
-8. evento NON viene salvato automaticamente
+1. utente apre Crea entità; il Nome può essere precompilato dalla suggestion
+2. utente conferma Nome e sceglie una Tipologia valida nel Select inline
+3. btn_create_entity_inline chiama page1.create_anagrafica con anagKind, anagName e anagType
+4. la procedura valida input e snapshot completo, blocca omonimie e verifica la rappresentazione della POST insert_entity con status ACTIVE
+5. se la creazione è confermata, il form viene chiuso e Nome/Tipologia azzerati anche se il refresh fallisce
+6. soltanto con refresh coerente viene assegnato il nuovo UUID a select_entity; entity_state non è richiamato esplicitamente
+7. create_suggestion_state viene ricalcolato e il feedback distingue CREATED da CREATED_REFRESH_FAILED
+8. evento NON salvato automaticamente; refresh fallito non autorizza una nuova POST
+
+Per guardie, ordine esatto e rami di errore vedere il contratto N18 in apertura di Architecture.
 
 ENTITY MATCH PRESENT / USER OVERRIDE — G22:
 
@@ -2706,19 +2746,7 @@ IGNORE GLOBALE:
 
 DUPLICATE GUARD:
 
-Project:
-
-- se input_new_project_name esiste già in projects_list
-- btn_create_project_inline è disabilitato
-- warning duplicato visibile
-- insert_project non parte da UI
-
-Entity:
-
-- se input_new_entity_name esiste già in entities_list
-- btn_create_entity_inline è disabilitato
-- warning duplicato visibile
-- insert_entity non parte da UI
+In N18 il Disabled dei quattro Crea verifica Nome, Tipologia, stato di esecuzione e guardie del percorso; la protezione dalle omonimie prima della POST appartiene a page1.create_anagrafica, mediante snapshot qualificato, non alla sola lista UI. La precedente descrizione del Disabled come controllo sufficiente sui nomi di projects_list/entities_list era riferita alla baseline pre-N18. Il preflight blocca il duplicato normalizzato, ma non rende atomica la concorrenza fra creatori. Dettagli, codici e limiti nel contratto N18 di Architecture.
 
 ------------------------------------------------
 COMMAND INTENT — CREATE PROJECT / ENTITY
@@ -2974,24 +3002,24 @@ AZIONI COMMAND
 
 btn_command_create_project:
 
-- legge candidateName o input_command_project_name
-- valorizza input_new_project_name
-- trigger insert_project
-- refresh projects_list
-- imposta feedback_mode = project_created
-- mostra feedback progetto
-- ritorna Home automaticamente
+- ricava il Nome normalizzato da candidateName oppure input_command_project_name e richiede canExecute === true
+- usa select_command_project_type e chiama page1.create_anagrafica con additionalScope anagKind/anagName/anagType
+- la procedura comune esegue preflight, insert_project, verifica riga e refresh; un esito non confermato ferma il percorso
+- a creazione confermata resetta input command/suggestion, tutti i quattro Select Tipologia, input principali e Select evento; non precompila il vecchio input_new_project_name come passaggio alla POST
+- prepara feedback_mode = project_created e feedback_summary prima di mostrare il container; micro-tick 0 e ritorno Home dopo 1800 ms
+- con refresh fallito il cleanup e il routing restano eseguiti, ma il testo segnala l'elenco da ricaricare; nessun evento salvato
+- sequenza e differenze esatte nel contratto N18 in apertura di Architecture
 - non crea eventi
 
 btn_command_create_entity:
 
-- legge candidateName o input_command_entity_name
-- valorizza input_new_entity_name
-- trigger insert_entity
-- refresh entities_list
-- imposta feedback_mode = entity_created
-- mostra feedback entità
-- ritorna Home automaticamente
+- ricava il Nome normalizzato da candidateName oppure input_command_entity_name e richiede canExecute === true
+- usa select_command_entity_type e chiama page1.create_anagrafica con additionalScope anagKind/anagName/anagType
+- la procedura comune esegue preflight, insert_entity, verifica riga e refresh; un esito non confermato ferma il percorso
+- a creazione confermata resetta input command/suggestion, tutti i quattro Select Tipologia, input principali e Select evento; non precompila il vecchio input_new_entity_name come passaggio alla POST
+- prepara feedback_mode = entity_created e feedback_summary prima di mostrare il container; micro-tick 0 e ritorno Home dopo 1800 ms
+- con refresh fallito il cleanup e il routing restano eseguiti, ma il testo segnala l'elenco da ricaricare; nessun evento salvato
+- sequenza e differenze esatte nel contratto N18 in apertura di Architecture
 - non crea eventi
 
 btn_command_go_events:
@@ -4815,7 +4843,7 @@ button_input_confirm blocca update_event tramite EDIT MODE COMMAND GUARD.
 
 Per usare comandi strutturali, l’utente deve prima premere Annulla modifica.
 
-QUERY — INVENTARIO BASE CON INTEGRAZIONE N16
+QUERY — INVENTARIO STORICO PRE-N18 CON INTEGRAZIONE N16
 
 GET ANAGRAFICHE N16:
 
@@ -4893,7 +4921,7 @@ text_edit_mode_notice contiene micro-copy contestuale per command rilevato in ed
 
 COMPONENTI UI RILEVANTI:
 
-ANAGRAFICHE N16 (contratto in Architecture, inventario in apertura):
+ANAGRAFICHE N16 (contratto nello snapshot N16 di Architecture; inventario in «Inventario statico storico del percorso N16» di questo documento):
 
 container_anagrafiche
 Anagrafiche
@@ -5167,7 +5195,7 @@ Icon System non completamente standardizzato
 rendering progressivo input evento normale ridotto tramite UI Readiness
 micro-flash feedback project/entity ancora presente
 “modifica”, “correggi”, “cambia” riconosciuti come guide generiche non operative
-linting Retool azzerati
+linting Retool azzerati (risultato storico pre-N18; finale N18: 11 residui qualificati)
 “Da verificare” resta interno alla Sintesi
 Full Visibility Migration degli Hidden principali completata
 button_input_confirm.Hidden migrato a input_analysis_result
@@ -5416,7 +5444,7 @@ Runtime attuale:
 ✔ text_edit_mode_notice contestuale su command rilevato in edit mode
 ✔ txt_command_intent_description aggiornata per edit_generic_help
 ✔ input_analysis_result rollbackato alla base stabile
-✔ linting 0 dopo rollback e micro-fix locali
+✔ linting 0 dopo rollback e micro-fix locali (risultato storico pre-N18; finale N18: 11 residui qualificati)
 
 Debiti:
 
@@ -5426,7 +5454,7 @@ Debiti:
 ⚠ match engine avanzato separato non implementato
 ⚠ alias / gerarchie / deduplicazione non implementati
 ✔ creazione guidata project/entity implementata a primo livello controllato
-⚠ suggestion create vs edit consistency da verificare
+⚠ suggestion create vs edit consistency: parte base command/edit trattata in Input Context Consistency; ulteriori casi restano da verificare
 ✔ project creation override con match generico risolto a primo livello in G22
 ✔ auto-select confidence / match generico salvabile risolto a primo livello in G22
 ⚠ select_project/select_entity non filtrano né prioritizzano ancora i candidati contestuali
@@ -5441,7 +5469,7 @@ Debiti:
 ⚠ Input Analysis Model completo non implementato
 ✔ rendering progressivo input evento normale ridotto tramite UI Readiness e input_analysis_result
 ⚠ micro-flash feedback project/entity ancora presente
-✔ linting Retool azzerati
+✔ linting Retool azzerati (risultato storico pre-N18; finale N18: 11 residui qualificati)
 ✔ ui_visibility_state residuo tecnico deprecabile
 ✔ Full Visibility Migration degli Hidden principali completata
 ✔ button_input_confirm.Hidden migrato
@@ -8466,3 +8494,8 @@ v24 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per revie
 - Aggiornato l'inventario statico N16 e distinto dalle fotografie tecniche precedenti.
 - Preparazione per review: nessuna copia/Apply, nuova verifica live,
   pubblicazione o completamento definitivo A4 attestati.
+
+v25 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o pubblicata. Revisione R04: riconciliazione integrale delle sezioni preesistenti e dei rinvii, con matrice dedicata; copertura tecnica N18 e Source Coverage R03 preservate.
+
+- Consolidato il runtime N18 dalla Draft e dai checkpoint: inventario 5 nuovi/10 modificati, cinque INSERT, eventi 268 invariati.
+- Distinti baseline statica pre-N18 e osservazioni mirate N18; linting 13→11 e residui R1/R2 preservati.

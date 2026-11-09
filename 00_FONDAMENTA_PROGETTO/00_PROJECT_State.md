@@ -1,14 +1,35 @@
 # 00_PROJECT_State
-Versione: v40
+Versione: v41
 
-DATA: 2026-11-02
+DATA: 2026-11-09
 
-## Stato corrente — N16 Project/Entity Editor Base (consolidamento A4)
+## Stato corrente — N18 creazione canonica Project/Entity (documentazione in preparazione)
+
+**Nodo:** `CP-LOGOS-M04-ANAG-CREATE-ACTIVE-20261104-18`. **Sottolotto:** N18/DOC-01, esclusivamente documentale, autorizzazione PREPARE. L'implementazione nella Draft Retool Classic `Logos` ha conseguito **PASS funzionale N18** il 6 novembre 2026; l'aggiornamento delle madri, la review, la copia e la pubblicazione di questo lotto **non sono ancora attestati**. Il precedente N16/A4 è invece **PASS documentale pubblicato e verificato** sul commit GitHub `dab06fa7df871b482bad691e530c62f5fd8b0260`.
+
+| Dimensione | Stato confermato dalle prove di origine |
+| --- | --- |
+| Creazione Project/Entity | Una sola procedura `create_anagrafica` in `page1`, invocata dai quattro percorsi inline Project, inline Entity, Command Intent Project, Command Intent Entity; Nome e Tipologia obbligatori, `ACTIVE` esplicito |
+| INSERT e controllo | Riusate `insert_project`/`insert_entity`, preflight delle omonimie su snapshot completo, verifica della singola riga restituita prima del feedback, refresh distinto dalla persistenza |
+| Collaudi | T1–T4 e T1B: **cinque INSERT autorizzate e verificate** con SELECT indipendenti; selezione Project inline PASS in T1B dopo il riordino dell'handler; Entity inline e due Command Intent PASS nei limiti dei checkpoint |
+| Invarianti | `public.events` **268 → 268**; nessun salvataggio evento automatico; Retool ancora **Draft**, nessun Publish; nessuna modifica schema/DDL Supabase |
+| Residui | **R1**: avviso «Villa selezionato» non coerente con la Select in T1B, origine `preview_analysis_state`, non corretto. **R2**: vecchia scheda Chrome con copia Dirty di `projects_list`, distinta dalla versione Draft salvata `enableTransformer: false`, non salvata né scartata. Feedback transitori T2/T3 non catturati direttamente; preflight omonimie non atomico tra creazioni concorrenti |
+| Linting | Da **13 a 11**, dopo sola formattazione di `create_anagrafica` con AST invariato; 11 segnalazioni residue qualificate come riferimenti forniti tramite `additionalScope` nei chiamanti osservati, non prova di bug runtime né di collaudo universale |
+| Contratto stati N17 | Default `ACTIVE` sui **quattro percorsi N18** realizzato; policy `INACTIVE`/`NULL` per matching, filtri, transizioni Editor ed eccezione UX-06 **approvata ma non implementata in N17/N18** |
+| Milestone | **M04 PARZIALE**; Core Global Completion v1.0 **35% → 35%**, +0 punti; nessuna nuova milestone globale PASS |
+
+Provenienza: N18 APPLY statico 05/11/2026, collaudo T1–T4, T1B conclusivo PASS e verifica linting/salvataggi 06/11/2026; N16/A4 pubblicato a `dab06fa7df871b482bad691e530c62f5fd8b0260`; N17 contratto decisionale distinto, non attuazione complessiva. Le osservazioni Retool/Supabase sono **VERIFICATE LIVE nei rispettivi checkpoint N18**, non nuovamente collaudate in N18/DOC-01; la revisione è **DOCUMENTALE**, con lettura mirata READ-ONLY dei nove sorgenti Retool il 9 novembre e nessuna nuova interrogazione Supabase.
+
+**Confine:** R1/R2 non autorizzano correzioni Retool in questa procedura. In N18/DOC-01 sono stati soltanto riletti i nove sorgenti nella Draft salvata il 9 novembre, come qualificato sopra: nessuna scrittura Retool, nessuna lettura o scrittura Supabase e nessun nuovo collaudo. Questo gate R04 usa le prove già acquisite e non effettua nuove letture live. I contenuti dei successivi snapshot N16 descrivono correttamente la propria data, non il runtime attuale dopo N18.
+
+## Snapshot storico N16 — Editor Base alla preparazione di A4 (2 novembre 2026)
 
 Nodo di sviluppo: `CP-LOGOS-DEV-EDITOR-BASE-20261028-16`; verifica
-funzionale e UX conclusa il **2 novembre 2026**, consolidamento documentale
-**A4 in preparazione/review**. Il nodo N16 non è dichiarato chiuso fino
-all'applicazione, alla verifica e alla pubblicazione del lotto approvato.
+funzionale e UX conclusa il **2 novembre 2026**; **alla data di questa
+fotografia** il consolidamento A4 era ancora in preparazione/review.
+**Aggiornamento successivo verificato:** A4 è stato pubblicato il 2 novembre
+2026 al commit `dab06fa7df871b482bad691e530c62f5fd8b0260`; il successivo N18 ha realizzato la creazione
+con stato `ACTIVE` sui quattro percorsi, come registrato nella sezione corrente.
 
 | Area | Risultato e grado di prova |
 | --- | --- |
@@ -86,7 +107,7 @@ nessun nuovo nodo è aperto e il recap per Regia rimane da trasferire.
 Gli snapshot seguenti conservano il testo e le condizioni dei nodi di
 origine, incluse le formulazioni allora candidate della baseline e i
 riferimenti DA BASELINARE. Non sostituiscono il quadro corrente sopra.
-La sezione OBIETTIVO IMMEDIATO descrive invece il mandato corrente N16/A4.
+La sezione OBIETTIVO IMMEDIATO descrive il mandato corrente N18/DOC-01; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
 
 ## Snapshot precedente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
 
@@ -602,7 +623,7 @@ Transizione post nodo Data Structure:
 La Readiness indicata nella v30 come passo successivo è stata completata.
 Nella fotografia post-Readiness l'Editor Base era candidato, non applicato
 né testato. N16 ha successivamente realizzato e collaudato la tranche Base;
-il lavoro corrente è A4 documentale, senza nuovo nodo funzionale implicito.
+il lavoro corrente è N18/DOC-01, successivo alla pubblicazione A4, senza nuovo nodo funzionale implicito.
 
 ------------------------------------------------
 FASE:
@@ -695,7 +716,7 @@ STATO GENERALE SISTEMA — BASELINE STORICA PRE-HARDENING
 
 Le attestazioni, percentuali e catene sotto descrivono la baseline funzionale
 precedente. Il quadro corrente, le guardie DB e i limiti produttivi sono nella
-sezione iniziale corrente N16/A4 e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
+sezione iniziale «Stato corrente — N18 creazione canonica Project/Entity» e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
 non costituiscono attestazioni correnti. I candidati non sono nodi attivati.
 
 Sistema funzionante end-to-end:
@@ -777,7 +798,7 @@ Debiti principali:
 
 Fonte completa:
 
-- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale N16/A4
+- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — N18 creazione canonica Project/Entity»
 - 01_LOGOS_Input_System per input/parser/input_analysis_result
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
@@ -792,8 +813,10 @@ SNAPSHOT FUNZIONALE CONSOLIDATO — BASELINE STORICA PRE-N16
 ------------------------------------------------
 
 La numerazione dei layer sottostante conserva la fotografia precedente;
-non include l'Editor N16. Capacità corrente in apertura e architettura alta
-in System; nessun ricalcolo delle percentuali storiche dei singoli layer.
+non include l'Editor N16 né il delta N18. Capacità corrente nella sezione
+«Stato corrente — N18 creazione canonica Project/Entity»; struttura generale
+in 00_FONDAMENTA_PROGETTO/00_PROJECT_System.md e contratto tecnico in 04_LOGOS_Retool_Architecture.md.
+Nessun ricalcolo delle percentuali storiche dei singoli layer.
 
 Il sistema LOGOS è stabilizzato su venticinque layer fondamentali.
 
@@ -1226,7 +1249,7 @@ STATO COMPLESSIVO STORICO (PERIMETRO PRECEDENTE):
 
 ~95%
 
-Non usare il ~95% come valore di LOGOS Core Global Completion. DA BASELINARE era il riferimento della fotografia precedente; il mandato N16/A4 conserva Core v1.0 al 35%, invariato.
+Non usare il ~95% come valore di LOGOS Core Global Completion. DA BASELINARE era il riferimento della fotografia precedente; N16/A4 aveva conservato Core v1.0 al 35%; N18 mantiene il 35% e M04 PARZIALE, come indicato in apertura.
 
 ------------------------------------------------
 FASE DELLA FOTOGRAFIA STORICA PRE-N16
@@ -1278,14 +1301,7 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare N16/A4 sui sei documenti del mandato: riconciliare i delta locali,
-le sezioni operative precedenti e le evidenze dell'export `Logos (35).json`;
-preparare postimage complete, diff, inventario tecnico, tracciabilità e manifest
-per la review in VS Code. Il primo lotto resta superato e non approvato.
-Nessuna copia/Apply, modifica applicativa, commit o push autorizzati.
-La corsia va qualificata per target; copia personale, verifica assistita
-e pubblicazione richiedono i passaggi successivi. Core v1.0 35% invariato,
-M04 PARZIALE; A1 PASS, A2 PASS circoscritto, A3 PASS preservati.
+Completare N18/DOC-01: riconciliare il delta documentale della creazione canonica sui sei target qualificati, con matrice di copertura dei 15 oggetti, sette lacune L01–L07, postimage integrali, diff, metriche e archivio di review. N16/A4 è già pubblicato a dab06fa7df871b482bad691e530c62f5fd8b0260; N17 resta decisionale salvo ACTIVE implementato nei quattro percorsi N18. La precedente candidata DOC-01 non è approvata. Nessuna copia/Apply, commit o push autorizzati. Successiva sostituzione manuale soggetta a review, consenso puntuale, backup e verifica assistita. Core v1.0 35%, M04 PARZIALE; R1/R2, limiti di feedback e concorrenza preservati.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1382,7 +1398,7 @@ Priorità aggiornata:
 23. input context consistency — edit / suggestion / command boundary ✔
 24. data structure / entity hierarchy — policy decision model ✔
 25. project / entity guided mode — readiness & minimum scope ✔ (decisionale, runtime invariato)
-26. project / entity editor base — name + type + duplicate alert (tranche Base realizzata e collaudata in N16: A1 PASS, A2 PASS circoscritto, A3 PASS; consolidamento A4 aperto; evoluzioni rinviate senza nuovi nodi impliciti)
+26. project / entity editor base — name + type + duplicate alert (tranche Base realizzata e collaudata in N16: A1 PASS, A2 PASS circoscritto, A3 PASS; consolidamento A4 pubblicato il 2 novembre 2026; evoluzioni rinviate senza nuovi nodi impliciti)
 27. preview model / hint state consolidation
 28. input analysis model completo / single interpretation layer avanzato
 29. economic direction advanced
@@ -1402,7 +1418,7 @@ Il sistema attuale è:
 BACKLOG DI RIFERIMENTO — PRIORITÀ ALLA RIPRESA DA CONFERMARE:
 
 1. Project / Entity Guided Mode — Readiness & Minimum Scope: completato, non più lavoro futuro
-2. Project / Entity Editor Base — Name + Type + Duplicate Alert: tranche Base realizzata e collaudata in N16; A4 documentale aperto, evoluzioni successive rinviate
+2. Project / Entity Editor Base — Name + Type + Duplicate Alert: tranche Base realizzata e collaudata in N16; A4 documentale pubblicato il 2 novembre 2026, evoluzioni successive rinviate
 3. Preview / status / hint cleanup se necessario
 4. input analysis model / single interpretation layer avanzato
 5. economic direction advanced
@@ -1513,7 +1529,7 @@ Esito: GO per Editor Base limitato; NO-GO guided event mode completa; runtime in
 2. PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
 Stato:
-TRANCHE BASE REALIZZATA E COLLAUDATA IN N16; CONSOLIDAMENTO A4 APERTO.
+TRANCHE BASE REALIZZATA E COLLAUDATA IN N16; CONSOLIDAMENTO A4 PUBBLICATO IL 2 NOVEMBRE 2026.
 A1 PASS, A2 PASS circoscritto con limite concorrente non atomico accettato, A3 PASS 8/8.
 La precedente candidatura post-Readiness è superata per questa tranche; non va riaperta.
 
@@ -1522,7 +1538,7 @@ Scopo storico emerso dalla Readiness, ora coperto dalla tranche Base N16:
 - preservare gestione name e alert/protezione duplicato esatto già presenti
 - gestire type con chiavi tecniche DB e label italiane
 
-Fuori scope della tranche Base: parent, metadata avanzato, alias, merge, fuzzy/G10A, Data Hygiene, guided event mode completa, dashboard/KPI/output e verticalizzazioni. Gestione modificabile dello Stato, politica generale sui NULL storici, default ACTIVE per nuove Entity, inattivi, Altre opzioni e altre evoluzioni restano rinviati senza nuovi nodi implicitamente approvati.
+Fuori scope della tranche Base: parent, metadata avanzato, alias, merge, fuzzy/G10A, Data Hygiene, guided event mode completa, dashboard/KPI/output e verticalizzazioni. Gestione modificabile dello Stato, politica generale sui NULL storici, inattivi, Altre opzioni e altre evoluzioni restano rinviati; il default ACTIVE per i nuovi Project/Entity è invece implementato nei quattro percorsi N18. Nessun ulteriore nodo è implicitamente approvato.
 
 L'apertura della vecchia chat, precedente a N16, non costituiva implementazione. Le prove della tranche realizzata sono i checkpoint N16, non i comandi storici; nessun loro recupero automatico è autorizzato.
 
@@ -2884,3 +2900,9 @@ v40 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per revie
 - Preservati A1 PASS, A2 PASS circoscritto, A3 8/8, A4 aperto, Core 35% e M04 PARZIALE.
 - Preparazione per review: nessuna copia/Apply, nuova verifica live,
   pubblicazione o completamento definitivo A4 attestati.
+
+v41 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o pubblicata. Revisione R04: riconciliazione integrale delle sezioni preesistenti e dei rinvii, con matrice dedicata; copertura tecnica N18 e Source Coverage R03 preservate.
+
+- Allineata la fotografia corrente al PASS funzionale N18 e al precedente N16/A4 pubblicato; conservato lo snapshot N16 della fase preparatoria.
+- Distinto default ACTIVE sui quattro percorsi N18 dalle decisioni N17 ancora non implementate; R1/R2 e limite di concorrenza preservati.
+- Core v1.0 35% → 35%; M04 PARZIALE; nessuna nuova verifica live o nuova milestone.
