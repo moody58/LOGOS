@@ -1,7 +1,17 @@
 # 04_LOGOS_Retool_Architecture
-Versione: v27
+Versione: v28
 
-DATA: 2026-11-09
+DATA: 2026-11-12
+
+## Wiring N19 — preview_analysis_state (checkpoint Work)
+
+Nel Func body page1, i rami Project/Entity usano selectedProject/selectedEntity già risolti tramite UUID select_project.value/select_entity.value, sia nella guardia sia nell'avviso. candidateName rimane testo letto. Il contratto completo e i casi Select vuota/ambiguità sono nella madre 06_LOGOS_View_Preview_System.md, «Contratto corrente N19»; non sono duplicate qui logiche di matching o Conferma.
+
+Il contratto e le prove N18 seguenti conservano integralmente la propria fotografia, compreso R1 allora aperto.
+
+Fonti: dossier Work LOGOS_N19_DOC01_EVIDENZE_WORK_PROJECT_ENTITY_20261111.md, raccolto l'11 novembre 2026: checkpoint Project T1–T3 PASS ed Entity E1–E3 PASS trasferiti dalla conversazione Work. Sono collaudi LIVE riportati da Work, non nuove verifiche LIVE indipendenti di N19/DOC-01. Work riferisce la Draft salvata (Save disabilitato dopo il salvataggio), senza Publish. Non è disponibile un export completo post-N19. L'hash della preimage Entity applicativa non è riportato nel dossier; l'immagine Project T3 citata non è allegata e non è dichiarata acquisita.
+
+R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment resta aperto e distinto da R1. Nessuna modifica N19 a parser, matching, database, lifecycle, salvataggio eventi, create_anagrafica, N17/UX-06; limiti di concorrenza, feedback e linting invariati. Core 35%, M04 PARZIALE.
 
 ## Creazione canonica Project / Entity — contratto tecnico N18 (PASS funzionale)
 
@@ -1349,7 +1359,9 @@ preview_analysis_state legge anche create_suggestion_state per rilevare:
 - project.requiresUserOverride
 - entity.requiresUserOverride
 
-Quando requiresUserOverride = true, genera un warning mirato non bloccante:
+Descrizione del wiring storico G22, precedente a N19: quando requiresUserOverride = true, generava un warning mirato non bloccante:
+Nota temporale N19: le formule baseName riportate sotto descrivono il wiring originario G22. Il wiring corrente usa selectedProject/selectedEntity risolti dalle Select; guardia e contratto sono nella madre Preview, sezione «Contratto corrente N19».
+
 
 Project:
 Associazione progetto da controllare
@@ -7568,3 +7580,9 @@ v27 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o
 
 - Inserito contratto N18 della query condivisa, quattro chiamanti, nuovi Select, INSERT/feedback/refresh, riordino selezione T1B e limiti.
 - Conservata la fotografia N16 come storico e corretti i soli rinvii di stato corrente; nessuna nuova verifica live o implementazione.
+
+v28 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
+
+- Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
+- R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
+- Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.

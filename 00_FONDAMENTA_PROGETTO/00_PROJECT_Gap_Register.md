@@ -1,10 +1,22 @@
 # 00_PROJECT_Gap_Register
-Versione: v26
+Versione: v27
 
-DATA: 2026-11-09
+DATA: 2026-11-12
+
+## Raccordo corrente — N19/DOC-01 in PREPARE
+
+R1 tecnicamente risolto nel perimetro dei checkpoint Work Project T1–T3 PASS ed Entity E1–E3 PASS, nodo CP-LOGOS-M04-R1-PREVIEW-SELECTION-20261111-19. Il contratto corrente del nome selezionato e del testo letto è nella madre 06_LOGOS_View_Preview_System.md; il registro non ne duplica la logica.
+
+G35 resta IDENTIFICATO e distinto: N19 non risolve automaticamente la semantica status OK/card Da verificare. R2 Dirty projects_list resta escluso e irrisolto. G03 resta INTEGRATO BASE; G11 INTEGRATO PARZIALE. Nessun nuovo Gap ID o cambio priorità. La documentazione resta PREPARE fino a review, sostituzione, verifica e pubblicazione.
+
+Il raccordo N18 seguente è conservato come fotografia storica: R1 era allora aperto.
+
+Fonti: dossier Work LOGOS_N19_DOC01_EVIDENZE_WORK_PROJECT_ENTITY_20261111.md, raccolto l'11 novembre 2026: checkpoint Project T1–T3 PASS ed Entity E1–E3 PASS trasferiti dalla conversazione Work. Sono collaudi LIVE riportati da Work, non nuove verifiche LIVE indipendenti di N19/DOC-01. Work riferisce la Draft salvata (Save disabilitato dopo il salvataggio), senza Publish. Non è disponibile un export completo post-N19. L'hash della preimage Entity applicativa non è riportato nel dossier; l'immagine Project T3 citata non è allegata e non è dichiarata acquisita.
+
+R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment resta aperto e distinto da R1. Nessuna modifica N19 a parser, matching, database, lifecycle, salvataggio eventi, create_anagrafica, N17/UX-06; limiti di concorrenza, feedback e linting invariati. Core 35%, M04 PARZIALE.
 
 ------------------------------------------------
-RACCORDO CORRENTE — N18 / G03 E G11 (9 NOVEMBRE 2026)
+SNAPSHOT N18 / G03 E G11 — 9 NOVEMBRE 2026
 ------------------------------------------------
 
 **G03 — Project/Entity Create Suggestion: INTEGRATO BASE, esteso e collaudato in N18.** Quattro percorsi Project/Entity inline e Command Intent convergono su `create_anagrafica` in `page1`, Nome/Tipologia obbligatori e `ACTIVE` esplicito, due INSERT riutilizzate, preflight omonimie e verifica post-INSERT. Cinque creazioni autorizzate confermate; evento non salvato automaticamente. Non è una garanzia atomica sulle omonimie concorrenti.
@@ -325,6 +337,8 @@ Il nodo G22 ha reso più evidente il residuo:
 - la card Da verificare può mostrare un warning decisionale non bloccante
 - il badge OK può restare semanticamente debole se l’utente legge dall’alto verso il basso
 - il problema è visuale/semantico, non funzionale
+
+Nota temporale: la micro-copy dell'esempio G22 seguente è storica. La sorgente del nome nell'avviso è stata corretta in N19; il problema di status OK insieme al warning resta G35, IDENTIFICATO.
 
 Esempio:
 
@@ -1125,6 +1139,8 @@ Fonte canonica:
 - 06_LOGOS_View_Preview_System per warning Da verificare e micro-copy preview
 - LOGOS_RETOOL_RUNTIME_REAL per runtime reale as-is
 
+Nota temporale N19: gli esiti e le micro-copy G22 sotto conservano la baseline originaria. Per guardia e nome effettivamente selezionato vale il contratto N19 della madre Preview; la risoluzione R1 non riapre né riclassifica G22.
+
 Esito:
 
 - caso guida “20 euro villa sierri” risolto
@@ -1411,7 +1427,7 @@ ORDINE CONSIGLIATO GAP / NODI
 
 Nel REENTRY storico non era stato assegnato un prossimo nodo.
 L'ordine di backlog precedente resta riferimento storico: il mandato corrente
-è N18/DOC-01, come descritto nel raccordo iniziale; nessun nodo successivo
+è N19/DOC-01, come descritto nel raccordo iniziale; nessun nodo successivo
 è assegnato implicitamente da questo elenco.
 
 Readiness G11: COMPLETATA, esclusa dai lavori futuri da riaprire automaticamente.
@@ -2225,3 +2241,9 @@ v26 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o
 - G03 esteso ai quattro percorsi e al contratto create_anagrafica; G11 resta INTEGRATO PARZIALE.
 - R1/R2, default ACTIVE verificato e residui N17 distinti, limite di concorrenza preservato. Nessun nuovo Gap ID.
 - Core 35%, M04 PARZIALE; nessuna operazione Retool/Supabase.
+
+v27 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
+
+- Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
+- R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
+- Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.

@@ -1,7 +1,19 @@
 # LOGOS_RETOOL_RUNTIME_REAL
-Versione: v25
+Versione: v26
 
-DATA: 2026-11-09
+DATA: 2026-11-12
+
+## Fotografia N19 — R1 Project e parità Entity (checkpoint Work dell'11 novembre 2026)
+
+R1 è tecnicamente risolto nel perimetro dei checkpoint Work Project T1–T3 PASS ed Entity E1–E3 PASS. L'intervento riferito riguarda page1 → preview_analysis_state → Func body: nome selezionato risolto tramite UUID delle Select, distinto dal testo letto/candidato. Per contratto e micro-copy correnti vedere 06_LOGOS_View_Preview_System.md; per wiring 04_LOGOS_Retool_Architecture.md.
+
+Work riporta: T1 selezione del record N18_TEST_20261106_T1B diversa dal candidato Villa Sierri; E1 selezione Alfie con testo letto Brico Center Ostuni; T2/E2 matching ordinario senza override spurio; T3/E3 Select svuotata senza falsa selezione e ambiguità con Conferma disabilitata. Nessun evento confermato, INSERT o scrittura Supabase nei collaudi N19 riportati. La vecchia scheda Dirty non è stata aperta.
+
+Questa fotografia successiva non modifica la fotografia N18 seguente: R1 era allora aperto. Le descrizioni e gli esempi G22 precedenti conservati nel manifest documentano la baseline storica; per la sorgente corrente del nome nell'avviso prevale il contratto N19 della madre Preview.
+
+Fonti: dossier Work LOGOS_N19_DOC01_EVIDENZE_WORK_PROJECT_ENTITY_20261111.md, raccolto l'11 novembre 2026: checkpoint Project T1–T3 PASS ed Entity E1–E3 PASS trasferiti dalla conversazione Work. Sono collaudi LIVE riportati da Work, non nuove verifiche LIVE indipendenti di N19/DOC-01. Work riferisce la Draft salvata (Save disabilitato dopo il salvataggio), senza Publish. Non è disponibile un export completo post-N19. L'hash della preimage Entity applicativa non è riportato nel dossier; l'immagine Project T3 citata non è allegata e non è dichiarata acquisita.
+
+R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment resta aperto e distinto da R1. Nessuna modifica N19 a parser, matching, database, lifecycle, salvataggio eventi, create_anagrafica, N17/UX-06; limiti di concorrenza, feedback e linting invariati. Core 35%, M04 PARZIALE.
 
 ## Fotografia N18 — creazione canonica nella Draft Retool Classic (6 novembre 2026)
 
@@ -1528,6 +1540,8 @@ Regole:
 
 Nota post G22:
 
+STORICO PRE-N19: la descrizione G22 seguente conserva formulazioni, formule ed esiti originari. Per guardia e avviso correnti vale il contratto N19 di 06_LOGOS_View_Preview_System.md v17.
+
 preview_analysis_state legge anche create_suggestion_state per rilevare casi di match presente + suggestion extension.
 
 Fonti lette:
@@ -2648,6 +2662,8 @@ Per guardie, ordine esatto e rami di errore vedere il contratto N18 in apertura 
 
 PROJECT MATCH PRESENT / USER OVERRIDE — G22:
 
+STORICO PRE-N19: caso ed output G22 originari conservati. Il nome selezionato e le guardie correnti sono definiti nella madre 06_LOGOS_View_Preview_System.md v17, contratto N19.
+
 Caso guida:
 
 20 euro villa sierri
@@ -2682,6 +2698,8 @@ ENTITY CREATE FLOW:
 Per guardie, ordine esatto e rami di errore vedere il contratto N18 in apertura di Architecture.
 
 ENTITY MATCH PRESENT / USER OVERRIDE — G22:
+
+STORICO PRE-N19: caso ed output G22 originari conservati. Il nome selezionato e le guardie correnti sono definiti nella madre 06_LOGOS_View_Preview_System.md v17, contratto N19.
 
 Caso guida:
 
@@ -8499,3 +8517,9 @@ v25 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o
 
 - Consolidato il runtime N18 dalla Draft e dai checkpoint: inventario 5 nuovi/10 modificati, cinque INSERT, eventi 268 invariati.
 - Distinti baseline statica pre-N18 e osservazioni mirate N18; linting 13→11 e residui R1/R2 preservati.
+
+v26 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
+
+- Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
+- R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
+- Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.

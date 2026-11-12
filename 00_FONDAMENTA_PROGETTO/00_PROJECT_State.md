@@ -1,9 +1,19 @@
 # 00_PROJECT_State
-Versione: v41
+Versione: v42
 
-DATA: 2026-11-09
+DATA: 2026-11-12
 
-## Stato corrente — N18 creazione canonica Project/Entity (documentazione in preparazione)
+## Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)
+
+Nodo CP-LOGOS-M04-R1-PREVIEW-SELECTION-20261111-19. N19 funzionale concluso PASS secondo i checkpoint Work Project T1–T3 ed Entity E1–E3; R1 tecnicamente risolto nei limiti di quelle prove. Il contratto corrente è nella madre Preview, il wiring in Architecture e la fotografia qualificata in Retool Runtime Real.
+
+N19/DOC-01 resta documentale in PREPARE: postimage e pacchetto di review non attestano review conclusa, sostituzione dei canonici, verifica successiva o pubblicazione. R2 e G35 restano aperti e distinti; G03/G11 non cambiano classificazione.
+
+Fonti: dossier Work LOGOS_N19_DOC01_EVIDENZE_WORK_PROJECT_ENTITY_20261111.md, raccolto l'11 novembre 2026: checkpoint Project T1–T3 PASS ed Entity E1–E3 PASS trasferiti dalla conversazione Work. Sono collaudi LIVE riportati da Work, non nuove verifiche LIVE indipendenti di N19/DOC-01. Work riferisce la Draft salvata (Save disabilitato dopo il salvataggio), senza Publish. Non è disponibile un export completo post-N19. L'hash della preimage Entity applicativa non è riportato nel dossier; l'immagine Project T3 citata non è allegata e non è dichiarata acquisita.
+
+R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment resta aperto e distinto da R1. Nessuna modifica N19 a parser, matching, database, lifecycle, salvataggio eventi, create_anagrafica, N17/UX-06; limiti di concorrenza, feedback e linting invariati. Core 35%, M04 PARZIALE.
+
+## Snapshot N18 — creazione canonica Project/Entity (stato documentale al 9 novembre 2026)
 
 **Nodo:** `CP-LOGOS-M04-ANAG-CREATE-ACTIVE-20261104-18`. **Sottolotto:** N18/DOC-01, esclusivamente documentale, autorizzazione PREPARE. L'implementazione nella Draft Retool Classic `Logos` ha conseguito **PASS funzionale N18** il 6 novembre 2026; l'aggiornamento delle madri, la review, la copia e la pubblicazione di questo lotto **non sono ancora attestati**. Il precedente N16/A4 è invece **PASS documentale pubblicato e verificato** sul commit GitHub `dab06fa7df871b482bad691e530c62f5fd8b0260`.
 
@@ -107,7 +117,7 @@ nessun nuovo nodo è aperto e il recap per Regia rimane da trasferire.
 Gli snapshot seguenti conservano il testo e le condizioni dei nodi di
 origine, incluse le formulazioni allora candidate della baseline e i
 riferimenti DA BASELINARE. Non sostituiscono il quadro corrente sopra.
-La sezione OBIETTIVO IMMEDIATO descrive il mandato corrente N18/DOC-01; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
+La sezione OBIETTIVO IMMEDIATO descrive il mandato corrente N19/DOC-01; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
 
 ## Snapshot precedente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
 
@@ -623,7 +633,7 @@ Transizione post nodo Data Structure:
 La Readiness indicata nella v30 come passo successivo è stata completata.
 Nella fotografia post-Readiness l'Editor Base era candidato, non applicato
 né testato. N16 ha successivamente realizzato e collaudato la tranche Base;
-il lavoro corrente è N18/DOC-01, successivo alla pubblicazione A4, senza nuovo nodo funzionale implicito.
+il lavoro corrente è N19/DOC-01, successivo a N18, senza nuovo nodo funzionale implicito.
 
 ------------------------------------------------
 FASE:
@@ -716,7 +726,7 @@ STATO GENERALE SISTEMA — BASELINE STORICA PRE-HARDENING
 
 Le attestazioni, percentuali e catene sotto descrivono la baseline funzionale
 precedente. Il quadro corrente, le guardie DB e i limiti produttivi sono nella
-sezione iniziale «Stato corrente — N18 creazione canonica Project/Entity» e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
+sezione iniziale «Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)» e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
 non costituiscono attestazioni correnti. I candidati non sono nodi attivati.
 
 Sistema funzionante end-to-end:
@@ -798,7 +808,7 @@ Debiti principali:
 
 Fonte completa:
 
-- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — N18 creazione canonica Project/Entity»
+- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)»
 - 01_LOGOS_Input_System per input/parser/input_analysis_result
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
@@ -814,7 +824,7 @@ SNAPSHOT FUNZIONALE CONSOLIDATO — BASELINE STORICA PRE-N16
 
 La numerazione dei layer sottostante conserva la fotografia precedente;
 non include l'Editor N16 né il delta N18. Capacità corrente nella sezione
-«Stato corrente — N18 creazione canonica Project/Entity»; struttura generale
+«Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)»; struttura generale
 in 00_FONDAMENTA_PROGETTO/00_PROJECT_System.md e contratto tecnico in 04_LOGOS_Retool_Architecture.md.
 Nessun ricalcolo delle percentuali storiche dei singoli layer.
 
@@ -1301,7 +1311,7 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare N18/DOC-01: riconciliare il delta documentale della creazione canonica sui sei target qualificati, con matrice di copertura dei 15 oggetti, sette lacune L01–L07, postimage integrali, diff, metriche e archivio di review. N16/A4 è già pubblicato a dab06fa7df871b482bad691e530c62f5fd8b0260; N17 resta decisionale salvo ACTIVE implementato nei quattro percorsi N18. La precedente candidata DOC-01 non è approvata. Nessuna copia/Apply, commit o push autorizzati. Successiva sostituzione manuale soggetta a review, consenso puntuale, backup e verifica assistita. Core v1.0 35%, M04 PARZIALE; R1/R2, limiti di feedback e concorrenza preservati.
+Completare il consolidamento N19/DOC-01 sui cinque target: review coordinata delle postimage, dei diff, del manifest e della matrice; successiva eventuale sostituzione, verifica e pubblicazione soltanto dopo i relativi gate e decisioni. Il pacchetto resta PREPARE. R1 è tecnicamente risolto secondo i checkpoint Work Project T1–T3 ed Entity E1–E3; R2 resta escluso e irrisolto, G35 aperto e distinto. Conservare N18 e precedenti come fotografie storiche, senza nuovo nodo o priorità. Core 35%, M04 PARZIALE; limiti N17/UX-06, feedback, linting e concorrenza invariati.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -1879,6 +1889,8 @@ Stato:
 COMPLETATO
 
 Nota:
+
+Nota temporale: il resoconto G22 seguente conserva gli esempi originari. Il raccordo corrente N19 in apertura registra R1 risolto secondo Work; contratto tecnico e avvisi correnti nella madre Preview.
 
 Il nodo G22 ha introdotto una policy locale per il caso match presente + suggestion extension.
 
@@ -2906,3 +2918,9 @@ v41 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o
 - Allineata la fotografia corrente al PASS funzionale N18 e al precedente N16/A4 pubblicato; conservato lo snapshot N16 della fase preparatoria.
 - Distinto default ACTIVE sui quattro percorsi N18 dalle decisioni N17 ancora non implementate; R1/R2 e limite di concorrenza preservati.
 - Core v1.0 35% → 35%; M04 PARZIALE; nessuna nuova verifica live o nuova milestone.
+
+v42 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
+
+- Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
+- R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
+- Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.

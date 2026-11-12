@@ -1,6 +1,19 @@
-# 06_LOGOS_View_Preview_System_v16
+# 06_LOGOS_View_Preview_System
+Versione: v17
 
-DATA: 2026-06-04
+DATA: 2026-11-12
+
+## Contratto corrente N19 — selezione effettiva e warning Project/Entity
+
+Il nome effettivamente selezionato è selectedProject / selectedEntity, già risolto dall'UUID presente in select_project.value / select_entity.value. Nel ramo corrispondente preview_analysis_state usa quel nome sia nella guardia sia nel messaggio, insieme a requiresUserOverride, candidateName e alle guardie preesistenti. projectSuggestion.baseName / entitySuggestion.baseName rimangono dati della suggestion: non provano quale record sia selezionato.
+
+projectSuggestion.candidateName / entitySuggestion.candidateName restano esclusivamente il testo letto nell'input. Select vuota o nome non risolto: nessuna falsa dicitura «selezionato/selezionata»; il suggerimento può restare visibile. Matching ordinario: nessun avviso di override spurio. Ambiguità e guardie di Conferma restano quelle preesistenti, senza logica parallela.
+
+Prove Work: T1 mostra «N18_TEST_20261106_T1B selezionato · testo letto: Villa Sierri»; E1 mostra «Alfie selezionata · testo letto: Brico Center Ostuni». T2/E2 coprono matching ordinario; T3/E3 Select vuota e ambiguità con Conferma disabilitata. Gli esempi originari G22 riportati sotto restano testimonianze storiche: non definiscono la sorgente corrente del nome selezionato.
+
+Fonti: dossier Work LOGOS_N19_DOC01_EVIDENZE_WORK_PROJECT_ENTITY_20261111.md, raccolto l'11 novembre 2026: checkpoint Project T1–T3 PASS ed Entity E1–E3 PASS trasferiti dalla conversazione Work. Sono collaudi LIVE riportati da Work, non nuove verifiche LIVE indipendenti di N19/DOC-01. Work riferisce la Draft salvata (Save disabilitato dopo il salvataggio), senza Publish. Non è disponibile un export completo post-N19. L'hash della preimage Entity applicativa non è riportato nel dossier; l'immagine Project T3 citata non è allegata e non è dichiarata acquisita.
+
+R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment resta aperto e distinto da R1. Nessuna modifica N19 a parser, matching, database, lifecycle, salvataggio eventi, create_anagrafica, N17/UX-06; limiti di concorrenza, feedback e linting invariati. Core 35%, M04 PARZIALE.
 
 ------------------------------------------------
 SCOPO DEL DOCUMENTO
@@ -292,15 +305,15 @@ Fonte:
 create_suggestion_state.data.project.requiresUserOverride
 create_suggestion_state.data.entity.requiresUserOverride
 
-Quando requiresUserOverride = true, la card Da verificare mostra un warning mirato:
+Quando requiresUserOverride = true, il nome selezionato è risolto e candidateName e le guardie preesistenti sono soddisfatti, la card Da verificare mostra un warning mirato:
 
 Project:
 Associazione progetto da controllare
-[baseName] selezionato · testo letto: [candidateName]
+[selectedProject] selezionato · testo letto: [candidateName]
 
 Entity:
 Associazione entità da controllare
-[baseName] selezionata · testo letto: [candidateName]
+[selectedEntity] selezionata · testo letto: [candidateName]
 
 Regola:
 
@@ -1940,6 +1953,8 @@ La card Da verificare segnala anche il rischio decisionale nei casi:
 
 match presente + suggestion extension
 
+Nota temporale: gli esempi G22 seguenti conservano gli output originari. La sorgente corrente del nome selezionato e la guardia sono quelle del contratto N19 in apertura; il residuo status OK/card Da verificare (G35) resta aperto.
+
 Esempi:
 
 Associazione progetto da controllare
@@ -2140,21 +2155,23 @@ create_suggestion_state.data.entity.requiresUserOverride
 
 Project:
 
-project.requiresUserOverride = true
+project.requiresUserOverride = true, selectedProject risolto e candidateName presente, con le guardie preesistenti
 → "ℹ️ Associazione progetto da controllare"
 
 Action / dettaglio:
 
-[baseName] selezionato · testo letto: [candidateName]
+[selectedProject] selezionato · testo letto: [candidateName]
 
 Entity:
 
-entity.requiresUserOverride = true
+entity.requiresUserOverride = true, selectedEntity risolto e candidateName presente, con le guardie preesistenti
 → "ℹ️ Associazione entità da controllare"
 
 Action / dettaglio:
 
-[baseName] selezionata · testo letto: [candidateName]
+[selectedEntity] selezionata · testo letto: [candidateName]
+
+Esempi storici G22: selezioni e output originari conservati; non sostituiscono il contratto corrente N19.
 
 Esempio project:
 
@@ -2497,6 +2514,8 @@ in ambiguità bloccante.
 Classificazione:
 
 MATCH PRESENT + SUGGESTION EXTENSION
+
+Esempi storici G22: i valori baseName e gli output seguenti descrivono le prove originarie. N19 usa il nome effettivamente risolto dalla Select per guardia e avviso.
 
 Esempio project:
 
@@ -4257,3 +4276,9 @@ v15 — 2026-05-26
   - balloon blu “Manca progetto / Manca entità” da rivalutare in nodo Preview/UX futuro
   - badge OK / status Sintesi da riallineare semanticamente
   - residui grafici/mobile polish da trattare in nodi UX dedicati o sessioni brevi
+
+v17 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
+
+- Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
+- R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
+- Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
