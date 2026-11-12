@@ -1,7 +1,7 @@
 # 00_PROJECT_System
-Versione: v10
+Versione: v11
 
-DATA: 2026-11-02
+DATA: 2026-11-12
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -152,8 +152,10 @@ Logica:
 - feedback temporaneo lato Retool
 - navigation dock lato Retool
 - consultazione e modifica anagrafica Base Project/Entity lato Retool:
-  ricerca, selezione UUID, dettaglio, modifica Nome/Tipologia e salvataggio
-  condizionale; Stato in sola lettura, distinto dall'editing degli eventi
+  ricerca, selezione UUID, dettaglio, modifica Nome/Tipologia/Stato e
+  salvataggio condizionale N16/N20, distinto dall'editing degli eventi.
+  Creazione N18 con ACTIVE esplicito; scelta «Mantieni stato attuale» in N20
+  conserva anche NULL. Rinvio al contratto in 04_LOGOS_Retool_Architecture.md.
 
 Nota canonica:
 
@@ -355,7 +357,7 @@ LIVELLI ATTUALI:
 13. PROCESSING LAYER
 14. UX MOBILE / NAVIGATION / FEEDBACK LAYER
 15. DOCUMENTATION ARCHITECTURE / CANONICAL SOURCES LAYER
-16. PROJECT / ENTITY MANAGEMENT BASE — N16
+16. PROJECT / ENTITY MANAGEMENT BASE — N16, creazione N18 ed Editor Stato N20
 
 LIVELLI FUTURI:
 
@@ -366,8 +368,7 @@ LIVELLI FUTURI:
 21. ECONOMIC DIRECTION ADVANCED
 22. OUTPUT / ANALYTICS LAYER
 
-La gestione anagrafica Base è attiva nel perimetro N16; non rende attive
-le gerarchie/metadata avanzati e non completa il macro-gap G11 o M04.
+La gestione anagrafica Base è attiva nei perimetri N16/N18/N20. G11 e M04 restano parziali per gerarchie/metadata avanzati, policy di matching, filtri e UX-06. Le omonimie concorrenti non sono protette atomicamente.
 
 Nota post Visibility Migration Completion:
 
@@ -1306,7 +1307,7 @@ Regole:
 
 Capacità architetturale documentata: consultare, ricercare e selezionare
 Project/Entity per UUID; modificare Nome e Tipologia su record esistenti.
-Lo Stato è visualizzato, preservato e non editabile nella tranche Base.
+N16 visualizzava e preservava lo Stato. N20 aggiunge la scelta volontaria di ACTIVE/INACTIVE con mantenimento predefinito, anche su NULL. Il contratto tecnico corrente è nella madre Retool Architecture.
 
 Il percorso è distinto dalla creazione anagrafica tramite Command Intent
 e suggerimenti, dall'associazione agli eventi e dall'editing dei NEW.
@@ -1662,9 +1663,10 @@ data structure avanzata
 economic direction advanced
 output
 
-Capacità N16 aggiunta al quadro alto: gestione anagrafica Base
-Nome/Tipologia con identità UUID; Stato read-only, nessuna garanzia atomica
-sui nomi normalizzati. Le attestazioni precedenti restano storiche.
+Gestione anagrafica Base nella Draft: Nome/Tipologia (N16), creazione
+canonico-applicativa con ACTIVE (N18), Stato editabile per scelta volontaria
+(N20), sempre con identità UUID. Controlli sui nomi normalizzati privi di
+garanzia atomica. Le attestazioni precedenti restano storiche.
 
 Layer esistenti ma parziali:
 
@@ -1998,3 +2000,5 @@ v10 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per revie
 - Introdotta la capacità architetturale di gestione anagrafica Base, senza inventario di query.
 - Preparazione per review: nessuna copia/Apply, nuova verifica live,
   pubblicazione o completamento definitivo A4 attestati.
+
+v11 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Aggiornati quadro capacità, layer anagrafico e limiti G11/M04 senza estendere schema, lifecycle o release.

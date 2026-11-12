@@ -1,7 +1,7 @@
-# 01_LOGOS_Input_System_v21
-Versione: v21
+# 01_LOGOS_Input_System_v22
+Versione: v22
 
-DATA: 2026-11-09
+DATA: 2026-11-12
 
 ## Raccordo corrente N18 — creazione da input inline e Command Intent
 
@@ -11,7 +11,7 @@ Lato input, `create_suggestion_state` continua a proporre l'azione senza creare 
 
 **Associazione vs evento:** la creazione aggiorna la disponibilità/selezione del Project/Entity ma **non conferma né salva l'evento**. Nelle cinque INSERT N18 verificate con SELECT indipendenti, `public.events` è rimasta a **268 → 268**. Comandi strutturali puri non diventano eventi. Resta possibile salvare l'evento solo con successiva conferma esplicita dell'utente nel normale flusso, soggetta alle guardie già documentate. L'app è ancora Draft; nessun Publish. I dettagli di query, componenti, cataloghi e preflight appartengono alle madri `04_LOGOS_Retool_Architecture.md` e `LOGOS_RETOOL_RUNTIME_REAL.md`.
 
-**Limiti:** T2 toast e T3 feedback transitori non catturati; messaggio «Villa selezionato» di `preview_analysis_state` incoerente dopo T1B (**R1**, nessun fix); copia Chrome locale Dirty di `projects_list` distinta dalla Draft salvata (**R2**, nessun salvataggio/scarto). Il preflight non offre protezione atomica fra creatori concorrenti. Della policy decisionale N17 è operativo in N18 il default `ACTIVE` dei quattro percorsi di creazione; gli altri requisiti `INACTIVE`/`NULL` e UX-06 **restano futuri e non implementati**. Il linting finale N18 è 11, distinto dalle vecchie fotografie di 0.
+**Confini e stato corrente:** T2 toast e T3 feedback transitori restano limiti delle prove N18. L'avviso «Villa selezionato» osservato dopo T1B è il caso storico R1, poi risolto nel perimetro N19 e consolidato su main a `e8bfd8f06a0072681bf29f7ce9c68f649b33fe16`. R2 resta la copia Chrome locale Dirty di `projects_list`. La creazione N18 usa ACTIVE esplicito; N20 ha esteso esclusivamente gli Editor in Anagrafiche per scelta volontaria dello Stato, senza modificare input, Crea o salvataggio eventi. Filtri INACTIVE/NULL, policy completa di matching e associazione UX-06 restano separati. Controlli omonimie senza garanzia atomica. Il linting 11 è la fotografia N18.
 
 **Fonte:** checkpoint N18 Apply statico, Apply/collaudo T1–T4, T1B e linting 5–6 novembre 2026; provenienze N16/A4 e N17 separate. Nella revisione DOC-01 del 9 novembre sono stati riletti in sola lettura gli otto handler e create_anagrafica nella Draft salvata. Nessun nuovo collaudo, Run/Test/Save/Publish o lettura Supabase.
 
@@ -7342,3 +7342,5 @@ v21 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o
 
 - Allineati input suggestion e Command Intent alla procedura condivisa N18 e al default ACTIVE sui quattro percorsi.
 - Documentati ordine della selezione T1B, invarianti evento, residui R1/R2 e limiti N17 non implementati.
+
+v22 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Riconciliati input, creazione N18, R1 N19 ed Editor Stato N20 senza attribuire modifiche al flow input.

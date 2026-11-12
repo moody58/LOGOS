@@ -1,7 +1,21 @@
 # LOGOS_RETOOL_RUNTIME_REAL
-Versione: v26
+Versione: v27
 
 DATA: 2026-11-12
+
+## Fotografia N20 — Editor Stato nella Draft (12 novembre 2026)
+
+Logos Classic, Draft UUID `18ea4684-29de-11f1-b868-0b05f2d402b2`, nessun Publish. Per il contratto corrente e la matrice proprietà vedere `04_LOGOS_Retool_Architecture.md`. Il delta verificato è di due Select nuovi (`select_edit_project_status_anag`, `select_edit_entity_status_anag`) e sei proprietà esistenti: Click dei due Modifica, Click e Disabled dei due Salva. Quattro Click riletti identici alle postimage. Per i due Disabled Retool ha aggiunto soli spazi finali. Nessuna nuova query o nuovo export integrale attestato.
+
+| Evidenza | Esito documentato |
+| --- | --- |
+| Statico/simulato | 36/36 PASS. Solo Nome con Stato NULL e casi Project NULL coperti in simulazione; nessun Project NULL idoneo osservato |
+| LIVE Project | ACTIVE → INACTIVE → ACTIVE e modifica combinata Nome/Tipologia/Stato, con ripristino Nome/Tipologia |
+| LIVE Entity | ACTIVE → INACTIVE → ACTIVE; NULL → INACTIVE; sola Tipologia con Stato ancora NULL; NULL → ACTIVE ripristinando Tipologia a NULL nello stesso salvataggio |
+| Mobile | Chrome a 390 × 844 CSS px PASS su entrambi i Select; iPhone Safari reale PASS attestato dall'utente |
+| Incidente e recupero | Omonima selezionata per nome e rinominata fuori dal perimetro; nome ripristinato con consenso mirato, SELECT indipendente e associazione evento preservata. Prima dei salvataggi residui verificati UUID della selezione e UUID della preimage |
+
+Confronto e collaudi provengono dal checkpoint Work N20, con Safari e PASS funzionale finale attestati nel mandato di consolidamento. Le SELECT indipendenti attestano la persistenza dei record di test. La singola PATCH combinata è qualificata dal sorgente e dalle simulazioni; il numero di richieste live non è stato misurato. Nessun nuovo test live in DOC-01.
 
 ## Fotografia N19 — R1 Project e parità Entity (checkpoint Work dell'11 novembre 2026)
 
@@ -45,7 +59,7 @@ R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment
 
 **Cronologia dei gate N18:** prima dei test riusciti, `insert_entity.enableTransformer` è stato riportato da true nella copia pendente a false, salvato e verificato dopo riapertura, preservando body/header/notifiche N18. R2 resta soltanto la vecchia copia Dirty di projects_list, non quel caso risolto. Un primo tentativo T1 prima della correzione Global→page1 si fermò prima di snapshot e INSERT, con zero righe create; le cinque INSERT effettive sono quelle successive già elencate. Lo spostamento preservò sorgente e 122 voci osservate; manuale, page load disattivo e timeout 10000 ms. La diagnosi della selezione riconosce l’interferenza project_state/Default value, non l’istante esatto della sovrascrittura. Fonti intermedie: COLLAUDO_T1_BLOCCATO_SCOPE, SCOPE_APPLICATO_T1_SELEZIONE e DIAGNOSI_SELEZIONE_T1, 6 novembre.
 
-**R1 — UI:** `preview_analysis_state` conserva dopo T1B la dicitura «Villa selezionato», incoerente con Select e Sintesi che indicavano il Project appena creato. **R2 — stato editor:** `projects_list` in una vecchia scheda Chrome ha una copia Dirty con transformer visibile; versione salvata della Draft `enableTransformer: false` confermata, nessun Save/Save & Run/scarto. R1 e R2 non sono implementazioni o correzioni N18. Il limite di omonimie concorrenti su normalizzazione resta accettato, non protetto atomicamente.
+**R1 — osservazione storica N18, risolta da N19:** `preview_analysis_state` conservava dopo T1B la dicitura «Villa selezionato», incoerente con Select e Sintesi che indicavano il Project appena creato. **R2 — stato editor:** `projects_list` in una vecchia scheda Chrome ha una copia Dirty con transformer visibile; versione salvata della Draft `enableTransformer: false` confermata, nessun Save/Save & Run/scarto. R1 e R2 non sono implementazioni o correzioni N18. Il limite di omonimie concorrenti su normalizzazione resta accettato, non protetto atomicamente.
 
 Le decisioni N17 su stato Editor, filtri `INACTIVE`/`NULL` e associazione eccezionale UX-06 **non sono implementazioni** dell'N18. Nessun test in questo sottolotto documentale né modifiche DB/Retool. Il 9 novembre sono stati riletti in sola lettura gli otto script finali e il sorgente condiviso: chiusura/reset inline indipendenti dal refresh, selezione condizionata, cleanup e feedback Command Intent con testo differenziato. Non sono stati attivati Run, Test, Save o Publish e la vecchia copia Dirty non è stata toccata. Per preflight, risposte e ordine delle query si rimanda a `04_LOGOS_Retool_Architecture.md`, senza duplicarne il contratto completo. L'identificativo, le prove e i contatori del paragrafo N16 seguente restano **snapshot precedenti** alla Draft N18.
 
@@ -5263,7 +5277,7 @@ PRINCIPI RUNTIME
 ✔ client-side logic
 ✔ database con protezioni lifecycle e accesso
 ✔ append-only controllato
-✔ editing degli eventi solo su NEW; l'Editor anagrafiche Project/Entity N16 segue il proprio contratto Nome/Tipologia con Stato in sola lettura
+✔ editing degli eventi solo su NEW; l'Editor anagrafiche Project/Entity gestisce Nome/Tipologia/Stato secondo il contratto R03 esteso da N20
 ✔ suggerire ≠ decidere
 ✔ input non bloccante
 ✔ salvataggio amount/unit/event_date da ui_state.parsed
@@ -8523,3 +8537,5 @@ v26 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
 - R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
+
+v27 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Fotografia circoscritta N20, inventario del delta ed evidenze; distinti i reperti N16/N18/N19.

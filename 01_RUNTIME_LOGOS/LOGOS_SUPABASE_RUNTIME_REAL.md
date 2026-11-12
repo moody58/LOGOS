@@ -1,7 +1,7 @@
 # LOGOS_SUPABASE_RUNTIME_REAL
-Versione: v8
+Versione: v9
 
-DATA: 2026-10-28
+DATA: 2026-11-12
 
 ## Fotografia documentale post-nodo 14 — integrità referenziale minima
 
@@ -888,8 +888,8 @@ CARATTERISTICHE
 name univoco → base per matching
 supporto gerarchia tramite parent_project_id
 gerarchia non attiva nel runtime
-campo type non utilizzato
-campo status non utilizzato lato Retool
+campo type usato in creazione N18 e nell’Editor
+campo status letto e, da N20, modificabile volontariamente nell’Editor Retool
 
 UTILIZZO REALE
 
@@ -902,9 +902,10 @@ priority match minimo gestito lato Retool
 popolabile tramite insert_project lato Retool
 insert_project può essere invocato da Project Create Suggestion o Command Intent
 creazione sempre previa conferma utente
-nessun evento creato automaticamente dopo insert_project
 nessuna gestione gerarchia
-nessun filtro operativo per status
+nessun evento creato automaticamente dopo insert_project
+N18 invia ACTIVE esplicito, distinto dal default DB. N20 usa la PATCH condizionale esistente per gli stati e non cambia schema o FK.
+nessun filtro operativo di matching introdotto da N20 per status INACTIVE/NULL
 
 Esempi runtime:
 
@@ -924,7 +925,7 @@ name (text, NULL)
 
 parent_entity_id (uuid, NULL)
 
-status (text, NULL)
+status (text, NULL; nessun default DB documentato)
 
 metadata (jsonb, NULL, default: {})
 
@@ -965,9 +966,12 @@ priority match minimo gestito lato Retool
 popolabile tramite insert_entity lato Retool
 insert_entity può essere invocato da Entity Create Suggestion o Command Intent
 creazione sempre previa conferma utente
-nessun evento creato automaticamente dopo insert_entity
 nessuna gerarchia attiva
 metadata non usato in modo strutturale
+
+**Riscontri N20 del 12 novembre 2026:** SELECT indipendenti sui soli record di prova confermano transizioni Project/Entity, mantenimento di NULL con sola Tipologia e classificazioni Entity. La prova del solo Nome con NULL e i casi Project NULL sono simulati. L’omonima rinominata durante il collaudo è stata ripristinata con consenso mirato e il riferimento all’evento tramite UUID è stato preservato. Nessuna nuova DDL o migrazione N20, e nessuna acquisizione live in DOC-01. Per dettaglio delle prove e del contratto vedere Retool Runtime Real e Retool Architecture.
+nessun evento creato automaticamente dopo insert_entity
+N18 invia ACTIVE esplicito. N20 usa la PATCH condizionale esistente: le Entity legacy con status NULL conservano NULL quando si modifica soltanto Nome/Tipologia e si classificano soltanto per scelta esplicita.
 
 Esempi runtime:
 
@@ -1415,3 +1419,5 @@ v6 — 2026-05-25
 - nessuna modifica save flow
 - nessuna modifica payload
 - nessuna anticipazione output / KPI / dashboard
+
+v9 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Conservata la fotografia DB dei default, integrato uso Retool di type/status e documentate le SELECT N20 circoscritte.

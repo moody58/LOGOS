@@ -1,5 +1,5 @@
 # 04_LOGOS_Retool_Architecture
-Versione: v28
+Versione: v29
 
 DATA: 2026-11-12
 
@@ -310,7 +310,7 @@ Non si inferisce la storia di una modifica dal solo timestamp dell'export.
 | `container_edit_project_anag`, `container_edit_entity_anag` | Visibili solo con id nello state uguale alla selezione della tabella |
 | `input_edit_project_name_anag`, `input_edit_entity_name_anag` | Nome editabile; customValidation segnala una modifica vuota/soli spazi, preservando il caso storico invariato |
 | `select_edit_project_type_anag`, `select_edit_entity_type_anag` | Valori tecnici e label italiane, allowCustomValue=false; sentinelle __NULL__/__EMPTY__ e valori legacy esistenti |
-| `text_edit_project_status_anag`, `text_edit_entity_status_anag` | Stato read-only e avviso omonimie; nessuna decisione automatica di Stato |
+| `text_edit_project_status_anag`, `text_edit_entity_status_anag` | Snapshot N16: visualizzazione Stato e avviso omonimie. Da N20 la modifica è affidata ai due Select dedicati |
 | `btn_cancel_project_anag`, `btn_cancel_entity_anag` | Azzerano soltanto il rispettivo state Editor, senza PATCH |
 | `btn_save_project_anag`, `btn_save_entity_anag` | Disabled e handler Click distinti; dal primo modulo senza persistenza al Save R03 e alla chiusura post-save verificata |
 
@@ -347,17 +347,34 @@ non sono diagnostica eliminabile. `test_snapshot_r03` e
 `diag_entity_filter_r03` sono assenti dalla baseline finale: eliminazione
 storica attestata da R03, non un cleanup eseguito in A4.
 
-### Contratto dei due handler Salva R03
+### Delta N20 nei due Editor anagrafici (Draft, 12 novembre 2026)
 
-1. Acquisizione di source, selectedId, Nome e Tipologia; UUID valido,
+| Oggetto | Proprietà | Comportamento N20 |
+| --- | --- | --- |
+| `select_edit_project_status_anag` | Nuovo Select nel container Project | Default `__KEEP_STATUS__`, label «Modifica stato» |
+| `select_edit_entity_status_anag` | Nuovo Select nel container Entity | Stesso contratto, indipendente dal Project |
+| `btn_edit_project_anag`, `btn_edit_entity_anag` | Click, due proprietà | Reset del rispettivo Select a `__KEEP_STATUS__` prima di valorizzare la preimage |
+| `btn_save_project_anag`, `btn_save_entity_anag` | Click, due proprietà | Validano la scelta, calcolano il delta status, la ricontrollano dopo la GET e verificano l'esito atteso |
+| `btn_save_project_anag`, `btn_save_entity_anag` | Disabled, due proprietà | Includono il cambio volontario di Stato nella decisione no-op e bloccano valori non ammessi |
+
+Le opzioni sono «Mantieni stato attuale» (`__KEEP_STATUS__`), «Attivo» (`ACTIVE`) e «Inattivo» (`INACTIVE`). La sentinella è solo UI. Il default vale anche su record con status NULL. Il Select permette ACTIVE ↔ INACTIVE e la classificazione esplicita NULL → ACTIVE/INACTIVE. Il Select non offre il ritorno a NULL. I due testi storici mostrano lo Stato originale e gli avvisi, Annulla chiude senza PATCH e la riapertura azzera la scelta.
+
+Le query PATCH e snapshot N16 sono riutilizzate senza modifiche. N18 resta il percorso INSERT con ACTIVE esplicito. L'intervento riguarda solo gli Editor esistenti. UX-06, filtri INACTIVE/NULL, policy di matching, lifecycle eventi, G35 e R2 Dirty projects_list restano fuori dal delta. Per collaudi e provenienza vedere `LOGOS_RETOOL_RUNTIME_REAL.md`.
+
+### Contratto corrente dei due handler Salva (R03 esteso da N20)
+
+1. Acquisizione di source, selectedId, Nome, Tipologia e scelta Stato; UUID valido,
    proprietà originali name/type/status presenti, selezione coerente.
    Nessuna richiesta concorrente locale in corso su PATCH/snapshot/duplicati.
 2. Rifiuto di valori storici non preservabili e di collisioni dei valori
    type originari con le sentinelle UI. La Select ordinaria non ammette
-   custom; l'handler isolato non è una whitelist difensiva completa.
-3. PATCH dei soli campi modificati name/type. Nome vuoto/soli spazi rifiutato
-   se modificato; nome non riscritto automaticamente con trim. Nessun
-   campo status nel body. No-op interrompe prima della GET di salvataggio.
+   custom. Per Stato i due handler accettano soltanto __KEEP_STATUS__,
+   ACTIVE e INACTIVE.
+3. Una sola PATCH con i soli campi modificati name/type/status. Nome vuoto
+   o soli spazi rifiutato se modificato, senza trim automatico. Status
+   entra nel body soltanto per scelta esplicita diversa dalla preimage.
+   Un salvataggio del solo Nome o della sola Tipologia conserva anche NULL.
+   No-op interrompe prima della GET di salvataggio.
 4. GET pre-save qualificata: HTTP 200/206, project-ref atteso, count=exact
    applicato, content-range coerente, totale uguale alle righe e <=1000,
    UUID validi e univoci, campi presenti, una sola riga corrente identica
@@ -365,7 +382,7 @@ storica attestata da R03, non un cleanup eseguito in A4.
 5. Solo in caso di rinomina: confronto case-insensitive, rimozione accenti
    NFD e spazi normalizzati; UUID corrente escluso. Altro omonimo blocca
    prima della PATCH. Il testo informativo UI non autorizza un override.
-6. Dopo la GET ricontrollo selezione, state e valori dei campi, quindi
+6. Dopo la GET ricontrollo selezione, state, valori dei campi e scelta Stato, quindi
    PATCH filtrata per id e preimage name/type/status. R03 usa is.null per
    NULL e "eq." + encodeURIComponent(value) per altri valori; nessuna
    coppia supplementare di virgolette codificate.
@@ -394,7 +411,7 @@ Q1/Q2A/Q2B: costruzione progressiva UI e validazioni; R03: persistenza Nome,
 filtri e UX post-save; A1: Tipologia persistita con SELECT indipendente;
 A2: PASS circoscritto, prove storiche/statiche/simulate distinte;
 A3: 8/8 conferme manuali utente desktop/iPhone Safari, nessuna scrittura.
-Il codice sopra descritto è DOCUMENTATO STATICAMENTE dall'export acquisito,
+La base R03 qui riusata è DOCUMENTATA STATICAMENTE dall'export N16 acquisito,
 non VERIFICATO LIVE in A4. La matrice N16 → oggetto/proprietà → documento
 → evidenza è nel pacchetto A4; nessun nuovo test applicativo richiesto.
 
@@ -7586,3 +7603,5 @@ v28 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
 - R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
+
+v29 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Contratto Salva corrente, Select e sei proprietà N20 documentati nel wiring. N16 conservato come baseline storica.

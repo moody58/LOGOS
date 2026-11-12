@@ -1,13 +1,19 @@
 # 00_PROJECT_Gap_Register
-Versione: v27
+Versione: v28
 
 DATA: 2026-11-12
 
-## Raccordo corrente — N19/DOC-01 in PREPARE
+## Raccordo corrente — consolidamento N20/DOC-01
+
+Questa revisione recepisce il consolidamento N20/DOC-01. La prova di pubblicazione richiede una verifica esterna dello SHA su GitHub.
+
+G03 resta INTEGRATO BASE con la creazione canonica N18. G11 resta INTEGRATO PARZIALE: N16 Editor Base, N18 creazione con ACTIVE esplicito, N20 Editor Stato PASS nella Draft. La classificazione volontaria copre ACTIVE ↔ INACTIVE e NULL → ACTIVE/INACTIVE. Mantenendo lo Stato, anche NULL è preservato. Restano separati filtri INACTIVE/NULL, UX-06, policy di matching, gerarchie/metadata e limite di omonimie concorrenti non atomiche. **Core 35%, M04 PARZIALE.**
+
+## Snapshot N19 — R1 e pubblicazione
 
 R1 tecnicamente risolto nel perimetro dei checkpoint Work Project T1–T3 PASS ed Entity E1–E3 PASS, nodo CP-LOGOS-M04-R1-PREVIEW-SELECTION-20261111-19. Il contratto corrente del nome selezionato e del testo letto è nella madre 06_LOGOS_View_Preview_System.md; il registro non ne duplica la logica.
 
-G35 resta IDENTIFICATO e distinto: N19 non risolve automaticamente la semantica status OK/card Da verificare. R2 Dirty projects_list resta escluso e irrisolto. G03 resta INTEGRATO BASE; G11 INTEGRATO PARZIALE. Nessun nuovo Gap ID o cambio priorità. La documentazione resta PREPARE fino a review, sostituzione, verifica e pubblicazione.
+N19/DOC-01 pubblicato su main a `e8bfd8f06a0072681bf29f7ce9c68f649b33fe16`. G35 resta IDENTIFICATO e distinto e R2 Dirty projects_list resta irrisolto.
 
 Il raccordo N18 seguente è conservato come fotografia storica: R1 era allora aperto.
 
@@ -37,7 +43,7 @@ Editor Project/Entity Nome/Tipologia; macro-gap ancora INTEGRATO PARZIALE**.
 La Readiness storica è completata e non va riaperta. L'Editor Base ora
 esiste ed è stato collaudato: R03 Nome PASS LIVE, A1 Tipologia PASS LIVE,
 A2 protezioni PASS circoscritto, A3 navigazione e mobile PASS 8/8 manuale.
-Il consolidamento documentale A4 è stato pubblicato il 2 novembre 2026 al commit dab06fa7df871b482bad691e530c62f5fd8b0260. Il lavoro corrente è N18/DOC-01; non riaprire le prove N16.
+Il consolidamento documentale A4 è stato pubblicato il 2 novembre 2026 al commit dab06fa7df871b482bad691e530c62f5fd8b0260. Seguì N18/DOC-01; le prove N16 restano storiche.
 
 **Residuo R-A2-01 (accettato, non protetto):** controllo omonimie
 normalizzate basato su snapshot pre-save, senza atomicità contro rinomine
@@ -702,7 +708,7 @@ NOME:
 Data Structure / Entity Hierarchy
 
 STATO:
-INTEGRATO PARZIALE — EDITOR BASE N16 INTEGRATO BASE E COLLAUDATO; RESIDUI G11 APERTI
+INTEGRATO PARZIALE — EDITOR BASE N16, CREAZIONE N18 ED EDITOR STATO N20 COLLAUDATI NEI RISPETTIVI PERIMETRI
 
 DESCRIZIONE:
 
@@ -759,8 +765,7 @@ PROJECT / ENTITY EDITOR BASE — NAME + TYPE + DUPLICATE ALERT
 
 Stato attestato: **EDITOR BASE IMPLEMENTATO E COLLAUDATO (N16)**;
 A4 documentale è stato successivamente pubblicato a `dab06fa7df871b482bad691e530c62f5fd8b0260`.
-La creazione canonica N18 sui quattro percorsi è PASS; G11 resta
-INTEGRATO PARZIALE per gli altri requisiti. La candidatura storica non
+La creazione canonica N18 sui quattro percorsi e l’Editor Stato N20 sono PASS nella Draft; G11 resta INTEGRATO PARZIALE. La candidatura storica non
 descrive più il runtime presente.
 
 Perimetro storico emerso dalla Readiness, ora da distinguere dall'implementazione:
@@ -769,7 +774,7 @@ Perimetro storico emerso dalla Readiness, ora da distinguere dall'implementazion
 - Select con chiavi DB e label italiane; nessuna attestazione di modifica
   generalizzata delle query insert o della gestione Stato dei nuovi record
 
-La tranche Editor Base è stata implementata e collaudata; rimane aperto il macro-gap G11 per capacità non coperte, inclusi Stato/UX-06, omonimie concorrenti e funzioni avanzate. Non è aperto alcun nuovo nodo implicito.
+Le tranche anagrafiche N16/N18/N20 sono collaudate nei rispettivi perimetri. Rimane aperto G11 per filtri INACTIVE/NULL, UX-06, policy di matching, omonimie concorrenti e funzioni avanzate. Non è aperto alcun nuovo nodo implicito.
 
 Fuori scope della prima tranche:
 - parent operativo completo
@@ -1426,14 +1431,14 @@ ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
 Nel REENTRY storico non era stato assegnato un prossimo nodo.
-L'ordine di backlog precedente resta riferimento storico: il mandato corrente
-è N19/DOC-01, come descritto nel raccordo iniziale; nessun nodo successivo
-è assegnato implicitamente da questo elenco.
+L'ordine di backlog precedente resta un riferimento storico. Il raccordo
+iniziale recepisce il consolidamento N20/DOC-01. Nessun nodo funzionale
+successivo è assegnato da questo elenco.
 
 Readiness G11: COMPLETATA, esclusa dai lavori futuri da riaprire automaticamente.
 
 Backlog non attivato:
-1. G11 — Editor Base N16 già collaudato; solo residui macro-gap (Stato/UX-06, concorrenza omonimie accettata, gerarchie/metadata avanzati) da valutare in successivi mandati confermati
+1. G11 — Editor N16/N20 già collaudato; solo residui macro-gap (filtri INACTIVE/NULL, UX-06, concorrenza omonimie accettata, gerarchie/metadata avanzati) da valutare in successivi mandati confermati
 2. G35 — Status Semantics Alignment
 3. G38 — Preview / Missing Association Notice Cleanup
 4. G17 — Preview Model / Hint State Consolidation
@@ -2247,3 +2252,5 @@ v27 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
 - R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
+
+v28 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Riallineati G11, raccordo e backlog a N20. Preservate fotografie storiche, G03, G35, R2 e priorità.

@@ -1,13 +1,21 @@
 # 00_PROJECT_State
-Versione: v42
+Versione: v43
 
 DATA: 2026-11-12
 
-## Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)
+## Stato corrente — N20 Editor Stato e consolidamento DOC-01
+
+Nodo `CP-LOGOS-M04-ANAG-STATUS-EDITOR-20261112-20`. **N20 PASS funzionale nella Draft** secondo il checkpoint Work e il PASS iPhone Safari reale attestato dall'utente. Due Select Stato e sei proprietà, 36/36 simulazioni, ACTIVE ↔ INACTIVE per Project/Entity e salvataggio combinato Project verificati. Per Entity legacy sono verificati NULL → INACTIVE, sola Tipologia con Stato NULL e NULL → ACTIVE con ripristino Tipologia nella stessa operazione. Il solo Nome con Stato NULL e i casi Project NULL hanno copertura simulata. Il nome dell'Entity omonima coinvolta nel collaudo è stato ripristinato con consenso mirato, SELECT indipendente e collegamento evento preservato.
+
+N20 attua il delta Editor del contratto N17: mantenere il valore attuale anche se NULL oppure scegliere ACTIVE/INACTIVE. N18 resta la creazione canonica con ACTIVE esplicito. UX-06, filtri INACTIVE/NULL e policy completa di matching sono residui, con G35 e R2 distinti. Nessuna migrazione, DDL, nuova query, modifica del lifecycle o Publish Retool. Le omonimie concorrenti non sono protette atomicamente. **Core 35% → 35%, M04 PARZIALE.**
+
+**Questa revisione recepisce il consolidamento N20/DOC-01.** La prova di pubblicazione richiede una verifica esterna dello SHA su GitHub. Fonti tecniche: Retool Architecture, Retool Runtime Real e checkpoint N20; Safari reale attestato dall'utente, distinto dallo smoke Chrome 390 × 844. Retool e Supabase non interrogati live in DOC-01.
+
+## Snapshot N19 — parità Project/Entity e pubblicazione documentale
 
 Nodo CP-LOGOS-M04-R1-PREVIEW-SELECTION-20261111-19. N19 funzionale concluso PASS secondo i checkpoint Work Project T1–T3 ed Entity E1–E3; R1 tecnicamente risolto nei limiti di quelle prove. Il contratto corrente è nella madre Preview, il wiring in Architecture e la fotografia qualificata in Retool Runtime Real.
 
-N19/DOC-01 resta documentale in PREPARE: postimage e pacchetto di review non attestano review conclusa, sostituzione dei canonici, verifica successiva o pubblicazione. R2 e G35 restano aperti e distinti; G03/G11 non cambiano classificazione.
+N19/DOC-01 pubblicato su main al commit `e8bfd8f06a0072681bf29f7ce9c68f649b33fe16`. La qualificazione delle prove N19 resta circoscritta alla parità R1; R2 e G35 rimangono aperti.
 
 Fonti: dossier Work LOGOS_N19_DOC01_EVIDENZE_WORK_PROJECT_ENTITY_20261111.md, raccolto l'11 novembre 2026: checkpoint Project T1–T3 PASS ed Entity E1–E3 PASS trasferiti dalla conversazione Work. Sono collaudi LIVE riportati da Work, non nuove verifiche LIVE indipendenti di N19/DOC-01. Work riferisce la Draft salvata (Save disabilitato dopo il salvataggio), senza Publish. Non è disponibile un export completo post-N19. L'hash della preimage Entity applicativa non è riportato nel dossier; l'immagine Project T3 citata non è allegata e non è dichiarata acquisita.
 
@@ -15,7 +23,7 @@ R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment
 
 ## Snapshot N18 — creazione canonica Project/Entity (stato documentale al 9 novembre 2026)
 
-**Nodo:** `CP-LOGOS-M04-ANAG-CREATE-ACTIVE-20261104-18`. **Sottolotto:** N18/DOC-01, esclusivamente documentale, autorizzazione PREPARE. L'implementazione nella Draft Retool Classic `Logos` ha conseguito **PASS funzionale N18** il 6 novembre 2026; l'aggiornamento delle madri, la review, la copia e la pubblicazione di questo lotto **non sono ancora attestati**. Il precedente N16/A4 è invece **PASS documentale pubblicato e verificato** sul commit GitHub `dab06fa7df871b482bad691e530c62f5fd8b0260`.
+**Nodo:** `CP-LOGOS-M04-ANAG-CREATE-ACTIVE-20261104-18`. **Sottolotto:** N18/DOC-01, esclusivamente documentale, autorizzazione PREPARE. L'implementazione nella Draft Retool Classic `Logos` ha conseguito **PASS funzionale N18** il 6 novembre 2026; l'aggiornamento delle madri, la review, la copia e la pubblicazione **non erano ancora attestate in questa fotografia**. Il precedente N16/A4 è invece **PASS documentale pubblicato e verificato** sul commit GitHub `dab06fa7df871b482bad691e530c62f5fd8b0260`.
 
 | Dimensione | Stato confermato dalle prove di origine |
 | --- | --- |
@@ -23,14 +31,14 @@ R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment
 | INSERT e controllo | Riusate `insert_project`/`insert_entity`, preflight delle omonimie su snapshot completo, verifica della singola riga restituita prima del feedback, refresh distinto dalla persistenza |
 | Collaudi | T1–T4 e T1B: **cinque INSERT autorizzate e verificate** con SELECT indipendenti; selezione Project inline PASS in T1B dopo il riordino dell'handler; Entity inline e due Command Intent PASS nei limiti dei checkpoint |
 | Invarianti | `public.events` **268 → 268**; nessun salvataggio evento automatico; Retool ancora **Draft**, nessun Publish; nessuna modifica schema/DDL Supabase |
-| Residui | **R1**: avviso «Villa selezionato» non coerente con la Select in T1B, origine `preview_analysis_state`, non corretto. **R2**: vecchia scheda Chrome con copia Dirty di `projects_list`, distinta dalla versione Draft salvata `enableTransformer: false`, non salvata né scartata. Feedback transitori T2/T3 non catturati direttamente; preflight omonimie non atomico tra creazioni concorrenti |
+| Residui | **R1**: avviso «Villa selezionato» non coerente con la Select in T1B, origine `preview_analysis_state`; osservazione storica poi risolta da N19. **R2**: vecchia scheda Chrome con copia Dirty di `projects_list`, distinta dalla versione Draft salvata `enableTransformer: false`, non salvata né scartata. Feedback transitori T2/T3 non catturati direttamente; preflight omonimie non atomico tra creazioni concorrenti |
 | Linting | Da **13 a 11**, dopo sola formattazione di `create_anagrafica` con AST invariato; 11 segnalazioni residue qualificate come riferimenti forniti tramite `additionalScope` nei chiamanti osservati, non prova di bug runtime né di collaudo universale |
 | Contratto stati N17 | Default `ACTIVE` sui **quattro percorsi N18** realizzato; policy `INACTIVE`/`NULL` per matching, filtri, transizioni Editor ed eccezione UX-06 **approvata ma non implementata in N17/N18** |
 | Milestone | **M04 PARZIALE**; Core Global Completion v1.0 **35% → 35%**, +0 punti; nessuna nuova milestone globale PASS |
 
 Provenienza: N18 APPLY statico 05/11/2026, collaudo T1–T4, T1B conclusivo PASS e verifica linting/salvataggi 06/11/2026; N16/A4 pubblicato a `dab06fa7df871b482bad691e530c62f5fd8b0260`; N17 contratto decisionale distinto, non attuazione complessiva. Le osservazioni Retool/Supabase sono **VERIFICATE LIVE nei rispettivi checkpoint N18**, non nuovamente collaudate in N18/DOC-01; la revisione è **DOCUMENTALE**, con lettura mirata READ-ONLY dei nove sorgenti Retool il 9 novembre e nessuna nuova interrogazione Supabase.
 
-**Confine:** R1/R2 non autorizzano correzioni Retool in questa procedura. In N18/DOC-01 sono stati soltanto riletti i nove sorgenti nella Draft salvata il 9 novembre, come qualificato sopra: nessuna scrittura Retool, nessuna lettura o scrittura Supabase e nessun nuovo collaudo. Questo gate R04 usa le prove già acquisite e non effettua nuove letture live. I contenuti dei successivi snapshot N16 descrivono correttamente la propria data, non il runtime attuale dopo N18.
+**Confine:** R1/R2 non autorizzano correzioni Retool in questa procedura. In N18/DOC-01 sono stati soltanto riletti i nove sorgenti nella Draft salvata il 9 novembre, come qualificato sopra: nessuna scrittura Retool, nessuna lettura o scrittura Supabase e nessun nuovo collaudo. Questo gate R04 usa le prove già acquisite e non effettua nuove letture live. I contenuti dei successivi snapshot N16 descrivono correttamente la propria data, non il runtime attuale dopo N20.
 
 ## Snapshot storico N16 — Editor Base alla preparazione di A4 (2 novembre 2026)
 
@@ -117,7 +125,7 @@ nessun nuovo nodo è aperto e il recap per Regia rimane da trasferire.
 Gli snapshot seguenti conservano il testo e le condizioni dei nodi di
 origine, incluse le formulazioni allora candidate della baseline e i
 riferimenti DA BASELINARE. Non sostituiscono il quadro corrente sopra.
-La sezione OBIETTIVO IMMEDIATO descrive il mandato corrente N19/DOC-01; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
+La sezione OBIETTIVO IMMEDIATO riporta l’esito N20 e il riferimento alla verifica della pubblicazione; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
 
 ## Snapshot precedente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
 
@@ -633,7 +641,7 @@ Transizione post nodo Data Structure:
 La Readiness indicata nella v30 come passo successivo è stata completata.
 Nella fotografia post-Readiness l'Editor Base era candidato, non applicato
 né testato. N16 ha successivamente realizzato e collaudato la tranche Base;
-il lavoro corrente è N19/DOC-01, successivo a N18, senza nuovo nodo funzionale implicito.
+N18 e N19 hanno preceduto il consolidamento documentale N20/DOC-01 recepito in questa revisione.
 
 ------------------------------------------------
 FASE:
@@ -726,7 +734,7 @@ STATO GENERALE SISTEMA — BASELINE STORICA PRE-HARDENING
 
 Le attestazioni, percentuali e catene sotto descrivono la baseline funzionale
 precedente. Il quadro corrente, le guardie DB e i limiti produttivi sono nella
-sezione iniziale «Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)» e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
+sezione iniziale «Stato corrente — N20 Editor Stato e consolidamento DOC-01» e nei documenti tecnici competenti; «produzione reale», «DB invariato» e «storage passivo»
 non costituiscono attestazioni correnti. I candidati non sono nodi attivati.
 
 Sistema funzionante end-to-end:
@@ -808,7 +816,7 @@ Debiti principali:
 
 Fonte completa:
 
-- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)»
+- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — N20 Editor Stato e consolidamento DOC-01»
 - 01_LOGOS_Input_System per input/parser/input_analysis_result
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
@@ -824,7 +832,7 @@ SNAPSHOT FUNZIONALE CONSOLIDATO — BASELINE STORICA PRE-N16
 
 La numerazione dei layer sottostante conserva la fotografia precedente;
 non include l'Editor N16 né il delta N18. Capacità corrente nella sezione
-«Stato corrente — N19 Project–Entity (N19/DOC-01 in PREPARE)»; struttura generale
+«Stato corrente — N20 Editor Stato e consolidamento DOC-01»; struttura generale
 in 00_FONDAMENTA_PROGETTO/00_PROJECT_System.md e contratto tecnico in 04_LOGOS_Retool_Architecture.md.
 Nessun ricalcolo delle percentuali storiche dei singoli layer.
 
@@ -1311,7 +1319,7 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare il consolidamento N19/DOC-01 sui cinque target: review coordinata delle postimage, dei diff, del manifest e della matrice; successiva eventuale sostituzione, verifica e pubblicazione soltanto dopo i relativi gate e decisioni. Il pacchetto resta PREPARE. R1 è tecnicamente risolto secondo i checkpoint Work Project T1–T3 ed Entity E1–E3; R2 resta escluso e irrisolto, G35 aperto e distinto. Conservare N18 e precedenti come fotografie storiche, senza nuovo nodo o priorità. Core 35%, M04 PARZIALE; limiti N17/UX-06, feedback, linting e concorrenza invariati.
+CP-LOGOS-M04-ANAG-STATUS-EDITOR-20261112-20 — N20 PASS funzionale nella Draft. Questa revisione recepisce il consolidamento documentale N20/DOC-01. La prova di pubblicazione richiede una verifica esterna dello SHA su GitHub. Core 35%, M04 PARZIALE. Nessun nodo funzionale successivo assegnato.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -2924,3 +2932,5 @@ v42 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
 - R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
+
+v43 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Raccordo N20 e obiettivo operativo aggiornati. N19 pubblicato e snapshot N18/N16 conservati con data e limiti.

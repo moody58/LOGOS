@@ -1,7 +1,7 @@
 # 05_LOGOS_Database_Schema
-Versione: v13
+Versione: v14
 
-DATA: 2026-10-28
+DATA: 2026-11-12
 
 ## Integrità referenziale minima degli eventi — nodo 14
 
@@ -40,8 +40,7 @@ FK validate e zero riferimenti orfani; conteggi e NULL sono fotografati in
 revisione. Nessuna modifica a colonne, RPC, policy RLS, trigger lifecycle,
 codice Retool o altre tabelle è attribuita al nodo 14.
 
-La tranche referenziale non completa la gestione anagrafica: Editor Base,
-regole sui duplicati e residui G11 restano distinti. M04 rimane PARZIALE;
+Le FK della tranche referenziale preservano l’identità tramite UUID. Gli Editor N16/N20 e la creazione N18 operano sui campi esistenti. I residui G11, incluse le regole avanzate sui duplicati, restano distinti. M04 rimane PARZIALE;
 CF-02/VF-02 ricevono la sola evidenza referenziale. La baseline globale non
 acquista una nuova milestone PASS. Ulteriori modifiche DB richiedono il
 proprio mandato; questo aggiornamento documentale non esegue DDL.
@@ -1603,9 +1602,9 @@ name (text, UNIQUE)
 
 parent_project_id (uuid, non utilizzato)
 
-type (text, non utilizzato)
+type (text, nullable; usato negli Editor e nella creazione Retool)
 
-status (text, non utilizzato)
+status (text, nullable, default DB ACTIVE). N18 invia ACTIVE esplicito anche per Project. N20 permette modifica volontaria da Editor; scelta invariata conserva il valore originario, anche NULL.
 
 created_at (timestamp)
 
@@ -1619,6 +1618,7 @@ UTILIZZO REALE:
 ✔ priority match minimo gestito lato Retool  
 ✔ nessuna gerarchia attiva  
 ✔ popolabile tramite insert_project lato Retool
+✔ `update_project_anag` riusata da N20 per PATCH condizionale su UUID e preimage; nessuna nuova DDL
 ✔ creazione inline project validata
 ✔ utilizzata anche da Project Create Suggestion First Controlled Level
 ✔ utilizzata anche da Command Intent — Create Project
@@ -1722,11 +1722,11 @@ id (uuid, PK)
 
 name (text)
 
-type (text, non utilizzato)
+type (text, nullable; usato negli Editor e nella creazione Retool)
 
 parent_entity_id (uuid, non utilizzato)
 
-status (text, non utilizzato)
+status (text, nullable, senza default DB documentato). N18 invia ACTIVE esplicito anche per Entity. N20 conserva i NULL legacy salvo classificazione esplicita ad ACTIVE/INACTIVE.
 
 metadata (jsonb, default {})
 
@@ -1744,6 +1744,7 @@ UTILIZZO REALE:
 ✔ priority match minimo gestito lato Retool  
 ✔ nessuna gerarchia attiva  
 ✔ popolabile tramite insert_entity lato Retool
+✔ `update_entity_anag` riusata da N20 per PATCH condizionale su UUID e preimage; nessuna nuova DDL
 ✔ creazione inline entity validata
 ✔ utilizzata anche da Entity Create Suggestion First Controlled Level
 ✔ utilizzata anche da Command Intent — Create Entity
@@ -3420,4 +3421,6 @@ v11 — 2026-06-23
 - indicato prossimo nodo candidato: PROJECT / ENTITY GUIDED MODE — READINESS & MINIMUM SCOPE
 - indicato primo nodo implementativo eventuale: PROJECT / ENTITY GUIDED MODE — NAME + TYPE + DUPLICATE ALERT BASE
 - esplicitato che guided mode completa non deve essere aperta come nodo unico troppo ampio
+
+v14 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Allineati campi type/status, default DB e ACTIVE applicativo; preservata la separazione tra schema, valori legacy e uso Retool.
 
