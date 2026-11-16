@@ -1,9 +1,15 @@
-# 01_LOGOS_Input_System_v22
-Versione: v22
+# 01_LOGOS_Input_System_v24
+Versione: v24
 
-DATA: 2026-11-12
+DATA: 2026-11-16
 
-## Raccordo corrente N18 — creazione da input inline e Command Intent
+## Raccordo corrente N21 — matching e suggerimenti in input evento
+
+I repertori `projects_list` e `entities_list` rimangono completi. L'input legacy `input_raw.change` resta fuori dal delta. Il [Match Engine](02_LOGOS_Match_Engine.md) definisce B1 e l'uscita informativa Project `prefixAlternatives`. Quando questa contiene alternative, `create_suggestion_state` sopprime il suggerimento Project prematuro e la scheda Sintesi presenta le varianti. Le estensioni ordinarie e il controllo omonimie sul repertorio completo mantengono il percorso B1.
+
+Le Select usano UUID, con soli ACTIVE associabili ordinariamente e FK storiche invariate conservate in edit. Il flusso canonico N18 `create_anagrafica`, il Command Intent e la scelta UUID restano distinti. Vedere [Retool Architecture](04_LOGOS_Retool_Architecture.md) per wiring e [View Preview System](06_LOGOS_View_Preview_System.md) per gli avvisi.
+
+## Contratto N18 — creazione da input inline e Command Intent
 
 L'implementazione Retool Classic N18, collaudata il **6 novembre 2026**, unifica le quattro conferme Crea già presenti nell'input evento e nel Command Intent attraverso **`page1.create_anagrafica`**. Due percorsi inline (Project/Entity) e due Command Intent (Project/Entity) richiedono sempre **Nome** e **Tipologia**; i quattro Select di Tipologia sono distinti ma la procedura applicativa è una. `insert_project` e `insert_entity` rimangono gli unici due endpoint fisici di creazione, con `status: "ACTIVE"` esplicito.
 
@@ -11,7 +17,7 @@ Lato input, `create_suggestion_state` continua a proporre l'azione senza creare 
 
 **Associazione vs evento:** la creazione aggiorna la disponibilità/selezione del Project/Entity ma **non conferma né salva l'evento**. Nelle cinque INSERT N18 verificate con SELECT indipendenti, `public.events` è rimasta a **268 → 268**. Comandi strutturali puri non diventano eventi. Resta possibile salvare l'evento solo con successiva conferma esplicita dell'utente nel normale flusso, soggetta alle guardie già documentate. L'app è ancora Draft; nessun Publish. I dettagli di query, componenti, cataloghi e preflight appartengono alle madri `04_LOGOS_Retool_Architecture.md` e `LOGOS_RETOOL_RUNTIME_REAL.md`.
 
-**Confini e stato corrente:** T2 toast e T3 feedback transitori restano limiti delle prove N18. L'avviso «Villa selezionato» osservato dopo T1B è il caso storico R1, poi risolto nel perimetro N19 e consolidato su main a `e8bfd8f06a0072681bf29f7ce9c68f649b33fe16`. R2 resta la copia Chrome locale Dirty di `projects_list`. La creazione N18 usa ACTIVE esplicito; N20 ha esteso esclusivamente gli Editor in Anagrafiche per scelta volontaria dello Stato, senza modificare input, Crea o salvataggio eventi. Filtri INACTIVE/NULL, policy completa di matching e associazione UX-06 restano separati. Controlli omonimie senza garanzia atomica. Il linting 11 è la fotografia N18.
+**Confini della fotografia N18–N20:** T2 toast e T3 feedback transitori restano limiti delle prove N18. L'avviso «Villa selezionato» osservato dopo T1B è il caso storico R1, poi risolto nel perimetro N19 e consolidato su main a `e8bfd8f06a0072681bf29f7ce9c68f649b33fe16`. R2 resta la copia Chrome locale Dirty di `projects_list`. La creazione N18 usa ACTIVE esplicito; N20 ha esteso esclusivamente gli Editor in Anagrafiche per scelta volontaria dello Stato, senza modificare input, Crea o salvataggio eventi. Filtri INACTIVE/NULL, policy completa di matching e associazione UX-06 restano separati. Controlli omonimie senza garanzia atomica. Il linting 11 è la fotografia N18.
 
 **Fonte:** checkpoint N18 Apply statico, Apply/collaudo T1–T4, T1B e linting 5–6 novembre 2026; provenienze N16/A4 e N17 separate. Nella revisione DOC-01 del 9 novembre sono stati riletti in sola lettura gli otto handler e create_anagrafica nella Draft salvata. Nessun nuovo collaudo, Run/Test/Save/Publish o lettura Supabase.
 
@@ -819,6 +825,8 @@ input_home
 → routing post-save contestuale
 
 Nota post G22:
+
+La nota storica G22 qui sotto riguarda la suggestion di estensione, distinta dalla nuova informazione su varianti e Stato in N21.
 
 create_suggestion_state può produrre requiresUserOverride.
 
@@ -3464,119 +3472,15 @@ AGGIORNAMENTO MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL:
 
 MATCHING BASE — FIRST CONTROLLED LEVEL
 
-Nota canonica:
 
-Questa sezione documenta il matching nel contesto dell’input flow.
+Il riconoscimento segue `project_state.query` e `entity_state.query`: leggono testo e repertori completi. Le query restituiscono `matches`, `count`, `hasMatch`, `isAmbiguous`, `singleMatch`, `moreSpecificMatches`, `hasMoreSpecificMatches`, `plausibleAlternatives` e `hasPlausibleAlternatives`. Project aggiunge `prefixAlternatives` da UX. Il [Match Engine](02_LOGOS_Match_Engine.md#match-con-varianti-e-prefissi) descrive precedenza dei nomi completi, diacritici, parole intere e nomi numerici.
 
-La fonte canonica completa del Match Engine è:
+- Nuovo evento: il default della Select è l’UUID del solo `singleMatch` ACTIVE, oppure `null`. INACTIVE e NULL restano visibili, disabilitati, e riconoscibili in Sintesi. Un match univoco non ACTIVE da solo non blocca un evento senza associazione.
+- Edit: il default è l’UUID già persistito, oppure `null`. L’opzione con la stessa FK resta disponibile anche se INACTIVE/NULL. Ogni nuova scelta richiede ACTIVE.
+- Ambiguità canonica: senza UUID scelto, la Select è vuota nel nuovo evento e permane il blocco preesistente. Le varianti solo informative non estendono quel blocco.
+- `select_project.value` e `select_entity.value` sono gli UUID usati dal Click. L’etichetta Entity aggiunge un suffisso UUID per gli omonimi esatti senza cambiare il value. La Sintesi illustra la differenza tra match testuale e scelta effettiva.
 
-- 02_LOGOS_Match_Engine
-
-Per il wiring Retool dei componenti coinvolti:
-
-- 04_LOGOS_Retool_Architecture
-
-Per gli effetti visuali in Sintesi / hint / highlight:
-
-- 06_LOGOS_View_Preview_System
-
-Oggetti:
-
-projects
-entities
-
-Fonte minima matching:
-
-project_state
-entity_state
-
-Input:
-
-input_raw
-projects_list.data
-entities_list.data
-
-Output standard:
-
-- matches
-- count
-- hasMatch
-- isAmbiguous
-- singleMatch
-- moreSpecificMatches
-- hasMoreSpecificMatches
-
----
-
-STRATEGIA:
-
-- normalizzazione base testo
-- confronto parole significative
-- full name match
-- priority match minimo
-- rimozione match generici coperti da match specifici
-- auto-select solo tramite singleMatch
-- hint match più specifici non bloccante
-
----
-
-PROJECT MATCH:
-
-Esempi:
-
-villa → Villa + hint progetti più specifici
-villa 2 → Villa 2
-casa mare → Casa Mare
-ristrutturazione bagno → Ristrutturazione Bagno
-
----
-
-ENTITY MATCH:
-
-Esempi:
-
-mario → Mario + hint entità più specifiche
-mario rossi → Mario Rossi + hint entità più specifiche
-mario rossi alfredo → Mario Rossi Alfredo
-alfie mario rossi → ambiguità reale
-
----
-
-COMPORTAMENTO:
-
-match univoco:
-→ singleMatch valorizzato
-→ select_project/select_entity valorizzati
-→ conferma abilitata
-
-match ambiguo non risolto:
-→ isAmbiguous = true
-→ select vuota
-→ hint rosso
-→ conferma disabilitata
-
-match ambiguo risolto manualmente:
-→ select valorizzata dall’utente
-→ hint rosso rimosso
-→ conferma abilitata
-
-nessun match:
-→ select vuota
-→ nessun hint ambiguità
-→ conferma abilitata
-
-match generico semplice:
-→ singleMatch valorizzato
-→ nessun blocco
-→ conferma abilitata
-
-match presente + suggestion extension:
-→ singleMatch valorizzato
-→ create_suggestion_state genera candidate più specifica
-→ requiresUserOverride = true
-→ Da verificare mostra warning mirato
-→ Suggerimenti associazione mostra azione di creazione
-→ conferma abilitata
+Esempi N21: Casa Mare può essere proposta come match univoco; Casa Mar presenta Casa e Casa Mare senza scegliere al posto dell’utente. Mario con Stato NULL può essere riconosciuto e mostrare le varianti già presenti, con Select Entity vuota in un nuovo evento. Cucciolata Marzo mostra i due anni senza selezione o proposta di duplicazione. L’handler legacy `input_raw.change` resta fuori dal delta. `input_analysis_result` e la visibilità consumano i risultati senza sostituire i guard della Conferma.
 
 Nota post G22:
 
@@ -3723,6 +3627,14 @@ Nota post G22:
 Il caso osservato in G33 è stato risolto nel nodo:
 
 PROJECT CREATE SUGGESTION — MATCH PRESENT / USER OVERRIDE / AUTO-SELECT CONFIDENCE
+
+### CREATE SUGGESTION NEL FLUSSO INPUT
+
+`create_suggestion_state` legge repertori completi, risultato canonico e selezioni. Per l’estensione parte dall’UUID scelto se risolto, altrimenti da `singleMatch`, con testo significativo e nome base presente nel testo ripulito. Controlla estensioni normalizzate sul repertorio completo e scarta anche quelle che includono un nome riconosciuto nell’altro livello. Una suggestion non crea record. La creazione richiede conferma N18 con Nome e Tipologia tramite `page1.create_anagrafica`. In assenza di match Entity il ramo autofill controllato può proporre un nome per il form.
+
+Ambiguità, alternative plausibili B1 e prefissi Project N21/UX precedono la suggestion di estensione. Il prefisso Project sopprime anche il messaggio di assenza associativa specifico della suggestion. Il valore diagnostico `noMatch` continua a descrivere l’assenza di match canonico. La [Preview](06_LOGOS_View_Preview_System.md#guida-associazione-n21) presenta nomi e disponibilità. `requiresUserOverride` resta il segnale G22 per una suggestion di estensione con match presente. La selezione effettiva viene risolta per UUID nel warning N19.
+
+**Snapshot G22 pre-N21.** L’esempio seguente descrive il comportamento originario di Villa Sierri. Nel dataset collaudato N21, Villa Sierri presenta Villa e varianti numerate come ambiguità canonica.
 
 Caso guida:
 
@@ -7344,3 +7256,7 @@ v21 — 2026-11-09 — Preparazione documentale N18/DOC-01, non ancora copiata o
 - Documentati ordine della selezione T1B, invarianti evento, residui R1/R2 e limiti N17 non implementati.
 
 v22 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Riconciliati input, creazione N18, R1 N19 ed Editor Stato N20 senza attribuire modifiche al flow input.
+
+v23 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v24 — 2026-11-16 — N21/DOC PREPARE R03: integrati matching, suggestion, Select e confine con il flusso N18 nelle sezioni operative.

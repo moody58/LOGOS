@@ -1,9 +1,15 @@
 # 00_PROJECT_Gap_Register
-Versione: v28
+Versione: v30
 
-DATA: 2026-11-12
+DATA: 2026-11-16
 
-## Raccordo corrente — consolidamento N20/DOC-01
+## Raccordo corrente — delta N21 su G11
+
+**G11 INTEGRATO PARZIALE.** N21 aggiunge il matching B1, l'ammissibilità ACTIVE per nuove associazioni con preflight e la preservazione delle FK storiche. Gli avvisi rendono distinguibili INACTIVE, NULL, alternative e omonimi. B2 e UX sono collaudati nella Draft nei limiti della [fotografia N21](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md). Nessun cambio a G03, G35 o R2 Dirty.
+
+Restano UX-06, gerarchie/metadata, omonimie concorrenti non atomiche, funzioni avanzate e residui P1-01. L'ordine mobile del logo N22 resta un residuo separato. **Core 35%, M04 PARZIALE.** Nessun nuovo gap o cambio di priorità.
+
+## Snapshot — consolidamento N20/DOC-01
 
 Questa revisione recepisce il consolidamento N20/DOC-01. La prova di pubblicazione richiede una verifica esterna dello SHA su GitHub.
 
@@ -774,7 +780,7 @@ Perimetro storico emerso dalla Readiness, ora da distinguere dall'implementazion
 - Select con chiavi DB e label italiane; nessuna attestazione di modifica
   generalizzata delle query insert o della gestione Stato dei nuovi record
 
-Le tranche anagrafiche N16/N18/N20 sono collaudate nei rispettivi perimetri. Rimane aperto G11 per filtri INACTIVE/NULL, UX-06, policy di matching, omonimie concorrenti e funzioni avanzate. Non è aperto alcun nuovo nodo implicito.
+N21 amplia la tranche applicativa di G11: il riconoscimento considera il repertorio integrale, B2/R01 ammette solo ACTIVE nelle nuove FK e conserva quella storica se invariata, UX distingue Stato non definito, inattività e alternative già presenti. [Contratto e limiti del preflight](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md#conferma-evento-dopo-n21b2-r01) e [prove Gate B](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026). La Readiness G11 è completata come decisione. Il macro-gap rimane **INTEGRATO PARZIALE** per UX-06, omonimie concorrenti non atomiche e funzione avanzata di gerarchie/metadata. G35, R2 Dirty (tab locale `projects_list`) e Δ5 legacy `input_raw.change` rimangono separati. Nessun nuovo gap o nodo implicito.
 
 Fuori scope della prima tranche:
 - parent operativo completo
@@ -1431,14 +1437,13 @@ ORDINE CONSIGLIATO GAP / NODI
 ------------------------------------------------
 
 Nel REENTRY storico non era stato assegnato un prossimo nodo.
-L'ordine di backlog precedente resta un riferimento storico. Il raccordo
-iniziale recepisce il consolidamento N20/DOC-01. Nessun nodo funzionale
+L'ordine di backlog precedente resta un riferimento storico. Lo snapshot N20 documenta il consolidamento N20/DOC-01; il raccordo in apertura riporta il delta N21. Nessun nodo funzionale
 successivo è assegnato da questo elenco.
 
-Readiness G11: COMPLETATA, esclusa dai lavori futuri da riaprire automaticamente.
+Readiness G11: COMPLETATA nella tranche di definizione e verifica del perimetro. Il macro-gap G11 è INTEGRATO PARZIALE dopo le tranche N16, N18, N20 e N21; i residui sono indicati nella riga G11 sotto.
 
 Backlog non attivato:
-1. G11 — Editor N16/N20 già collaudato; solo residui macro-gap (filtri INACTIVE/NULL, UX-06, concorrenza omonimie accettata, gerarchie/metadata avanzati) da valutare in successivi mandati confermati
+1. G11 — Editor N16/N20 e tranche N21 già collaudati; restano UX-06, concorrenza omonimie e gerarchie/metadata avanzati da valutare in successivi mandati confermati
 2. G35 — Status Semantics Alignment
 3. G38 — Preview / Missing Association Notice Cleanup
 4. G17 — Preview Model / Hint State Consolidation
@@ -2254,3 +2259,7 @@ v27 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
 
 v28 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Riallineati G11, raccordo e backlog a N20. Preservate fotografie storiche, G03, G35, R2 e priorità.
+
+v29 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v30 — 2026-11-16 — N21/DOC PREPARE R03: assorbiti contratto e residui N21 nel macro-gap G11, distinta la Readiness.

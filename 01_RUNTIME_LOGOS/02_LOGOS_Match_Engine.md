@@ -1,9 +1,17 @@
-# 02_LOGOS_Match_Engine_v12
+# 02_LOGOS_Match_Engine_v14
 
-DATA: 2026-06-04
+DATA: 2026-11-16
+
+## Contratto corrente N21 — riconoscimento e associabilità
+
+`project_state` e `entity_state` B1 lavorano sul repertorio completo, con normalizzazione degli accenti, parole intere, precedenza ai nomi completi e distinzione dei numeri identificativi da importi/durate. Le varianti testuali plausibili entrano nelle alternative B1 e possono richiedere scelta manuale. `create_suggestion_state` usa il match canonico o l'UUID selezionato come base e mantiene il controllo delle omonimie sull'intero repertorio. Il ramo di estensione evita la creazione prematura in caso di ambiguità.
+
+N21/UX aggiunge solo al Project `prefixAlternatives`, informativa, in assenza di candidati B1. Usa prefissi comuni di almeno due parole intere, condivisi da almeno due record. Esempio: `Cucciolata Marzo` propone 2025 e 2026 nella Sintesi, senza attribuire un UUID o innescare una nuova creazione. Conservati i campi canonici `matches`, `count`, `hasMatch`, `isAmbiguous`, `singleMatch`, `moreSpecificMatches` e `plausibleAlternatives`. `entity_state` è rimasto invariato nella tranche UX. Un match INACTIVE o NULL identifica il record. L'ammissibilità delle nuove FK è una responsabilità delle Select e del [preflight Conferma](03_LOGOS_Event_Lifecycle.md).
+
+**DOCUMENTATO** dai pacchetti B1 e N21/UX. **VERIFICATO LIVE** nel perimetro dei casi registrati in [Retool Runtime Real](LOGOS_RETOOL_RUNTIME_REAL.md). I blocchi e gli esempi precedenti a N21 descrivono le rispettive versioni storiche.
 
 ------------------------------------------------
-CQD — VALIDAZIONE DOCUMENTO
+CQD — VALIDAZIONE DOCUMENTO · snapshot storico v12 (4 giugno 2026)
 ------------------------------------------------
 
 C (Completezza): 10/10  
@@ -54,7 +62,7 @@ C (Completezza): 10/10
 - documentato che button_input_confirm.Disabled resta guard funzionale separata
 - documentato che button_input_confirm payload resta invariato
 - documentato che Linting / Retool Query Safety Pass non ha modificato il Match Engine
-- documentato linting Retool azzerato come debito tecnico risolto fuori dal matching
+- documentato linting Retool azzerato nel Retool Query Safety Pass (fotografia pre-N18). Il checkpoint N18 del 6 novembre 2026 registra 11 segnalazioni residue qualificate; il conteggio attuale non è stato verificato in N21
 - documentato caso match più specifico come policy non bloccante invariata
 - documentata responsabilità canonica del documento nel modello post Pacchetto B
 - chiarito che State, Roadmap e Gap Register richiamano il Match Engine senza duplicarne il dettaglio tecnico completo
@@ -803,20 +811,11 @@ Per i comandi puri:
 NORMALIZZAZIONE MATCHING
 ------------------------------------------------
 
-La normalizzazione testuale del matching è ora concentrata nei due state:
+La normalizzazione comune delle query B1 usa minuscole, NFD con rimozione dei caratteri combinanti nell’intervallo U+0300–U+036F, compressione degli spazi e trim. Mantiene i nomi originali per rappresentazione. Sotto tre caratteri di input normalizzato restituisce insiemi vuoti. I token sono estratti con `[a-z0-9]+`. Il nome completo è cercato come frase a confini di parola, con parti regex-escaped e spazi flessibili.
 
-- project_state
-- entity_state
+Per nomi senza token interamente numerici, vale una frase completa oppure la presenza di tutte le parole significative (lunghezza maggiore di due, esclusi i numeri) come token interi. Il fallback richiede almeno una parola significativa; non contiene ranking fuzzy e può accettare parole significative in ordine diverso. Se tra i match-base sono presenti nomi completi, si conservano soltanto quelli. Tra i candidati residui, un nome generico coperto da un nome specifico più lungo esce dall’insieme, mentre due omonimi con UUID distinti rimangono distinti.
 
-Operazioni comuni:
-
-- lowercase
-- trim
-- compressione spazi
-- split parole significative
-- full name match
-- confronto su parole
-- riduzione match generici coperti da match più specifici
+Un token numerico nel nome impone la frase completa. Il match-base viene escluso se segue immediatamente un’unità elencata dalla regola (euro, eur, simbolo €, ora, ore, h, min, minuto o minuti). Così il 20 di `Spesa 20 euro Villa` non identifica `Villa 20`, né `Mario` identifica con certezza `Mario 2`. Il ramo successivo delle alternative plausibili verifica il suffisso numerico per uguaglianza; un’alternativa può richiedere scelta manuale, separata dalla preselezione.
 
 ---
 
@@ -858,241 +857,19 @@ ui_state.parsed resta fonte unica per i dati parsati strutturati.
 PROJECT MATCH ATTUALE
 ------------------------------------------------
 
-Fonte:
+### MATCH CON VARIANTI E PREFISSI
 
-project_state
+`project_state` legge `input_raw.value` e `projects_list.data`; `entity_state` legge lo stesso input e `entities_list.data`. Lo Stato non restringe i repertori. `matches` contiene risultati con UUID, `count` è il loro numero, `hasMatch` vale sopra zero, `isAmbiguous` sopra uno e `singleMatch` è valorizzato soltanto con un candidato. In presenza di una base unica, `moreSpecificMatches` espone nomi su UUID diversi che iniziano col nome base seguito da spazio.
 
-Input:
+Il primo token immediatamente dopo la base individuata nel testo rende plausibile una variante se coincide con il primo token numerico del suffisso o, per testo di almeno tre caratteri, ne è prefisso. `plausibleAlternatives` entra nei candidati canonici per UUID senza sostituire la base. Perciò Casa Mar con Casa e Casa Mare porta a scelta manuale, mentre Casa esatta resta riconosciuta quando la sola esistenza di Casa Mare non rende plausibile un suffisso digitato. I flag `hasMoreSpecificMatches` e `hasPlausibleAlternatives` espongono separatamente la presenza delle due liste.
 
-- input_raw.value
-- projects_list.data
+Solo Project aggiunge `prefixAlternatives`. Quando i candidati B1 sono zero, per ogni record si cerca il più lungo prefisso proprio di almeno due token interi presente come sequenza contigua nell’input. Si espongono i gruppi condivisi da almeno due record, deduplicati per UUID. Cucciolata Marzo può così mostrare 2025 e 2026 lasciando `count=0` e `singleMatch=null`. Questo ramo non seleziona, non altera gli output B1 e non rende ambiguo un campo che prima non lo era.
 
-Output:
-
-- matches
-- count
-- hasMatch
-- isAmbiguous
-- singleMatch
-- moreSpecificMatches
-- hasMoreSpecificMatches
-
----
-
-LOGICA:
-
-1. Normalizzazione testo
-
-- lowercase
-- trim
-- compressione spazi
-
-2. Match base
-
-- confronto su parole significative del nome progetto
-- parole del progetto devono essere presenti nel testo input
-- gestione numeri nei nomi progetto
-
-3. Gestione numeri
-
-Se il progetto contiene numeri,
-gli stessi numeri devono essere presenti nell’input.
-
-Esempio:
-
-Villa 2
-→ richiede presenza di 2 nell’input
-
-Questo evita che:
-
-villa
-→ selezioni Villa 2
-
-ma consente:
-
-villa 2
-→ selezioni Villa 2
-
-4. Full name match
-
-Se il nome completo del progetto è presente nel testo,
-viene considerato match forte.
-
-5. Priority match minimo
-
-Se esistono match generici e match più specifici,
-vengono rimossi i generici coperti dallo specifico.
-
-Esempi:
-
-Ristrutturazione + Ristrutturazione Bagno
-→ Ristrutturazione Bagno
-
-Casa + Casa Mare
-→ Casa Mare
-
-Villa + Villa 2
-→ Villa 2
-
-6. More specific hint
-
-Se il match esatto breve è valido,
-ma esistono progetti più specifici,
-il sistema mantiene il match e mostra hint informativo non bloccante.
-
-Esempio:
-
-villa
-→ select_project = Villa
-→ hint: Esistono progetti più specifici
-
----
-
-COMPORTAMENTO:
-
-count = 1  
-→ singleMatch valorizzato  
-→ select_project auto-valorizzato  
-
-count > 1  
-→ isAmbiguous = true  
-→ select_project vuoto  
-→ hint rosso se non risolto  
-→ confirm disabilitato finché l’utente non sceglie  
-
-count = 0  
-→ nessun suggerimento  
-→ select_project vuoto  
-→ confirm non bloccato  
-
----
-
-NOTE:
-
-- project_id viene salvato solo da select_project.value
-- project_state non crea project automaticamente
-- eventuale creazione project è gestita da create_suggestion_state + insert_project
-- eventuale creazione project da comando puro è gestita da command_intent_state + btn_command_create_project + insert_project
-- il command intent non modifica il comportamento di project_state
-- la creazione project richiede conferma esplicita utente
-- il sistema non decide project in caso di ambiguità non risolta
-- la scelta manuale utente prevale
-
-------------------------------------------------
-ENTITY MATCH ATTUALE
-------------------------------------------------
-
-Fonte:
-
-entity_state
-
-Input:
-
-- input_raw.value
-- entities_list.data
-
-Output:
-
-- matches
-- count
-- hasMatch
-- isAmbiguous
-- singleMatch
-- moreSpecificMatches
-- hasMoreSpecificMatches
-
----
-
-LOGICA:
-
-1. Normalizzazione testo
-
-- lowercase
-- trim
-- compressione spazi
-
-2. Match base
-
-- confronto su parole significative del nome entità
-- parole dell’entità devono essere presenti nel testo input
-
-3. Full name match
-
-Se il nome completo dell’entità è presente nel testo,
-viene considerato match forte.
-
-4. Priority match minimo
-
-Se esistono match generici e match più specifici,
-vengono rimossi i generici coperti dallo specifico.
-
-Esempi:
-
-Marco + Marco Rossi
-→ Marco Rossi
-
-Mario + Mario Rossi
-→ Mario Rossi
-
-Mario Rossi + Mario Rossi Alfredo
-→ Mario Rossi Alfredo, quando il nome completo è presente
-
-5. More specific hint
-
-Se il match esatto breve è valido,
-ma esistono entità più specifiche,
-il sistema mantiene il match e mostra hint informativo non bloccante.
-
-Esempi:
-
-mario
-→ select_entity = Mario
-→ hint: Esistono entità più specifiche
-
-mario rossi
-→ select_entity = Mario Rossi
-→ hint: Esistono entità più specifiche se esiste Mario Rossi Alfredo
-
-mario rossi alfredo
-→ select_entity = Mario Rossi Alfredo
-→ nessun hint più specifico
-
----
-
-COMPORTAMENTO:
-
-count = 1  
-→ singleMatch valorizzato  
-→ select_entity auto-valorizzato  
-
-count > 1  
-→ isAmbiguous = true  
-→ select_entity vuoto  
-→ hint rosso se non risolto  
-→ confirm disabilitato finché l’utente non sceglie  
-
-count = 0  
-→ nessun suggerimento  
-→ select_entity vuoto  
-→ confirm non bloccato  
-
----
-
-NOTE:
-
-- entity_id viene salvato solo da select_entity.value
-- entity_state non crea entity automaticamente
-- eventuale creazione entity è gestita da create_suggestion_state + insert_entity
-- eventuale creazione entity da comando puro è gestita da command_intent_state + btn_command_create_entity + insert_entity
-- il command intent non modifica il comportamento di entity_state
-- la creazione entity richiede conferma esplicita utente
-- il sistema non decide entity in caso di ambiguità non risolta
-- la scelta manuale utente prevale
-- la presenza di duplicati o entità simili resta un limite strutturale
-
----
+`project_id` e `entity_id` persistono solo tramite le Select. Il match unico può identificare INACTIVE/NULL anche se la Select non lo preseleziona nei nuovi eventi. L’UUID storico viene mantenuto in edit dal [wiring delle Select](04_LOGOS_Retool_Architecture.md#inventario-funzionale-n21). Il matcher Entity non acquisisce la regola del prefisso informativo Project. La creazione da comando rimane separata.
 
 RELAZIONE CON CREATE SUGGESTION:
+
+Nel contratto N21 l’estensione richiede una base già risolta via UUID o `singleMatch`, senza ambiguità, alternative plausibili o prefisso informativo Project. La disponibilità di nomi sul repertorio intero serve al controllo dei duplicati. Il caso G22 seguente è un esempio storico di estensione, antecedente alla qualificazione N21 di Villa Sierri con varianti numerate.
 
 Se project_state rileva un match base valido e create_suggestion_state
 individua una possibile estensione non ancora presente,
@@ -1157,35 +934,9 @@ La selezione automatica resta limitata a singleMatch prodotto da project_state /
 
 Nota post Visibility Migration Completion:
 
-la migrazione degli Hidden principali a input_analysis_result non cambia l’auto-select.
+la migrazione degli Hidden principali a input_analysis_result era una modifica di visibilità. Le Select sono ora regolate da B2/R01.
 
-select_project / select_entity restano alimentate da singleMatch.
-
----
-
-select_project:
-
-legge project_state.data.singleMatch
-
-Se singleMatch esiste:
-→ select_project = singleMatch.id
-
-Altrimenti:
-→ select_project = null
-
----
-
-select_entity:
-
-legge entity_state.data.singleMatch
-
-Se singleMatch esiste:
-→ select_entity = singleMatch.id
-
-Altrimenti:
-→ select_entity = null
-
----
+In un nuovo evento i due default leggono rispettivamente il `singleMatch` di Project ed Entity e restituiscono il suo UUID soltanto se ACTIVE. In edit restituiscono la rispettiva FK persistita o null. La scelta manuale lavora sul repertorio completo e le opzioni non ACTIVE sono disabilitate eccetto l’UUID storico invariato. La Select resta l’autorità sulla FK.
 
 NON auto-select se:
 
@@ -1484,9 +1235,7 @@ il caso “mario sopralluogo villa 2” conferma la policy corrente:
 - Conferma può restare attiva se esiste selezione effettiva
 - il warning non è bloccante nella policy attuale
 
-Nodo futuro eventuale:
-
-MATCH ENGINE — MORE SPECIFIC MATCH POLICY
+Riferimento storico alla policy pre-N21. Il comportamento effettivo su varianti pertinenti è nella sezione MATCH CON VARIANTI E PREFISSI. Il warning G22 di estensione resta distinto dagli avvisi UX sulle varianti già esistenti.
 
 ---
 
@@ -1839,6 +1588,8 @@ referente kappa
 ---
 
 AMBIGUITÀ E CREATE SUGGESTION
+
+La query consuma i campi canonici e un eventuale UUID scelto. Verifica il candidato normalizzato sulle anagrafiche complete (ACTIVE, INACTIVE e NULL), dopo pulizia dei token evento, e scarta estensioni che inglobano un nome già riconosciuto nell’altro repertorio. Evita un suggerimento Project prematuro in presenza di `prefixAlternatives`. Il confronto omonimie qui orienta la UI, mentre il preflight che precede l’INSERT anagrafico resta in N18.
 
 Se project/entity è ambiguo:
 
@@ -2480,6 +2231,8 @@ Vincoli futuri:
 
 7. MATCH ENGINE — MORE SPECIFIC MATCH POLICY
 
+Fotografia del backlog pre-N21: B1 e UX hanno già implementato le alternative pertinenti nei casi descritti nella sezione MATCH CON VARIANTI E PREFISSI. Le opzioni qui elencate oltre quel perimetro restano ipotesi.
+
 - valutare se warning “match più specifici” resta sempre non bloccante
 - esempio: Mario selezionato automaticamente con warning entità più specifiche
 - decidere se richiedere scelta manuale nei casi più delicati
@@ -2501,7 +2254,7 @@ EVOLUZIONE FUTURA NON ATTIVA
 - Input Analysis Model completo
 - eventuale decommission di ui_visibility_state
 - button_input_confirm Disabled / readiness alignment
-- Match Engine — More Specific Match Policy
+- Ulteriori evoluzioni della policy More Specific Match oltre le alternative pertinenti documentate per N21
 - creazione automatica silenziosa project/entity
 - filtro select su match ambigui
 - pending state avanzato per nuovi project/entity
@@ -2950,3 +2703,7 @@ v12 — 2026-06-04
 - confermato parser invariato
 - confermato save flow invariato
 - confermato payload invariato
+
+v13 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v14 — 2026-11-16 — N21/DOC PREPARE R03: integrate regole B1 e varianti UX nelle sezioni di matching e suggestion.

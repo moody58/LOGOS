@@ -1,7 +1,13 @@
 # 03_LOGOS_Event_Lifecycle
-Versione: v14
+Versione: v16
 
-DATA: 2026-10-27
+DATA: 2026-11-16
+
+## Conferma evento dopo N21/B2-R01
+
+Il Click applicativo preserva command guard e uscita no-op. Prima di POST/PATCH, per ogni FK nuova o sostituita invoca il GET anagrafico senza cache e usa le righe restituite per verificare UUID e ACTIVE. Se lo Stato è inammissibile o non verificabile, interrompe il salvataggio con avviso. Un UUID storico che rimane identico evita il nuovo controllo anche quando è INACTIVE o NULL. Il controllo di coerenza confronta contesto, testo, tipo e UUID prima dell'invio. Il PATCH usa `events?id=eq.{{ confirm_event_id }}`, con UUID dell'evento acquisito all'avvio e passato via `additionalScope`. Un lock in memoria copre invio e reset UI. Dopo il salvataggio il Click aggiorna la lista e gestisce il feedback. Le FK restano facoltative, salvo ambiguità bloccanti già previste.
+
+Il preflight GET e il POST/PATCH sono richieste separate. Una variazione dello Stato successiva al GET e precedente alla scrittura può sfuggire alla verifica applicativa, che non garantisce atomicità. T08 ha qualificato un solo doppio clic nella stessa UI. Idempotenza generale, più schede e retry di rete restano fuori da quella prova (P1-04). Le protezioni DB e le transizioni del ledger descritte sotto restano distinte. Si veda la [fotografia N21](LOGOS_RETOOL_RUNTIME_REAL.md) per il no-op, il PATCH con FK storiche, il blocco della race e il doppio clic osservati LIVE. Gli estratti precedenti al delta descrivono lo storico del flusso.
 
 ## Protezione del lifecycle implementata nel database
 
@@ -1029,6 +1035,8 @@ La visibilità si riallinea automaticamente leggendo input/edit_mode/ui_state.
 
 NO-OP EDIT GUARD:
 
+Il Click R01 esce subito se il lock della UI è attivo. Acquisisce poi testo, tipo e UUID delle Select insieme a modo edit ed evento originale. In edit, il command guard blocca un comando riconosciuto soltanto se il suo testo normalizzato coincide con l’input corrente. Il confronto no-op precede il preflight e conserva `updated_at`, come nel Gate B T03. Un edit reale con evento originale privo di ID si arresta con avviso.
+
 Se l’utente entra in edit mode e conferma senza modificare campi utente,
 button_input_confirm non esegue update_event.
 
@@ -1077,7 +1085,9 @@ NEW → NEW (EDIT)
 - aggiorna project_id
 - aggiorna entity_id
 - project_id/entity_id derivano da select_project/select_entity
-- select_project/select_entity sono alimentati da project_state/entity_state
+- Select alimentate dai repertori completi, con B1 nel default del flusso nuovo e FK originale nel default edit
+- FK storica identica: resta nel payload e salta il controllo di Stato. Sostituzione con UUID non vuoto: preflight ACTIVE. L’assenza di associazione resta ammessa secondo le guardie esistenti.
+- `update_event` riceve `confirm_event_id: originalEvent.id` con il payload in `additionalScope`; filtro URL `events?id=eq.{{ confirm_event_id }}`. Stato evento NEW governato dal lifecycle DB, distinto dallo Stato anagrafico.
 - aggiorna updated_at
 - al termine dell’update reale azzera edit_mode
 - al termine dell’update reale azzera editing_event
@@ -1778,9 +1788,9 @@ Output:
 
 Regole:
 
-match univoco  
-→ select valorizzata  
-→ conferma consentita  
+match univoco in creazione  
+→ Select preselezionata solo per UUID ACTIVE  
+→ match INACTIVE/NULL resta informativo; assenza FK ammessa se le altre guardie sono soddisfatte  
 
 match ambiguo non risolto  
 → select vuota  
@@ -2005,6 +2015,12 @@ Campi evento principali:
 
 Fonti runtime dei campi:
 
+**Preflight N21/B2-R01 comune a INSERT e UPDATE.** Il Click invoca in parallelo `projects_list.trigger()` e/o `entities_list.trigger()` per le sole FK non vuote nuove o sostituite. Le query sono GET senza cache secondo le proprietà acquisite in B2/R01. Usa le righe della risposta: per UUID serve esattamente una riga e Stato ACTIVE. Risposta mancante, errore, righe duplicate o Stato inatteso generano «Stato non verificabile». INACTIVE e NULL producono «Anagrafica non attiva». Un blocco conserva input e selezioni. I due repertori non sono filtrati per Stato.
+
+Prima di chiamare la query mutativa verifica di nuovo modo edit, UUID dell’evento in edit, testo, tipo e due UUID. Usa `insert_event` per nuovo evento e `update_event` per modifica. Solo dopo la risposta del save cancella debounce, resetta input e Select, mostra feedback, aggiorna con `events_new` e riallinea lo stato edit. Il lock locale `window.__logosEventConfirmPending` resta attivo fino a reset, refresh e schedulazione del ritorno dopo feedback; `finally` lo rilascia. Questo lock non copre il timer dopo la sua schedulazione né il ramo no-op che precede l’acquisizione. In caso di esito incerto avvisa di controllare la lista prima di riprovare.
+
+**Confine transazionale.** I GET e la scrittura sono separati: T07 osserva il cambio di Stato prima della rilettura, mentre un cambio fra GET e POST/PATCH può sfuggire. T08 copre il singolo doppio clic osservato nella stessa UI. Multi-tab, idempotenza generale e retry di rete restano non qualificati. I vincoli referenziali e le protezioni SQL sullo stato evento hanno un ruolo distinto.
+
 - amount / unit / event_date → ui_state.parsed
 - type → select1.value
 - project_id → select_project.value
@@ -2054,7 +2070,8 @@ EDIT INPUT COMMAND-LIKE → nessun update_event / nessuna creazione project/enti
 Dopo insert/update:
 
 button_input_confirm attende il completamento del salvataggio
-e poi aggiorna events_new.
+e poi aggiorna events_new. In N21/B2-R01 l’invio segue la verifica
+pre-persistenza e precede il reset del form.
 
 Dopo insert reale:
 
@@ -2666,6 +2683,8 @@ solo dopo stabilizzazione:
 ------------------------------------------------
 ## Revisione corrente
 
+La revisione R03 integra le transizioni e le guardie N21/B2-R01 nelle sezioni operative sopra. Le voci di changelog riportano le revisioni nelle rispettive date.
+
 v14 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
 CHANGELOG
@@ -3036,4 +3055,8 @@ v13 — 2026-06-15
   - edit flow con input evento valido
   - Annulla modifica
   - G22 20 euro villa sierri
-  - linting 0
+  - linting 0 nella fotografia storica precedente a N18; il checkpoint N18 del 6 novembre 2026 riporta 11 segnalazioni residue qualificate
+
+v15 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v16 — 2026-11-16 — N21/DOC PREPARE R03: integrati no-op, FK, preflight, PATCH e limiti transazionali nelle sezioni del lifecycle.

@@ -1,9 +1,15 @@
 # 06_LOGOS_View_Preview_System
-Versione: v17
+Versione: v19
 
-DATA: 2026-11-12
+DATA: 2026-11-16
 
-## Contratto corrente N19 — selezione effettiva e warning Project/Entity
+## Contratto corrente N21 — avvisi di associazione
+
+`preview_analysis_state` costruisce gli avvisi di Stato e le alternative. `sintesi` riusa «Da verificare», codifica i testi e le etichette provenienti dalle anagrafiche prima dell'HTML e applica l'evidenziazione a segmenti di testo. INACTIVE è riconosciuto e inattivo; NULL è riconosciuto e con Stato da definire. La lista presenta fino a cinque risultati, con conteggio degli altri. Le alternative ACTIVE sono preferite nell'elenco; se tutte sono inammissibili l'avviso indirizza alle Anagrafiche. Le alternative di un nome esatto informano senza cambiare preselezione o blocchi. Una FK storica già selezionata evita l'avviso di nuova associazione vietata.
+
+`Cucciolata Marzo` mostra 2025/2026 senza preselezione o invito a duplicare. `Casa Mar` e `Villa Sierri` mantengono l'ambiguità B1 con nomi visibili. I due `Cliente Test` hanno etichette distinte nella Select Entity e valori UUID originali. Gli avvisi non introducono nuovi blocchi per un evento senza associazioni. Le evidenze desktop, responsive e simulate sono descritte nella [fotografia N21](LOGOS_RETOOL_RUNTIME_REAL.md). Il contratto N19 sotto resta valido per la distinzione tra nome selezionato e testo letto.
+
+## Contratto N19 — selezione effettiva e warning Project/Entity
 
 Il nome effettivamente selezionato è selectedProject / selectedEntity, già risolto dall'UUID presente in select_project.value / select_entity.value. Nel ramo corrispondente preview_analysis_state usa quel nome sia nella guardia sia nel messaggio, insieme a requiresUserOverride, candidateName e alle guardie preesistenti. projectSuggestion.baseName / entitySuggestion.baseName rimangono dati della suggestion: non provano quale record sia selezionato.
 
@@ -260,7 +266,7 @@ Regole consolidate:
 - canShowConfirm = visibilità del bottone Conferma
 - canConfirm = readiness funzionale
 - button_input_confirm.Disabled = guard funzionale separata
-- button_input_confirm payload = invariato
+- forma dei dati evento invariata in questa fotografia di visibilità; in N21/B2-R01 il Click aggiunge il preflight e il PATCH riceve l’UUID evento in `confirm_event_id`
 - insert_event / update_event = invariati
 
 ui_visibility_state:
@@ -1424,7 +1430,7 @@ Regola Conferma:
 - canShowConfirm = visibilità bottone Conferma
 - canConfirm = readiness funzionale
 - button_input_confirm.Disabled = guard funzionale separata
-- button_input_confirm payload = invariato
+- forma dei dati evento invariata in questa fotografia di visibilità; in N21/B2-R01 il Click aggiunge il preflight e il PATCH riceve l’UUID evento in `confirm_event_id`
 
 Componenti NON migrati perché routing principale app:
 
@@ -1947,13 +1953,15 @@ La logica che decide se esistono hint, warning, ambiguità o stati “Da verific
 La card resta visualmente nella Sintesi,
 ma la fonte logica primaria non è più interamente embedded nel codice Sintesi.
 
+Da N21 il transformer fornisce anche avvisi di Stato e alternativi. La card riusa la resa di Sintesi con escaping per nome e messaggio. I controlli G22 continuano a distinguere nome risolto dall’UUID e testo della candidate.
+
 Nota post G22:
 
 La card Da verificare segnala anche il rischio decisionale nei casi:
 
 match presente + suggestion extension
 
-Nota temporale: gli esempi G22 seguenti conservano gli output originari. La sorgente corrente del nome selezionato e la guardia sono quelle del contratto N19 in apertura; il residuo status OK/card Da verificare (G35) resta aperto.
+Nota temporale: gli esempi G22 seguenti conservano gli output originari, prima di N21. Villa Sierri con varianti già presenti segue oggi il caso di ambiguità descritto in Guida associazione N21. Il nome selezionato e la guardia G22 rispettano il contratto N19; il residuo status OK/card Da verificare (G35) resta aperto.
 
 Esempi:
 
@@ -2341,6 +2349,23 @@ Aggiornamento Project / Entity Create Suggestion First Controlled Level:
 - entity autofill controlled minimal precompila input_new_entity_name, ma non è preview
 
 COMPORTAMENTO MATCHING IN PREVIEW
+
+### Guida associazione N21
+
+`preview_analysis_state` legge i match canonici, gli UUID effettivi delle Select, il contesto edit e le suggestion. Con ambiguità irrisolta usa `matches` e preserva il blocco già previsto dal contratto. Con match unico descrive INACTIVE come esistente ma inattivo e NULL come Stato non definito. Se l’UUID selezionato è la stessa FK storica in edit, omette l’avviso di nuova associazione vietata. Le varianti di un match unico vengono annotate se manca la scelta o se la scelta coincide col match. Senza selezione e senza match unico, il prefisso del Project può alimentare un avviso informativo.
+
+Per ogni elenco deduplica per UUID, ordina prima gli ACTIVE e mostra fino a cinque nomi con disponibilità e conteggio degli altri. Suggerisce l’uso della Select se c’è almeno un’ACTIVE; altrimenti rimanda allo Stato nelle Anagrafiche. In `sintesi.value` nomi, etichette di selezione e testi degli avvisi sono sottoposti a escaping HTML. L’evidenziazione usa regex con nome escaped e lavora sui segmenti testuali; il markup viene creato soltanto nel rendering. Il delta non estende le garanzie di sicurezza a campi estranei alla modifica.
+
+| Caso | Esito applicativo |
+| --- | --- |
+| Mario e varianti | Match esistente NULL; Mario Rossi e Mario Rossi Alfredo leggibili come indisponibili. Nessun UUID preselezionato. |
+| Aurora Nord / Sud | INACTIVE e NULL distinti; Select nuova vuota. Aurora ACTIVE resta preselezionabile. |
+| Cucciolata Marzo | 2025 e 2026 informative. Nessuna preselezione o invito a creare il Project incompleto. |
+| Villa Sierri / Casa Mar | Ambiguità canonica e nomi pertinenti in Da verificare. Casa Mare esatta conserva il default ACTIVE. |
+| Cliente Test | Due UUID distinti, etichette con suffisso UUID e disponibilità come da Stato. |
+| Edit con FK storica | Prevenzione dell’avviso improprio verificata in simulazione UX; preservazione della FK dimostrata dal Gate B T05 per il percorso B2. |
+
+Le associazioni restano facoltative secondo il contratto di Conferma. Preview e Sintesi non applicano nuovi vincoli di persistenza. [Riepilogo delle prove UX e dei viewport](LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026).
 
 Nota canonica:
 
@@ -3036,6 +3061,8 @@ Regola:
 
 la Preview non salva direttamente.
 Il salvataggio avviene solo tramite button_input_confirm e le fonti salvabili finali.
+
+Il [Lifecycle N21](03_LOGOS_Event_Lifecycle.md#conferma-evento-dopo-n21b2-r01) qualifica le verifiche delle FK nuove prima di POST/PATCH e il mantenimento della FK storica. L’ID del PATCH proviene dall’evento catturato dal Click.
 
 Dati salvati:
 
@@ -4282,3 +4309,7 @@ v17 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Recepiti i checkpoint Work Project T1–T3 ed Entity E1–E3 PASS, con provenienza e limiti dichiarati.
 - R1 risolto nel perimetro delle prove; G35 e R2 distinti, storia G22/N18 preservata.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
+
+v18 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v19 — 2026-11-16 — N21/DOC PREPARE R03: integrati avvisi, alternative, omonimi, storico ed escaping nel sistema Preview.

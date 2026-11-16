@@ -1,7 +1,7 @@
 # 00_PROJECT_System
-Versione: v11
+Versione: v12
 
-DATA: 2026-11-12
+DATA: 2026-11-16
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -223,7 +223,7 @@ La UI:
 - normalizza durate certe ore/minuti
 - classifica type a livello base
 - calcola match state project/entity
-- alimenta select_project/select_entity tramite singleMatch
+- in creazione preseleziona Project/Entity solo da singleMatch ACTIVE; in modifica conserva la FK storica invariata
 - gestisce ambiguità project/entity non risolte
 - costruisce preview
 - guida decisione utente
@@ -368,7 +368,13 @@ LIVELLI FUTURI:
 21. ECONOMIC DIRECTION ADVANCED
 22. OUTPUT / ANALYTICS LAYER
 
-La gestione anagrafica Base è attiva nei perimetri N16/N18/N20. G11 e M04 restano parziali per gerarchie/metadata avanzati, policy di matching, filtri e UX-06. Le omonimie concorrenti non sono protette atomicamente.
+La gestione anagrafica Base è attiva nei perimetri N16/N18/N20. Nella
+Draft N21, il matching B1, i filtri ACTIVE di B2/R01 per le nuove associazioni
+e la guida UX su Stati, alternative e omonimi sono implementati e verificati
+nei rispettivi casi di collaudo. Il Publish Retool non è attestato.
+G11 e M04 restano parziali per le funzionalità avanzate, comprese gerarchie
+e metadata, e per l'eccezione UX-06 ancora da attuare. La protezione dalle
+omonimie concorrenti rimane non atomica.
 
 Nota post Visibility Migration Completion:
 
@@ -719,16 +725,16 @@ Strategia attuale:
 - full name match
 - priority match minimo
 - rimozione match generici coperti da match specifici
-- auto-select solo tramite singleMatch
+- nel flusso nuovo, preselezione solo per singleMatch ACTIVE
 - nessuna inferenza definitiva
 - nessuna creazione automatica project/entity
 
 Regole:
 
-match univoco
-→ singleMatch
-→ select_project/select_entity valorizzata
-→ conferma consentita
+match univoco in creazione
+→ singleMatch, anche per record INACTIVE o NULL
+→ Select preselezionata soltanto se ACTIVE
+→ con Select vuota, la Conferma segue le guardie già previste per gli eventi senza associazione
 
 match ambiguo non risolto
 → isAmbiguous = true
@@ -738,14 +744,14 @@ match ambiguo non risolto
 
 match ambiguo risolto manualmente
 → select valorizzata dall’utente
-→ conferma consentita
+→ superata la guardia di ambiguità; il preflight sulle nuove FK resta applicabile
 
-nessun match
-→ select vuota
-→ project_id/entity_id null
-→ conferma consentita
+nessun match nel flusso nuovo
+→ Select non preselezionata
+→ project_id/entity_id null in assenza di scelta manuale
+→ conferma soggetta alle altre guardie
 
-Esempi:
+Esempi storici di riconoscimento testuale (lo Stato decide l'associabilità):
 
 villa 2 mario
 → project Villa 2
@@ -772,7 +778,7 @@ nessun fuzzy matching
 nessun alias system
 nessuna gerarchia entity/project
 nessuna deduplicazione
-nessuna creazione guidata project/entity
+Il Match Engine non crea anagrafiche Project/Entity. La creazione guidata è gestita dal livello separato di suggestion e dai flussi canonici N18.
 nessun ranking avanzato
 
 ------------------------------------------------
@@ -798,8 +804,10 @@ Componenti:
 
 Funzione:
 
-proporre creazione project/entity quando l’input evento ordinario
-non trova associazioni controllate.
+Proporre la creazione guidata nel flusso evento ordinario quando
+la suggestion riconosce un candidato coerente. In presenza di alternative
+plausibili, o di varianti Project per prefisso comune, N21 privilegia
+l'informazione sulle voci esistenti.
 
 Regole:
 
@@ -814,7 +822,7 @@ Regole:
 Limiti:
 
 - suggestion create vs edit consistency da verificare
-- project creation override con match generico non implementato
+- un'estensione suggerita può richiedere una scelta esplicita; la proposta non sostituisce automaticamente l'associazione
 - entity/project hierarchy non implementata
 
 ------------------------------------------------
@@ -1190,7 +1198,8 @@ salva raw_input
 salva type
 salva amount/unit/event_date
 salva project/entity se selezionati
-blocca conferma solo se ambiguità project/entity non risolta
+blocca la conferma in caso di ambiguità Project/Entity non risolta
+controlla con preflight applicativo lo Stato ACTIVE di ogni nuova FK
 
 Update:
 
@@ -1198,7 +1207,8 @@ modifica evento NEW
 mantiene status NEW
 aggiorna type
 aggiorna amount/unit/event_date
-aggiorna project_id/entity_id se modificati
+aggiorna project_id/entity_id se modificati, con preflight ACTIVE sulle nuove FK
+mantiene le FK storiche invariate
 aggiorna type
 aggiorna updated_at
 aggiorna lista dopo save completato
@@ -1319,11 +1329,21 @@ il limite è accettato, non trasformato in garanzia del database.
 
 Prove: R03 e A1 persistenza storica; A2 PASS circoscritto; A3 8/8 manuali
 su desktop e Safari iPhone. Nessuna nuova verifica live in A4.
-Inventario, query, handler e limiti tecnici: 04_LOGOS_Retool_Architecture;
-fotografia dell'export: LOGOS_RETOOL_RUNTIME_REAL. Gestione modificabile dello Stato, trattamento degli inattivi, politica
-generale sui NULL storici e default ACTIVE per nuove Entity restano
-capacità differite; la preservazione dei NULL nei salvataggi già provati
-rimane attestata nei checkpoint pertinenti.
+Inventario, query e limiti tecnici: [Retool Architecture](../01_RUNTIME_LOGOS/04_LOGOS_Retool_Architecture.md).
+Fotografie e prove: [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md).
+
+- N18 crea Project ed Entity con ACTIVE esplicito tramite il flusso
+  canonico, a prescindere dal default del database.
+- N20 consente di scegliere ACTIVE o INACTIVE nell'Editor. «Mantieni stato
+  attuale» conserva anche NULL.
+- N21 conserva il repertorio completo. Le nuove associazioni ordinarie
+  richiedono ACTIVE. INACTIVE e NULL restano riconoscibili e consultabili,
+  con le FK storiche invariate preservate in modifica. I NULL legacy
+  rimangono tali fino a una classificazione esplicita, senza migrazione
+  automatica. UX-06, per l'associazione eccezionale, resta fuori dal perimetro.
+  Il [preflight applicativo](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md)
+  precede la scrittura con una lettura separata, con il limite di concorrenza
+  documentato per N21.
 
 FLOW COMPLETO SISTEMA — SNAPSHOT STORICO DEL FLOW EVENTI PRE-N16
 
@@ -1702,7 +1722,7 @@ dati storici non retro-normalizzati
 lifecycle senza versioning
 output non attivo
 micro-flash feedback project/entity ancora presente
-linting Retool azzerati dopo Linting / Retool Query Safety Pass
+Linting Retool: lo zero dopo il Linting / Retool Query Safety Pass è un risultato storico pre-N18. L’ultima verifica N18 registrava 11 segnalazioni residue qualificate.
 cleanup obsolete UI guards / query reduction non ancora eseguito
 alias guida edit generici non implementati
 creazione guidata project/entity implementata a primo livello controllato
@@ -2002,3 +2022,5 @@ v10 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per revie
   pubblicazione o completamento definitivo A4 attestati.
 
 v11 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Aggiornati quadro capacità, layer anagrafico e limiti G11/M04 senza estendere schema, lifecycle o release.
+
+v12 — 2026-11-16 — N21/DOC, proposta PREPARE. Riconciliati Architettura Funzionale, gestione anagrafica e passaggi collegati di matching, suggestion e conferma con N18/N20/N21. Nessuna nuova verifica runtime o pubblicazione attestata.

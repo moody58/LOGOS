@@ -1,9 +1,106 @@
 # LOGOS_RETOOL_RUNTIME_REAL
-Versione: v27
+Versione: v29
 
-DATA: 2026-11-12
+DATA: 2026-11-16
+
+## Fotografia N21 — matching, preflight e UX nella Draft (15 novembre 2026)
+
+**DOCUMENTATO:** Retool Classic Logos `18ea4684-29de-11f1-b868-0b05f2d402b2`, Draft, `page1`. Baseline `moody58/LOGOS`, `main`, SHA `e218da2e8a1d06d0fd7524432f7b857aee2d574c`. Fonti: checkpoint Work B1, B2/R01 recupero, T01, T02 Gate A e Gate B finale, T05 recupero autonomo, pacchetto `LOGOS_N21_UX_APPLY_VERIFY_20261115.zip` e verifica responsive Work. La [provenienza delle prove N21](#provenienza-delle-prove-n21) e l’[appendice dei sorgenti](#appendice-n21--sorgenti-delle-proprietà) tracciano i riscontri nel presente documento. Gli estratti precedenti in questo documento sono fotografie datate; per i contratti correnti vedere [Match Engine](02_LOGOS_Match_Engine.md), [Retool Architecture](04_LOGOS_Retool_Architecture.md), [Lifecycle](03_LOGOS_Event_Lifecycle.md) e [Preview](06_LOGOS_View_Preview_System.md).
+
+| Fase | Evidenza |
+| --- | --- |
+| B1 Δ1–Δ2 | Source Guard e Verify 3/3, Draft salvata; smoke non persistente sui casi riportati nel checkpoint. |
+| B2/R01 Δ3–Δ4 | Sessione iniziale FALLITA per Apply parziale; recupero Source Guard 3/3 e Verify 6/6. L'URL finale è `events?id=eq.{{ confirm_event_id }}`. |
+| T01 non persistente | PASS limitato in anteprima: selezioni ACTIVE, INACTIVE/NULL, repertorio, ambiguità e assenza di scritture osservate. |
+| T02 Gate A / Gate B | **VERIFICATO LIVE.** Gate A fixture PASS. Gate B T01 selezioni, T02 INSERT EV01, T03 no-op con timestamp invariato, T04 transizioni, T05 edit storico dopo recupero, T06 opzioni non ACTIVE, T07 blocco race, T08 doppio clic con un solo INSERT. |
+| UX | Source Guard 5/5 più riferimento Entity, statico 16/16, diff 5/5, Verify 5/5. Chrome desktop **VERIFICATO LIVE** a 1478 × 931. Sicurezza HTML ed edit storico nel delta UX qualificati in simulazione. |
+| Responsive N21 | **VERIFICATO LIVE UI** in Chrome user-view `Previewing Latest`, canvas mobile, viewport effettivi 390 × 844 e 375 × 812 CSS px. M01–M06 a 390; controllo rapido Cucciolata, card, Select e scroll a 375. M07 PASS nel perimetro dei casi osservati. Touch e iPhone/Safari reale **NON VERIFICATI**. Il logo N22 conserva il residuo separato. |
+
+**T05:** prima apertura in modifica bloccata, poi apertura riuscita. Primo tentativo di UPDATE FAIL senza PATCH osservato. Diagnostica temporanea con una conferma successiva: ingresso, PATCH riuscito e rilascio lock. Click ripristinato esattamente a R01, SHA-256 `e65c20bd2217d9f55d2d19d401b9290fb1983d0abacb2b5610b879e61931cc7e`. La causa del FAIL originario resta indeterminata. La SELECT indipendente ha verificato EV01, stesso UUID e FK storiche P-A/E-A INACTIVE, testo a 52 euro e `updated_at` da 11:24:48.761 a 14:13:18.547 UTC.
+
+**Fotografia finale Gate B:** 271 eventi, EV01 ed EV02 esattamente uno ciascuno, RACE zero. EV01 `6b47abac-1505-4774-940a-ced624a3a62b`, 52 euro, Stato NEW. EV02 `06f1ea38-3c80-4ed4-bdb2-f9a02a249970`, 54 euro, Stato NEW. Entrambi associati a P-A `f6faa840-dd07-4d58-bf21-bcfa9c521a3c` ed E-A `e52119a6-0c91-4620-ac88-63653594cc8f`, finali ACTIVE. P-I INACTIVE e P-N NULL. In T07 lo Stato di P-A è cambiato dopo la selezione e prima del clic su Conferma. Le due letture Retool e zero eventi RACE in Supabase qualificano il blocco osservato. L’avviso transitorio non è stato catturato. Il test non copre una variazione nell’intervallo fra GET e POST/PATCH, che rimangono separati. T08 qualifica il singolo doppio clic eseguito nella stessa UI, con un solo INSERT e una sola riga. Idempotenza generale, più schede e retry di rete non sono stati collaudati.
+
+**Incidente antecedente al Gate B:** la preparazione aveva creato involontariamente una riga di sviluppo `07b1d9fd-0268-49d8-96ca-b7c7fe4edeaf`, già inclusa nel baseline Gate A. Nessun cleanup eseguito. App in Draft, Publish assente. La fase di verifica responsive e PREPARE documentale non ha modificato codice, schema o dati. Nessun nuovo export completo attestato.
+
+
+### Provenienza delle prove N21
+
+Le prove LIVE sono osservazioni del 14–15 novembre 2026 nei perimetri indicati. Le simulazioni restano distinte. Questa integrazione R03 effettua verifiche documentali sui byte e riusa le prove senza nuove letture LIVE.
+
+| Prova | Origine e data | Reperibilità | Esito e limite |
+|---|---|---|---|
+| N21/A e G0 | Regia N21, 13 novembre 2026 | `05_WORKSPACE/LOGOS_N21_CHECKPOINT_RIPRESA_COMPLETO_20261113.md` (fotografia locale), SHA-256 `7ad0bbbf7ffb8ecdf1ad4479c466d729b2632b056aec3f89c31b49358e56222e`; G0 nel checkpoint/mandato Work successivo, snapshot export (42). | N21/A è diagnosi statica D1–D7, decisioni Δ1–Δ5 e piano T01–T18. G0 PASS è un riscontro precedente sul riferimento export, non ripetuto in R03. |
+| B1 Prepare/Review | Preparazione del 14 novembre 2026 | `LOGOS_N21_B1_PREPARE_REVIEW_20261114(1).zip`, copia allegata alla sessione Work, report interno `LOGOS_N21_B1_PREPARE_REVIEW_20261114.md`. SHA-256 della copia `ec9b2e8c6973bd0b1be8e406c78c78bd5fb18bfc8e2234f7b65a4abdfdb2d204`. | 25/25 in preparazione, separati dal collaudo Draft. |
+| B1 Apply/Verify | Work, 14 novembre 2026 | Checkpoint conversazionale «N21/B1 · Apply e Verify» nella sessione Work del nodo. Hash autonomo non disponibile. | Source Guard e Verify 3/3, smoke Draft circoscritto. |
+| B2/R01 Prepare/Review | Preparazione del 15 novembre 2026 | `LOGOS_N21_B2_PREPARE_REVIEW_R01_20261115(1).zip`, copia allegata a Work, manifest e checkpoint interni. SHA-256 `f232d5ccb402baf5a788fb13577264d7165e39bd327a75831f0b87e3b94d072a`. | Versione R01. Il log base riporta 15/15; la review R01 riporta 16/16 includendo il lock durante il reset. |
+| B2/R01 Apply/Verify | Work, 15 novembre 2026 | Checkpoint conversazionali «N21/B2/R01» (Apply parziale) e «N21/B2/R01 · RECUPERO». Hash autonomi dei checkpoint non disponibili. | Primo Apply parziale FALLITO; recupero Source Guard 3/3 e Verify 6/6. Il Click R01 ha SHA-256 `e65c20bd2217d9f55d2d19d401b9290fb1983d0abacb2b5610b879e61931cc7e`; hash della proprietà sorgente, non del checkpoint. |
+| B2/T01 | Work, 15 novembre 2026 | Checkpoint conversazionale «N21/B2/T01 · Collaudo non persistente». Hash autonomo non disponibile. | PASS limitato alle osservazioni UI riportate. |
+| T02 Gate A | Sessione N21 principale, 15 novembre 2026 | [LOGOS_N21_B2_T02_GATE_A_PASS_20261115.md](https://chatgpt.com/library?file_id=libfile_a53bf89cd7388191a27d262734da0bb0&account_id=personal), riferimento emerso nella discussione principale. SHA-256 `e36c82fa6d1a3a33cf72d877960fc405a445ded7e45078574b098c4f1f2b5f3c` sui byte del checkpoint autonomo. | PASS fixture, SELECT separata e conteggi. |
+| T02 Gate B T01–T08 | Work, 15 novembre 2026 | Checkpoint conversazionali «N21/B2/T02 · GATE B» e «N21/B2/T02 · Gate B finale». Hash autonomi non disponibili. | PASS nei casi verificati, con T05 recuperato. SELECT indipendenti di EV01, EV02, RACE e fixture documentate nei checkpoint. |
+| T05 | Work, 15 novembre 2026 | Checkpoint conversazionali «T05 Diagnosi», «T05 Riproduzione», «T05 UPDATE», «T05 Diagnosi pre-PATCH», «T05 Recupero autonomo», tutti in N21/B2/T02 nella sessione Work. Hash autonomi non disponibili. | Blocco di apertura, FAIL iniziale del PATCH, recupero funzionale PASS con FK storiche e ripristino esatto del Click R01. Causa originaria indeterminata. |
+| UX | Work, 15 novembre 2026 | [LOGOS_N21_UX_APPLY_VERIFY_20261115.zip](https://chatgpt.com/library?file_id=libfile_724615656c5c8191af80835331d636f4&account_id=personal), checkpoint interno `CHECKPOINT_LOGOS_N21_UX_20261115.md`. SHA-256 dell’archivio `e669cee8bf4c2565a0c971cf540243534f98ae165b0778d0e8b00478c729bc3b`, calcolato sui byte resi disponibili per R02. | 16/16 statici, Verify 5/5, Chrome desktop PASS. HTML speciale ed edit storico del delta UX qualificati in simulazione. |
+| Mobile | Work, 15 novembre 2026 | `CHECKPOINT/CHECKPOINT_LOGOS_N21_MOBILE_DOC_20261115.md` in R02, sezione storica ripresa da R01. Esiti e metodo riportati anche nel Runtime Retool. | M01–M07 responsive Chrome PASS; 390 × 844 e controllo rapido 375 × 812. Touch e Safari reale non verificati. |
+
+### Piano N21/A e copertura effettiva
+
+La numerazione T01–T18 del 13 novembre appartiene al piano iniziale, distinta da T01–T08 del successivo Gate B. Le voci assorbite indicano prove di scenari equivalenti o parziali, nei limiti riportati. I casi statici del B2 citati sotto sono simulazioni.
+
+| ID | Scenario pianificato | Classificazione | Prova effettiva e confine |
+| --- | --- | --- | --- |
+| T01 | Casa esatta con Casa Mare nel repertorio | SIMULATO | B1 log T01, nessuna ambiguità per la sola variante. |
+| T02 | Casa Mar con Casa e Casa Mare | VERIFICATO | B1 log T02 simulato e UX desktop, nomi in card, niente preselezione, blocco di ambiguità preservato. |
+| T03 | Casa Mare e Casa Marina, input abbreviato | SIMULATO | B1 log T03. Villa Sierri LIVE è un altro caso di alternative multiple. |
+| T04 | Casa rispetto a casale | SIMULATO | B1 log T04. |
+| T05 | Villa 20 rispetto a 20 euro | SIMULATO | B1 log T05 e T24 coprono contesto numerico. È distinto dall’edit EV01. |
+| T06 | Villa 2 e Villa 20 distinti | SIMULATO | B1 log T06, numero esatto distinto. |
+| T07 | Mario 2 da Mario | SIMULATO | B1 log T07. |
+| T08 | Accento e parità con omonimie | SIMULATO | B1 log T08 sul matching; normalizzazione del confronto omonimi riscontrata nei sorgenti. Nessun INSERT concorrente qualificato. |
+| T09 | Match unico ACTIVE, corretto e salvabile | ASSORBITO | UX Casa Mare preselezionata. Gate B T01–T02 qualificano UUID ACTIVE scelti e salvataggio su fixture distinte. |
+| T10 | Riconoscimento unico INACTIVE | VERIFICATO | UX Aurora Nord e Gate B T06, senza scrittura evento. |
+| T11 | Riconoscimento unico NULL, nessun duplicato proposto | VERIFICATO | Mario/Aurora Sud in UX, opzioni non ACTIVE nel Gate B T06; creazione duplicata non eseguita. |
+| T12 | Creazione esplicita quando mancano alternative | ASSORBITO | B1 T10/T11 e UX 13 in simulazione; percorso N18 precedentemente collaudato e conservato. Nessuna nuova prova di creazione anagrafica N21. |
+| T13 | Omonimo esatto INACTIVE/NULL, protezione N18 | ASSORBITO | Repertorio completo e confronto statico B1; Cliente Test omonimi NULL in UX. Il preflight di creazione N18 non è stato rieseguito sul duplicato non ACTIVE. |
+| T14 | ACTIVE → INACTIVE dopo scelta | VERIFICATO | Gate B T07, RACE=0; transizione precedente al GET. |
+| T15 | Update con FK storiche INACTIVE | VERIFICATO | Gate B T05: EV01 aggiornato, stesse FK; primo FAIL conservato. |
+| T16 | Edit con sostituzione FK storica | SIMULATO | B2 statico T08 verifica nuova FK. Nessuna sostituzione FK storica persistita dal Gate B. |
+| T17 | Creazione inline e tramite comando | FUORI SCOPE | N18 preservato, nessun nuovo INSERT anagrafico da questi percorsi in N21. |
+| T18 | Cambio input durante analisi asincrona | ASSORBITO IN PARTE | B2 T12 cambia l’UUID dell’evento durante il GET e verifica il blocco. La digitazione rapida e la concorrenza del parser UI non sono state riprodotte. |
+
+### Prove Gate B e limiti
+
+| ID | Prova LIVE riusata | Evidenza / limite |
+| --- | --- | --- |
+| T01 | P-A ed E-A associabili; P-I e P-N disabilitati | Select sulla Draft, nessuna Conferma. |
+| T02 | Un POST di EV01, 51 euro, NEW | Una riga, UUID EV01 e FK attese, updated_at 11:24:48.761 UTC. |
+| T03 | No-op in edit | Nessun UPDATE, timestamp e payload invariati per EV01. |
+| T04 | P-A/E-A da ACTIVE a INACTIVE | UPDATE mirati e SELECT; EV01 invariato. |
+| T05 | Update del testo EV01 a 52 euro | Apertura iniziale bloccata, poi riuscita; primo UPDATE FAIL senza PATCH. Diagnostica temporanea, unico PATCH riuscito, SELECT stesso UUID e FK INACTIVE, timestamp 14:13:18.547 UTC. Click R01 ripristinato, nessun fix definitivo, causa originaria indeterminata. |
+| T06 | P-A, P-I, P-N ed E-A restano nel repertorio | Opzioni non ACTIVE disabilitate per nuovi eventi, nessun salvataggio. |
+| T07 | P-A selezionato, aggiornato a INACTIVE prima della Conferma | Due letture Retool, zero eventi RACE, avviso transitorio non acquisito. P-A tornato ACTIVE. Finestra GET→POST/PATCH non coperta. |
+| T08 | Un doppio clic sulla CTA nella stessa UI | Un solo INSERT, un EV02 di 54 euro. Nessuna prova di idempotenza universale, multi-tab o retry. |
+
+EV01 `6b47abac-1505-4774-940a-ced624a3a62b`; EV02 `06f1ea38-3c80-4ed4-bdb2-f9a02a249970`. Stato NEW per entrambi. Rilevazione finale 271 eventi, 1 EV01 / 1 EV02 / 0 RACE. P-A `f6faa840-dd07-4d58-bf21-bcfa9c521a3c` ed E-A `e52119a6-0c91-4620-ac88-63653594cc8f` sono le FK di entrambi e risultano ACTIVE alla fine. P-I `bf951f5a-2c01-4476-8e02-2d10033ebe3c` INACTIVE e P-N `b8005d02-f8e4-474a-99af-1c19033e01e3` NULL. L’evento accidentale precedente `07b1d9fd-0268-49d8-96ca-b7c7fe4edeaf` è già nel baseline Gate A di 269 eventi. Nessun cleanup.
+
+**Gate A:** nella transazione autorizzata, tre fixture Project e una Entity in `logos_template`, ref `utvwefciuxtwoqvvcwel`; SELECT separata dopo la scrittura. Projects 35 → 38, Entities 32 → 33, eventi 269 → 269 e nessun marker N21T02. Gli Stati di avvio erano P-A/E-A ACTIVE, P-I INACTIVE e P-N NULL. La riga accidentale antecedente, prodotta da un clic durante l’ispezione, era già nel conteggio iniziale e non appartiene ai risultati Gate B.
+
+### Verifica responsive N21
+
+I test a 390 × 844 CSS px sono stati osservati nella user-view Chrome «Previewing Latest», canvas mobile. A 375 × 812 sono stati ricontrollati Cucciolata, card, Select e scroll. La Preview interna dell’editor non mostrava il form a 390 px; il collaudo riguarda la user-view della medesima Draft. Touch e iPhone/Safari reale non verificati. I casi di sicurezza HTML, collisione di prefissi UUID, alternative miste sintetiche ed edit storico nel delta UX sono stati qualificati in simulazione. Su desktop la UI è stata osservata a 1478 × 931.
+
+| Test | Risultato live UI |
+|---|---|
+| M01 Cucciolata Marzo | 2025 e 2026 disponibili e leggibili. Select vuota e nessuna proposta di creare il Project. Ripetuto a 375. |
+| M02 Mario | Stato non definito, varianti Rossi e Rossi Alfredo indisponibili. Entità vuota. |
+| M03 Aurora Nord | Avviso esplicito INACTIVE, Project vuoto e opzione UUID attesa disabilitata. |
+| M04 Cliente Test | Due etichette leggibili con suffissi `d4c20086` e `211b43e2`. Gli UUID delle opzioni sono distinti, entrambe disabilitate. |
+| M05 Casa Mare | Project Casa Mare preselezionato. |
+| M06 Villa Sierri | Quattro varianti numerate leggibili, con Villa base presente. Nessuna preselezione e blocco canonico preservato. |
+| M07 layout | Nessuno scroll orizzontale della pagina rilevato nei due viewport (scrollWidth pari al viewport). Card e avvisi leggibili, screenshot di verifica a 375. Con scroll verticale, Select aperta e CTA raggiungibile senza attivarla. Nessuna sovrapposizione bloccante osservata. |
+
 
 ## Fotografia N20 — Editor Stato nella Draft (12 novembre 2026)
+
+La fotografia precede i filtri applicativi N21/B2-R01. L’Editor Stato N20 e il gate delle nuove associazioni N21 agiscono su percorsi distinti.
 
 Logos Classic, Draft UUID `18ea4684-29de-11f1-b868-0b05f2d402b2`, nessun Publish. Per il contratto corrente e la matrice proprietà vedere `04_LOGOS_Retool_Architecture.md`. Il delta verificato è di due Select nuovi (`select_edit_project_status_anag`, `select_edit_entity_status_anag`) e sei proprietà esistenti: Click dei due Modifica, Click e Disabled dei due Salva. Quattro Click riletti identici alle postimage. Per i due Disabled Retool ha aggiunto soli spazi finali. Nessuna nuova query o nuovo export integrale attestato.
 
@@ -61,7 +158,7 @@ R2 Dirty projects_list resta escluso e irrisolto; G35 Status Semantics Alignment
 
 **R1 — osservazione storica N18, risolta da N19:** `preview_analysis_state` conservava dopo T1B la dicitura «Villa selezionato», incoerente con Select e Sintesi che indicavano il Project appena creato. **R2 — stato editor:** `projects_list` in una vecchia scheda Chrome ha una copia Dirty con transformer visibile; versione salvata della Draft `enableTransformer: false` confermata, nessun Save/Save & Run/scarto. R1 e R2 non sono implementazioni o correzioni N18. Il limite di omonimie concorrenti su normalizzazione resta accettato, non protetto atomicamente.
 
-Le decisioni N17 su stato Editor, filtri `INACTIVE`/`NULL` e associazione eccezionale UX-06 **non sono implementazioni** dell'N18. Nessun test in questo sottolotto documentale né modifiche DB/Retool. Il 9 novembre sono stati riletti in sola lettura gli otto script finali e il sorgente condiviso: chiusura/reset inline indipendenti dal refresh, selezione condizionata, cleanup e feedback Command Intent con testo differenziato. Non sono stati attivati Run, Test, Save o Publish e la vecchia copia Dirty non è stata toccata. Per preflight, risposte e ordine delle query si rimanda a `04_LOGOS_Retool_Architecture.md`, senza duplicarne il contratto completo. L'identificativo, le prove e i contatori del paragrafo N16 seguente restano **snapshot precedenti** alla Draft N18.
+Le decisioni N17 su stato Editor, filtri `INACTIVE`/`NULL` e associazione eccezionale UX-06 **non sono implementazioni** dell'N18. I filtri ordinari sono documentati più avanti nella successione delle release, in N21/B2-R01. N20 tratta invece l’Editor Stato. UX-06 resta pendente. Nessun test in questo sottolotto documentale né modifiche DB/Retool. Il 9 novembre sono stati riletti in sola lettura gli otto script finali e il sorgente condiviso: chiusura/reset inline indipendenti dal refresh, selezione condizionata, cleanup e feedback Command Intent con testo differenziato. Non sono stati attivati Run, Test, Save o Publish e la vecchia copia Dirty non è stata toccata. Per preflight, risposte e ordine delle query si rimanda a `04_LOGOS_Retool_Architecture.md`, senza duplicarne il contratto completo. L'identificativo, le prove e i contatori del paragrafo N16 seguente restano **snapshot precedenti** alla Draft N18.
 
 ## Snapshot storico N16 — Editor Project/Entity Base (2 novembre 2026)
 
@@ -307,7 +404,7 @@ C (Completezza): 10/10
 - ui_visibility_mode confermato come latch leggero empty / event / command documentato
 - routing principale container_home / container_feedback / container_events_list confermato su ui_state.view documentato
 - Linting / Retool Query Safety Pass documentato
-- linting Retool azzerati documentati
+- linting Retool azzerati nella fotografia pre-N18; finale N18: 11 residui qualificati
 - typing_state eliminato come query legacy unused documentato
 - handle_event_success eliminato come query legacy unused documentato
 - Performance unused query risolta documentata
@@ -388,7 +485,7 @@ Q (Qualità): 9.5/10
 - ui_visibility_state non più letto da input_analysis_result
 - ui_visibility_state riclassificato come residuo tecnico deprecabile
 - routing principale app mantenuto su ui_state.view
-- rumore tecnico Retool ridotto con linting azzerati
+- rumore tecnico Retool ridotto nella fotografia pre-N18; finale N18: 11 residui qualificati
 - query legacy unused rimosse senza regressioni
 - approccio modulare confermato: moduli specializzati calcolano, input_analysis_result compone
 - chiarito che il micro-flash container_input è residuo di rendering/timing Retool non bloccante
@@ -475,7 +572,7 @@ D (Deployabilità): 10/10
 - input_analysis_result non dipende più da ui_visibility_state
 - graph Retool verificato post-rimozione dipendenza
 - nodo Linting / Retool Query Safety Pass validato runtime
-- linting Retool portati a 0
+- linting Retool portati a 0 nella fotografia pre-N18; finale N18: 11 residui qualificati
 - typing_state eliminato e testato
 - handle_event_success eliminato e testato
 - Performance unused query risolta
@@ -514,7 +611,7 @@ D (Deployabilità): 10/10
 - edit flow input evento valido validato con update_event corretto
 - Annulla modifica validato
 - G22 20 euro villa sierri non regressivo
-- linting Retool 0 dopo rollback e micro-fix locali
+- linting Retool 0 dopo rollback e micro-fix locali nella fotografia pre-N18; finale N18: 11 residui qualificati
 
 ------------------------------------------------
 STATO
@@ -1514,6 +1611,8 @@ Regole:
 PREVIEW_ANALYSIS_STATE
 ------------------------------------------------
 
+**Contratto N21/UX.** Il transformer compone l’avviso INACTIVE/NULL e gli elenchi di alternative con disponibilità, al massimo cinque voci visualizzate e conteggio residuo. Legge gli UUID delle Select e la FK in `editing_event` per riconoscere lo storico conservato. `sintesi.value` rende i testi con escaping e applica i colori ai segmenti di testo. I blocchi originari e la visibilità canonica rimangono quelli precedenti. Le formule G22 che seguono sono fotografie pre-N21, salvo riferimenti espliciti al contratto N19/N21.
+
 Tipo:
 
 Transformer Retool read-only
@@ -2324,6 +2423,8 @@ button_input_confirm.disabled
 
 OUTPUT STANDARD project_state / entity_state:
 
+**Fotografia pre-N21.** I campi base sotto restano validi. Le query B1 aggiungono `plausibleAlternatives` e `hasPlausibleAlternatives`; solo Project riceve poi `prefixAlternatives` in UX. Per regole e output effettivi vedere [Match Engine](02_LOGOS_Match_Engine.md#match-con-varianti-e-prefissi).
+
 - matches
 - count
 - hasMatch
@@ -2373,22 +2474,16 @@ alfie mario rossi → ambiguità reale
 
 AUTO-SELECT:
 
-solo tramite singleMatch
-
-select_project:
-→ legge project_state.data.singleMatch
-
-select_entity:
-→ legge entity_state.data.singleMatch
+In nuova associazione, il default restituisce UUID solo per singleMatch ACTIVE. INACTIVE/NULL rimangono visibili nel repertorio. In edit il default restituisce la FK storica, con eccezione per quello stesso UUID nel mapping Disabled. Le fonti salvabili sono i valori UUID delle Select, senza cambi al data/value mapping.
 
 ---
 
 COMPORTAMENTO:
 
-match univoco:
+match univoco in nuovo evento:
 → singleMatch valorizzato
-→ select_project/select_entity valorizzati
-→ conferma abilitata
+→ Select preselezionata se ACTIVE
+→ INACTIVE/NULL riconoscibile, Select vuota e nessun nuovo blocco per la sola assenza di associazione
 
 match ambiguo non risolto:
 → isAmbiguous = true
@@ -4259,7 +4354,7 @@ button_input_confirm.Hidden:
 
 {{ !input_analysis_result.value?.readiness?.canShowConfirm }}
 
-Stato attuale post G33:
+Fotografia post G33, antecedente al Click R01. Le regole di visibilità e Disabled restano quelle acquisite; il Click N21 applica anche preflight a nuove FK e controllo di coerenza.
 
 - button_input_confirm.Hidden migrato
 - canShowConfirm introdotto come flag visibility-only
@@ -4324,6 +4419,8 @@ command riconosciuto durante edit mode
 → nessun insert_project / insert_entity
 
 INSERT_EVENT
+
+**Contratto N21/B2-R01.** Il Click verifica le nuove FK non vuote mediante GET dei repertori senza cache e controlla il contesto catturato prima di invocare il POST. Il body e `status: "NEW"` restano quelli dell’endpoint. Gli esempi successivi sono osservazioni storiche pre-N21. Per gli esiti Gate B e i limiti operativi vedere la fotografia N21.
 
 Trigger:
 
@@ -4398,6 +4495,8 @@ villa 2 mario
 → status NEW
 
 UPDATE_EVENT
+
+**Contratto N21/B2-R01.** Parametro URL `id`: `eq.{{ confirm_event_id }}` da `additionalScope`, con l’UUID originale acquisito dal Click. Le FK storiche invariate sono inviate senza GET di Stato. Le FK nuove sono soggette allo stesso preflight del POST. Il no-op non invia PATCH. Le validazioni sotto che precedono N21 non attestano il percorso R01; il riscontro qualificato per FK storiche è il Gate B T05.
 
 Trigger:
 
@@ -5349,7 +5448,9 @@ PRINCIPI RUNTIME
 
 STATO RUNTIME
 
-Runtime attuale:
+**Fotografia storica pre-N21.** Per i delta su matching, Default value, Click e Sintesi valgono il contratto e le prove N21. I controlli sotto restano esiti datati, inclusi quelli di manutenzione e linting.
+
+Runtime della fotografia:
 
 ✔ funzionante
 ✔ stabile su insert
@@ -7805,6 +7906,2151 @@ v23 — 2026-11-02 — Fotografia documentale Editor Base N16 da checkpoint ed e
 
 v22 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
+## Appendice N21 — sorgenti delle proprietà
+
+Riferimento funzionale: Draft Retool Classic Logos verificata il 15 novembre 2026, pagina `page1`. I sorgenti provengono dalle postimage conservate in B1, B2/R01 e UX. Le query Project e suggestion riportano la versione UX; Entity mantiene B1. Il Click è R01 dopo la rimozione integrale della strumentazione T05. I pacchetti originali e i checkpoint sono elencati nella sezione [Provenienza delle prove N21](#provenienza-delle-prove-n21). Le formulazioni o gli estratti in snapshot storici restano legati alle rispettive date. Non è un export completo della Draft o una verifica della versione pubblicata.
+
+La lunghezza e l’indicazione del terminatore si riferiscono ai byte UTF-8 originali. Quando il sorgente non termina con un newline, il carattere prima della chiusura del blocco fa parte della sola cornice Markdown.
+
+| ID | Proprietà | Origine finale | SHA-256 | Byte e terminatore |
+| --- | --- | --- | --- | --- |
+| 01 | `project_state.query` | B1 → UX | `741d0017b34d9868b24aaa7eb3228eb5af4697c9da76b9b772f405d5f844b309` | 6350, senza LF finale |
+| 02 | `entity_state.query` | B1 | `7eb43f265c94f93e40c32f9afbfb8f99b32dbad727ba817d7d774575cf1c856d` | 5198, senza LF finale |
+| 03 | `create_suggestion_state.query` | B1 → UX | `d80c62472314c428124981c69ebcc0b72e0e1d933d27569b33aa15397e0e596c` | 14336, senza LF finale |
+| 04 | `select_project.defaultValue` | B2/R01 | `30d64988cf7421615771411ec93701a969d1812584fe40f085a787679df712b0` | 260, senza LF finale |
+| 05 | `select_project.mappedOptionDisabled` | B2/R01 | `b06771716774e705a1dede6cbd2acf45d37067f1d485aa5606e716d7c556636a` | 106, senza LF finale |
+| 06 | `select_entity.defaultValue` | B2/R01 | `20ffd2f446cac550f145f33a7769b396733cafc216672a1539f817ab0cef2d58` | 258, senza LF finale |
+| 07 | `select_entity.mappedOptionDisabled` | B2/R01 | `4de3ddf046fc12c5f15988540145710baaf261dde3d9849bfee2b7bad35ece97` | 105, senza LF finale |
+| 08 | `button_input_confirm.click` | B2/R01 | `e65c20bd2217d9f55d2d19d401b9290fb1983d0abacb2b5610b879e61931cc7e` | 9816, senza LF finale |
+| 09 | `update_event.urlParameter.id` | B2/R01 | `76784dde637aa106257ec6e5d38fbc1e3aa7e585e59f61ba47eb14b219b34125` | 25, senza LF finale |
+| 10 | `preview_analysis_state.funcBody` | UX | `489e7bac944d2a1ee590cba2184c2e24965b01fbda84f98a1398756671222cf1` | 9698, senza LF finale |
+| 11 | `sintesi.value` | UX | `b5ebc7d5c8d8346bb0a58fe47fadfbe736ed6946e7d5ecc483431221ede151c3` | 14353, senza LF finale |
+| 12 | `select_entity.labels` | UX | `ab2de6eeb0129525ca180a0a82f54e66b56fec3d56f161badac5b52ee868ec17` | 461, senza LF finale |
+
+### 01 · `project_state.query`
+
+```javascript
+const text = input_raw.value?.trim() || "";
+const projects = projects_list.data || [];
+
+const normalize = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const escapeRegex = (str) =>
+  String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const cleanText = normalize(text);
+
+if (!cleanText || cleanText.length < 3) {
+  return {
+    matches: [],
+    count: 0,
+    hasMatch: false,
+    isAmbiguous: false,
+    singleMatch: null,
+    moreSpecificMatches: [],
+    hasMoreSpecificMatches: false,
+    plausibleAlternatives: [],
+    hasPlausibleAlternatives: false,
+    prefixAlternatives: []
+  };
+}
+
+// Token testuali a confine parola: un nome non deve coincidere con una sottostringa.
+const inputWords = cleanText.match(/[a-z0-9]+/g) || [];
+
+const hasFullNameInText = (name) => {
+  const cleanName = normalize(name);
+  if (!cleanName) return false;
+
+  const parts = cleanName
+    .split(" ")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (!parts.length) return false;
+
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+  return regex.test(cleanText);
+};
+
+const baseMatches = projects.filter((p) => {
+  const name = normalize(p.name);
+  if (!name) return false;
+
+  const nameTokens = name.match(/[a-z0-9]+/g) || [];
+  const meaningfulWords = nameTokens.filter((w) => w.length > 2 && !/^\d+$/.test(w));
+
+  // Nome numerico: richiediamo la frase completa, non un numero ricavato
+  // accidentalmente dall'importo/durata/data dell'evento.
+  if (nameTokens.some((w) => /^\d+$/.test(w))) {
+    if (!hasFullNameInText(p.name)) return false;
+
+    // Se dopo il nome numerico compare subito un'unita' di misura,
+    // il numero puo' appartenere al valore dell'evento: scelta manuale.
+    const pattern = name.split(" ").map(escapeRegex).join("\\s+");
+    const numericValueContext = new RegExp(
+      `\\b${pattern}\\b\\s*(?:\\b(?:euro|eur|ora|ore|h|min|minuto|minuti)\\b|€)`, "i"
+    ).test(cleanText);
+    return !numericValueContext;
+  }
+
+  // Evita il match vacuo su nomi brevi (es. "A", "2").
+  return hasFullNameInText(p.name) ||
+    (meaningfulWords.length > 0 && meaningfulWords.every((w) => inputWords.includes(w)));
+});
+
+// Priorità ai nomi completi realmente presenti nel testo
+const fullNameMatches = baseMatches.filter((p) =>
+  hasFullNameInText(p.name)
+);
+
+let candidates = baseMatches;
+
+if (fullNameMatches.length > 0) {
+  candidates = fullNameMatches;
+}
+
+// Rimuove match generici coperti da match più specifici.
+// Esempi:
+// Casa + Casa Mare → Casa Mare
+// Ristrutturazione + Ristrutturazione Bagno → Ristrutturazione Bagno
+// Villa + Villa 2 → Villa 2
+candidates = candidates.filter((p) => {
+  const name = normalize(p.name);
+
+  return !candidates.some((other) => {
+    if (other.id === p.id) return false;
+
+    const otherName = normalize(other.name);
+
+    return (
+      otherName.length > name.length &&
+      (` ${otherName} `).includes(` ${name} `)
+    );
+  });
+});
+
+// Questa è la corrispondenza prima di valutare eventuali varianti
+// digitate parzialmente. Le varianti plausibili richiedono scelta manuale.
+const baseSingleMatch = candidates.length === 1 ? candidates[0] : null;
+let moreSpecificMatches = [];
+
+if (baseSingleMatch) {
+  moreSpecificMatches = projects.filter((p) => {
+    if (p.id === baseSingleMatch.id) {
+      return false;
+    }
+
+    const baseName = normalize(baseSingleMatch.name);
+    const otherName = normalize(p.name);
+
+    if (!baseName || !otherName) {
+      return false;
+    }
+
+    return otherName.startsWith(`${baseName} `);
+  });
+}
+
+// Alternativa plausibile: il token immediatamente dopo il nome-base
+// coincide con l'inizio della prima parola del suffisso di un nome esistente.
+// La soglia 3 caratteri e' gia' usata dalla suggestion; numeri solo esatti.
+const plausibleAlternatives = [];
+if (baseSingleMatch && moreSpecificMatches.length > 0) {
+  const baseName = normalize(baseSingleMatch.name);
+  const parts = baseName.split(" ").filter(Boolean);
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const typedSuffix = cleanText.match(new RegExp(`\\b${pattern}\\b\\s+([a-z0-9]+)`, "i"))?.[1] || "";
+
+  if (typedSuffix) {
+    for (const candidate of moreSpecificMatches) {
+      const suffix = normalize(candidate.name).slice(baseName.length).trim();
+      const first = suffix.split(" ")[0] || "";
+      const isNumber = /^\d+$/.test(typedSuffix);
+      const plausible = isNumber
+        ? first === typedSuffix
+        : typedSuffix.length >= 3 && first.startsWith(typedSuffix);
+      if (plausible) plausibleAlternatives.push(candidate);
+    }
+  }
+}
+
+// Non preselezionare la base se il testo suggerisce una variante diversa.
+if (plausibleAlternatives.length > 0) {
+  const seen = new Set(candidates.map((c) => c.id));
+  for (const candidate of plausibleAlternatives) {
+    if (!seen.has(candidate.id)) {
+      candidates.push(candidate);
+      seen.add(candidate.id);
+    }
+  }
+}
+const singleMatch = candidates.length === 1 ? candidates[0] : null;
+
+// Prefissi di parole intere, solo a fini informativi quando B1 non ha match.
+const prefixAlternatives = [];
+if (candidates.length === 0) {
+  const byPrefix = new Map();
+  const wordsIn = (" " + inputWords.join(" ") + " ");
+  for (const project of projects) {
+    const words = normalize(project.name).match(/[a-z0-9]+/g) || [];
+    for (let size = words.length - 1; size >= 2; size--) {
+      const prefix = words.slice(0, size).join(" ");
+      if (!wordsIn.includes(" " + prefix + " ")) continue;
+      if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+      byPrefix.get(prefix).push(project);
+      break;
+    }
+  }
+  const seen = new Set();
+  for (const group of byPrefix.values()) {
+    if (group.length < 2) continue;
+    for (const project of group) {
+      if (seen.has(project.id)) continue;
+      seen.add(project.id);
+      prefixAlternatives.push(project);
+    }
+  }
+}
+
+return {
+  matches: candidates,
+  count: candidates.length,
+  hasMatch: candidates.length > 0,
+  isAmbiguous: candidates.length > 1,
+  singleMatch: singleMatch,
+  moreSpecificMatches: moreSpecificMatches,
+  hasMoreSpecificMatches: moreSpecificMatches.length > 0,
+  plausibleAlternatives,
+  hasPlausibleAlternatives: plausibleAlternatives.length > 0,
+  prefixAlternatives
+};
+```
+
+### 02 · `entity_state.query`
+
+```javascript
+const text = input_raw.value?.trim() || "";
+const entities = entities_list.data || [];
+
+const normalize = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const escapeRegex = (str) =>
+  String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const cleanText = normalize(text);
+
+if (!cleanText || cleanText.length < 3) {
+  return {
+    matches: [],
+    count: 0,
+    hasMatch: false,
+    isAmbiguous: false,
+    singleMatch: null,
+    moreSpecificMatches: [],
+    hasMoreSpecificMatches: false,
+    plausibleAlternatives: [],
+    hasPlausibleAlternatives: false
+  };
+}
+
+const inputWords = cleanText.match(/[a-z0-9]+/g) || [];
+
+const hasFullNameInText = (name) => {
+  const cleanName = normalize(name);
+  if (!cleanName) return false;
+
+  const parts = cleanName
+    .split(" ")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (!parts.length) return false;
+
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+  return regex.test(cleanText);
+};
+
+const baseMatches = entities.filter((e) => {
+  const name = normalize(e.name);
+  if (!name) return false;
+
+  const nameTokens = name.match(/[a-z0-9]+/g) || [];
+  const meaningfulWords = nameTokens.filter((w) => w.length > 2 && !/^\d+$/.test(w));
+
+  // Un suffisso numerico dell'entità non può sparire dal riconoscimento.
+  if (nameTokens.some((w) => /^\d+$/.test(w))) {
+    if (!hasFullNameInText(e.name)) return false;
+
+    // Se dopo il nome numerico compare subito un'unita' di misura,
+    // il numero puo' appartenere al valore dell'evento: scelta manuale.
+    const pattern = name.split(" ").map(escapeRegex).join("\\s+");
+    const numericValueContext = new RegExp(
+      `\\b${pattern}\\b\\s*(?:\\b(?:euro|eur|ora|ore|h|min|minuto|minuti)\\b|€)`, "i"
+    ).test(cleanText);
+    return !numericValueContext;
+  }
+
+  return hasFullNameInText(e.name) ||
+    (meaningfulWords.length > 0 && meaningfulWords.every((w) => inputWords.includes(w)));
+});
+
+// Priorità ai nomi completi realmente presenti nel testo
+const fullNameMatches = baseMatches.filter((e) =>
+  hasFullNameInText(e.name)
+);
+
+let candidates = baseMatches;
+
+if (fullNameMatches.length > 0) {
+  candidates = fullNameMatches;
+}
+
+// Rimuove match generici coperti da match più specifici.
+// Esempi:
+// Marco + Marco Rossi → Marco Rossi
+// Mario + Mario Rossi → Mario Rossi
+// Cliente + Cliente Test → Cliente Test
+candidates = candidates.filter((e) => {
+  const name = normalize(e.name);
+
+  return !candidates.some((other) => {
+    if (other.id === e.id) return false;
+
+    const otherName = normalize(other.name);
+
+    return (
+      otherName.length > name.length &&
+      (` ${otherName} `).includes(` ${name} `)
+    );
+  });
+});
+
+// Questa è la corrispondenza prima di valutare eventuali varianti
+// digitate parzialmente. Le varianti plausibili richiedono scelta manuale.
+const baseSingleMatch = candidates.length === 1 ? candidates[0] : null;
+let moreSpecificMatches = [];
+
+if (baseSingleMatch) {
+  moreSpecificMatches = entities.filter((e) => {
+    if (e.id === baseSingleMatch.id) {
+      return false;
+    }
+
+    const baseName = normalize(baseSingleMatch.name);
+    const otherName = normalize(e.name);
+
+    if (!baseName || !otherName) {
+      return false;
+    }
+
+    return otherName.startsWith(`${baseName} `);
+  });
+}
+
+// Alternativa plausibile: il token immediatamente dopo il nome-base
+// coincide con l'inizio della prima parola del suffisso di un nome esistente.
+// La soglia 3 caratteri e' gia' usata dalla suggestion; numeri solo esatti.
+const plausibleAlternatives = [];
+if (baseSingleMatch && moreSpecificMatches.length > 0) {
+  const baseName = normalize(baseSingleMatch.name);
+  const parts = baseName.split(" ").filter(Boolean);
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const typedSuffix = cleanText.match(new RegExp(`\\b${pattern}\\b\\s+([a-z0-9]+)`, "i"))?.[1] || "";
+
+  if (typedSuffix) {
+    for (const candidate of moreSpecificMatches) {
+      const suffix = normalize(candidate.name).slice(baseName.length).trim();
+      const first = suffix.split(" ")[0] || "";
+      const isNumber = /^\d+$/.test(typedSuffix);
+      const plausible = isNumber
+        ? first === typedSuffix
+        : typedSuffix.length >= 3 && first.startsWith(typedSuffix);
+      if (plausible) plausibleAlternatives.push(candidate);
+    }
+  }
+}
+
+// Non preselezionare la base se il testo suggerisce una variante diversa.
+if (plausibleAlternatives.length > 0) {
+  const seen = new Set(candidates.map((c) => c.id));
+  for (const candidate of plausibleAlternatives) {
+    if (!seen.has(candidate.id)) {
+      candidates.push(candidate);
+      seen.add(candidate.id);
+    }
+  }
+}
+const singleMatch = candidates.length === 1 ? candidates[0] : null;
+
+return {
+  matches: candidates,
+  count: candidates.length,
+  hasMatch: candidates.length > 0,
+  isAmbiguous: candidates.length > 1,
+  singleMatch: singleMatch,
+  moreSpecificMatches: moreSpecificMatches,
+  hasMoreSpecificMatches: moreSpecificMatches.length > 0,
+  plausibleAlternatives,
+  hasPlausibleAlternatives: plausibleAlternatives.length > 0
+};
+```
+
+### 03 · `create_suggestion_state.query`
+
+```javascript
+const text = input_raw.value?.trim() || "";
+
+const normalize = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const toTitleCase = (str) =>
+  String(str || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((part) => {
+      if (/^\d+$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(" ");
+
+const cleanText = normalize(text);
+
+const projects = projects_list.data || [];
+const entities = entities_list.data || [];
+
+const projectData = project_state.data || {};
+const entityData = entity_state.data || {};
+
+const projectCount = Number(projectData.count ?? projectData.matches?.length ?? 0);
+const entityCount = Number(entityData.count ?? entityData.matches?.length ?? 0);
+
+const projectIsAmbiguous =
+  Boolean(projectData.isAmbiguous) || projectCount > 1;
+
+const entityIsAmbiguous =
+  Boolean(entityData.isAmbiguous) || entityCount > 1;
+
+const projectHasSingle =
+  Boolean(projectData.singleMatch?.id) || Boolean(select_project.value);
+
+const entityHasSingle =
+  Boolean(entityData.singleMatch?.id) || Boolean(select_entity.value);
+
+const isMeaningful = cleanText.length >= 3;
+
+const escapeRegex = (str) =>
+  String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const STOPWORDS_BASE = [
+  "il", "lo", "la", "i", "gli", "le",
+  "un", "uno", "una",
+  "di", "del", "dello", "della", "dei", "degli", "delle",
+  "a", "al", "allo", "alla", "ai", "agli", "alle",
+  "da", "dal", "dallo", "dalla", "dai", "dagli", "dalle",
+  "in", "nel", "nello", "nella", "nei", "negli", "nelle",
+  "con", "su", "per", "tra", "fra",
+  "e", "ed", "o"
+];
+
+const UNIT_KEYWORDS = [
+  "euro", "eur", "ora", "ore", "h",
+  "min", "minuto", "minuti",
+  "giorno", "giorni", "settimana", "settimane",
+  "giornata", "giornate"
+];
+
+const ECONOMIC_KEYWORDS = [
+  "spesa", "acquisto", "acquistato", "comprato",
+  "pagato", "pagamento", "costo", "costi",
+  "uscita", "incasso", "incassato", "entrata",
+  "vendita", "venduto",
+  "acconto", "saldo",
+  "dato", "dati",
+  "versato", "versati",
+  "ricevuto", "ricevuti",
+  "fattura", "fatture",
+  "preventivo", "preventivi",
+  "ordine", "ordini",
+  "cliente", "clienti",
+  "fornitore", "fornitori"
+];
+
+const OPERATIONAL_CAUSAL_WORDS = [
+  "sopralluogo", "sopralluoghi",
+  "urgente", "urgenza",
+  "lavoro", "lavori",
+  "materiale", "materiali",
+  "nuovo", "nuova", "nuovi", "nuove",
+  "benzina",
+  "mangime",
+  "vaccino", "vaccini", "vaccinazione",
+  "test", "prova", "prove", "regressione",
+  "rendering", "render",
+  "visita", "visite",
+  "controllo", "controlli",
+  "verifica", "verifiche",
+  "manutenzione",
+  "riparazione",
+  "consegna", "consegnato",
+  "ritiro", "ritirato"
+];
+
+const MONTH_WORDS = [
+  "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"
+];
+
+const stopWords = new Set([
+  ...STOPWORDS_BASE,
+  ...UNIT_KEYWORDS,
+  ...ECONOMIC_KEYWORDS,
+  ...OPERATIONAL_CAUSAL_WORDS,
+  ...MONTH_WORDS
+]);
+
+const isStopWord = (word) => stopWords.has(normalize(word));
+
+const stripKnownTokens = (input) => {
+  let s = ` ${normalize(input)} `;
+
+  // date numeriche
+  s = s.replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ");
+
+  // date testuali
+  for (const m of MONTH_WORDS) {
+    s = s.replace(new RegExp(`\\b\\d{1,2}\\s+${m}\\b`, "g"), " ");
+  }
+
+  // importi euro
+  s = s
+    .replace(/€\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?/g, " ")
+    .replace(/€\s*\d+(?:[,.]\d+)?/g, " ")
+    .replace(/\b\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\s*(€|euro|eur)\b/g, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*(€|euro|eur)\b/g, " ")
+    .replace(/\b(euro|eur)\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\b/g, " ")
+    .replace(/\b(euro|eur)\s*\d+(?:[,.]\d+)?\b/g, " ");
+
+  // durate ore/minuti semplici e composte
+  s = s
+    .replace(/\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\s*(?:e\s*)?\d{1,2}\s*(minuti|minuto|min)?\b/g, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/g, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*(h|ora|ore|minuti|minuto|min)\b/g, " ")
+    .replace(/\b(h|minuti|minuto|min)\s*\d+(?:[,.]\d+)?\b/g, " ");
+
+  return s.replace(/\s+/g, " ").trim();
+};
+
+const hasPhraseInText = (phrase, sourceText) => {
+  const cleanPhrase = normalize(phrase);
+  if (!cleanPhrase) return false;
+
+  const parts = cleanPhrase.split(" ").filter(Boolean);
+  if (!parts.length) return false;
+
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+  return regex.test(sourceText);
+};
+
+const existsNormalized = (name, records) => {
+  const n = normalize(name);
+  return records.some((r) => normalize(r?.name) === n);
+};
+
+// Solo il record-base gia' identificato dallo state o scelto per UUID
+// puo' originare un'estensione. L'esistenza del nome si controlla sul totale.
+const findExtensionCandidate = (baseRecords, allRecords, excludedPhrases = []) => {
+  const stripped = stripKnownTokens(cleanText);
+
+  const normalizedExcluded = excludedPhrases
+    .map((p) => normalize(p))
+    .filter(Boolean);
+
+  const containsExcludedPhrase = (candidate) => {
+    const normalizedCandidate = normalize(candidate);
+
+    return normalizedExcluded.some((phrase) => {
+      if (!phrase) return false;
+
+      const parts = phrase.split(" ").filter(Boolean);
+      if (!parts.length) return false;
+
+      const pattern = parts.map(escapeRegex).join("\\s+");
+      const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+      return regex.test(normalizedCandidate);
+    });
+  };
+
+  const sorted = [...baseRecords]
+    .filter((r) => r?.name)
+    .sort((a, b) => normalize(b.name).length - normalize(a.name).length);
+
+  for (const record of sorted) {
+    const baseName = normalize(record.name);
+
+    if (!baseName || !hasPhraseInText(baseName, stripped)) {
+      continue;
+    }
+
+    const baseParts = baseName.split(" ").filter(Boolean);
+    const pattern = baseParts.map(escapeRegex).join("\\s+");
+
+    const regex = new RegExp(`\\b${pattern}\\b\\s*([a-z0-9\\s]*)`, "i");
+    const match = stripped.match(regex);
+
+    if (!match || !match[1]) {
+      continue;
+    }
+
+    const trailingWords = match[1]
+      .split(" ")
+      .map((w) => w.trim())
+      .filter(Boolean);
+
+    const usefulExtra = [];
+
+    for (const word of trailingWords) {
+      const cleanWord = normalize(word);
+
+      if (!cleanWord) continue;
+
+      if (isStopWord(cleanWord)) {
+        break;
+      }
+
+      if (cleanWord.length >= 3 || /^\d+$/.test(cleanWord)) {
+        usefulExtra.push(cleanWord);
+      }
+
+      if (usefulExtra.length >= 3) {
+        break;
+      }
+    }
+
+    if (!usefulExtra.length) {
+      continue;
+    }
+
+    const candidateNormalized = `${baseName} ${usefulExtra.join(" ")}`
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (candidateNormalized === baseName) {
+      continue;
+    }
+
+    if (existsNormalized(candidateNormalized, allRecords)) {
+      continue;
+    }
+
+    // Protezione cross-layer:
+    // se la candidate contiene un project/entity già riconosciuto nell'altro layer,
+    // non va proposta.
+    if (containsExcludedPhrase(candidateNormalized)) {
+      continue;
+    }
+
+    return {
+      candidateName: toTitleCase(candidateNormalized),
+      baseName: record.name,
+      reason: "extension"
+    };
+  }
+
+  return null;
+};
+
+const findNameById = (records, id) =>
+  records.find((r) => r.id === id)?.name || null;
+
+const projectSelectedName =
+  findNameById(projects, select_project.value) ||
+  projectData.singleMatch?.name ||
+  null;
+
+const entitySelectedName =
+  findNameById(entities, select_entity.value) ||
+  entityData.singleMatch?.name ||
+  null;
+
+const projectDetectedNames = [
+  projectSelectedName,
+  ...(Array.isArray(projectData.matches) ? projectData.matches.map((p) => p.name) : [])
+].filter(Boolean);
+
+const entityDetectedNames = [
+  entitySelectedName,
+  ...(Array.isArray(entityData.matches) ? entityData.matches.map((e) => e.name) : [])
+].filter(Boolean);
+
+const buildLayerSuggestion = ({
+  layer,
+  count,
+  isAmbiguous,
+  hasSingle,
+  records,
+  label
+}) => {
+  const noMatch = isMeaningful && count === 0 && !isAmbiguous && !hasSingle;
+
+  // Il matching resta autorita' dello state. Non ripercorrere il repertorio
+  // per individuare autonomamente un record-base alternativo.
+  const stateData = layer === "project" ? projectData : entityData;
+  const chosenId = layer === "project" ? select_project.value : select_entity.value;
+  const selectedRecord = chosenId ? records.find((r) => r.id === chosenId) : null;
+  const canonicalBase = selectedRecord || stateData.singleMatch || null;
+  const baseRecords = canonicalBase ? [canonicalBase] : [];
+  const hasPlausibleAlternatives =
+    Array.isArray(stateData.plausibleAlternatives) &&
+    stateData.plausibleAlternatives.length > 0;
+
+  const hasPrefixAlternatives =
+    layer === "project" && (stateData.prefixAlternatives?.length ?? 0) > 0;
+
+  const canLookForCandidate =
+    isMeaningful &&
+    !isAmbiguous &&
+    hasSingle &&
+    Boolean(canonicalBase) &&
+    !hasPlausibleAlternatives &&
+    !hasPrefixAlternatives;
+
+  const excludedPhrases = layer === "project" ? entityDetectedNames : projectDetectedNames;
+  const extension = canLookForCandidate
+    ? findExtensionCandidate(baseRecords, records, excludedPhrases)
+    : null;
+
+  const candidateName = extension?.candidateName || null;
+
+  const hasStrongCandidate =
+    Boolean(candidateName) &&
+    !existsNormalized(candidateName, records);
+
+  const shouldShowNoMatchHint = noMatch && !hasPrefixAlternatives;
+
+  // In caso di estensione con singleMatch, possiamo suggerire creazione
+  // anche se il layer ha già un valore selezionato.
+  const shouldSuggestCreate =
+    hasStrongCandidate &&
+    !isAmbiguous &&
+    (
+      noMatch ||
+      hasSingle
+    );
+
+  let message = null;
+
+  if (shouldSuggestCreate) {
+    message = `Crea ${label} “${candidateName}”`;
+  } else if (shouldShowNoMatchHint) {
+    message = `Nessun ${label} associato`;
+  }
+
+return {
+  layer,
+  noMatch,
+  isAmbiguous,
+  hasSingle,
+  shouldShowNoMatchHint,
+  shouldSuggestCreate,
+  candidateName,
+  draftName: candidateName || "",
+  reason: hasStrongCandidate ? extension.reason : null,
+  baseName: extension?.baseName || null,
+
+  // G22 — match presente + possibile estensione più specifica.
+  // Non blocca il salvataggio.
+  // Serve alla UI per segnalare che esiste già una selezione attiva
+  // diversa dalla candidate suggerita.
+  requiresUserOverride:
+    Boolean(hasSingle) &&
+    Boolean(hasStrongCandidate) &&
+    extension?.reason === "extension",
+
+  message
+};
+};
+
+const project = buildLayerSuggestion({
+  layer: "project",
+  count: projectCount,
+  isAmbiguous: projectIsAmbiguous,
+  hasSingle: projectHasSingle,
+  records: projects,
+  label: "progetto"
+});
+
+const entity = buildLayerSuggestion({
+  layer: "entity",
+  count: entityCount,
+  isAmbiguous: entityIsAmbiguous,
+  hasSingle: entityHasSingle,
+  records: entities,
+  label: "entità"
+});
+
+// -----------------------------
+// ENTITY AUTOFILL CANDIDATE — CONTROLLED MINIMAL
+// -----------------------------
+// Serve solo a precompilare input_new_entity_name.
+// Non crea entità, non seleziona entità, non modifica match.
+
+// Candidate consentita solo in caso di no-match entity reale,
+// senza ambiguità e senza entity già selezionata.
+const canBuildEntityAutofillCandidate =
+  isMeaningful &&
+  entity.noMatch &&
+  !entity.isAmbiguous &&
+  !entity.hasSingle;
+
+// Parole che possono indicare una entità/persona/contatto.
+// Manteniamo lista corta per evitare falsi positivi tipo "materiale nuovo".
+const ENTITY_PREFIX_WORDS = [
+  "referente",
+  "tecnico",
+  "cliente",
+  "fornitore",
+  "operaio",
+  "collaboratore",
+  "contatto",
+  "responsabile",
+  "muratore",
+  "idraulico",
+  "elettricista",
+  "geometra",
+  "architetto"
+];
+
+const findEntityAutofillCandidate = () => {
+  if (!canBuildEntityAutofillCandidate) {
+    return null;
+  }
+
+  let stripped = stripKnownTokens(cleanText);
+
+  // Rimuove nomi progetto già rilevati/selezionati.
+  let projectMatchNames = [];
+
+if (Array.isArray(projectData.matches)) {
+  projectMatchNames = projectData.matches.map((p) => p.name);
+}
+
+const projectNamesToRemove = [
+  projectSelectedName,
+  ...projectMatchNames
+].filter(Boolean);
+
+  for (const name of projectNamesToRemove) {
+    const cleanName = normalize(name);
+    if (!cleanName) continue;
+
+    const parts = cleanName.split(" ").filter(Boolean);
+    const pattern = parts.map(escapeRegex).join("\\s+");
+    stripped = stripped.replace(new RegExp(`\\b${pattern}\\b`, "gi"), " ");
+  }
+
+  // Rimuove parole operative residue.
+  for (const word of OPERATIONAL_CAUSAL_WORDS) {
+    stripped = stripped.replace(new RegExp(`\\b${escapeRegex(word)}\\b`, "gi"), " ");
+  }
+
+  stripped = stripped
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!stripped) {
+    return null;
+  }
+
+  const words = stripped
+    .split(" ")
+    .map((w) => normalize(w))
+    .filter(Boolean)
+    .filter((w) => !isStopWord(w));
+
+  if (!words.length) {
+    return null;
+  }
+
+  // Cerca pattern con prefisso entity forte:
+  // referente kappa
+  // tecnico alfa
+  // cliente rossi
+  const prefixIndex = words.findIndex((w) =>
+    ENTITY_PREFIX_WORDS.includes(w)
+  );
+
+  if (prefixIndex < 0) {
+    return null;
+  }
+
+  const candidateWords = [];
+
+  for (let i = prefixIndex; i < words.length; i++) {
+    const word = words[i];
+
+    if (!word) break;
+    if (isStopWord(word) && !ENTITY_PREFIX_WORDS.includes(word)) break;
+
+    if (word.length >= 3 || /^\d+$/.test(word)) {
+      candidateWords.push(word);
+    }
+
+    if (candidateWords.length >= 3) {
+      break;
+    }
+  }
+
+  // Richiediamo almeno:
+  // - prefisso + un secondo token
+  // così evitiamo candidate troppo deboli tipo solo "tecnico".
+  if (candidateWords.length < 2) {
+    return null;
+  }
+
+  const candidateNormalized = candidateWords.join(" ").trim();
+
+  if (!candidateNormalized) {
+    return null;
+  }
+
+  if (existsNormalized(candidateNormalized, entities)) {
+    return null;
+  }
+
+  return toTitleCase(candidateNormalized);
+};
+
+const entityAutofillCandidate = findEntityAutofillCandidate();
+
+if (
+  entityAutofillCandidate &&
+  !entity.candidateName &&
+  !entity.draftName
+) {
+  entity.candidateName = entityAutofillCandidate;
+  entity.draftName = entityAutofillCandidate;
+}
+
+return {
+  input: text,
+  cleanText,
+  project,
+  entity
+};
+```
+
+### 04 · `select_project.defaultValue`
+
+```text
+{{
+  (() => {
+    if (edit_mode.data === true) {
+      return editing_event.data?.project_id || null;
+    }
+
+    const singleMatch = project_state.data?.singleMatch || null;
+    return singleMatch?.status === "ACTIVE" ? singleMatch.id || null : null;
+  })()
+}}
+```
+
+### 05 · `select_project.mappedOptionDisabled`
+
+```text
+{{ item.status !== "ACTIVE" && !(edit_mode.data === true && item.id === editing_event.data?.project_id) }}
+```
+
+### 06 · `select_entity.defaultValue`
+
+```text
+{{
+  (() => {
+    if (edit_mode.data === true) {
+      return editing_event.data?.entity_id || null;
+    }
+
+    const singleMatch = entity_state.data?.singleMatch || null;
+    return singleMatch?.status === "ACTIVE" ? singleMatch.id || null : null;
+  })()
+}}
+```
+
+### 07 · `select_entity.mappedOptionDisabled`
+
+```text
+{{ item.status !== "ACTIVE" && !(edit_mode.data === true && item.id === editing_event.data?.entity_id) }}
+```
+
+### 08 · `button_input_confirm.click`
+
+```javascript
+if (window.__logosEventConfirmPending) return;
+
+// --- INSERT / UPDATE SWITCH ---
+const parsed = ui_state.value?.parsed || {};
+
+const payload = {
+  raw_input: input_raw.value,
+  type: select1.value || "Evento",
+  amount: parsed.amount,
+  unit: parsed.unit,
+  event_date: parsed.event_date,
+  project_id: select_project.value || null,
+  entity_id: select_entity.value || null
+};
+
+// --- NO-OP EDIT GUARD ---
+// Se siamo in edit mode ma il payload non cambia nulla,
+// non eseguiamo update_event e non aggiorniamo updated_at.
+
+const wasEditMode = edit_mode.data;
+const originalEvent = editing_event.data;
+
+// --- EDIT MODE COMMAND GUARD ---
+// In edit mode un command riconosciuto non deve diventare update_event.
+// Esempi:
+// - modifica
+// - correggi
+// - cambia
+// - crea progetto test
+// - crea entità test
+//
+// Non salva.
+// Non crea project/entity.
+// Non chiude edit mode.
+// L’utente può correggere l’input oppure premere Annulla modifica.
+
+const normalizeCommandText = (value) => {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const currentInputForCommandGuard = normalizeCommandText(input_raw.value);
+const commandRawForGuard = normalizeCommandText(command_intent_state.data?.rawInput);
+
+const isFreshCommandInEditMode =
+  wasEditMode === true &&
+  command_intent_state.data?.isCommand === true &&
+  currentInputForCommandGuard &&
+  commandRawForGuard === currentInputForCommandGuard;
+
+if (isFreshCommandInEditMode) {
+  utils.showNotification({
+    title: "Comando non disponibile durante la modifica",
+    description: "Completa la modifica dell’evento oppure premi Annulla modifica prima di usare un comando.",
+    notificationType: "warning"
+  });
+
+  return;
+}
+
+const normalizeComparable = (value) => {
+  if (value === undefined || value === "") return null;
+  return value;
+};
+
+const normalizeNumberComparable = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? value : n;
+};
+
+// Confronto no-op basato solo sui campi modificabili dall'utente.
+// amount / unit / event_date sono derivati dal parser:
+// se l'utente non cambia input, non devono generare update_event.
+
+const sameText =
+  String(normalizeComparable(payload.raw_input) || "") ===
+  String(normalizeComparable(originalEvent?.raw_input) || "");
+
+const sameType =
+  String(normalizeComparable(payload.type) || "Evento") ===
+  String(normalizeComparable(originalEvent?.type) || "Evento");
+
+const sameProject =
+  String(normalizeComparable(payload.project_id) || "") ===
+  String(normalizeComparable(originalEvent?.project_id) || "");
+
+const sameEntity =
+  String(normalizeComparable(payload.entity_id) || "") ===
+  String(normalizeComparable(originalEvent?.entity_id) || "");
+
+const isSamePayload =
+  wasEditMode &&
+  originalEvent &&
+  sameText &&
+  sameType &&
+  sameProject &&
+  sameEntity;
+
+if (isSamePayload) {
+  // reset edit mode senza salvare
+  if (window.__parseTimer) {
+    clearTimeout(window.__parseTimer);
+    window.__parseTimer = null;
+  }
+
+  trigger_parse_debounced.cancel?.();
+
+  window.__logos_edit_mode_value = false;
+await edit_mode.trigger();
+
+window.__logos_editing_event_value = null;
+await editing_event.trigger();
+
+  await input_home.setValue("");
+  await input_raw.setValue("");
+
+  select_project.clearValue();
+  select_entity.clearValue();
+  select1.clearValue?.();
+
+  ui_state.setValue({
+  ...ui_state.value,
+  view: "events",
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "idle",
+  feedback_text: null,
+  feedback_project: null,
+  feedback_summary: null
+});
+
+  container_input.setHidden(true);
+  container_home.setHidden(true);
+  container_feedback.setHidden(true);
+  container_events_list.setHidden(false);
+
+  return;
+}
+
+const feedbackText = input_raw.value;
+const feedbackProject = select_project.selectedItem?.name || null;
+const feedbackEntity = select_entity.selectedItem?.name || null;
+
+const formatFeedbackDate = (dateStr) => {
+  if (!dateStr) return "—";
+  const [y, m, d] = String(dateStr).split("-");
+  if (!y || !m || !d) return "—";
+  return `${d}/${m}/${y}`;
+};
+
+const formatFeedbackAmount = (amount, unit) => {
+  const num = Number(amount);
+
+  if (!Number.isFinite(num) || !unit) return "—";
+
+  if (unit === "euro") {
+    return `${num.toLocaleString("it-IT", {
+      useGrouping: true,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })} €`;
+  }
+
+  if (unit === "minuti") {
+    return `${num.toLocaleString("it-IT", {
+      useGrouping: true,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })} minuti`;
+  }
+
+  return `${num.toLocaleString("it-IT")} ${unit}`;
+};
+
+const feedbackSummary = {
+  type: payload.type || "Evento",
+  date: formatFeedbackDate(payload.event_date),
+  amount: formatFeedbackAmount(payload.amount, payload.unit),
+  project: feedbackProject || "—",
+  entity: feedbackEntity || "—",
+  text: feedbackText || "—"
+};
+
+// Verifica soltanto le nuove FK non vuote usando il risultato del GET senza cache.
+const associationsToVerify = [
+  { label: "Progetto", id: payload.project_id, unchanged: wasEditMode && sameProject, query: projects_list },
+  { label: "Entità", id: payload.entity_id, unchanged: wasEditMode && sameEntity, query: entities_list }
+].filter(({ id, unchanged }) => id && !unchanged);
+
+const warn = (title, description) => utils.showNotification({
+  title,
+  description,
+  notificationType: "warning"
+});
+
+if (wasEditMode && !originalEvent?.id) {
+  warn("Evento non verificabile", "Riapri l’evento prima di salvare.");
+  return;
+}
+
+window.__logosEventConfirmPending = true;
+try {
+  const results = await Promise.all(associationsToVerify.map(async ({ label, id, query }) => {
+    try {
+      const rows = await query.trigger();
+      const matches = Array.isArray(rows) ? rows.filter(row => row?.id === id) : [];
+      if (matches.length !== 1 || !["ACTIVE", "INACTIVE", null].includes(matches[0].status)) {
+        return { label, reason: "Stato non verificabile" };
+      }
+      return matches[0].status === "ACTIVE" ? null : { label, reason: "Anagrafica non attiva" };
+    } catch {
+      return { label, reason: "Stato non verificabile" };
+    }
+  }));
+
+  const blocked = results.find(Boolean);
+  if (blocked) {
+    warn(blocked.reason, `${blocked.label}: scegli un’anagrafica attiva o riprova la verifica.`);
+    return;
+  }
+
+  if (
+    edit_mode.data !== wasEditMode ||
+    (wasEditMode && editing_event.data?.id !== originalEvent.id) ||
+    input_raw.value !== payload.raw_input ||
+    (select1.value || "Evento") !== payload.type ||
+    (select_project.value || null) !== payload.project_id ||
+    (select_entity.value || null) !== payload.entity_id
+  ) {
+    warn("Dati evento cambiati", "Controlla i dati correnti e premi di nuovo Conferma.");
+    return;
+  }
+
+  // Esegui il salvataggio prima di pulire input e selezioni.
+  try {
+    if (wasEditMode) {
+      await update_event.trigger({ additionalScope: { ...payload, confirm_event_id: originalEvent.id } });
+    } else {
+      await insert_event.trigger({ additionalScope: payload });
+    }
+  } catch {
+    warn("Salvataggio non verificato", "Controlla la lista eventi prima di riprovare.");
+    return;
+  }
+// Mantieni il lock anche durante il reset e la transizione al feedback.
+// Il finally è posto a fine handler per coprire entrambe le fasi.
+
+// RESET INPUT / SELECT PRIMA DEL FEEDBACK
+// Motivo: input_home.setValue("") può attivare handler di change.
+// Quindi il feedback va impostato come ultimo stato UI visibile.
+
+if (window.__parseTimer) {
+  clearTimeout(window.__parseTimer);
+  window.__parseTimer = null;
+}
+
+trigger_parse_debounced.cancel?.();
+
+await input_home.setValue("");
+await input_raw.setValue("");
+
+select_project.clearValue();
+select_entity.clearValue();
+select1.clearValue?.();
+
+// MOSTRA FEEDBACK COME ULTIMO STATO UI
+ui_state.setValue({
+  ...ui_state.value,
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "success",
+  view: "feedback",
+  feedback_text: feedbackText,
+  feedback_project: feedbackProject,
+  feedback_summary: feedbackSummary
+});
+
+// ALLINEAMENTO CONTAINER ESPLICITO
+container_home.setHidden(true);
+container_input.setHidden(true);
+container_events_list.setHidden(true);
+container_feedback.setHidden(false);
+
+// ora la lista legge il dato aggiornato
+await events_new.trigger();
+
+// reset edit mode dopo il salvataggio
+if (wasEditMode) {
+  window.__logos_edit_mode_value = false;
+  await edit_mode.trigger();
+
+  window.__logos_editing_event_value = null;
+  await editing_event.trigger();
+}
+
+// --- AUTO RETURN AFTER FEEDBACK ---
+// Nuovo evento: feedback breve → Home
+// Modifica evento reale: feedback breve → Lista eventi
+// Gestito qui per evitare conflitti con insert_event/update_event success handlers.
+
+const returnViewAfterFeedback = wasEditMode ? "events" : "home";
+
+if (window.__logos_feedback_timer) {
+  clearTimeout(window.__logos_feedback_timer);
+  window.__logos_feedback_timer = null;
+}
+
+window.__logos_feedback_timer = setTimeout(() => {
+  ui_state.setValue({
+    ...ui_state.value,
+    view: returnViewAfterFeedback,
+    parsed: {
+      amount: null,
+      unit: null,
+      event_date: null
+    },
+    status: "idle",
+    feedback_text: null,
+    feedback_project: null,
+    feedback_summary: null
+  });
+
+  container_feedback.setHidden(true);
+  container_input.setHidden(true);
+
+  if (returnViewAfterFeedback === "events") {
+    container_home.setHidden(true);
+    container_events_list.setHidden(false);
+  } else {
+    container_events_list.setHidden(true);
+    container_home.setHidden(false);
+  }
+
+  window.__logos_feedback_timer = null;
+}, 1800);
+} finally {
+  window.__logosEventConfirmPending = false;
+}
+```
+
+### 09 · `update_event.urlParameter.id`
+
+```text
+eq.{{ confirm_event_id }}
+```
+
+### 10 · `preview_analysis_state.funcBody`
+
+```javascript
+const text = String({{ input_raw.value || "" }}).trim();
+const lowerText = text.toLowerCase();
+
+const parsed = {{ ui_state.value?.parsed || {} }};
+const parsedAmount = parsed.amount || null;
+const parsedUnit = parsed.unit || null;
+
+const projects = {{ projects_list.data || [] }};
+const entities = {{ entities_list.data || [] }};
+
+const projectId = {{ select_project.value || null }};
+const entityId = {{ select_entity.value || null }};
+
+const selectedProject =
+  projects.find(p => p.id === projectId)?.name || null;
+
+const selectedEntity =
+  entities.find(e => e.id === entityId)?.name || null;
+
+const entityMatch = {{ entity_state.data || {} }};
+const projectMatch = {{ project_state.data || {} }};
+
+const selectType = String({{ select1.value || "Evento" }});
+
+// -----------------------------
+// DURATION DETECTION — SAME LOGIC AS CURRENT SINTESI
+// -----------------------------
+
+const hasHourDurationInput =
+  /\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\b/.test(lowerText) ||
+  /\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/.test(lowerText) ||
+  /\bh\s*\d+(?:[,.]\d+)?\b/.test(lowerText);
+
+const hasAmbiguousLongDuration =
+  /\b\d+(?:[,.]\d+)?\s*(giorno|giorni|settimana|settimane|giornata|giornate)\b/.test(lowerText) ||
+  /\b(giorno|giorni|settimana|settimane|giornata|giornate)\s*\d+(?:[,.]\d+)?\b/.test(lowerText) ||
+  /\bmezza giornata\b/.test(lowerText);
+
+const formatDurationMinutesIT = (minutesValue) => {
+  const total = Number(minutesValue);
+
+  if (!Number.isFinite(total)) return null;
+
+  const rounded = Math.round(total);
+
+  return `${rounded.toLocaleString("it-IT", {
+    useGrouping: true,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })} ${rounded === 1 ? "minuto" : "minuti"}`;
+};
+
+// -----------------------------
+// MATCH STATE
+// -----------------------------
+
+const entityMatchCount =
+  Number(entityMatch.count ?? entityMatch.matches?.length ?? 0);
+
+const projectMatchCount =
+  Number(projectMatch.count ?? projectMatch.matches?.length ?? 0);
+
+const entityIsAmbiguous =
+  Boolean(entityMatch.isAmbiguous) || entityMatchCount > 1;
+
+const projectIsAmbiguous =
+  Boolean(projectMatch.isAmbiguous) || projectMatchCount > 1;
+
+const isMeaningful = lowerText.length >= 3;
+
+const suggestionState = {{ create_suggestion_state.data || {} }};
+const projectSuggestion = suggestionState.project || {};
+const entitySuggestion = suggestionState.entity || {};
+
+// -----------------------------
+// ACTION MAPPER
+// -----------------------------
+
+const getHintAction = (hintText) => {
+  const value = String(hintText || "");
+
+  if (value.includes("Più entità trovate")) {
+    return "Scegli l’entità corretta nel campo Entità.";
+  }
+
+  if (value.includes("Più progetti trovati")) {
+    return "Scegli il progetto corretto nel campo Progetto.";
+  }
+
+  if (value.includes("Definisci spesa o incasso")) {
+    return "Controlla il campo Tipo evento.";
+  }
+
+  if (value.includes("Normalizzato:")) {
+    return "Controlla che la durata interpretata sia corretta.";
+  }
+
+  if (value.includes("Durata ambigua")) {
+    return "Specifica ore o minuti se vuoi salvare una durata analizzabile.";
+  }
+
+  return "Controlla i dati evento prima di confermare.";
+};
+
+const hints = [];
+
+const pushHint = (text, color, actionOverride = null) => {
+  hints.push({
+    text,
+    color,
+    action: actionOverride || getHintAction(text)
+  });
+};
+
+// -----------------------------
+// AMBIGUITÀ MATCH
+// -----------------------------
+
+const availability = record =>
+  record.status === "ACTIVE" ? "disponibile" :
+  record.status === "INACTIVE" ? "inattivo" : "Stato da definire";
+
+const showAlternatives = (title, records, field, blocking) => {
+  const candidates = [...new Map(records.filter(r => r?.id).map(r => [r.id, r])).values()];
+  if (!candidates.length) {
+    if (blocking) pushHint(title, "#dc2626");
+    return;
+  }
+  const active = candidates.filter(r => r.status === "ACTIVE");
+  const ordered = [...active, ...candidates.filter(r => r.status !== "ACTIVE")];
+  const shown = ordered.slice(0, 5);
+  const names = shown.map(r => `${r.name} — ${availability(r)}`).join(" · ");
+  const remaining = candidates.length - shown.length;
+  const tail = remaining ? ` · altri: ${remaining}` : "";
+  const action = active.length
+    ? `Per usare una variante disponibile, scegli nel campo ${field}.`
+    : "Nessuna di queste alternative è associabile. Verifica lo Stato nelle Anagrafiche.";
+  pushHint(title, blocking ? "#dc2626" : "#6B7280", `${names}${tail}. ${action}`);
+};
+
+const showAssociationGuidance = ({ match, selectedId, ambiguous, field, ambiguityTitle, historicalId }) => {
+  if (ambiguous && !selectedId) {
+    showAlternatives(ambiguityTitle, match.matches || [], field, true);
+    return;
+  }
+  const exact = match.singleMatch;
+  if (exact && exact.status !== "ACTIVE" &&
+      !(selectedId === exact.id && historicalId === exact.id)) {
+    const status = exact.status === "INACTIVE" ? "esiste, ma è inattivo" : "esiste, ma lo Stato non è definito";
+    pushHint(`ℹ️ ${field}: ${exact.name} ${status}`, "#6B7280",
+      `Non associabile a un nuovo evento. Scegli un’altra voce attiva nel campo ${field} oppure verifica lo Stato nelle Anagrafiche.`);
+  }
+  if (exact && (!selectedId || selectedId === exact.id)) {
+    showAlternatives(`ℹ️ Varianti per ${exact.name}`, match.moreSpecificMatches || [], field, false);
+  }
+  if (!selectedId && !exact && match.prefixAlternatives?.length) {
+    showAlternatives(`ℹ️ Progetti con nome simile al testo digitato`, match.prefixAlternatives, field, false);
+  }
+};
+
+if (isMeaningful) {
+  const historical = {{ edit_mode.data === true ? editing_event.data : null }};
+  showAssociationGuidance({ match: entityMatch, selectedId: entityId, ambiguous: entityIsAmbiguous,
+    field: "Entità", ambiguityTitle: "⚠️ Più entità trovate", historicalId: historical?.entity_id });
+  showAssociationGuidance({ match: projectMatch, selectedId: projectId, ambiguous: projectIsAmbiguous,
+    field: "Progetto", ambiguityTitle: "⚠️ Più progetti trovati", historicalId: historical?.project_id });
+}
+
+// -----------------------------
+// G22 — MATCH PRESENT / USER OVERRIDE
+// -----------------------------
+// Warning mirato solo quando:
+// - esiste una selezione attiva
+// - l’input suggerisce una nuova associazione più specifica
+// - la candidate nasce da create_suggestion_state
+//
+// Non usa moreSpecificMatches perché quello indica solo
+// che nel DB esistono record più specifici,
+// non che l’input corrente li stia richiedendo.
+
+if (
+  isMeaningful &&
+  projectSuggestion.requiresUserOverride &&
+  selectedProject &&
+  projectSuggestion.candidateName
+) {
+  pushHint(
+    "ℹ️ Associazione progetto da controllare",
+    "#6B7280",
+    `${selectedProject} selezionato · testo letto: ${projectSuggestion.candidateName}`
+  );
+}
+
+if (
+  isMeaningful &&
+  entitySuggestion.requiresUserOverride &&
+  selectedEntity &&
+  entitySuggestion.candidateName
+) {
+  pushHint(
+    "ℹ️ Associazione entità da controllare",
+    "#6B7280",
+    `${selectedEntity} selezionata · testo letto: ${entitySuggestion.candidateName}`
+  );
+}
+
+// -----------------------------
+// SPESA / INCASSO
+// -----------------------------
+
+if (parsedUnit === "euro" && selectType === "Evento") {
+  pushHint("ℹ️ Definisci spesa o incasso", "#d97706");
+}
+
+// -----------------------------
+// DURATA NORMALIZZATA / AMBIGUA
+// -----------------------------
+
+if (parsedUnit === "minuti" && parsedAmount && hasHourDurationInput) {
+  const normalizedLabel = formatDurationMinutesIT(parsedAmount);
+
+  if (normalizedLabel) {
+    pushHint(`ℹ️ Normalizzato: ${normalizedLabel}`, "#6B7280");
+  }
+}
+
+if (hasAmbiguousLongDuration && !parsedUnit) {
+  pushHint(
+    "⚠️ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile",
+    "#d97706"
+  );
+}
+
+// -----------------------------
+// STATUS
+// -----------------------------
+
+const hasHints = hints.length > 0;
+
+const hasBlockingAmbiguity =
+  (entityIsAmbiguous && !entityId) ||
+  (projectIsAmbiguous && !projectId);
+
+const hasWarning =
+  hasBlockingAmbiguity ||
+  hints.some(h => String(h.text || "").includes("⚠"));
+
+let statusLabel = "OK";
+
+if (hasBlockingAmbiguity) {
+  statusLabel = "Verifica";
+} else if (hasWarning) {
+  statusLabel = "Attenzione";
+}
+
+let statusColor = "#059669";
+
+if (hasBlockingAmbiguity || hasWarning) {
+  statusColor = "#D97706";
+}
+
+let statusBg = "#ECFDF5";
+
+if (hasBlockingAmbiguity || hasWarning) {
+  statusBg = "#FEF3C7";
+}
+
+let dotColor = "#059669";
+
+if (hasBlockingAmbiguity || hasWarning) {
+  dotColor = "#D97706";
+}
+
+// -----------------------------
+// ASSOCIAZIONI MANCANTI
+// -----------------------------
+
+const missingProject = !selectedProject;
+const missingEntity = !selectedEntity;
+
+let missingAssociationTitle = null;
+
+if (missingProject && missingEntity) {
+  missingAssociationTitle = "Manca un progetto e un’entità";
+} else if (missingProject) {
+  missingAssociationTitle = "Manca un progetto";
+} else if (missingEntity) {
+  missingAssociationTitle = "Manca un’entità";
+}
+
+const showMissingAssociationNotice =
+  Boolean(missingAssociationTitle) &&
+  !hasBlockingAmbiguity;
+
+// -----------------------------
+// OUTPUT READ-ONLY
+// -----------------------------
+
+return {
+  text,
+  lowerText,
+
+  parsedAmount,
+  parsedUnit,
+
+  selectedProject,
+  selectedEntity,
+
+  projectId,
+  entityId,
+
+  entityMatchCount,
+  projectMatchCount,
+  entityIsAmbiguous,
+  projectIsAmbiguous,
+
+  hasHourDurationInput,
+  hasAmbiguousLongDuration,
+
+  hints,
+  hasHints,
+
+  hasBlockingAmbiguity,
+  hasWarning,
+
+  statusLabel,
+  statusColor,
+  statusBg,
+  dotColor,
+
+  missingProject,
+  missingEntity,
+  missingAssociationTitle,
+  showMissingAssociationNotice
+};
+```
+
+### 11 · `sintesi.value`
+
+```text
+{{
+(() => {
+
+  const text = input_raw.value?.trim() || "";
+  const lowerText = text.toLowerCase();
+
+  const parsed = ui_state.value?.parsed || {};
+  const parsedAmount = parsed.amount || null;
+  const parsedUnit = parsed.unit || null;
+  const parsedDate = parsed.event_date || null;
+
+  const projects = projects_list.data || [];
+  const entities = entities_list.data || [];
+
+  const projectId = select_project.value;
+  const entityId = select_entity.value;
+
+  const selectedProject = projects.find(p => p.id === projectId)?.name || null;
+  const selectedEntity = entities.find(e => e.id === entityId)?.name || null;
+
+  // -----------------------------
+  // DATE
+  // -----------------------------
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split("-");
+    const mesi = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+    return `${parseInt(d)} ${mesi[parseInt(m)-1]}`;
+  };
+
+  const displayDate = formatDate(parsedDate);
+
+  // -----------------------------
+  // VALUE (BOLD) — PREVIEW ALIGNMENT BASE
+  // -----------------------------
+
+  const formatAmountIT = (amount, unit) => {
+    const num = Number(amount);
+
+    if (!Number.isFinite(num)) return null;
+
+        if (unit === "euro") {
+      return num.toLocaleString("it-IT", {
+        useGrouping: true,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+        if (unit === "ore" || unit === "minuti") {
+      return num.toLocaleString("it-IT", {
+        useGrouping: true,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    }
+
+        return num.toLocaleString("it-IT", {
+      useGrouping: true,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const formatUnitIT = (amount, unit) => {
+    const num = Number(amount);
+
+    if (unit === "euro") return "€";
+    if (unit === "ore") return num === 1 ? "ora" : "ore";
+    if (unit === "minuti") return num === 1 ? "minuto" : "minuti";
+
+    return unit;
+  };
+
+ // -----------------------------
+// DURATION DISPLAY — BASE
+// -----------------------------
+
+const hasHourDurationInput =
+  // ore testuali o h semplice:
+  // 1 ora, 2 ore, 1,5 ore, 2h
+  /\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\b/.test(lowerText) ||
+
+  // formato compatto ore+minuti:
+  // 2h30, 2h 30, 2 h 30
+  /\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/.test(lowerText) ||
+
+  // formato h prima del numero:
+  // h2
+  /\bh\s*\d+(?:[,.]\d+)?\b/.test(lowerText);
+
+const hasAmbiguousLongDuration =
+  /\b\d+(?:[,.]\d+)?\s*(giorno|giorni|settimana|settimane|giornata|giornate)\b/.test(lowerText) ||
+  /\b(giorno|giorni|settimana|settimane|giornata|giornate)\s*\d+(?:[,.]\d+)?\b/.test(lowerText) ||
+  /\bmezza giornata\b/.test(lowerText);
+
+const formatDurationHumanIT = (minutesValue) => {
+  const total = Number(minutesValue);
+
+  if (!Number.isFinite(total)) return null;
+
+  const rounded = Math.round(total);
+  const hours = Math.floor(rounded / 60);
+  const minutes = rounded % 60;
+
+  const hourLabel = hours === 1 ? "ora" : "ore";
+  const minuteLabel = minutes === 1 ? "minuto" : "minuti";
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} ${hourLabel} ${minutes} ${minuteLabel}`;
+  }
+
+  if (hours > 0) {
+    return `${hours} ${hourLabel}`;
+  }
+
+  return `${rounded} ${minuteLabel}`;
+};
+
+const formatDurationMinutesIT = (minutesValue) => {
+  const total = Number(minutesValue);
+
+  if (!Number.isFinite(total)) return null;
+
+  const rounded = Math.round(total);
+
+  return `${rounded.toLocaleString("it-IT", {
+    useGrouping: true,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })} ${rounded === 1 ? "minuto" : "minuti"}`;
+};
+
+  let value = null;
+
+if (parsedAmount && parsedUnit) {
+
+  if (parsedUnit === "minuti" && hasHourDurationInput) {
+    const durationLabel = formatDurationHumanIT(parsedAmount);
+
+    if (durationLabel) {
+      value = `<span style="font-weight:600;">${durationLabel}</span>`;
+    }
+
+  } else {
+    const amountLabel = formatAmountIT(parsedAmount, parsedUnit);
+    const unitLabel = formatUnitIT(parsedAmount, parsedUnit);
+
+    if (amountLabel && unitLabel) {
+      value = `<span style="font-weight:600;">${amountLabel} ${unitLabel}</span>`;
+    }
+  }
+}
+
+    // -----------------------------
+  // LABEL CLEAN
+  // -----------------------------
+
+  let note = lowerText;
+
+  note = note
+    .replace(/€/g, " € ")
+
+    // unità compatte
+    // ordine importante: "minuti" prima di "min"
+    // per evitare residui tipo "uti"
+    .replace(/(\d)(minuti|minuto|min|ore|ora|h)/g, "$1 $2")
+    .replace(/(minuti|minuto|min|ore|ora|h)(\d)/g, "$1 $2")
+
+    .replace(/\s+/g, " ")
+    .trim();
+
+if (parsedAmount && parsedUnit) {
+  note = note
+    // duration normalization base — rimozione durata originale già normalizzata
+    // esempi:
+    // 1 ora e 15 minuti
+    // 1 ora 15 minuti
+    // 2 ore e 30 minuti
+    // 2 ore 30
+    // 2h30
+    // 2 h 30
+    .replace(/\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\s*(?:e\s*)?\d{1,2}\s*(minuti|minuto|min)?\b/gi, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/gi, " ")
+
+// euro separati o compatti:
+// 1.500,50 euro / 1500,50 euro / 10 euro / 10€ / €10 / € 500
+.replace(/€\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?/gi, " ")
+.replace(/€\s*\d+(?:[,.]\d+)?/gi, " ")
+.replace(/\b\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\s*(€|euro|eur)\b/gi, " ")
+.replace(/\b\d+(?:[,.]\d+)?\s*(€|euro|eur)\b/gi, " ")
+.replace(/\b(euro|eur)\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\b/gi, " ")
+.replace(/\b(euro|eur)\s*\d+(?:[,.]\d+)?\b/gi, " ")
+
+    // ore separate o compatte:
+    // 1 ora / 1,5 ore / 2.2 ore / 2h / h2
+    .replace(/\b\d+(?:[,.]\d+)?\s*(ore|ora|h)\b/gi, " ")
+    .replace(/\b(h)\s*\d+(?:[,.]\d+)?\b/gi, " ")
+
+    // minuti separati o compatti:
+    // 18 minuti / 18min / min30
+    .replace(/\b\d+(?:[,.]\d+)?\s*(minuti|minuto|min)\b/gi, " ")
+    .replace(/\b(minuti|minuto|min)\s*\d+(?:[,.]\d+)?\b/gi, " ")
+
+    // pulizia congiunzioni residue generate dalla rimozione duration
+    .replace(/\b(e|ed)\b/gi, " ")
+
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+  note = note
+    .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, "")
+    .replace(/\b\d{1,2}\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/g, "")
+    .replace(/\b20\d{2}\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = note.split(" ");
+  const combined = [];
+
+  for (let i = 0; i < words.length; i++) {
+    if (words[i + 1] && /^\d+$/.test(words[i + 1])) {
+      combined.push(words[i] + " " + words[i + 1]);
+      i++;
+    } else {
+      combined.push(words[i]);
+    }
+  }
+
+  note = combined.join(" ").trim();
+  note = note.split(" ").slice(0, 6).join(" ");
+
+  // -----------------------------
+  // TOKEN FILTER PREVIEW
+  // -----------------------------
+
+  const previewStopTokens = [
+  "ora",
+  "ore",
+  "h",
+  "min",
+  "minuto",
+  "minuti",
+  "euro",
+  "eur",
+  "giorno",
+  "giorni",
+  "settimana",
+  "settimane",
+  "giornata",
+  "giornate"
+];
+
+  const getPreviewTokens = () =>
+    lowerText
+      .split(" ")
+      .map(t => t.trim())
+      .filter(t => t.length >= 3)
+      .filter(t => !previewStopTokens.includes(t));
+
+  // -----------------------------
+  // DETECTION ENTITÀ / PROGETTI
+  // -----------------------------
+
+const detectedEntities =
+  Array.isArray(entity_state.data?.matches)
+    ? entity_state.data.matches
+    : [];
+
+const detectedProjects =
+  Array.isArray(project_state.data?.matches)
+    ? project_state.data.matches
+    : [];
+
+  const htmlCharacters = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => htmlCharacters[char]);
+
+  // Applica l'evidenziazione solo a segmenti del testo originale.
+  const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let segments = [{ text: note, color: null }];
+  const highlightName = (name, color) => {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return;
+    const pattern = new RegExp(`\\b${parts.map(escapeRegex).join("\\s+")}\\b`, "gi");
+    segments = segments.flatMap(segment => {
+      if (segment.color) return [segment];
+      const matches = [...segment.text.matchAll(pattern)];
+      if (!matches.length) return [segment];
+      const result = [];
+      let offset = 0;
+      for (const match of matches) {
+        result.push({ text: segment.text.slice(offset, match.index), color: null });
+        result.push({ text: match[0], color });
+        offset = match.index + match[0].length;
+      }
+      result.push({ text: segment.text.slice(offset), color: null });
+      return result;
+    });
+  };
+
+  detectedProjects.forEach(p => highlightName(p.name, "#2563eb"));
+  detectedEntities.forEach(e => highlightName(e.name, "#059669"));
+  const styledNote = segments.map(({ text, color }) =>
+    color ? `<span style="color:${color};font-weight:500;">${escapeHtml(text)}</span>` : escapeHtml(text)
+  ).join("");
+  const labelStyled = [displayDate, value, styledNote].filter(Boolean).join(" • ");
+
+// -----------------------------
+// PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
+// -----------------------------
+
+const previewAnalysis = preview_analysis_state.value || {};
+
+const hints = Array.isArray(previewAnalysis.hints)
+  ? previewAnalysis.hints
+  : [];
+
+const hasHints =
+  previewAnalysis.hasHints === true ||
+  hints.length > 0;
+
+const hasBlockingAmbiguity =
+  previewAnalysis.hasBlockingAmbiguity === true;
+
+const hasWarning =
+  previewAnalysis.hasWarning === true;
+
+const statusLabel =
+  previewAnalysis.statusLabel || "OK";
+
+const statusColor =
+  previewAnalysis.statusColor || "#059669";
+
+const statusBg =
+  previewAnalysis.statusBg || "#ECFDF5";
+
+const dotColor =
+  previewAnalysis.dotColor || "#059669";
+
+const missingAssociationTitle =
+  previewAnalysis.missingAssociationTitle || null;
+
+const showMissingAssociationNotice =
+  previewAnalysis.showMissingAssociationNotice === true;
+
+// -----------------------------
+// OUTPUT HINT / VERIFICATION CARD
+// -----------------------------
+
+const verificationOutput = hints
+  .map((h, index) => {
+    const isLast = index === hints.length - 1;
+
+    const hintText = String(h.text || "");
+    const hintColor = String(h.color || "#6B7280");
+    const hintAction = String(
+      h.action || "Controlla i dati evento prima di confermare."
+    );
+
+    return `<div style="padding:${index === 0 ? "0 0 8px 0" : "8px 0"};${!isLast ? "border-bottom:1px solid #F3F4F6;" : ""}"><div style="color:${hintColor};font-size:13px;font-weight:500;line-height:1.35;">${escapeHtml(hintText)}</div><div style="color:#6B7280;font-size:12px;line-height:1.35;margin-top:2px;">${escapeHtml(hintAction)}</div></div>`;
+  })
+  .join("");
+
+// -----------------------------
+// OUTPUT — PREVIEW CARD UX STRUCTURED BASE
+// -----------------------------
+
+const typeLabel = select1.value || "Evento";
+const dateLabel = displayDate || "—";
+const amountLabel = value || "—";
+
+const valueRowLabel =
+  parsedUnit === "euro"
+    ? "Importo"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "Durata"
+      : value
+        ? "Valore"
+        : "Valore";
+
+const valueRowIcon =
+  parsedUnit === "euro"
+    ? "€"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "⏱️"
+      : "🔢";
+
+const projectLabel = selectedProject
+  ? `<span style="color:#64748B;font-weight:500;">${escapeHtml(selectedProject)}</span>`
+  : "—";
+
+const entityLabel = selectedEntity
+  ? `<span style="color:#059669;font-weight:500;">${escapeHtml(selectedEntity)}</span>`
+  : "—";
+
+// -----------------------------
+// NOTICE ASSOCIAZIONI MANCANTI
+// -----------------------------
+
+const canUseAssociationSuggestions =
+  input_analysis_result.value?.readiness?.canShowAssociationSuggestions === true;
+
+const missingAssociationHelpText = canUseAssociationSuggestions
+  ? "Puoi selezionare i dati nei campi sotto o usare i suggerimenti."
+  : "Puoi selezionare i dati nei campi sotto.";
+
+const missingAssociationNotice = showMissingAssociationNotice
+  ? `<div style="margin-top:8px;padding:8px 10px;border:1px solid #DBEAFE;border-radius:8px;background:#EFF6FF;font-size:12px;line-height:1.35;"><div style="color:#1D4ED8;font-weight:600;margin-bottom:2px;">ⓘ ${missingAssociationTitle}</div><div style="color:#64748B;">${missingAssociationHelpText}</div></div>`
+  : "";
+
+const row = (icon, label, val, action = "") =>
+  `<div style="display:grid;grid-template-columns:24px 82px 1fr 52px;align-items:center;column-gap:4px;min-height:26px;font-size:13px;line-height:1.35;"><div style="font-size:13px;text-align:center;">${icon}</div><div style="color:#64748B;">${label}</div><div style="color:#111827;">${val}</div><div style="color:#64748B;font-size:11px;text-align:right;font-weight:500;white-space:nowrap;">${action}</div></div>`;
+
+const verificationCard = hasHints
+  ? `<div style="border:1px solid #FDE68A;border-radius:10px;background:#FFFBEB;padding:12px;margin-bottom:10px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-weight:600;font-size:13px;color:#111827;">Da verificare</div><div style="font-size:11px;font-weight:600;color:#B45309;background:#FEF3C7;border-radius:6px;padding:2px 6px;">Controlla</div></div><div>${verificationOutput}</div></div>`
+  : "";
+
+return `<div><div style="border:1px solid #E5E7EB;border-radius:10px;background:#FFFFFF;padding:12px;margin-bottom:10px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div style="font-weight:600;font-size:13px;color:#111827;"><span style="color:${dotColor};">●</span> Sintesi</div><div style="font-size:11px;font-weight:600;color:${statusColor};background:${statusBg};border-radius:6px;padding:2px 6px;">${statusLabel}</div></div><div style="font-size:13px;color:#111827;line-height:1.45;margin-bottom:6px;">${labelStyled || "—"}</div><div style="border-top:1px solid #F3F4F6;padding-top:8px;">${row("🏷️", "Tipo", typeLabel, "Cambia")}${row("📅", "Data", dateLabel)}${row(valueRowIcon, valueRowLabel, amountLabel)}${row("📁", "Progetto", projectLabel, selectedProject ? "Cambia" : "Scegli")}${row("👤", "Entità", entityLabel, selectedEntity ? "Cambia" : "Scegli")}</div>${missingAssociationNotice}</div>${verificationCard}</div>`;
+
+})()
+}}
+```
+
+### 12 · `select_entity.labels`
+
+```text
+{{ (() => {
+  const duplicates = (entities_list.data || []).filter(entity => entity.name === item.name);
+  if (duplicates.length < 2 || !item.id) return item.name;
+  const key = String(item.id).replace(/-/g, "");
+  let length = 8;
+  while (length < key.length && duplicates.some(entity =>
+    entity.id !== item.id && String(entity.id).replace(/-/g, "").startsWith(key.slice(0, length))
+  )) length++;
+  return `${item.name} · ${key.slice(0, length)}`;
+})() }}
+```
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -8539,3 +10785,7 @@ v26 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
 
 v27 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Fotografia circoscritta N20, inventario del delta ed evidenze; distinti i reperti N16/N18/N19.
+
+v28 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v29 — 2026-11-16 — N21/DOC PREPARE R03: tracciati prove, sorgenti finali e confini delle fotografie Retool.

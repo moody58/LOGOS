@@ -1,7 +1,41 @@
 # 04_LOGOS_Retool_Architecture
-Versione: v29
+Versione: v31
 
-DATA: 2026-11-12
+DATA: 2026-11-16
+
+## Wiring corrente N21 — associazioni Project ed Entity
+
+### Inventario funzionale N21
+
+I riferimenti 01–12 seguono il [registro dei sorgenti finali](LOGOS_RETOOL_RUNTIME_REAL.md#appendice-n21--sorgenti-delle-proprietà). La Draft N21 di riferimento è quella collaudata il 15 novembre 2026.
+
+| ID | Proprietà | Collegamento operativo e responsabilità |
+| --- | --- | --- |
+| 01 | `project_state.query` | `input_raw.value` / `projects_list.data` → candidati Project B1 e prefissi informativi UX. |
+| 02 | `entity_state.query` | `input_raw.value` / `entities_list.data` → candidati Entity B1. Read-only in UX. |
+| 03 | `create_suggestion_state.query` | State + repertori completi + UUID delle Select → oggetti project/entity per hint e suggestion. |
+| 04 | `select_project.defaultValue` | FK originale in edit o `singleMatch` ACTIVE nel nuovo evento. |
+| 05 | `select_project.mappedOptionDisabled` | Opzioni Project complete, eccezione per lo stesso UUID storico. |
+| 06 | `select_entity.defaultValue` | FK originale in edit o `singleMatch` ACTIVE nel nuovo evento. |
+| 07 | `select_entity.mappedOptionDisabled` | Opzioni Entity complete, eccezione per lo stesso UUID storico. |
+| 08 | `button_input_confirm.click` | Guardie, GET per nuove FK e invio POST/PATCH; reset e feedback dopo il successo. |
+| 09 | `update_event.urlParameter.id` | ID del PATCH da `additionalScope.confirm_event_id`. |
+| 10 | `preview_analysis_state.funcBody` | State, selezioni, suggestion e contesto edit → avvisi e status di Sintesi. |
+| 11 | `sintesi.value` | Rappresentazione HTML di Sintesi / Da verificare con escaping e highlight testuale. |
+| 12 | `select_entity.labels` | Mapped options → Label: suffisso UUID solo per omonimi, value `item.id`. |
+
+Lotti: B1 01–03, B2/R01 04–09, UX 01, 03 e 10–12. I 14 interventi coinvolgono 12 proprietà perché 01 e 03 hanno una seconda versione UX. `button_input_confirm.Disabled` e Hidden, il data/value mapping delle Select, le liste anagrafiche, `btn_edit`, `create_anagrafica`, `input_raw.change`, R2 Dirty, G35 e N22 rimangono fuori dal delta.
+
+| Oggetto | Proprietà e ruolo |
+| --- | --- |
+| `project_state`, `entity_state` | Query B1 sul repertorio completo. Solo `project_state` espone anche `prefixAlternatives` per la UX. |
+| `create_suggestion_state` | Query B1 di estensione da match/UUID. Coordina il suggerimento Project con le alternative da prefisso; la creazione canonica N18 è separata. |
+| `select_project`, `select_entity` | Default value e Mapped options → Disabled applicano il filtro ACTIVE in nuova associazione e preservano il valore storico in edit. Mapping value `item.id`. Il mapping Label Entity distingue omonimi con prefisso UUID della lunghezza necessaria. |
+| `button_input_confirm` | Click R01: preflight per nuove FK, confronto del contesto e lock. La [madre Lifecycle](03_LOGOS_Event_Lifecycle.md) documenta il contratto del salvataggio. |
+| `update_event` | URL parameter `id` risolto da `confirm_event_id`. Body e risorsa precedenti conservati. |
+| `preview_analysis_state`, `sintesi` | Func body e value producono e rendono le informazioni contestuali. La [madre Preview](06_LOGOS_View_Preview_System.md) documenta il comportamento. |
+
+`projects_list` e `entities_list` mantengono i GET completi senza cache. Non sono stati aggiunti componenti, query o regole SQL. La [fotografia runtime](LOGOS_RETOOL_RUNTIME_REAL.md) riporta i collaudi nella Draft e i limiti della verifica. Gli estratti di wiring dei nodi precedenti conservano la loro data.
 
 ## Wiring N19 — preview_analysis_state (checkpoint Work)
 
@@ -3169,10 +3203,10 @@ select_entity:
 
 COMPORTAMENTO:
 
-match univoco:
-→ singleMatch valorizzato
-→ select valorizzata
-→ conferma abilitata
+match univoco in nuovo evento:
+→ singleMatch valorizzato anche se INACTIVE o NULL
+→ default valorizzato solo se ACTIVE
+→ la sola mancanza di associazione non costituisce blocco
 
 match ambiguo non risolto:
 → isAmbiguous = true
@@ -3206,7 +3240,7 @@ match presente + suggestion extension:
 Nota post G33:
 
 button_input_confirm.Disabled non usa più matches.length > 1.
-Il blocco funzionale dipende solo da isAmbiguous.
+Per il ramo ambiguità di Disabled valgono `isAmbiguous` e Select ancora vuota. Il Click R01 esegue il gate ACTIVE separatamente.
 
 Nota post G22:
 
@@ -3230,7 +3264,7 @@ Caratteristiche:
 ✔ preview non usa detection locale come fonte decisionale  
 ✔ confirm guard basata su ambiguità non risolta  
 ✔ confirm guard Disabled allineata a isAmbiguous dopo G33
-✔ auto-select solo se match univoco  
+✔ auto-select nel nuovo evento solo per singleMatch ACTIVE; edit inizializzato con la FK originale  
 ✔ utente mantiene controllo  
 ✔ match state live in create/edit  
 
@@ -3251,6 +3285,8 @@ PROJECT_STATE
 Ruolo:
 
 fonte minima matching project.
+
+Nel contratto N21, D1–D3 sono trattati dal matcher B1 con parole intere, normalizzazione NFD e frase numerica completa. Ai campi base si aggiungono `plausibleAlternatives` e `hasPlausibleAlternatives`. Per D4 la query Project UX aggiunge `prefixAlternatives` come uscita informativa, senza cambiare i candidati canonici.
 
 Input:
 
@@ -3287,6 +3323,8 @@ Ruolo:
 
 fonte minima matching entity.
 
+B1 introduce `plausibleAlternatives` e `hasPlausibleAlternatives` con le stesse regole di testo e numeri del Project. Il campo informativo dei prefissi è solo Project. Gli omonimi Entity mantengono i loro UUID.
+
 Input:
 
 - input_raw.value
@@ -3318,35 +3356,25 @@ entity_id viene salvato solo tramite select_entity.value.
 
 SELECT_PROJECT
 
-Default value:
+Data: `projects_list.data`, repertorio completo. Mapped options → Value: `item.id`. Il default B2/R01 restituisce `editing_event.data?.project_id || null` se `edit_mode.data === true`; altrimenti solo `project_state.data?.singleMatch.id` quando lo Stato del match è ACTIVE.
 
-legge project_state.data.singleMatch.
-
-Comportamento:
-
-- se singleMatch esiste → ritorna singleMatch.id
-- altrimenti → null
-
-select_project.value resta fonte finale salvabile per project_id.
+Mapped options → Disabled disabilita ogni opzione con `item.status !== "ACTIVE"` salvo stesso UUID dell’evento in edit. L’etichetta Project non cambia. `select_project.value` è la fonte finale di `project_id`; una nuova FK viene ricontrollata nel Click.
 
 ---
 
 SELECT_ENTITY
 
-Default value:
+Data: `entities_list.data`, repertorio completo. Mapped options → Value: `item.id`. Default e Disabled seguono lo stesso contratto di Project usando `entity_state` e `editing_event.data?.entity_id`. Il match NULL/INACTIVE resta identificato da Entity e non viene preselezionato in un nuovo evento.
 
-legge entity_state.data.singleMatch.
+Mapped options → Label confronta `entity.name === item.name` sul repertorio completo. In caso di omonimia esatta mostra `nome · prefisso UUID` senza trattini. Parte da otto caratteri e allunga finché il prefisso distingue l’opzione dalle altre, nei limiti del suo UUID. In assenza di omonimi o UUID usa il solo nome. `select_entity.value` resta l’UUID originale.
 
-Comportamento:
-
-- se singleMatch esiste → ritorna singleMatch.id
-- altrimenti → null
-
-select_entity.value resta fonte finale salvabile per entity_id.
+Il default storico e l’eccezione Disabled valgono per la sola FK corrente. Nessun percorso eccezionale UX-06 e nessun nuovo filtro nelle GET anagrafiche.
 
 ------------------------------------------------
 CREATE SUGGESTION FLOW — FIRST CONTROLLED LEVEL
 ------------------------------------------------
+
+Il ramo N21 risolve l’eventuale record scelto col valore UUID, poi usa `singleMatch` come alternativa. I risultati del matching, compreso il prefisso informativo Project, hanno precedenza sulla suggestion. `container_association_suggestions` e i draft dei form consumano `shouldSuggestCreate`, `candidateName` e `draftName`; la Preview usa `requiresUserOverride` solo per l’avviso G22. Il flusso che scrive l’anagrafica rimane quello canonico N18.
 
 Eseguito tramite:
 
@@ -3455,6 +3483,8 @@ Flow:
 8. evento NON salvato automaticamente; refresh fallito non autorizza una nuova POST
 
 Per guardie, ordine esatto e rami di errore vedere il contratto N18 in apertura di Architecture.
+
+Le sequenze G22 seguenti sono esempi storici pre-N21. Nel caso N21 con varianti Villa Sierri già presenti, valgono alternative e ambiguità canoniche.
 
 Nota post G22:
 
@@ -4608,7 +4638,7 @@ Regola:
 button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm.
 button_input_confirm.Disabled resta guard funzionale separata.
 Dopo G33, button_input_confirm.Disabled è allineato a project_state/entity_state isAmbiguous.
-button_input_confirm payload resta invariato.
+La forma dei dati evento è conservata. B2/R01 verifica le nuove FK nel Click e fornisce `confirm_event_id` al PATCH.
 
 Componente:
 
@@ -4624,22 +4654,15 @@ aggiornare feedback, lista e routing post-save
 
 Sequenza attuale:
 
-legge ui_state.parsed
-costruisce payload
-determina wasEditMode
-esegue EDIT MODE COMMAND GUARD se in edit mode l’input è un command riconosciuto
-esegue no-op edit guard se in edit mode
-costruisce feedbackText / feedbackProject / feedbackEntity
-costruisce feedbackSummary prima del reset input/select
-cancella debounce pending
-resetta input/select
-mostra feedback come ultimo stato UI visibile
-esegue insert_event o update_event
-attende savePromise
-aggiorna events_new
-resetta edit_mode / editing_event se necessario
-avvia timer feedback 1800 ms
-ritorna a Home o Events list in base a insert/update
+### Sequenza Click R01
+
+1. Uscita se lock attivo. Cattura input, parsed, tipo, UUID delle Select, modo edit ed evento originale.
+2. Command guard in edit su comando coerente con il testo corrente. No-op su testo, tipo e FK senza aggiornamento. Un edit reale richiede UUID originale verificabile.
+3. Acquisizione lock. GET senza cache delle sole liste necessarie per nuove FK non vuote. Richiesti UUID univoco e Stato ACTIVE nella risposta. Un rischio o uno Stato non verificabile lascia il form aperto.
+4. Confronto dello snapshot con modo edit, ID evento, testo, tipo e Select effettivi. Invio tramite `insert_event.trigger` oppure `update_event.trigger` con `confirm_event_id` ricavato dallo snapshot.
+5. Solo a salvataggio risolto: stop debounce, pulizia input e Select, feedback, `events_new.trigger`, reset helper edit quando necessario. Schedulazione del ritorno a Home oppure Lista Eventi dopo 1800 ms. Rilascio del lock in `finally`, raggiunto anche in caso di blocco o errore nel ramo protetto.
+
+`update_event.urlParameter.id` legge `eq.{{ confirm_event_id }}`. URL fuori parametro, risorsa, body e guard state del database non fanno parte del delta. Il [Lifecycle](03_LOGOS_Event_Lifecycle.md) documenta i limiti GET→scrittura, lock e concorrenza.
 
 EDIT MODE:
 
@@ -4668,7 +4691,7 @@ VINCOLI:
 Nota post G33:
 
 button_input_confirm.Disabled non usa più matches.length > 1 come criterio grezzo.
-Il blocco funzionale dipende solo da isAmbiguous.
+Per il ramo ambiguità di Disabled valgono `isAmbiguous` e Select ancora vuota. Il Click R01 esegue il gate ACTIVE separatamente.
 
 Principio:
 
@@ -7605,3 +7628,7 @@ v28 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 - Nessuna propria applicazione, verifica operativa o pubblicazione attestata; Core 35%, M04 PARZIALE.
 
 v29 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Contratto Salva corrente, Select e sei proprietà N20 documentati nel wiring. N16 conservato come baseline storica.
+
+v30 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
+
+v31 — 2026-11-16 — N21/DOC PREPARE R03: allineati inventario, Select, suggestion e ordine delle operazioni Conferma.
