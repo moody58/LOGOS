@@ -1,7 +1,272 @@
 # LOGOS_RETOOL_RUNTIME_REAL
-Versione: v29
+Versione: v30
 
-DATA: 2026-11-16
+DATA: 2026-11-20
+
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Fotografia finale Q2 — Draft inline senza modale
+
+Draft Logos app UUID 18ea4684-29de-11f1-b868-0b05f2d402b2, page1. Nodo CP-LOGOS-M04-UX06-INACTIVE-EXCEPTION-20261117-Q2, esiti tecnici conclusivi 18–20 novembre 2026. Non una release pubblicata: manutenzione ancora attiva. Consolidamento presente PREPARE documentale, non copia/Apply o pubblicazione già eseguiti.
+
+La logica finale è distribuita per responsabilità nelle madri; gli hash consentono il riscontro delle proprietà complete senza duplicarne qui il codice.
+
+Fonti complete per responsabilità: [Input](01_LOGOS_Input_System.md#contratto-finale-q2--analisi-correlata), [Match](02_LOGOS_Match_Engine.md#contratto-finale-q2--riconoscimento-e-associazione), [Lifecycle](03_LOGOS_Event_Lifecycle.md#contratto-finale-q2--conferma-unica), [Architecture](04_LOGOS_Retool_Architecture.md#contratto-finale-q2--wiring-inline), [Preview](06_LOGOS_View_Preview_System.md#contratto-finale-q2--sintesi-e-decisioni), [Runtime](LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale).
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
+
+### Inventario e rimozione legacy
+
+Export pre-Delete originale Logos (47).json, 559.936 byte, SHA-256 efd15215e5d0b25f7c3b681b890567d29db2dfe2dfeb709920b38f1c003aaaf8, 171 oggetti. modalFrame1 è unico, subtype ModalFrameWidget, uuid:null nel modello autentico. Rimossi con un solo Delete nativo il padre e otto figli; inventario finale 162 per riconciliazione, **non esiste un export completo post-Delete**.
+
+119 sorgenti widget native finali complete confrontate dopo reload; inventario dei 40 oggetti Code dalla UI e conservazione di Main/pagina/tema riconciliati come nel checkpoint. Non dichiarare acquisizione byte-per-byte post-Delete di tutti i template query/tema. 50 UUID UX-R1 preservati, dodici handler STEP 3-A invariati, confirm_event 16.468 byte UTF-8 identici. I sorgenti query dal modello originale sono pre-Delete; il Delete non è una nuova certificazione globale dei loro byte. IAR e coordinatore hanno inoltre readback critici separati conformi.
+
+Oggetti eliminati, inventario effettivo del checkpoint:
+
+```json
+[
+  {
+    "id": "modalFrame1",
+    "position2": null,
+    "preimage": "preimage/modalFrame1.source.json",
+    "subtype": "ModalFrameWidget",
+    "type": "frame",
+    "uuid": null
+  },
+  {
+    "id": "modalTitle1",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 0.6,
+      "row": 0,
+      "rowGroup": "header",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 9
+    },
+    "preimage": "preimage/modalTitle1.source.json",
+    "subtype": "TextWidget2",
+    "type": "widget",
+    "uuid": "5bd1bfd5-c50f-4de6-b292-c62e374aa732"
+  },
+  {
+    "id": "modalCloseButton1",
+    "position2": {
+      "col": 9,
+      "container": "",
+      "height": 1,
+      "row": 0,
+      "rowGroup": "header",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 3
+    },
+    "preimage": "preimage/modalCloseButton1.source.json",
+    "subtype": "ButtonWidget2",
+    "type": "widget",
+    "uuid": "dac3979f-3412-489d-aa43-55a6676b777c"
+  },
+  {
+    "id": "text_exception_project",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 0.6,
+      "row": 0,
+      "rowGroup": "body",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 12
+    },
+    "preimage": "preimage/text_exception_project.source.json",
+    "subtype": "TextWidget2",
+    "type": "widget",
+    "uuid": "d17e8c7a-f343-411e-88c1-884fc9701356"
+  },
+  {
+    "id": "select_exception_project",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 0.2,
+      "row": 0.5999999999999999,
+      "rowGroup": "body",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 12
+    },
+    "preimage": "preimage/select_exception_project.source.json",
+    "subtype": "SelectWidget2",
+    "type": "widget",
+    "uuid": "045b50d6-0151-43ed-a22d-3d58de52620f"
+  },
+  {
+    "id": "text_exception_entity",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 0.6,
+      "row": 0.7999999999999998,
+      "rowGroup": "body",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 12
+    },
+    "preimage": "preimage/text_exception_entity.source.json",
+    "subtype": "TextWidget2",
+    "type": "widget",
+    "uuid": "c89afa29-6485-48a7-b70f-39d98f7ff617"
+  },
+  {
+    "id": "select_exception_entity",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 0.2,
+      "row": 1.4,
+      "rowGroup": "body",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 12
+    },
+    "preimage": "preimage/select_exception_entity.source.json",
+    "subtype": "SelectWidget2",
+    "type": "widget",
+    "uuid": "3db9b48e-f4da-479c-8ff3-aeefa4efa7dd"
+  },
+  {
+    "id": "button_exception_confirm",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 1,
+      "row": 4.2,
+      "rowGroup": "body",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 6
+    },
+    "preimage": "preimage/button_exception_confirm.source.json",
+    "subtype": "ButtonWidget2",
+    "type": "widget",
+    "uuid": "fb86f357-61dc-4339-bc22-3c133fdff215"
+  },
+  {
+    "id": "button_exception_cancel",
+    "position2": {
+      "col": 0,
+      "container": "",
+      "height": 1,
+      "row": 5.199999999999999,
+      "rowGroup": "body",
+      "stackPosition": null,
+      "subcontainer": "modalFrame1",
+      "tabNum": 0,
+      "type": "grid",
+      "width": 6
+    },
+    "preimage": "preimage/button_exception_cancel.source.json",
+    "subtype": "ButtonWidget2",
+    "type": "widget",
+    "uuid": "a11bf313-046f-4c7e-8d1d-60fa2ba023af"
+  }
+]
+```
+
+### Prove riutilizzate e limiti
+
+| Gruppo | Esito documentato | Classe / limite |
+| --- | --- | --- |
+| Gate F/P | 13 prove freshness e 24 simulazioni conferma, sintassi/hash di 56 proprietà | Locali sui sorgenti di allora, non suite LIVE finale né nuovo rerun; vecchi mock non consumavano i mailbox edit |
+| Recovery EV01 | 6 prove mirate e ingresso edit LIVE senza salvare EV01; fix persistito | Corretta la lettura dei mailbox già consumati, usando dati canonici e contesto atteso; sorgenti finali sostituiscono le candidate precedenti |
+| A4 inline | 15 prove locali adattate e smoke Chrome non persistenti | Project, Entity, entrambe, nessuna/ACTIVE, scelta mancante/scaduta, preflight/cancel/doppio invio nelle rispettive coperture; stub non provano reset/DB |
+| UX-R1 | 12 prove candidate iniziali e 9 del completamento, readback/reload e UI mirata | Schede/badge/disabled, Toggle e pertinenza dei suggerimenti; nessun nuovo matcher/coordinatore |
+| Safari UX-R1 | 4/4 PASS | Dichiarati dall’utente sul dispositivo reale, non rieseguiti da Work |
+| Persistenza P1/P2 | INSERT e UPDATE sul medesimo evento, readback DB indipendente, feedback/reset | 271→272→272; nessun duplicato; nessuna autorizzazione DML residua |
+| STEP 3-A | 12/12 statement visivi rimossi; delta esatto e reload | 24 compilazioni, 12 confronti e 48 casi prefissi locali; prove LIVE mirate con L08 escluso |
+| STEP 3-B | Padre e otto figli assenti, zero riferimenti legacy, integrità inline e reload | Non persistente; nessun Click Conferma o nuovo test DB |
+
+Evento di test: 7a4a32b4-76cb-4612-8335-ebe3f1db2cfc, NEW. P1 Spesa 20 euro, Project bf951f5a-2c01-4476-8e02-2d10033ebe3c collegato, Entity NULL. P2 stesso UUID Spesa 21 euro, Project invariato, Entity 0996b93d-dc44-4e86-ba9d-88b6a800bc1e collegata. Cambiati soltanto amount, entity_id, raw_input, updated_at; updated_at P2 2026-11-20T00:05:18.321+00:00, conteggio 272 al readback 2026-11-20T00:05:39.752465+00:00. Conteggi e stato non nuovamente interrogati in STEP 4. Nessun cleanup autorizzato.
+
+L08 «Vai agli eventi» non eseguito LIVE; non ne viene inferita regressione o causa. Le corse/fallimenti/mock hanno copertura locale, non garanzie di scheduler Retool o concorrenza DB universali. Dirty globale=0 non attestato. 46 lint inventariati nel checkpoint mobile/linting, non riparati da Q2. G35/R2/N22, ricerca manuale INACTIVE non riconosciuta, fuzzy/G10A, schema/RLS e altri nodi non assorbiti.
+
+### Fonti conservate
+
+I pacchetti e i checkpoint nella tabella sono fonti già acquisite; nessuna suite è stata rieseguita nel consolidamento. Il pacchetto finale STEP 3-B è prioritario per widget/handler/coordinatore dopo Delete; UX-R1 per la presentazione, STEP 2 per i collaudi DB. Non usare le candidate storiche modali o gli ordinal nominali come postimage finale.
+
+| File | SHA-256 effettivo | Provenienza |
+| --- | --- | --- |
+| `CHECKPOINT_LOGOS_M04_Q2_INLINE_STEP3_A4_PASS_20261119.md` | `5253f801e079c4891b273ed3e0f085552fc45e669e5a5048006be7f777f57f5b` | copia conservata con provenienza nel checkpoint Q2 |
+| `LOGOS_M04_Q2_INLINE_STEP3_A4_VERIFIED_20261119.zip` | `03f33bc22a71b6f01daf2003c478e543149451d5d94d8779653426b6a9457276` | copia conservata con provenienza nel checkpoint Q2 |
+| `CHECKPOINT_LOGOS_M04_Q2_UX_R1_COMPLETAMENTO_PASS_20261120.md` | `8cf4018e6ce32a407ba068705db552ea1794a9674dca4682324b884f0175db13` | https://chatgpt.com/library?file_id=libfile_204cfe904dd08191982d1b74c9b8ce93&account_id=personal |
+| `LOGOS_M04_Q2_UX_R1_COMPLETAMENTO_VERIFIED_20261120.zip` | `4361192ac476a78f1b87c17b761d32390c21fbf13b40c1db36174f31b144526b` | https://chatgpt.com/library?file_id=libfile_2035d357a8988191baaf4c039971ce7f&account_id=personal |
+| `CHECKPOINT_LOGOS_M04_Q2_STEP2_CONCLUSIVO_PASS_20261120.md` | `e53898ef15af2c75e38492c9fb82ad1784db219a342f0b68a0c575443d2cda72` | https://chatgpt.com/library?file_id=libfile_c9f3e53026788191a5155c01fe995147&account_id=personal |
+| `LOGOS_M04_Q2_STEP2_CONCLUSIVO_VERIFIED_20261120.zip` | `36233cd84b7039425e37604e794c71524cf46512726c9b9ee3a5b43bdb930cbc` | https://chatgpt.com/library?file_id=libfile_e3b98ca59910819187286f0183697e66&account_id=personal |
+| `CHECKPOINT_LOGOS_M04_Q2_STEP3_A_DISTACCO_MODALE_20261120.md` | `27fc8e178c156ce3ca5d7ba60e46ec6c10c5b2befafa65580b301923107a50a6` | https://chatgpt.com/library?file_id=libfile_307fcc85de608191847dd82f1e71af05&account_id=personal |
+| `LOGOS_M04_Q2_STEP3_A_DISTACCO_MODALE_VERIFIED_20261120.zip` | `eb09889cc090b60ab643c9caffcaaeb955e39e30fcbf24ed2589a98aa2b1d69b` | https://chatgpt.com/library?file_id=libfile_0f66109c6874819194c60e023a178e7a&account_id=personal |
+| `CHECKPOINT_LOGOS_M04_Q2_STEP3_B_RIMOZIONE_MODALE_PASS_20261120.md` | `c5825e8f8ed702e972d6805d2b040bb81098fc57c270b8fc75afc56e951a5655` | https://chatgpt.com/library?file_id=libfile_fedbc6e00178819198b1ef3b1c88410e&account_id=personal |
+| `LOGOS_M04_Q2_STEP3_B_RIMOZIONE_MODALE_VERIFIED_20261120.zip` | `0c02066f084254749eb01b3cb8fa3b0009b5eb6d427256dab5fe1ae8aedece67` | https://chatgpt.com/library?file_id=libfile_be1772621f4c819185829ef33d43aed7&account_id=personal |
+
+### Proprietà complete e madre responsabile
+
+| Sorgente | SHA-256 UTF-8/LF | Madre / sezione |
+| --- | --- | --- |
+| `parse_input_controlled.template.query` | `0a721e653597e802b6a160671c6530606750c5eb125378ff83bc46e20d6a3b7c` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-parse-input-controlled-query) |
+| `trigger_parse_debounced.template.query` | `64f0a243e12eb408e034cf93ff3a16aa0927d27b54badc105f637f403cd82eb0` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-trigger-parse-debounced-query) |
+| `analysis_snapshot.template.funcBody` | `6404d26273b80b12cb8d13ae5948f39c7463d59f0fe3351ad199900642701c91` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-analysis-snapshot-funcbody) |
+| `input_analysis_result.template.funcBody` | `c3ae149722b45ce64325f18af44a22d6ec2ebfb6d850623f00f87f1507920532` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-input-analysis-result-funcbody) |
+| `command_intent_state.template.query` | `eee8a740ca33f60b15c339ff8995ff2019cf4bed91bbf6698d389fb6e248b489` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-command-intent-state-query) |
+| `create_suggestion_state.template.query` | `fc581c669262a9ccf4a050cb2edbef9e26cd605b2a80a0492775e150fd32db63` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-create-suggestion-state-query) |
+| `focus_input_home.template.query` | `8e73ff23f3310b4ad8b38aee270c71330a4bef7bac5aace49ad1395489c896fc` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-focus-input-home-query) |
+| `select1.template.value` | `321f51a11f027fee961ec3cba6f2a61c2e141a539e8b3fe6d84f12b4dea79289` | [01_LOGOS_Input_System.md](01_LOGOS_Input_System.md#q2-source-select1-value) |
+| `project_state.template.query` | `02c3dca27b5c823d2da411a1f3c045ae9e8cb1b3b1b669e1139e6823bdbec446` | [02_LOGOS_Match_Engine.md](02_LOGOS_Match_Engine.md#q2-source-project-state-query) |
+| `entity_state.template.query` | `2807fc720369ebbc38da0e39d47dbbd2201f71f726eee1d311fce0432c9a43a5` | [02_LOGOS_Match_Engine.md](02_LOGOS_Match_Engine.md#q2-source-entity-state-query) |
+| `confirm_event.template.query` | `6eb54d94d83e8fb2c390a7d97e62a246a8eeceb27b0cea656e6f3ba49dc40e8a` | [03_LOGOS_Event_Lifecycle.md](03_LOGOS_Event_Lifecycle.md#q2-source-confirm-event-query) |
+| `edit_mode.template.query` | `eb5078e00cff573b73d40e722e87a0905ec3c1aa4a83f2b9af2232c0b3363faa` | [03_LOGOS_Event_Lifecycle.md](03_LOGOS_Event_Lifecycle.md#q2-source-edit-mode-query) |
+| `editing_event.template.query` | `fe7c00c9ea31e2c69adfd17e5bf2e839bce30d38d941fcbf0230422377d5bd34` | [03_LOGOS_Event_Lifecycle.md](03_LOGOS_Event_Lifecycle.md#q2-source-editing-event-query) |
+| `preview_analysis_state.template.funcBody` | `bb35859a6b3506502295e779bd3fb825135e1e5e403f2c08e89d3c3052c89547` | [06_LOGOS_View_Preview_System.md](06_LOGOS_View_Preview_System.md#q2-source-preview-analysis-state-funcbody) |
+| `sintesi.template.value` | `f2724be8b9cd9ad76967c0af11744bc4c0261403060996fb185112cf79b26dcb` | [06_LOGOS_View_Preview_System.md](06_LOGOS_View_Preview_System.md#q2-source-sintesi-value) |
+| `create_suggestion_hint.template.value` | `1fd22b8d81a62cf74d7952810a4dc5c9f247f2d89d60633b116766ad76eb8942` | [06_LOGOS_View_Preview_System.md](06_LOGOS_View_Preview_System.md#q2-source-create-suggestion-hint-value) |
+
+I binding e gli eventi dei consumer sono conservati integralmente nelle configurazioni di Architecture; l’archivio di review contiene i source nativi senza deleghe e il registro dei relativi hash. Le appendici N21 successive rimangono esplicitamente storiche per le proprietà sostituite da Q2.
+
+### Matrice discriminante Q2-D01–Q2-D16 — copertura finale, non nuova esecuzione
+
+Gli ID provengono dal Prepare F/P del 17 novembre. La copertura seguente riconcilia i checkpoint successivi senza convertire simulazioni in PASS LIVE né promettere l’intera matrice persistente. X/Escape/outside e continuazione modale descrivevano il progetto poi sostituito, non nuove funzioni inline.
+
+| ID | Discriminante | Evidenza conservata / limite finale |
+| --- | --- | --- |
+| Q2-D01 | Nessun match/associazione | Smoke A4/UX-R1 senza INACTIVE e associazioni facoltative, non persistente; salvataggio senza entrambe le FK non provato dal collaudo P1/P2 |
+| Q2-D02 | Unico INACTIVE per livello | Project solo ed Entity sola osservati in A4; P1 link Project/skip Entity e P2 link Entity verificati DB nei contesti descritti |
+| Q2-D03 | Due INACTIVE | UI indipendente e scelte miste osservate; quattro combinazioni coperte localmente, non quattro collaudi DB; P1 una combinazione persistente |
+| Q2-D04 | Skip distinto da abort | Skip selettivo e annullamento/navigazione non persistenti osservati; X/Escape/outside della vecchia modale sono casi storici ora superati dalla sua rimozione |
+| Q2-D05 | NULL/Stato inatteso | Regole/sorgenti ed esclusione simulate; nessun nuovo salvataggio Q2 con nuove FK NULL eccezionali |
+| Q2-D06 | Ambiguità N21/varianti/prefisso | Contratto e prove N21 preservati, adapter canonici conservati; nessuna nuova suite N21 ripetuta per dichiarare un ulteriore PASS |
+| Q2-D07 | Debounce e analisi pendente | F-E/F-X locali e binding/invalidazioni; Change finale waitMs 0 e timer 350 ms. I 400 ms erano la preimage storica, non attesa di sicurezza attuale |
+| Q2-D08 | Rifiuti/fuori ordine | Simulazioni deterministiche F/A4; non provocate risposte fuori ordine o rejection reali Retool nel Verify inline |
+| Q2-D09 | Cambio testo/tipo/Select/mode/view/evento | Input/Select e contesti edit/cancel/nav osservati nei checkpoint, token obsoleti rifiutati; non ogni interleaving possibile LIVE |
+| Q2-D10 | Cambio catalogo/Stato/nome/candidato | Controlli di snapshot/preflight e simulazioni; nessuna nuova mutazione DB di fixture per indurre una race Q2 |
+| Q2-D11 | Edit storico/no-op/delta reale | Recovery EV01 non persistente; no-op locale e prove N21 storiche; P2 UPDATE reale sullo stesso UUID con Project storico invariato |
+| Q2-D12 | Skip e selezione valida prevalente | Alternativa ACTIVE manuale osservata UX-R1; P1 skip Entity conserva Project collegato; altri casi nella copertura locale |
+| Q2-D13 | Doppio invio/consumo | Lock e consume-once conservati e simulati A4; doppio click N21 prova storica distinta, non un nuovo collaudo Q2 multi-scheda |
+| Q2-D14 | Esito persistente incerto/errore | Ramo errore e simulazioni locali; nessun errore DB intenzionalmente provocato nel collaudo P1/P2, nessun retry automatico |
+| Q2-D15 | Sintesi/payload/feedback | P1/P2 con letture indipendenti, UUID finali e reset/feedback concordi; non generalizzato a dati non provati |
+| Q2-D16 | Mobile reale/responsive | Safari UX-R1 4/4 PASS dichiarati dall’utente, distinto da Chrome; problema del vecchio dialogo documentato e risolto cambiando percorso, non correggendo o certificando quel layout |
 
 ## Fotografia N21 — matching, preflight e UX nella Draft (15 novembre 2026)
 
@@ -920,41 +1185,25 @@ Supabase conserva i dati e applica le protezioni lifecycle e accesso documentate
 
 Flusso attuale:
 
-INPUT
-→ UI VISIBILITY MODE CHECK
-→ COMMAND INTENT CHECK
-→ se comando puro: CONTAINER COMMAND INTENT
-→ COMMAND ACTION / FEEDBACK / ROUTING
-→ nessun evento creato
-
-oppure
-
-INPUT
-→ UI VISIBILITY MODE CHECK
-→ PARSING CONTROLLED
-→ NORMALIZATION BASE
-→ DURATION NORMALIZATION
-→ TYPE CLASSIFICATION BASE
-→ MATCH STATE
-→ CREATE SUGGESTION STATE
-→ PREVIEW ANALYSIS STATE
-→ INPUT ANALYSIS RESULT
-→ PREVIEW / SINTESI
-→ DATI EVENTO / INPUT CONTAINER / LOADING / CANCEL / CONFIRM HIDDEN
-→ SELECT PROJECT / ENTITY
-→ FEEDBACK SUMMARY
-→ INSERT / UPDATE
-→ REFRESH LISTA
-→ ROUTING POST-SAVE
-→ PROCESSING
+input_home → input_raw e invalidazione della revisione/consenso
+→ trigger_parse_debounced: richiesta identificata per revisione, testo e contesto
+→ parser, project_state, entity_state e Command Intent canonici sulla stessa richiesta
+→ suggestion canonica correlata → unico publish di ui_state.analysis e mirror ui_state.parsed
+→ analysis_snapshot validato → IAR, Select ordinarie, Tipo e preview
+→ decisioni INACTIVE contestuali nelle Select inline, se richieste
+→ button_input_confirm delega confirm_event(begin)
+→ guardie/lock, no-op e command guard → preflight e verifica fingerprint/consume-once
+→ un solo ramo insert_event oppure update_event
+→ dopo successo: reset, refresh e feedback/routing contestuale.
+La creazione Project/Entity resta un’azione separata già esistente, non un secondo salvataggio evento.
 
 ✔ allineamento save → DB verificato  
-✔ insert e update usano ui_state.parsed  
+✔ insert/update correnti usano snapshot.parsed catturato e validato nel coordinatore
 ✔ normalizzazione amount/unit base attiva 
 ✔ duration normalization base attiva  
 ✔ durate certe ore/minuti salvate in minuti canonici  
 ✔ type classification base attiva  
-✔ select1 allineato a ui_state.parsed.unit  
+✔ select1 legge analysis_snapshot.parsed.unit nel value finale
 ✔ events.type valorizzato in insert/update  
 ✔ Spesa / Incasso / Tempo / Evento persistiti nel DB   
 ✔ preview visualmente allineata a ui_state.parsed  
@@ -1105,7 +1354,7 @@ INPUT
 ✔ create flow protetto da eventi impropri su modifica / correggi / cambia
 ✔ edit flow protetto da update_event impropri su command riconosciuti
 ✔ command create project/entity bloccati funzionalmente durante edit mode
-✔ button_input_confirm include EDIT MODE COMMAND GUARD
+✔ confirm_event include EDIT MODE COMMAND GUARD; il pulsante delega il solo begin
 ✔ text_edit_mode_notice contestuale su command rilevato in edit mode
 ✔ input_analysis_result rollbackato alla base stabile dopo test su approccio più invasivo
 ⚠ micro-flash container_input durante transizioni input / command / empty ancora presente come residuo non bloccante
@@ -1193,7 +1442,7 @@ Il parsing non viene più eseguito direttamente nel bottone confirm.
 
 Nota canonica:
 
-Questo documento conserva il comportamento runtime Retool reale di trigger_parse_debounced.
+Il trigger corrente correla ogni esecuzione per richiesta/revisione/testo/contesto/cataloghi, usa solo parser/matcher/Command Intent canonici e pubblica un bundle completo con mirror parsed. Scarta esiti falliti o superati. Non usa classificazione locale o visibility_run_id come barriera F. Codice completo: Input System, «q2-source-trigger-parse-debounced-query».
 
 Per la logica completa dell’input flow, parser, Command Intent e input_analysis_result,
 la fonte canonica è:
@@ -1209,7 +1458,9 @@ Query/script:
 
 trigger_parse_debounced
 
-Ruolo:
+INIZIO FOTOGRAFIA STORICA DEL TRIGGER PRE-Q2 — NON APPLICABILE
+
+Ruolo e pseudo-codice seguenti documentano il percorso sostituito. Non ripristinare runId o publisher indipendenti. Ruolo storico:
 
 - evitare parsing per-lettera
 - ridurre trigger inutili
@@ -1339,6 +1590,7 @@ Non sono implementati:
 - fuzzy command recognition
 - alias system globale
 - “modifica progetto” come command strutturale
+FINE FOTOGRAFIA STORICA DEL TRIGGER PRE-Q2. Il publisher effettivo è quello del bundle correlato.
 
 UI_STATE
 
@@ -1412,7 +1664,7 @@ Regole:
 
 Nota:
 
-ui_state.parsed alimenta amount/unit/event_date.
+analysis_snapshot.parsed alimenta i consumer amount/unit/event_date; ui_state.parsed è il mirror compatibile del publish unico.
 
 Il type non è contenuto in ui_state.parsed.
 Il type viene alimentato da select1.value.
@@ -1424,19 +1676,9 @@ Il matching project/entity è gestito da:
 input_raw
 → project_state / entity_state
 
-La scelta finale salvabile resta:
+Le Select ordinarie usano i singleMatch di analysis_snapshot: nuove preselezioni soltanto ACTIVE, oppure FK storiche in edit. IAR risolve association.selectedId e l’eventuale candidato canonico unico INACTIVE senza selezione valida prevalente. Il coordinatore usa finalAssociationId: selectedId se non serve decisione; candidateId con Collega; null con Non collegare. Le due decisioni sono indipendenti. NULL non abilita nuove eccezioni, le FK storiche restano preservate. Non esiste ricerca manuale INACTIVE aggiuntiva.
 
-select_project.value
-select_entity.value
-
-Quindi:
-
-- ui_state.parsed = amount / unit / event_date
-- select1.value = type
-- project_state / entity_state = match state
-- create_suggestion_state = suggestion project/entity
-- command_intent_state = command intent controllato
-- select_project.value / select_entity.value = project_id / entity_id
+Ripartizione corrente: snapshot.parsed per dati strutturati; select1 per type; snapshot.project/entity/command/suggestion per i consumer correlati; association IAR e scelte inline per la risoluzione delle FK nel coordinatore.
 - ui_state.feedback_mode = modalità feedback temporanea
 - ui_state.feedback_summary = riepilogo temporaneo feedback
 
@@ -1715,30 +1957,11 @@ comporre lo stato operativo dell’input flow.
 
 Legge:
 
-- input_home / input_raw
-- ui_visibility_mode
-- edit_mode
-- command_intent_state
-- ui_state.parsed
-- select1
-- project_state / entity_state
-- select_project / select_entity
-- create_suggestion_state
-- preview_analysis_state
+- input_home/input_raw, ui_state e ui_visibility_mode per testo e contesto UI;
+- analysis_snapshot.parsed, .project, .entity, .command e .suggestion per i risultati correlati;
+- edit_mode/editing_event, cataloghi, select1, select_project/select_entity e preview_analysis_state.
 
-Espone:
-
-- mode
-- input
-- parsed
-- type
-- project.raw / project.selection / project.effective
-- entity.raw / entity.selection / entity.effective
-- suggestion
-- command
-- preview
-- readiness
-- diagnostics
+Espone mode/input/parsed/type, project ed entity raw/selection/effective, suggestion, command, preview, readiness e diagnostics; inoltre analysis, association, associationContext e choiceValues contestuali. Le scelte inline non sono lette da IAR: nessuna dipendenza inversa o secondo matching. association è input di confirm_event, senza costruzione o persistenza del payload nel transformer.
 
 Concetti:
 
@@ -1968,7 +2191,7 @@ Questa normalizzazione:
 ✔ non modifica input_home
 ✔ non modifica raw_input
 ✔ non modifica direttamente DB
-✔ produce solo output strutturato in ui_state.parsed
+✔ il parser produce il risultato canonico correlato; il trigger pubblica il bundle e il mirror compatibile parsed
 
 ------------------------------------------------
 HELPER VISIBILITY STATE — RUNTIME
@@ -2078,10 +2301,10 @@ Esempio:
 
 Utilizzato da:
 
-success handler parser
-ui_state.parsed
+pubblicazione correlata del trigger; il vecchio success handler indipendente è dismesso
+analysis_snapshot.parsed (mirror compatibile ui_state.parsed)
 preview
-button_input_confirm
+confirm_event (invocato dal solo Click normale)
 insert_event
 update_event
 
@@ -2098,9 +2321,11 @@ Tuttavia il suo output unit viene usato da select1:
 parsed.unit = "minuti"
 → select1 = Tempo
 
-6.1 SUCCESS HANDLER parse_input_controlled
+6.1 SUCCESS HANDLER STORICO parse_input_controlled — DISMESSO
 
-Codice runtime:
+Il parser finale ha template.events=[]; restituisce un risultato con identità della richiesta. Pubblica soltanto trigger_parse_debounced dopo la correlazione dell’intero bundle. INIZIO ESTRATTO STORICO NON APPLICABILE:
+
+Codice della fotografia precedente (non runtime Q2):
 
 const parsed = parse_input_controlled.data || {};
 
@@ -2119,6 +2344,7 @@ Risultato:
 ✔ nessun undefined
 ✔ fonte unica per save/edit
 ✔ riduzione drift tra preview e DB
+FINE ESTRATTO STORICO. Fonte dei consumer Q2: analysis_snapshot.parsed; mirror compatibile ui_state.parsed nello stesso publish.
 
 6.2 UNIT NORMALIZATION
 
@@ -2623,7 +2849,7 @@ SELECT_PROJECT — DEFAULT VALUE
 
 Logica runtime:
 
-select_project legge project_state.data.singleMatch.
+select_project legge analysis_snapshot.value?.project?.singleMatch per il default ordinario; nuove preselezioni solo ACTIVE, in edit FK storica.
 
 Comportamento:
 
@@ -2640,7 +2866,7 @@ SELECT_ENTITY — DEFAULT VALUE
 
 Logica runtime:
 
-select_entity legge entity_state.data.singleMatch.
+select_entity legge analysis_snapshot.value?.entity?.singleMatch per il default ordinario; nuove preselezioni solo ACTIVE, in edit FK storica.
 
 Comportamento:
 
@@ -2672,15 +2898,7 @@ Consumatori:
 - btn_cancel_project_inline
 - btn_cancel_entity_create
 
-Input usati:
-
-- input_raw.value
-- project_state.data
-- entity_state.data
-- projects_list.data
-- entities_list.data
-- select_project.value
-- select_entity.value
+Input usati nel flow Q2: analysis_request contiene testo/cataloghi/selezioni catturati e i risultati correlati dei matcher. L’adapter li passa ai parametri locali del corpo canonico create_suggestion_state; il trigger verifica il requestId prima della pubblicazione. L’helper UI create_suggestion_hint legge invece create_suggestion_state.data con i filtri association IAR: non confonderlo con preview_analysis_state/renderer, che consumano il bundle.
 
 Output logico:
 
@@ -3204,7 +3422,7 @@ LOGICA ATTUALE
 
 Fonte primaria per Tempo:
 
-ui_state.parsed.unit
+analysis_snapshot.parsed.unit
 
 Regola:
 
@@ -3525,16 +3743,16 @@ senza sostituire il documento madre della preview.
 Costruita da:
 
 input_raw
-ui_state.parsed
+analysis_snapshot.parsed
 select_project
 select_entity
-project_state
-entity_state
+analysis_snapshot.project
+analysis_snapshot.entity
 select1
 liste projects/entities
 preview_analysis_state
-input_analysis_result per visibilità/readiness parziale
-ui_visibility_state solo come stato strutturale residuo / raw diagnostic indiretto
+input_analysis_result per associazioni/readiness e Select inline per rappresentare decisioni contestuali
+ui_visibility_state resta residuo fisico, non input del contenuto corrente della Sintesi
 
 Nota Command Intent:
 
@@ -3585,7 +3803,7 @@ Caratteristiche:
 ✔ non modifica DB
 ✔ visualizza i dati principali parsati
 ✔ supporta create/edit
-✔ legge amount/unit/event_date da ui_state.parsed
+✔ legge amount/unit/event_date da analysis_snapshot.parsed validato
 ✔ visualizza amount/unit in formato italiano
 ✔ visualizza durata normalizzata in forma umana
 ✔ mostra label valore semantica: Importo per euro, Durata per ore/minuti, Valore come fallback
@@ -3622,7 +3840,7 @@ Limiti:
 
 VALUE BUILDER:
 
-Il value builder della sintesi costruisce il valore visuale partendo da ui_state.parsed.
+Il value builder della sintesi costruisce il valore visuale partendo da analysis_snapshot.parsed, senza riscrivere il dato salvabile.
 
 Funzioni runtime introdotte:
 
@@ -3706,10 +3924,10 @@ Esempio:
 input:
 1.500,50 euro
 
-ui_state.parsed.amount:
+analysis_snapshot.parsed.amount:
 1500.5
 
-ui_state.parsed.unit:
+analysis_snapshot.parsed.unit:
 euro
 
 preview:
@@ -3860,8 +4078,8 @@ il filtro token tecnici resta utile per evitare highlight impropri.
 Dopo Match Engine Unification First Controlled Level,
 l’highlight project/entity legge però i matches da:
 
-- project_state.data.matches
-- entity_state.data.matches
+- analysis_snapshot.value?.project?.matches
+- analysis_snapshot.value?.entity?.matches
 
 La preview non usa più detection locale come fonte decisionale matching.
 
@@ -3928,48 +4146,9 @@ Per il wiring Retool generale la fonte canonica tecnica è:
 
 - 04_LOGOS_Retool_Architecture
 
-Componente:
-
-button_input_confirm
-
-Ruolo:
-
-costruisce payload
-esegue no-op edit guard
-costruisce feedback_summary
-mostra feedback mobile
-resetta input/select
-lancia insert_event o update_event
-aggiorna events_new dopo save
-gestisce routing post-save contestuale
-non gestisce command intent
-non salva comandi puri come eventi
-ha Hidden migrato a input_analysis_result, ma Disabled e payload restano separati
-contiene EDIT MODE COMMAND GUARD locale contro command freschi durante edit mode
-
-Principio:
-
-button_input_confirm NON esegue più parsing.
-
-Fonte dati:
-
-const parsed = ui_state.value?.parsed || {
-  amount: null,
-  unit: null,
-  event_date: null
-};
-
-Payload:
-
-const payload = {
-  raw_input: input_raw.value,
-  type: select1.value || "Evento",
-  amount: parsed.amount,
-  unit: parsed.unit,
-  event_date: parsed.event_date,
-  project_id: select_project.value || null,
-  entity_id: select_entity.value || null
-};
+button_input_confirm ha un solo Click: return confirm_event.trigger({additionalScope:{confirmation_action:"begin"}}); Non costruisce payload né salva direttamente.
+confirm_event acquisisce il lock prima del corpo asincrono e del no-op; valida lo snapshot completo contro richiesta corrente, epoch/revisione, testi, contesto edit e cataloghi; confronta associationContext e fingerprint, comprese le scelte inline. Solo token correnti autorizzano una nuova associazione INACTIVE. Consenso transitorio e consume-once restano nel coordinatore.
+Un solo builder usa snapshot.parsed per amount/unit/event_date, input_raw per raw_input e select1 per type, tutti vincolati ai controlli di freschezza. Le FK provengono da finalAssociationId sulla proiezione IAR e sulla decisione contestuale. Preflight e ricontrolli precedono il solo ramo INSERT oppure UPDATE; reset/feedback seguono il successo del save. Il ramo no-op non esegue UPDATE.
 
 EDIT MODE:
 
@@ -4036,7 +4215,7 @@ Il caso match presente + suggestion extension resta confermabile.
 
 Nota post Input Context Consistency:
 
-button_input_confirm legge command_intent_state solo per una guard locale di sicurezza in edit mode.
+confirm_event legge snapshot.command per la guardia contestuale di sicurezza in edit; non legge command_intent_state.data come risultato indipendente.
 
 Scopo:
 
@@ -4055,7 +4234,9 @@ Esempi bloccati in edit mode:
 - crea progetto test
 - crea entità test
 
-11.1 BUTTON_INPUT_CONFIRM — CODICE LOGICO
+11.1 BUTTON_INPUT_CONFIRM — CODICE LOGICO STORICO PRE-Q2
+
+INIZIO ESTRATTO STORICO NON APPLICABILE: il vecchio Click seguente è conservato per provenienza. Il Click corrente è soltanto la delega a confirm_event(begin) nelle configurazioni native finali di Architecture. Il coordinatore integrale corrente è in Lifecycle; non copiare questo builder né affiancarlo al coordinatore.
 
 // --- INSERT / UPDATE SWITCH ---
 const parsed = ui_state.value?.parsed || {};
@@ -4294,7 +4475,9 @@ window.__logos_feedback_timer = setTimeout(() => {
   window.__logos_feedback_timer = null;
 }, 1800);
 
-Nota:
+FINE ESTRATTO STORICO DEL CLICK.
+
+Nota sugli helper di feedback tuttora pertinenti:
 
 formatFeedbackDate e formatFeedbackAmount sono helper locali usati per costruire feedback_summary.
 Il loro output è solo UI.
@@ -4324,9 +4507,14 @@ Risultati:
 ✔ update reale → feedback 1800 ms → Lista eventi
 ✔ no-op edit → Lista eventi immediata senza feedback
 
-BUTTON_INPUT_CONFIRM — DISABLED LOGIC
+BUTTON_INPUT_CONFIRM — DISABLED CORRENTE UX-R1
 
-Codice runtime post BUTTON CONFIRM READINESS ALIGNMENT:
+Binding corrente esatto: `{{ !input_analysis_result.value?.readiness?.canConfirm || confirm_event.isFetching || ["project", "entity"].some(layer => { const entry = input_analysis_result.value?.association?.[layer]; const value = layer === "project" ? select_inline_inactive_project.value : select_inline_inactive_entity.value; return entry?.requiresDecision && ![entry.choiceValues?.link, entry.choiceValues?.skip].some(token => typeof token === "string" && token.length > 0 && token === value); }) }}`
+La proprietà resta nel componente; IAR fornisce readiness, il componente confronta le scelte e il coordinatore ricontrolla il contesto.
+
+INIZIO FOTOGRAFIA STORICA G33 / PRE-Q2 — il blocco seguente non è il binding corrente:
+
+Codice storico post BUTTON CONFIRM READINESS ALIGNMENT:
 
 {{
   (() => {
@@ -4354,7 +4542,7 @@ button_input_confirm.Hidden:
 
 {{ !input_analysis_result.value?.readiness?.canShowConfirm }}
 
-Fotografia post G33, antecedente al Click R01. Le regole di visibilità e Disabled restano quelle acquisite; il Click N21 applica anche preflight a nuove FK e controllo di coerenza.
+Nella fotografia storica post-G33 precedente a R01 le proprietà erano quelle sotto; R01 aggiunse il preflight. Q2 ha poi sostituito Click e Disabled nel perimetro descritto sopra: non ricopiare le regole seguenti come binding corrente.
 
 - button_input_confirm.Hidden migrato
 - canShowConfirm introdotto come flag visibility-only
@@ -4392,6 +4580,7 @@ Nota:
 G33 non modifica la policy del Match Engine.
 G33 non trasforma warning informativi in blocchi.
 G33 non centralizza canConfirm dentro input_analysis_result.
+FINE FOTOGRAFIA STORICA G33 / PRE-Q2.
 
 COMMAND INTENT — HIDDEN / GUARD PRINCIPLE
 
@@ -4690,7 +4879,7 @@ Edit mode:
 
 No-op edit guard:
 
-- attivo in button_input_confirm
+- attivo in confirm_event, sotto il lock iniziale; button_input_confirm delega begin
 - confronta raw_input / type / project_id / entity_id
 - esclude amount / unit / event_date perché derivati dal parser
 - se non ci sono modifiche reali, non esegue update_event
@@ -4828,6 +5017,10 @@ Su mobile Safari, input e select principali devono mantenere font-size minimo 16
 
 BTN_EDIT — FLOW AGGIORNATO
 
+Ingresso edit corrente Q2: btn_edit invalida analysis/consenso con epoch e revisione; inizializza l’evento e il modo edit tramite i risultati delle query canoniche, verificandoli dopo ogni await; carica testo visibile/tecnico e FK storiche; avvia il solo trigger correlato con analysis_revision_id e analysis_expected_context. Se setValue genera un nuovo proprietario della revisione, l’handler superato si ferma. Non usare await del solo debounce come attestazione di analisi completa.
+Il sorgente integrale finale di btn_edit e gli handler di cancel/navigazione sono conservati in Architecture, nelle configurazioni e nei dodici handler Q2.
+
+INIZIO ESTRATTO STORICO EDIT PRE-Q2 — non applicabile senza raccordo F:
 Il pulsante edit ora rilancia anche il match state.
 
 Sequenza:
@@ -4858,6 +5051,7 @@ await editing_event.trigger();
 window.__logos_edit_mode_value = true;
 await edit_mode.trigger();
 ```
+FINE ESTRATTO STORICO EDIT PRE-Q2.
 
 Risultato:
 
@@ -4888,7 +5082,9 @@ Label dinamica:
 - create/input mode → Torna alla home
 - edit mode → Annulla modifica
 
-Comportamento create/input:
+Prima dei reset, cancel invalida sincronicamente analysis/consenso e cancella timer parse/edit 0/150; aggiorna analysis_revision e verifica il proprietario dopo gli await. Pulisce analysis e il mirror parsed insieme al contesto edit e ai valori previsti. Le navigazioni mantengono le invalidazioni esplicite dei rispettivi handler; la rimozione delle dodici chiusure visive legacy non le sostituisce. Per ordine ed effetti esatti valgono gli handler finali integrali in Architecture, non un nuovo reset generico.
+
+Comportamento create/input, dopo invalidazione:
 
 1. cancella eventuale debounce pendente
 2. cancella eventuale timer feedback pendente
@@ -5330,7 +5526,7 @@ linting Retool azzerati (risultato storico pre-N18; finale N18: 11 residui quali
 “Da verificare” resta interno alla Sintesi
 Full Visibility Migration degli Hidden principali completata
 button_input_confirm.Hidden migrato a input_analysis_result
-button_input_confirm.Disabled non migrato a input_analysis_result, ma allineato localmente a isAmbiguous
+button_input_confirm.Disabled resta proprietà del componente con readiness/fetching/choiceValues; guardie finali nel coordinatore
 flash residui durante digitazione/cambio schermata ancora presenti
 label “Importo” su valori durata risolta tramite label semantica della riga valore
 status OK + card Da verificare da riallineare semanticamente
@@ -5359,7 +5555,7 @@ Controlled UI Consumption Pass completato
 ui_visibility_state ancora presente come residuo tecnico deprecabile
 Full Visibility Migration degli Hidden principali completata
 button_input_confirm.Hidden migrato
-button_input_confirm.Disabled non migrato, ma allineato localmente a isAmbiguous
+button_input_confirm.Disabled usa IAR e token correnti senza centralizzare tutte le guardie del coordinatore
 save readiness completa non centralizzata
 cleanup obsolete UI guards / query reduction non ancora eseguito
 requiresUserOverride introdotto senza creare motore monolitico
@@ -5379,7 +5575,7 @@ PRINCIPI RUNTIME
 ✔ editing degli eventi solo su NEW; l'Editor anagrafiche Project/Entity gestisce Nome/Tipologia/Stato secondo il contratto R03 esteso da N20
 ✔ suggerire ≠ decidere
 ✔ input non bloccante
-✔ salvataggio amount/unit/event_date da ui_state.parsed
+✔ dati parsati del salvataggio da snapshot.parsed catturato e validato in confirm_event
 ✔ salvataggio type da select1.value
 ✔ normalizzazione progressiva
 ✔ nessuna automazione decisionale
@@ -5396,7 +5592,7 @@ PRINCIPI RUNTIME
 ✔ insert_project / insert_entity solo su conferma utente
 ✔ evento non salvato automaticamente dopo creazione project/entity
 ✔ feedback_summary = UI temporanea, non dato DB
-✔ feedback/routing post-save centralizzati in button_input_confirm
+✔ feedback/routing post-save centralizzati in confirm_event; il bottone delega begin
 ✔ insert → feedback → Home
 ✔ update → feedback → Lista eventi
 ✔ no-op edit → Lista eventi senza update_event
@@ -5427,9 +5623,9 @@ PRINCIPI RUNTIME
 ✔ LOGOS evolve verso architettura modulare coordinata, non motore monolitico
 ✔ canShowConfirm = visibilità bottone Conferma
 ✔ canConfirm = readiness funzionale
-✔ button_input_confirm.Disabled = guard funzionale separata basata su isAmbiguous
+✔ button_input_confirm.Disabled combina readiness canonica, fetching e validità delle scelte inline
 ✔ button_input_confirm.Disabled non usa più matches.length > 1 come blocco grezzo
-✔ button_input_confirm payload = invariato
+✔ payload unico costruito da confirm_event, non dal Click
 ✔ micro-flash non bloccanti non vanno inseguiti oltre senza nodo/refactor dedicato
 ✔ input_shell_visible non è parte del runtime attivo
 ✔ G29 resta residuo UX minore accettabile / in osservazione
@@ -5442,11 +5638,13 @@ PRINCIPI RUNTIME
 ✔ alias generici edit non salvano eventi
 ✔ command riconosciuto durante edit mode non diventa update_event
 ✔ command create project/entity durante edit mode non crea project/entity
-✔ EDIT MODE COMMAND GUARD resta locale a button_input_confirm
+✔ EDIT MODE COMMAND GUARD nel coordinatore confirm_event, non nel Click delegante
 ✔ text_edit_mode_notice può mostrare guidance contestuale su command rilevato
 ✔ input_analysis_result non va usato per correggere ogni caso command/edit fuori nodo dedicato
 
-STATO RUNTIME
+STATO RUNTIME — RIEPILOGO STORICO PRE-Q2
+
+Inizio fotografia storica fino a «PREVIEW ALIGNMENT BASE — TEST VALIDATI». Gli esiti dei pass nominati sono conservati, ma non sono il binding o il conteggio lint attuali. Per stato finale Q2 valgono il contratto iniziale e le sorgenti finali nelle madri. La validazione storica di Vai agli eventi non chiude L08 Q2.
 
 **Fotografia storica pre-N21.** Per i delta su matching, Default value, Click e Sintesi valgono il contratto e le prove N21. I controlli sotto restano esiti datati, inclusi quelli di manutenzione e linting.
 
@@ -5514,7 +5712,7 @@ Runtime della fotografia:
 ✔ input_command_entity_name implementato
 ✔ btn_command_create_project implementato e validato
 ✔ btn_command_create_entity implementato e validato
-✔ btn_command_go_events implementato e validato
+✔ btn_command_go_events implementato e validato nel pass storico qui registrato; L08 Q2 resta NON VERIFICATO LIVE per il Click nel contesto osservato, senza nuovo PASS/FAIL
 ✔ feedback_mode implementato
 ✔ feedback project_created implementato
 ✔ feedback entity_created implementato
@@ -7907,6 +8105,8 @@ v23 — 2026-11-02 — Fotografia documentale Editor Base N16 da checkpoint ed e
 v22 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
 ## Appendice N21 — sorgenti delle proprietà
+
+Fotografia storica del 15 novembre 2026, non postimage corrente Q2. Per parser/matcher adapter e consumer snapshot, IAR, renderer e conferma valgono le madri/proprietà della fotografia finale Q2 in apertura. In particolare il vecchio Click 08 non è più il payload builder operativo. Gli hash e i sorgenti storici restano conservati senza sovrascrivere le prove N21. Il titolo resta stabile per preservare i rinvii alla fonte storica.
 
 Riferimento funzionale: Draft Retool Classic Logos verificata il 15 novembre 2026, pagina `page1`. I sorgenti provengono dalle postimage conservate in B1, B2/R01 e UX. Le query Project e suggestion riportano la versione UX; Entity mantiene B1. Il Click è R01 dopo la rimozione integrale della strumentazione T05. I pacchetti originali e i checkpoint sono elencati nella sezione [Provenienza delle prove N21](#provenienza-delle-prove-n21). Le formulazioni o gli estratti in snapshot storici restano legati alle rispettive date. Non è un export completo della Draft o una verifica della versione pubblicata.
 
@@ -10789,3 +10989,5 @@ v27 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Fotografia circoscritta N2
 v28 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v29 — 2026-11-16 — N21/DOC PREPARE R03: tracciati prove, sorgenti finali e confini delle fotografie Retool.
+
+v30 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

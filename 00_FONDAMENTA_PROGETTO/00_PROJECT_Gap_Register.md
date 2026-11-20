@@ -1,13 +1,16 @@
 # 00_PROJECT_Gap_Register
-Versione: v30
+Versione: v31
 
-DATA: 2026-11-16
+DATA: 2026-11-20
 
-## Raccordo corrente — delta N21 su G11
+## Raccordo corrente — tranche UX-06 Q2 su G11
 
-**G11 INTEGRATO PARZIALE.** N21 aggiunge il matching B1, l'ammissibilità ACTIVE per nuove associazioni con preflight e la preservazione delle FK storiche. Gli avvisi rendono distinguibili INACTIVE, NULL, alternative e omonimi. B2 e UX sono collaudati nella Draft nei limiti della [fotografia N21](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md). Nessun cambio a G03, G35 o R2 Dirty.
+**G11 INTEGRATO PARZIALE, M04 PARZIALE, Core 35% invariato.** La tranche UX-06 è implementata e verificata nella Draft: riconoscimento canonico separato dall’associazione; decisioni INACTIVE indipendenti inline; freshness, consenso e percorso unico; Toggle e suggerimenti UX-R1; collaudo INSERT/UPDATE sullo stesso evento; dodici distacchi visivi e rimozione persistita della vecchia modale.
 
-Restano UX-06, gerarchie/metadata, omonimie concorrenti non atomiche, funzioni avanzate e residui P1-01. L'ordine mobile del logo N22 resta un residuo separato. **Core 35%, M04 PARZIALE.** Nessun nuovo gap o cambio di priorità.
+Restano gerarchie/metadata, omonimie concorrenti non atomiche, funzioni avanzate e residui P1-01. Non viene chiuso genericamente G35, G38 o R2 Dirty; il polish Q2 non ricertifica altri ambiti UI. N22/logo mobile resta escluso. L08 è limite di copertura LIVE del Click Vai agli eventi, non FAIL né nuovo handler da correggere. Linting inventariato, non azzerato.
+
+Sorgenti, prove e limiti: [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale). Questo lotto prepara il consolidamento, non ne attesta copia/pubblicazione o chiusura globale. Le sezioni seguenti esplicitamente datate conservano i rispettivi stati storici.
+
 
 ## Snapshot — consolidamento N20/DOC-01
 
@@ -714,7 +717,7 @@ NOME:
 Data Structure / Entity Hierarchy
 
 STATO:
-INTEGRATO PARZIALE — EDITOR BASE N16, CREAZIONE N18 ED EDITOR STATO N20 COLLAUDATI NEI RISPETTIVI PERIMETRI
+INTEGRATO PARZIALE — N16/N18/N20/N21 E UX-06 Q2 COLLAUDATI NEI RISPETTIVI PERIMETRI
 
 DESCRIZIONE:
 
@@ -1440,10 +1443,10 @@ Nel REENTRY storico non era stato assegnato un prossimo nodo.
 L'ordine di backlog precedente resta un riferimento storico. Lo snapshot N20 documenta il consolidamento N20/DOC-01; il raccordo in apertura riporta il delta N21. Nessun nodo funzionale
 successivo è assegnato da questo elenco.
 
-Readiness G11: COMPLETATA nella tranche di definizione e verifica del perimetro. Il macro-gap G11 è INTEGRATO PARZIALE dopo le tranche N16, N18, N20 e N21; i residui sono indicati nella riga G11 sotto.
+Readiness G11: COMPLETATA nella tranche di definizione e verifica del perimetro. Il macro-gap G11 è INTEGRATO PARZIALE dopo le tranche N16, N18, N20, N21 e UX-06 Q2; i residui sono indicati nella riga G11 sotto.
 
 Backlog non attivato:
-1. G11 — Editor N16/N20 e tranche N21 già collaudati; restano UX-06, concorrenza omonimie e gerarchie/metadata avanzati da valutare in successivi mandati confermati
+1. G11 — Editor N16/N20, N21 e UX-06 Q2 già collaudati nei rispettivi perimetri; restano concorrenza omonimie, gerarchie/metadata e altri residui avanzati da valutare in mandati confermati
 2. G35 — Status Semantics Alignment
 3. G38 — Preview / Missing Association Notice Cleanup
 4. G17 — Preview Model / Hint State Consolidation
@@ -2263,3 +2266,6 @@ v28 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Riallineati G11, raccordo 
 v29 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v30 — 2026-11-16 — N21/DOC PREPARE R03: assorbiti contratto e residui N21 nel macro-gap G11, distinta la Readiness.
+
+
+v31 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

@@ -1,18 +1,22 @@
 # 00_PROJECT_Roadmap
-Versione: v35
+Versione: v36
 
-DATA: 2026-11-16
+DATA: 2026-11-20
 
-## Raccordo corrente — M04 dopo N21
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
 
-| Tranche | Esito e perimetro |
+## Raccordo corrente — M04 dopo Q2
+
+| Tranche | Risultato e residuo |
 | --- | --- |
-| N16–N20 | Editor Base, creazione canonica, parità R1 e Editor Stato conservano prove e perimetri documentati sotto. |
-| N21 B1/B2 | Matching Project/Entity e filtro per nuove associazioni ACTIVE, con FK storiche invariate. Gate B T01–T08 PASS nel perimetro delle fixture; primo FAIL T05 conservato insieme al recupero. |
-| N21 UX | Avvisi e alternative nella Draft, Chrome desktop e responsive PASS nel perimetro testato. |
-| M04 | PARZIALE. UX-06, residui G11/P1-01, omonimie concorrenti non atomiche e casi avanzati restano distinti da G35 e R2. Core 35%. |
+| N16–N21 | Capacità e limiti storici conservati: Editor Base/Stato, creazione canonica, matching e guardie ordinarie ACTIVE. |
+| Q2 / UX-06 | Conferma INACTIVE inline implementata e collaudata nel perimetro: due decisioni indipendenti, snapshot correlato, unico coordinatore, UX-R1 e modale legacy rimossa. |
+| Prove | Safari UX-R1 4/4 PASS dichiarati dall’utente; un INSERT e un UPDATE sullo stesso UUID con letture indipendenti e feedback/reset; rimozione persistita dopo reload. L08 resta non verificato LIVE. |
+| Consolidamento | PREPARE delle madri; review, copia autorizzata, verifica documentale assistita e pubblicazione manuale non attestati dalla candidata. Nessuna riapertura ordinaria. |
+| M04 | PARZIALE; UX-06 non è più una funzione da implementare nel perimetro Q2. Restano G11/P1-01, omonimie concorrenti non atomiche e funzioni avanzate, senza assorbire G35/R2/N22. Core v1.0 35% invariato. |
 
-Al checkpoint PREPARE del 15 novembre 2026, review, copia personale, verifica assistita e pubblicazione Git erano pendenti. Il checkpoint di chiusura e il confronto dei file allo SHA effettivamente pubblicato su GitHub main attestano l’esito successivo, quando disponibili. Nessun nuovo peso, priorità o nodo operativo assegnato. Prove e limiti in [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md).
+Nessun nuovo peso, priorità o nodo. Fonti e copertura in [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale). Le fotografie seguenti restano storiche.
+
 
 ## Snapshot storico — M04 dopo N20 (12 novembre 2026)
 
@@ -112,7 +116,7 @@ La presente baseline definisce 15 milestone verificabili per 100 punti percentua
 | M01 | Input originale conservato, parsing e normalizzazione base coerenti; dati supportati correttamente trasferiti al salvataggio negli scenari base provati | CF-01; VF-01 limitata | 8% | PASS storico | Input System v20, Retool Runtime v22, prove pregresse di parsing/normalizzazione/save flow; non attestano interpretazione universale né nuove scritture dopo ultimo hardening | Capacità semantiche più ampie in M06; nessun intent engine globale implicito |
 | M02 | Comandi di primo livello distinti da eventi ordinari; comandi puri non persistiti come eventi, edit flow protetto da comandi riconosciuti | CF-01 | 4% | PASS storico | Input System v20, Retool Architecture v24, prove Command Intent e Input Context Consistency; solo primo livello controllato | Nuovi comandi solo quando richiesti da capacità approvate |
 | M03 | Matching Project/Entity, single-match e disambiguazione controllata funzionano nei casi di test; nessuna selezione ambigua salvata senza decisione | CF-02; VF-02 limitata | 7% | PASS storico | Match Engine v12 e G22 come prove storiche. [Contratto Match Engine N21](../01_RUNTIME_LOGOS/02_LOGOS_Match_Engine.md) e collaudi B1/UX precisano la disambiguazione; le protezioni FK e i limiti di concorrenza rientrano in M04 | Integrità e CRUD in M04 |
-| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PARZIALE | Due FK validate nel nodo 14; Editor Base N16 (Nome/Tipologia PASS e protezioni circoscritte); creazione canonica N18 PASS sui quattro percorsi con Nome/Tipologia e ACTIVE esplicito, cinque INSERT verificate, nessun auto-save evento; N20 Editor Stato PASS; N21 B1/B2/R01 e UX verificati nella Draft: disambiguazione e alternative, gate ACTIVE su nuove FK, FK storiche conservate in edit; [Gate B T01–T08](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026) con FAIL T05 storico e recupero | G11 macro residuo, UX-06 del contratto N17, omonimie concorrenti non atomiche, P1-01/valori base e dati preesistenti |
+| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PARZIALE | Due FK validate nel nodo 14; Editor Base N16 (Nome/Tipologia PASS e protezioni circoscritte); creazione canonica N18 PASS sui quattro percorsi con Nome/Tipologia e ACTIVE esplicito, cinque INSERT verificate, nessun auto-save evento; N20 Editor Stato PASS; N21 B1/B2/R01 e UX verificati nella Draft: disambiguazione e alternative, gate ACTIVE ordinario, FK storiche conservate in edit; Q2 aggiunge la sola eccezione INACTIVE esplicita, INSERT/UPDATE e rimozione modale verificati nei rispettivi checkpoint; [Gate B T01–T08](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026) con FAIL T05 storico e recupero | G11 macro residuo, omonimie concorrenti non atomiche, P1-01/valori base e dati preesistenti; UX-06 Q2 implementata e collaudata nei limiti della fotografia finale |
 | M05 | Gerarchie e correlazioni con semantica e cardinalità esplicite; contenitori/figli, ruoli e legami occasionali recuperabili senza confusione; genealogia con due genitori rappresentabile | CF-03; VF-03, VF-04, VF-06 | 10% | MANCANTE come funzione qualificata | Parent fields storicamente dormienti; contratto dati nodo 03 candidato non integralmente approvato/implementato | P1-02, vincoli e modello correlazioni minimo, casi ASPRI/ADEXIMA |
 | M06 | Eventi economicamente e temporalmente classificati, importi/unità/date/durate sufficienti e interrogabili; spesa e incasso distinguibili in aggregazione | CF-04; VF-01, VF-07 limitate | 8% | PARZIALE | Parsing/amount/duration/type base documentati; la semantica analitica non è interamente verificata | Distinzione economica e persistenza strutturata per casi approvati, M13 |
 | M07 | Prezzo concordato, più versamenti, saldo residuo, stati delle obbligazioni e scadenze future rappresentabili e collegati agli oggetti giusti | CF-04; VF-05; scenari CF §7–8 | 9% | MANCANTE come funzione qualificata | Requisiti definiti nel contratto funzionale, non un modello persistente verificato | Relazioni M05, struttura obbligazioni/tempi, casi ASPRI |
@@ -193,7 +197,7 @@ definiti dal contratto; P0/P1/P2 e gap mantengono natura e limiti precedenti.
 | Requisito del contratto | Verifiche pertinenti | Lavoro residuo / dipendenze da qualificare nei mandati competenti |
 |---|---|---|
 | CF-01 Acquisizione e interpretazione | VF-01 | Riusare prove input valide; qualificare capacita' e dati richiesti dal caso d'uso; P0-01 prima di modifiche Retool |
-| CF-02 Progetti ed entita' | VF-02 | Editor Base N16 collaudato e A4 pubblicato il 2 novembre 2026. N18 creazione canonica e N20 Editor Stato verificati nei rispettivi perimetri. N21 applica la policy ACTIVE alle nuove FK, conserva quelle storiche invariate e mostra alternative, Stati e omonimi nella Draft. G11 e M04 restano parziali. UX-06, duplicati e P1-01 restano distinti. |
+| CF-02 Progetti ed entita' | VF-02 | Editor Base N16 collaudato e A4 pubblicato il 2 novembre 2026. N18 creazione canonica e N20 Editor Stato verificati nei rispettivi perimetri. N21 applica la policy ACTIVE alle nuove FK, conserva quelle storiche invariate e mostra alternative, Stati e omonimi nella Draft. G11 e M04 restano parziali. Q2 attua UX-06 nel perimetro verificato; duplicati e P1-01 restano residui distinti. |
 | CF-03 Gerarchie e correlazioni | VF-03, VF-04, VF-06 | Modello minimo, cardinalita' e ruoli da qualificare; P1-02 e contratto dati nodo 03 candidato; parent non equivale a genealogia |
 | CF-04 Eventi, economia, tempi e scadenze | VF-01, VF-05, VF-07 | Struttura di obbligazioni, versamenti, attivita' e scadenze da qualificare; G13/G08A nei soli casi pertinenti; dipendenze P1-01/P1-02/P1-05 |
 | CF-05 Lifecycle, affidabilita' e rettifiche | VF-08 | Conservare PASS 07/08 nei loro limiti; P1-01/P1-03/P1-04 restano distinti; nessuna garanzia universale dedotta dall'hardening |
@@ -1584,7 +1588,7 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-CP-LOGOS-M04-ACTIVE-MATCHING-GATE-20261112-21 — N21 tecnico PASS nel perimetro verificato nella Draft del 15 novembre 2026. Nell’archivio della working copy del 16 novembre le nove madri coincidono con le postimage R02. La review ha rilevato una lacuna di assorbimento tecnico, affrontata nel PREPARE R03. Lo snapshot dello ZIP documenta i byte delle madri ricevute. Stato Git del PC, pubblicazione R03 e chiusura del nodo richiedono riscontri distinti. Core 35%, M04 PARZIALE.
+CP-LOGOS-M04-UX06-INACTIVE-EXCEPTION-20261117-Q2 — lavoro tecnico concluso nel perimetro verificato; STEP 4 consolidamento documentale finale in PREPARE. Nessuna copia/Apply o pubblicazione attestata, nessun nuovo nodo funzionale. Core 35%, M04 PARZIALE.
 
 ------------------------------------------------
 BACKLOG POST READINESS — NESSUN PROSSIMO NODO PREASSEGNATO
@@ -1897,7 +1901,7 @@ Stato attuale:
 - project/entity creation controllata completata
 - command intent base completato
 - input_analysis_result operativo come fonte UI controllata per gli Hidden principali
-- linting Retool: fotografia storica azzerata; ultimo checkpoint N18 13→11, residui qualificati
+- linting Retool: fotografia storica azzerata; inventario Q2 46/46 documentato nel checkpoint mobile/linting del 18 novembre, non nuova attestazione LIVE o azzeramento corrente
 - documentation architecture audit completato
 - fonti canoniche consolidate
 - Session Boot Matrix consolidata
@@ -1907,7 +1911,7 @@ Residui non bloccanti ma rilevanti:
 - preview ancora layer ibrido
 - label “Importo” su durata risolta
 - flash residui digitazione/cambio schermata classificati come G29 in osservazione
-- button_input_confirm.Disabled allineato localmente a isAmbiguous ma non migrato dentro input_analysis_result
+- button_input_confirm.Disabled è proprietà del componente: usa readiness.canConfirm, confirm_event.isFetching e confronto dei choiceValues correnti; le guardie finali restano in confirm_event
 - save readiness completa non centralizzata
 - match generico salvabile / auto-select confidence risolto a primo livello in G22
 - status OK / Da verificare da riallineare semanticamente
@@ -2708,3 +2712,6 @@ v33 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Raccordo corrente e mandat
 v34 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v35 — 2026-11-16 — N21/DOC PREPARE R03: aggiornate evidenze M03/M04 e CF-02/VF-02 nel registro di milestone, pesi e scope invariati.
+
+
+v36 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

@@ -1,9 +1,23 @@
 # 04_LOGOS_Retool_Architecture
-Versione: v31
+Versione: v32
 
-DATA: 2026-11-16
+DATA: 2026-11-20
 
-## Wiring corrente N21 — associazioni Project ed Entity
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Contratto finale Q2 — wiring inline
+
+Il percorso finale è input → snapshot correlato → proiezione IAR → decisioni native inline → unico button_input_confirm(begin) → confirm_event → unico INSERT/UPDATE. Componenti e UUID sono quelli riletti dopo STEP 3-B; nessuna nuova pagina o motore. Il codice dei motori sta in Input/Match, la persistenza in Lifecycle, il renderer in Preview; qui sono conservati wiring, binding e configurazioni native.
+
+Host container_inactive_associations contiene Sintesi, gruppo Project e gruppo Entity nello Stack verticale; ogni gruppo contiene Text poi Select. Hidden dei gruppi combina analisi presente, canShowEventPreview e requiresDecision del proprio livello; i controlli mantengono il binding del livello. L’host/Sintesi non dipendono dalla presenza di decisioni INACTIVE e restano disponibili nei casi ACTIVE ordinari secondo le proprie guardie. Le due Select hanno esattamente Collega/Non collegare, valori contestuali, required, validazione, nessun handler di persistenza. Il pulsante finale è disabilitato per scelte mancanti o obsolete, oltre alla readiness canonica e isFetching.
+
+Toggle «Modifica associazioni», default false, modifica soltanto Hidden dei campi manuali. Tipo rimane accessibile. Nessun handler/reset aggiunto al Toggle; la chiusura non cancella valori e il default chiuso vale al caricamento, non è un reset forzato ad ogni nuovo evento.
+
+Eliminate le dodici sole chiamate modalFrame1.setHidden(true) dagli handler qualificati, preservando le invalidazioni esplicite. Successivamente eliminati il frame e gli otto figli legacy. event_confirmation, confirm_event, IAR, Select inline e pulsante normale preservati. Non esistono più controlli modali da riattivare o mantenere come secondo finale.
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
+
+## Wiring N21 — associazioni Project ed Entity (snapshot 15 novembre 2026)
 
 ### Inventario funzionale N21
 
@@ -1166,7 +1180,7 @@ UI = funzione dello stato
 
 Stato dati:
 
-ui_state.parsed è la fonte runtime per:
+analysis_snapshot.parsed validato è la fonte corrente per:
 
 amount
 unit
@@ -1179,28 +1193,28 @@ type
 Usato da:
 
 preview
-button_input_confirm
+confirm_event (builder delegato dal pulsante)
 insert_event
 update_event
 
 Nota:
 
-ui_state.parsed alimenta amount/unit/event_date.
+analysis_snapshot.parsed alimenta amount/unit/event_date; ui_state.parsed è il mirror compatibile dello stesso publish.
 select1.value alimenta type.
 
 project_state / entity_state alimentano il matching project/entity.
 
-select_project.value alimenta project_id.
+select_project.value alimenta la selezione Project ordinaria/storica nella proiezione IAR.
 
-select_entity.value alimenta entity_id.
+select_entity.value alimenta la selezione Entity ordinaria/storica nella proiezione IAR.
 
 Fonti controllate aggiornate:
 
-- amount / unit / event_date → ui_state.parsed
+- amount / unit / event_date → snapshot.parsed catturato e validato
 - type → select1.value
 - matching project/entity → project_state / entity_state
-- project_id → select_project.value
-- entity_id → select_entity.value
+- project_id → finalAssociationId("project") nel coordinatore
+- entity_id → finalAssociationId("entity") nel coordinatore
 - feedback temporaneo → ui_state.feedback_summary
 - modalità feedback → ui_state.feedback_mode
 - command intent → command_intent_state
@@ -1447,30 +1461,11 @@ comporre lo stato operativo dell’input flow.
 
 Legge:
 
-- input_home / input_raw
-- ui_visibility_mode
-- edit_mode
-- command_intent_state
-- ui_state.parsed
-- select1
-- project_state / entity_state
-- select_project / select_entity
-- create_suggestion_state
-- preview_analysis_state
+- input_home/input_raw, ui_state e ui_visibility_mode per testo e contesto UI;
+- analysis_snapshot.parsed, .project, .entity, .command e .suggestion per i risultati correlati;
+- edit_mode/editing_event, cataloghi, select1, select_project/select_entity e preview_analysis_state.
 
-Espone:
-
-- mode
-- input
-- parsed
-- type
-- project.raw / project.selection / project.effective
-- entity.raw / entity.selection / entity.effective
-- suggestion
-- command
-- preview
-- readiness
-- diagnostics
+Espone mode/input/parsed/type, project ed entity raw/selection/effective, suggestion, command, preview, readiness e diagnostics; inoltre analysis, association, associationContext e choiceValues contestuali. Le scelte inline non sono lette da IAR: nessuna dipendenza inversa o secondo matching. association è input di confirm_event, senza costruzione o persistenza del payload nel transformer.
 
 Concetti:
 
@@ -1799,7 +1794,25 @@ Ruolo:
 
 CONTAINER INPUT
 
-Componenti:
+Gerarchia nativa finale Q2 (body/view effettivi; nessun ordinal nominale da forzare):
+
+| Componente | UUID | Parent | View | Ordinal |
+|---|---|---|---|---|
+| `container_inactive_associations` | `e1da2257-12e0-4de9-b643-2fa3274c68ea` | `container_input` | `00030` | 0 |
+| `sintesi` | `44dde8d3-73bd-449a-81a0-630474f0c7d1` | `container_inactive_associations` | `00030` | 0 |
+| `container_inactive_project_choice` | `5c19aba3-e538-49a0-ba41-9e0250056696` | `container_inactive_associations` | `00030` | 1 |
+| `text_inline_inactive_project` | `143f41f0-94e7-4419-963d-089064de49bd` | `container_inactive_project_choice` | `00030` | 0 |
+| `select_inline_inactive_project` | `4b735a8d-fbc7-4f27-8ec2-907a46bb2176` | `container_inactive_project_choice` | `00030` | 1 |
+| `container_inactive_entity_choice` | `bc6e28c9-4c34-467b-9f58-09dff103a508` | `container_inactive_associations` | `00030` | 2 |
+| `text_inline_inactive_entity` | `2b8370fd-49a5-49ce-9d80-9da7e2e729ee` | `container_inactive_entity_choice` | `00030` | 0 |
+| `select_inline_inactive_entity` | `3179d38d-47fc-4834-ad21-ae2516d0511e` | `container_inactive_entity_choice` | `00030` | 1 |
+| `select1` | `c22d5279-8d11-4c51-8dd4-206166c48fb1` | `container_input` | `00030` | 5 |
+| `toggle_manual_associations` | `23336781-75d2-4090-b9b6-3aa659bfb6b3` | `container_input` | `00030` | 6 |
+| `select_project` | `68d8a923-adc1-4e70-9ee4-204adb684287` | `container_input` | `00030` | 7 |
+| `select_entity` | `f5c6d996-0642-47a2-84f5-4a6689be5af9` | `container_input` | `00030` | 8 |
+| `button_input_confirm` | `503dbbe3-64c4-4fbc-a345-59e560f2615b` | `container_input` | `00030` | 9 |
+
+Le query e gli stati sono page-level e non figli grafici di container_input. L’elenco funzionale storico seguente raggruppa anche riferimenti logici: non assegna parent/view e non sostituisce la matrice o le configurazioni finali.
 
 input_raw (hidden)
 sintesi (preview)
@@ -1819,7 +1832,7 @@ preview_analysis_state
 input_analysis_result
 text_input_analysis_loading
 text_edit_mode_notice
-EDIT MODE COMMAND GUARD in button_input_confirm
+EDIT MODE COMMAND GUARD in confirm_event (il pulsante delega begin)
 edit_mode
 editing_event
 container_association_suggestions
@@ -2636,136 +2649,13 @@ Risultato:
 
 TRIGGER_PARSE_DEBOUNCED
 
-Tipo:
+JS Query canonica di orchestrazione Q2. Scope effettivo: analysis_revision_id e analysis_expected_context. Congela richiesta, testi, contesto e cataloghi; attesa cancellabile 350 ms; Promise.all dei quattro motori con risultati request-scoped; suggestion subordinata agli stessi risultati; pubblicazione unica del bundle completo e parsed compatibile. current e __logosRequestId vengono ricontrollati, non sostituiti da throttle, ready, visibilità o semplice await trigger.
 
-JS Query / script runtime
-
-Funzione:
-
-resettare micro-editor project/entity quando cambia input principale
-impostare ui_visibility_mode in modo immediato e controllato
-cancellare timer precedente
-attendere debounce
-lanciare command_intent_state
-lanciare parsing controllato
-aggiornare match state project/entity
-aggiornare create_suggestion_state
-evitare update stale tramite window.__logos_visibility_run_id
-
-Codice runtime:
-
-Codice runtime concettuale aggiornato:
-
-// Reset micro-editor project/entity quando cambia input principale.
-// Evita stati stale tra input consecutivi.
-project_create_inline_open.setValue(false);
-project_create_suggestion_dismissed.setValue(false);
-input_new_project_name.setValue("");
-
-entity_create_inline_open.setValue(false);
-entity_create_suggestion_dismissed.setValue(false);
-input_new_entity_name.setValue("");
-
-// Classificazione locale minima SOLO per visibilità UI.
-const rawText = String(input_home.value || input_raw.value || "")
-  .toLowerCase()
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/\s+/g, " ")
-  .trim();
-
-const runId = Date.now();
-window.__logos_visibility_run_id = runId;
-
-if (!rawText) {
-  ui_visibility_mode.setValue("empty");
-} else {
-  const isGenericCreateCommand =
-    /^(crea|aggiungi|inserisci|nuovo|nuova)$/.test(rawText);
-
-  const isCreateCommand =
-    /^(crea|aggiungi|inserisci|nuovo|nuova)\s+(nuovo\s+|nuova\s+)?(progetto|entita)(\s|$)/.test(rawText);
-
-  const isGenericEditGuideCommand =
-    /^(modifica|correggi|cambia)$/.test(rawText);
-
-  const isGuideCommand =
-    isGenericEditGuideCommand ||
-    /^(modifica|correggi|cambia)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText) ||
-    /^(come\s+)?(modifico|correggo|cambio)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText) ||
-    /^(devo\s+)?(modificare|correggere|cambiare)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText);
-
-  ui_visibility_mode.setValue(
-    isGenericCreateCommand || isCreateCommand || isGuideCommand
-      ? "command"
-      : "event"
-  );
-}
-
-if (window.__parseTimer) {
-  clearTimeout(window.__parseTimer);
-}
-
-window.__parseTimer = setTimeout(async () => {
-  if (window.__logos_visibility_run_id !== runId) return;
-
-  await Promise.allSettled([
-    command_intent_state.trigger(),
-    parse_input_controlled.trigger(),
-    project_state.trigger(),
-    entity_state.trigger()
-  ]);
-
-  await create_suggestion_state.trigger();
-}, 350);
-
-Nota:
-
-La classificazione locale nel debounce serve solo a evitare flash visivi
-tra evento ordinario e command intent.
-
-La fonte funzionale del command intent resta command_intent_state.
-
-Limite aggiornato:
-
-“modifica evento” viene classificato come command.
-“modifica”, “correggi” e “cambia” sono ora classificati come command guide generiche.
-
-Non sono implementati:
-
-- typo command recognition
-- fuzzy command recognition
-- alias system globale
-- “modifica progetto” come command strutturale
-
-Nota:
-
-Il debounce permette preview reattiva
-senza parsing continuo a ogni singolo carattere.
-
-Dopo Project / Entity Create Suggestion First Controlled Level,
-il debounce aggiorna anche:
-
-- project_state
-- entity_state
-- create_suggestion_state
-
-Inoltre resetta i micro-state di creazione inline quando cambia input principale,
-evitando stati stale tra input consecutivi.
-
-Risultato:
-
-✔ parser aggiornato  
-✔ ui_state.parsed aggiornato  
-✔ match state aggiornato  
-✔ select_project/select_entity coerenti  
-✔ preview hint/highlight coerenti  
-✔ confirm guard coerente  
-✔ command_intent_state aggiornato
-✔ command intent coerente con input corrente
-✔ comandi puri possono escludere il flow evento ordinario
+Il publisher indipendente Success del parser è rimosso. I consumer decisivi leggono analysis_snapshot; input/cancel/edit/nav invalidano mediante epoch e contesto, con codice finale nelle configurazioni di questo documento. Il corpo integrale dell’orchestratore e il dettaglio dei suoi consumer sono in [Input System](01_LOGOS_Input_System.md#q2-source-trigger-parse-debounced-query). La vecchia classificazione parallela di visibilità e __logos_visibility_run_id non sono la prova funzionale di completamento.
 
 ------------------------------------------------
+
+
 UI VISIBILITY / INPUT ANALYSIS RESULT — HIDDEN CENTRALIZATION
 ------------------------------------------------
 
@@ -2896,8 +2786,8 @@ La base stabile è:
 button_input_confirm.Hidden:
 {{ !input_analysis_result.value?.readiness?.canShowConfirm }}
 
-button_input_confirm.Disabled:
-legge solo project_state.data?.isAmbiguous e entity_state.data?.isAmbiguous.
+Fotografia storica G33 — button_input_confirm.Disabled:
+nel pass G33 leggeva soltanto isAmbiguous; il binding corrente UX-R1 e i suoi handler sono nelle configurazioni finali Q2.
 
 Non sono stati modificati:
 
@@ -2925,7 +2815,7 @@ Questo documento conserva il wiring Retool reale:
 
 - parse_input_controlled
 - trigger_parse_debounced
-- ui_state.parsed
+- trigger come unico publisher del bundle; analysis_snapshot per i consumer e ui_state.parsed come mirror compatibile
 - select1
 - collegamento verso preview / confirm / save flow
 
@@ -2950,7 +2840,9 @@ Output:
   event_date
 }
 
-Success handler:
+Success handler storico pre-Q2 — NON ATTIVO / NON RICOPIARE:
+
+Il parser corrente ha template.events=[]: il solo trigger correla le risposte e pubblica bundle e mirror. Il vecchio estratto è conservato qui soltanto come provenienza della migrazione. INIZIO ESTRATTO STORICO:
 
 const parsed = parse_input_controlled.data || {};
 
@@ -2962,6 +2854,7 @@ ui_state.setValue({
     event_date: parsed.event_date ?? null
   }
 });
+FINE ESTRATTO STORICO. Il publisher corrente è il sorgente integrale trigger_parse_debounced in Input System.
 
 Caratteristiche:
 
@@ -3356,19 +3249,19 @@ entity_id viene salvato solo tramite select_entity.value.
 
 SELECT_PROJECT
 
-Data: `projects_list.data`, repertorio completo. Mapped options → Value: `item.id`. Il default B2/R01 restituisce `editing_event.data?.project_id || null` se `edit_mode.data === true`; altrimenti solo `project_state.data?.singleMatch.id` quando lo Stato del match è ACTIVE.
+Data: `projects_list.data`, repertorio completo. Mapped options → Value: `item.id`. Il default B2/R01 restituisce `editing_event.data?.project_id || null` se `edit_mode.data === true`; altrimenti solo `analysis_snapshot.value?.project?.singleMatch.id` quando lo Stato del match è ACTIVE.
 
-Mapped options → Disabled disabilita ogni opzione con `item.status !== "ACTIVE"` salvo stesso UUID dell’evento in edit. L’etichetta Project non cambia. `select_project.value` è la fonte finale di `project_id`; una nuova FK viene ricontrollata nel Click.
+Mapped options → Disabled disabilita ogni opzione con `item.status !== "ACTIVE"` salvo stesso UUID dell’evento in edit. L’etichetta Project non cambia. `select_project.value` è la selezione ordinaria; IAR e confirm_event risolvono la FK finale con l’eventuale decisione INACTIVE, ricontrollata nel coordinatore.
 
 ---
 
 SELECT_ENTITY
 
-Data: `entities_list.data`, repertorio completo. Mapped options → Value: `item.id`. Default e Disabled seguono lo stesso contratto di Project usando `entity_state` e `editing_event.data?.entity_id`. Il match NULL/INACTIVE resta identificato da Entity e non viene preselezionato in un nuovo evento.
+Data: `entities_list.data`, repertorio completo. Mapped options → Value: `item.id`. Default e Disabled seguono lo stesso contratto di Project usando `analysis_snapshot.value?.entity` e `editing_event.data?.entity_id`. Il match NULL/INACTIVE resta identificato da Entity e non viene preselezionato in un nuovo evento.
 
 Mapped options → Label confronta `entity.name === item.name` sul repertorio completo. In caso di omonimia esatta mostra `nome · prefisso UUID` senza trattini. Parte da otto caratteri e allunga finché il prefisso distingue l’opzione dalle altre, nei limiti del suo UUID. In assenza di omonimi o UUID usa il solo nome. `select_entity.value` resta l’UUID originale.
 
-Il default storico e l’eccezione Disabled valgono per la sola FK corrente. Nessun percorso eccezionale UX-06 e nessun nuovo filtro nelle GET anagrafiche.
+Il default storico e l’eccezione Disabled restano propri delle Select ordinarie; Q2 usa separatamente la proiezione canonica e le Select INACTIVE inline. Nessun nuovo filtro nelle GET anagrafiche, nessuna ricerca manuale INACTIVE. Le configurazioni finali Q2 in appendice usano analysis_snapshot per il default e il Toggle per Hidden.
 
 ------------------------------------------------
 CREATE SUGGESTION FLOW — FIRST CONTROLLED LEVEL
@@ -4318,17 +4211,17 @@ visualizzare amount/unit/type/label/project/entity/hint
 Input usati:
 
 input_raw.value
-ui_state.parsed
+analysis_snapshot.parsed (il mirror ui_state.parsed non è il risultato autorevole consumato separatamente)
 select_project.value
 select_entity.value
 projects_list.data
 entities_list.data
-project_state.data
-entity_state.data
+analysis_snapshot.value?.project
+analysis_snapshot.value?.entity
 select1.value
 preview_analysis_state.value per hint/status/missing association
-input_analysis_result.value per visibilità/readiness degli Hidden principali
-ui_visibility_state.value solo come stato strutturale residuo / raw diagnostic indiretto
+input_analysis_result.value per associazioni/readiness e le due Select inline per rappresentare le scelte contestuali
+ui_visibility_state resta helper fisico legacy; non è fonte del contenuto corrente di Sintesi
 
 Nota:
 
@@ -4517,7 +4410,7 @@ villa 2 mario
 → project_state.singleMatch = Villa 2
 → entity_state.singleMatch = Mario
 → preview evidenzia villa 2 e mario
-→ DB salva project_id/entity_id solo tramite select_project/select_entity
+→ DB riceve le FK risolte da confirm_event: selezione ordinaria/storica oppure candidato INACTIVE con decisione esplicita; mai dal renderer
 
 REGOLA PREVIEW_ANALYSIS_STATE:
 
@@ -4616,53 +4509,13 @@ La preview non usa più detection locale come fonte decisionale matching.
 
 CONFIRM FLOW
 
-Nota canonica:
+Fonte del wiring: questo documento e l’appendice configurazioni native Q2. Fonte integrale unica di conferma, preflight, payload, feedback/reset: [Lifecycle](03_LOGOS_Event_Lifecycle.md#q2-source-confirm-event-query). Input e Match qualificano le sorgenti; Schema DB resta distinto.
 
-Questo documento è fonte canonica per il wiring Retool di button_input_confirm,
-insert_event, update_event, feedback/routing post-save e Hidden/Disabled lato componente.
+button_input_confirm ha un solo Click che delega begin, senza payload builder. Hidden resta canShowConfirm; Disabled legge canConfirm, isFetching e choiceValues correnti delle due Select inline. confirm_event acquisisce il lock, ricontrolla lo snapshot e le decisioni, esegue command/no-op, GET e confronto post-preflight, consuma una volta il consenso e invoca il solo ramo INSERT/UPDATE. L’invio precede reset e feedback. UPDATE usa eq.{{ confirm_event_id }} con l’UUID catturato dall’edit.
 
-Per il lifecycle semantico evento la fonte canonica è:
+Le descrizioni ed estratti post-G33/R01 qui sotto conservano il flusso storico precedente al coordinatore Q2. Non sono un secondo handler corrente né una sorgente da riapplicare. Le proprietà finali complete sono in q2-configurazioni-native-finali.
 
-- 03_LOGOS_Event_Lifecycle
 
-Per lo schema DB e i campi persistiti la fonte canonica è:
-
-- 05_LOGOS_Database_Schema
-
-Per origine dei dati input salvabili la fonte canonica è:
-
-- 01_LOGOS_Input_System
-
-Regola:
-
-button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm.
-button_input_confirm.Disabled resta guard funzionale separata.
-Dopo G33, button_input_confirm.Disabled è allineato a project_state/entity_state isAmbiguous.
-La forma dei dati evento è conservata. B2/R01 verifica le nuove FK nel Click e fornisce `confirm_event_id` al PATCH.
-
-Componente:
-
-button_input_confirm
-
-Ruolo:
-
-confermare inserimento
-confermare modifica evento NEW
-costruire payload da ui_state.parsed e select1.value
-lanciare insert_event o update_event
-aggiornare feedback, lista e routing post-save
-
-Sequenza attuale:
-
-### Sequenza Click R01
-
-1. Uscita se lock attivo. Cattura input, parsed, tipo, UUID delle Select, modo edit ed evento originale.
-2. Command guard in edit su comando coerente con il testo corrente. No-op su testo, tipo e FK senza aggiornamento. Un edit reale richiede UUID originale verificabile.
-3. Acquisizione lock. GET senza cache delle sole liste necessarie per nuove FK non vuote. Richiesti UUID univoco e Stato ACTIVE nella risposta. Un rischio o uno Stato non verificabile lascia il form aperto.
-4. Confronto dello snapshot con modo edit, ID evento, testo, tipo e Select effettivi. Invio tramite `insert_event.trigger` oppure `update_event.trigger` con `confirm_event_id` ricavato dallo snapshot.
-5. Solo a salvataggio risolto: stop debounce, pulizia input e Select, feedback, `events_new.trigger`, reset helper edit quando necessario. Schedulazione del ritorno a Home oppure Lista Eventi dopo 1800 ms. Rilascio del lock in `finally`, raggiunto anche in caso di blocco o errore nel ramo protetto.
-
-`update_event.urlParameter.id` legge `eq.{{ confirm_event_id }}`. URL fuori parametro, risorsa, body e guard state del database non fanno parte del delta. Il [Lifecycle](03_LOGOS_Event_Lifecycle.md) documenta i limiti GET→scrittura, lock e concorrenza.
 
 EDIT MODE:
 
@@ -5186,7 +5039,7 @@ Risultato:
 
 No-op edit guard:
 
-button_input_confirm impedisce update_event quando l’utente conferma una modifica
+confirm_event impedisce update_event quando l’utente conferma una modifica
 senza cambiare realmente:
 
 - raw_input
@@ -5202,6 +5055,10 @@ In questo caso:
 
 BTN_EDIT — FLOW AGGIORNATO
 
+Ingresso edit corrente Q2: btn_edit invalida analysis/consenso con epoch e revisione; inizializza l’evento e il modo edit tramite i risultati delle query canoniche, verificandoli dopo ogni await; carica testo visibile/tecnico e FK storiche; avvia il solo trigger correlato con analysis_revision_id e analysis_expected_context. Se setValue genera un nuovo proprietario della revisione, l’handler superato si ferma. Non usare await del solo debounce come attestazione di analisi completa.
+Il sorgente integrale finale di btn_edit e gli handler di cancel/navigazione sono conservati in Architecture, nelle configurazioni e nei dodici handler Q2.
+
+INIZIO ESTRATTO STORICO EDIT PRE-Q2 — non applicabile senza raccordo F:
 Il pulsante edit rilancia anche il match state.
 
 Sequenza:
@@ -5232,6 +5089,7 @@ await editing_event.trigger();
 window.__logos_edit_mode_value = true;
 await edit_mode.trigger();
 ```
+FINE ESTRATTO STORICO EDIT PRE-Q2.
 
 Risultato:
 
@@ -5259,7 +5117,9 @@ Label dinamica:
 - create/input mode → Torna alla home
 - edit mode → Annulla modifica
 
-Comportamento create/input:
+Prima dei reset, cancel invalida sincronicamente analysis/consenso e cancella timer parse/edit 0/150; aggiorna analysis_revision e verifica il proprietario dopo gli await. Pulisce analysis e il mirror parsed insieme al contesto edit e ai valori previsti. Le navigazioni mantengono le invalidazioni esplicite dei rispettivi handler; la rimozione delle dodici chiusure visive legacy non le sostituisce. Per ordine ed effetti esatti valgono gli handler finali integrali in Architecture, non un nuovo reset generico.
+
+Effetti UI del cancel create/input, dopo invalidazione:
 
 1. cancella eventuale debounce pendente
 2. cancella eventuale timer feedback pendente
@@ -5630,6 +5490,7 @@ PAGE1 — INPUT / PARSING:
 
 trigger_parse_debounced
 parse_input_controlled
+analysis_snapshot (transformer del bundle validato)
 
 PAGE1 — DATA / MATCHING / SUGGESTION:
 
@@ -5662,6 +5523,7 @@ Non sostituisce create_suggestion_state.
 
 PAGE1 — EVENTI:
 
+confirm_event (coordinatore unico)
 insert_event
 update_event
 events_new
@@ -5672,7 +5534,10 @@ insert_entity
 
 PAGE1 — STATE / UI:
 
-ui_state
+ui_state (analysis e mirror parsed)
+analysis_revision
+event_confirmation (stato condiviso conservato)
+edit_mode ed editing_event: query canoniche dello stato edit
 edit_mode
 focus_input_home
 editing_event
@@ -5686,13 +5551,16 @@ input_analysis_result
 
 window.__logos_edit_mode_value
 window.__logos_editing_event_value
-window.__logos_visibility_run_id
+window.__logosAnalysisEpoch / __logosAnalysisCurrentRequest / __logosAnalysisRequestSerial
+window.__logosConsentEpoch / __logosPendingConsent / __logosConsumedConsent / __logosEventConfirmPending
+window.__logosEditTimer0 / __logosEditTimer150 / __parseTimer
+window.__logos_visibility_run_id è un riferimento storico di visibilità, non prova di completamento dell’analisi; valgono le guardie F del trigger e del coordinatore.
 
 handle_event_success:
 
 eliminato come query legacy unused dopo Linting / Retool Query Safety Pass.
 
-La gestione feedback/routing resta centralizzata in button_input_confirm.
+La gestione feedback/routing del salvataggio evento è centralizzata in confirm_event; il normale pulsante delega soltanto begin.
 
 PAGE1 — COMPONENTI UI RILEVANTI:
 
@@ -5793,7 +5661,7 @@ Nota:
 
 input_analysis_result è fonte read-only compositiva per readiness/visibility parziale.
 
-Non è fonte payload.
+Non costruisce né salva il payload; association/associationContext sono input controllati del builder unico in confirm_event.
 Non salva dati.
 Non sostituisce parser, matching, suggestion, command o select.
 
@@ -5805,7 +5673,7 @@ eventuali residui parse_input non devono essere considerati fonte di verità se 
 typing_state è stato eliminato come query legacy unused
 handle_event_success è stato eliminato come query legacy unused
 fonte operativa parsing = parse_input_controlled
-fonte operativa salvataggio = ui_state.parsed
+fonte operativa salvataggio = snapshot.parsed e association IAR nel builder confirm_event; controlli correnti vincolati a contesto e fingerprint
 
 SUPABASE INTEGRAZIONE
 
@@ -6916,6 +6784,3180 @@ v25 — 2026-11-02 — Documentato Editor Base N16: Anagrafiche, Save Nome/Tipol
 
 v24 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
 
+## Q2 — configurazioni native finali
+
+Le configurazioni seguenti sono integrali salvo le sole proprietà espressamente delegate alla madre indicata: reinserendole dai rispettivi blocchi sorgente si ricostruisce esattamente il modello nativo decodificato. Il JSON non è un nuovo oggetto Retool né un import applicabile. Il source completo senza deleghe è conservato in source_evidence/native_final_widgets.json del lotto.
+
+UUID, parent/view, ordinal, row, dimensioni e metadati sono quelli realmente assegnati. Nelle copie native STEP 3-B row/height sono rappresentati con fattore 5 rispetto all’export originale: non confondere le due serializzazioni o forzare coordinate nominali. Nessun drag/riordino nel consolidamento documentale.
+
+| ID | UUID | Parent / view | Ordinal |
+| --- | --- | --- | --- |
+| `container_inactive_associations` | `e1da2257-12e0-4de9-b643-2fa3274c68ea` | `container_input` / `00030` | `0` |
+| `sintesi` | `44dde8d3-73bd-449a-81a0-630474f0c7d1` | `container_inactive_associations` / `00030` | `0` |
+| `container_inactive_project_choice` | `5c19aba3-e538-49a0-ba41-9e0250056696` | `container_inactive_associations` / `00030` | `1` |
+| `text_inline_inactive_project` | `143f41f0-94e7-4419-963d-089064de49bd` | `container_inactive_project_choice` / `00030` | `0` |
+| `select_inline_inactive_project` | `4b735a8d-fbc7-4f27-8ec2-907a46bb2176` | `container_inactive_project_choice` / `00030` | `1` |
+| `container_inactive_entity_choice` | `bc6e28c9-4c34-467b-9f58-09dff103a508` | `container_inactive_associations` / `00030` | `2` |
+| `text_inline_inactive_entity` | `2b8370fd-49a5-49ce-9d80-9da7e2e729ee` | `container_inactive_entity_choice` / `00030` | `0` |
+| `select_inline_inactive_entity` | `3179d38d-47fc-4834-ad21-ae2516d0511e` | `container_inactive_entity_choice` / `00030` | `1` |
+| `toggle_manual_associations` | `23336781-75d2-4090-b9b6-3aa659bfb6b3` | `container_input` / `00030` | `6` |
+| `select1` | `c22d5279-8d11-4c51-8dd4-206166c48fb1` | `container_input` / `00030` | `5` |
+| `select_project` | `68d8a923-adc1-4e70-9ee4-204adb684287` | `container_input` / `00030` | `7` |
+| `select_entity` | `f5c6d996-0642-47a2-84f5-4a6689be5af9` | `container_input` / `00030` | `8` |
+| `button_input_confirm` | `503dbbe3-64c4-4fbc-a345-59e560f2615b` | `container_input` / `00030` | `9` |
+| `input_home` | `50132396-de46-4bc4-b400-65bfb4967927` | `container_home` / `00030` | `0` |
+| `input_raw` | `3c1d1f78-3088-4075-b1f7-b4030f22eddd` | `container_input` / `00030` | `1` |
+| `btn_cancel_edit` | `c6c2aa84-6fdd-4897-8435-fa0ac8fde7ca` | `container_input` / `00030` | `10` |
+| `btn_cancel_input_home` | `e275c435-c1ec-45e0-82c7-b602f289d566` | `container_input` / `00030` | `11` |
+| `button_handle_attivita` | `11500a68-3e79-48f7-b319-e912a7eda900` | `container_attivita` / `00030` | `2` |
+| `btn_edit` | `807c76b2-fc32-4305-a557-0c25c6864f95` | `container_events` / `00030` | `0` |
+| `btn_nav_home` | `4dfd5d60-8609-4768-b23e-b72598949992` | `container_app_nav` / `00030` | `0` |
+| `btn_nav_events` | `57b1c29f-9673-4c1f-8f2a-d60b9db67e8e` | `container_app_nav` / `00030` | `1` |
+| `btn_command_go_events` | `4c5e7f42-99c8-4b14-a107-7c7e7743322f` | `container_command_intent` / `00030` | `10` |
+| `btn_nav_anagrafiche` | `d6f46932-e0fe-4f10-bae6-aa8c7c8e96f1` | `container_app_nav` / `00030` | `2` |
+| `btn_create_project_inline` | `c7502901-202d-4a69-b585-80a16cb6dc5d` | `container_association_suggestions` / `00030` | `10` |
+| `btn_create_entity_inline` | `b6c6470e-8251-4695-953e-911a2631d05b` | `container_association_suggestions` / `00030` | `5` |
+| `btn_command_create_project` | `e0c26d19-8a9b-4d00-b53e-7244cb6f37be` | `container_command_intent` / `00030` | `13` |
+| `btn_command_create_entity` | `db1cf20d-1305-4637-ab8a-1a6d408a70d7` | `container_command_intent` / `00030` | `12` |
+| `create_suggestion_hint` | `25859f72-bb0b-4757-9f29-b1c12114fa14` | `container_association_suggestions` / `00030` | `1` |
+| `container_association_suggestions` | `4c0fd7b0-0621-439c-a716-f91ba0c7d8eb` | `container_input` / `00030` | `3` |
+| `btn_open_project_create` | `d84075c0-25cb-48b5-9ec9-4085376242cb` | `container_association_suggestions` / `00030` | `12` |
+| `btn_open_entity_create` | `6c1c7634-6964-4b3d-be15-9e78af50347f` | `container_association_suggestions` / `00030` | `13` |
+| `btn_cancel_project_create` | `5f53c58c-5237-460a-8836-c4a1fb500e34` | `container_association_suggestions` / `00030` | `14` |
+| `text_event_data_title` | `94fdd943-6b2f-4db3-831a-dc32e0381626` | `container_input` / `00030` | `4` |
+
+### Configurazioni e handler finali
+
+```json
+{
+  "container_inactive_associations": {
+    "native_configuration_except_delegated_properties": {
+      "id": "container_inactive_associations",
+      "uuid": "e1da2257-12e0-4de9-b643-2fa3274c68ea",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ContainerWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "_direction": "vertical",
+        "_disabledByIndex": [
+          ""
+        ],
+        "heightType": "auto",
+        "currentViewKey": null,
+        "iconByIndex": [],
+        "_flexWrap": false,
+        "clickable": false,
+        "_iconByIndex": [
+          ""
+        ],
+        "headerPadding": "4px 12px",
+        "showFooterBorder": true,
+        "_align": "center",
+        "enableFullBleed": false,
+        "showBorder": true,
+        "hidden": "{{ !input_analysis_result.value?.analysis || input_analysis_result.value?.mode?.effectiveIsCommandFlow }}",
+        "showHeader": false,
+        "hoistFetching": false,
+        "margin": "0",
+        "views": [],
+        "showInEditor": false,
+        "tooltipText": "",
+        "padding": "12px",
+        "_justify": "start",
+        "style": {
+          "background": "#ffffff",
+          "border": "#e5e7eb",
+          "borderRadius": "10px"
+        },
+        "hiddenByIndex": [],
+        "_hiddenByIndex": [
+          ""
+        ],
+        "currentViewIndex": null,
+        "_hasMigratedNestedItems": true,
+        "transition": "none",
+        "showHeaderBorder": true,
+        "footerPadding": "4px 12px",
+        "itemMode": "static",
+        "_gap": "8px",
+        "_tooltipByIndex": [
+          ""
+        ],
+        "tooltipByIndex": [],
+        "showFooter": false,
+        "_viewKeys": [
+          "View 1"
+        ],
+        "_type": "stack",
+        "events": {},
+        "_ids": [
+          "00030"
+        ],
+        "viewKeys": [],
+        "iconPositionByIndex": [],
+        "_iconPositionByIndex": [
+          ""
+        ],
+        "hovered": false,
+        "loading": false,
+        "overflowType": "scroll",
+        "disabled": false,
+        "_labels": [
+          ""
+        ],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "showBody": true,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 140,
+        "col": 0,
+        "height": 19,
+        "width": 6,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fill",
+          "width": 168,
+          "height": 40
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795013327343",
+      "updatedAt": "~m1795037070280",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "sintesi": {
+    "native_configuration_except_delegated_properties": {
+      "id": "sintesi",
+      "uuid": "44dde8d3-73bd-449a-81a0-630474f0c7d1",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "left",
+        "hidden": "{{ !input_analysis_result.value?.analysis || input_analysis_result.value?.mode?.effectiveIsCommandFlow }}",
+        "imageWidth": "fit",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "verticalAlign": "center",
+        "tooltipText": "",
+        "ariaLive": "off",
+        "disableMarkdown": false,
+        "overflowType": "scroll",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_associations",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 90,
+        "col": 0,
+        "height": 3,
+        "width": 3,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fill",
+          "width": 260,
+          "height": 24
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774703520012",
+      "updatedAt": "~m1795127942720",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {
+      "template.value": {
+        "mother": "06_LOGOS_View_Preview_System.md",
+        "anchor": "q2-source-sintesi-value",
+        "sha256_utf8_LF": "f2724be8b9cd9ad76967c0af11744bc4c0261403060996fb185112cf79b26dcb"
+      }
+    }
+  },
+  "container_inactive_project_choice": {
+    "native_configuration_except_delegated_properties": {
+      "id": "container_inactive_project_choice",
+      "uuid": "5c19aba3-e538-49a0-ba41-9e0250056696",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ContainerWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "_direction": "vertical",
+        "_disabledByIndex": [
+          ""
+        ],
+        "heightType": "auto",
+        "currentViewKey": null,
+        "iconByIndex": [],
+        "_flexWrap": false,
+        "clickable": false,
+        "_iconByIndex": [
+          ""
+        ],
+        "headerPadding": "4px 12px",
+        "showFooterBorder": true,
+        "_align": "center",
+        "enableFullBleed": false,
+        "showBorder": true,
+        "hidden": "{{ !input_analysis_result.value?.analysis || !input_analysis_result.value?.readiness?.canShowEventPreview || !input_analysis_result.value?.association?.project?.requiresDecision }}",
+        "showHeader": false,
+        "hoistFetching": false,
+        "margin": "0",
+        "views": [],
+        "showInEditor": false,
+        "tooltipText": "",
+        "padding": "12px",
+        "_justify": "start",
+        "style": {
+          "background": "#fffbeb",
+          "border": "highlight",
+          "borderRadius": "10px"
+        },
+        "hiddenByIndex": [],
+        "_hiddenByIndex": [
+          ""
+        ],
+        "currentViewIndex": null,
+        "_hasMigratedNestedItems": true,
+        "transition": "none",
+        "showHeaderBorder": true,
+        "footerPadding": "4px 12px",
+        "itemMode": "static",
+        "_gap": "8px",
+        "_tooltipByIndex": [
+          ""
+        ],
+        "tooltipByIndex": [],
+        "showFooter": false,
+        "_viewKeys": [
+          "View 1"
+        ],
+        "_type": "stack",
+        "events": {},
+        "_ids": [
+          "00030"
+        ],
+        "viewKeys": [],
+        "iconPositionByIndex": [],
+        "_iconPositionByIndex": [
+          ""
+        ],
+        "hovered": false,
+        "loading": false,
+        "overflowType": "scroll",
+        "disabled": false,
+        "_labels": [
+          ""
+        ],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "showBody": true,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_associations",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 93,
+        "col": 0,
+        "height": 19,
+        "width": 6,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 1,
+          "widthType": "fill",
+          "width": 156,
+          "height": 40
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795113263687",
+      "updatedAt": "~m1795127729633",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "text_inline_inactive_project": {
+    "native_configuration_except_delegated_properties": {
+      "id": "text_inline_inactive_project",
+      "uuid": "143f41f0-94e7-4419-963d-089064de49bd",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "left",
+        "hidden": "{{ !input_analysis_result.value?.association?.project?.requiresDecision }}",
+        "imageWidth": "fit",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "verticalAlign": "center",
+        "tooltipText": "",
+        "value": "{{ (() => { const entry = input_analysis_result.value?.association?.project; const escape = value => String(value || \"\").replace(/&/g,\"&amp;\").replace(/</g,\"&lt;\").replace(/>/g,\"&gt;\").replace(/\"/g,\"&quot;\").replace(/'/g,\"&#39;\"); return `<div style=\"font-weight:600;color:#92400e;font-size:13px;margin-bottom:6px;\">Associazione progetto</div><div style=\"color:#1f1a17;font-size:13px;line-height:1.45;\">${escape(entry?.message)}</div><div style=\"color:#64748b;font-size:12px;line-height:1.4;margin-top:6px;\">${escape(entry?.information)}</div>`; })() }}",
+        "ariaLive": "off",
+        "disableMarkdown": false,
+        "overflowType": "scroll",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_project_choice",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 0,
+        "col": 0,
+        "height": 3,
+        "width": 3,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fill",
+          "width": 78,
+          "height": 24
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795116293261",
+      "updatedAt": "~m1795127878505",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "select_inline_inactive_project": {
+    "native_configuration_except_delegated_properties": {
+      "id": "select_inline_inactive_project",
+      "uuid": "4b735a8d-fbc7-4f27-8ec2-907a46bb2176",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "SelectWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "imageByIndex": [],
+        "_disabledByIndex": [
+          "",
+          ""
+        ],
+        "showSelectionIndicator": true,
+        "_values": [
+          "{{ input_analysis_result.value?.association?.project?.choiceValues?.link || \"unavailable:project:link\" }}",
+          "{{ input_analysis_result.value?.association?.project?.choiceValues?.skip || \"unavailable:project:skip\" }}"
+        ],
+        "iconByIndex": [],
+        "values": [],
+        "readOnly": false,
+        "clearInputValueOnChange": false,
+        "iconAfter": "",
+        "_iconByIndex": [
+          "",
+          ""
+        ],
+        "overlayMinWidth": null,
+        "allowDeselect": false,
+        "inputValue": "",
+        "hidden": "{{ !input_analysis_result.value?.association?.project?.requiresDecision }}",
+        "customValidation": "{{ (() => { const entry = input_analysis_result.value?.association?.project; if (!entry?.requiresDecision) return \"\"; return typeof self.value === \"string\" && self.value && [entry.choiceValues?.link, entry.choiceValues?.skip].includes(self.value) ? \"\" : self.value ? \"I dati sono cambiati: ripeti la scelta.\" : \"Scegli Collega oppure Non collegare.\"; })() }}",
+        "data": [],
+        "searchMode": "fuzzy",
+        "hideValidationMessage": false,
+        "fallbackTextByIndex": [],
+        "textBefore": "",
+        "_fallbackTextByIndex": [
+          "",
+          ""
+        ],
+        "selectedItem": null,
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "automaticItemColors": false,
+        "itemAdornmentShape": "circle",
+        "textAfter": "",
+        "showInEditor": false,
+        "showClear": false,
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "value": null,
+        "hiddenByIndex": [],
+        "labelCaption": "",
+        "labelWidth": "33",
+        "deprecatedLabels": [],
+        "_hiddenByIndex": [
+          "",
+          ""
+        ],
+        "placeholder": "Scegli come proseguire",
+        "_captionByIndex": [
+          "",
+          ""
+        ],
+        "itemAdornmentSize": "auto",
+        "label": "Associazione progetto",
+        "_hasMigratedNestedItems": true,
+        "captionByIndex": [],
+        "_validate": false,
+        "itemMode": "static",
+        "labelWidthUnit": "%",
+        "allowCustomValue": false,
+        "invalid": false,
+        "selectedIndex": null,
+        "_tooltipByIndex": [
+          "",
+          ""
+        ],
+        "_colorByIndex": [
+          "",
+          ""
+        ],
+        "tooltipByIndex": [],
+        "iconBefore": "",
+        "colorByIndex": [],
+        "selectedLabel": "",
+        "events": {},
+        "_ids": [
+          "00030",
+          "00031"
+        ],
+        "emptyMessage": "No options",
+        "overlayMaxHeight": 375,
+        "loading": false,
+        "disabled": "{{ confirm_event.isFetching }}",
+        "labelPosition": "top",
+        "_labels": [
+          "Collega",
+          "Non collegare"
+        ],
+        "labelWrap": true,
+        "disabledValues": [],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "_imageByIndex": [
+          "",
+          ""
+        ],
+        "required": true,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_project_choice",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 3,
+        "col": 0,
+        "height": 1,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 1,
+          "widthType": "fill",
+          "width": 104,
+          "height": 8
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795116391027",
+      "updatedAt": "~m1795121674658",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "container_inactive_entity_choice": {
+    "native_configuration_except_delegated_properties": {
+      "id": "container_inactive_entity_choice",
+      "uuid": "bc6e28c9-4c34-467b-9f58-09dff103a508",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ContainerWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "_direction": "vertical",
+        "_disabledByIndex": [
+          ""
+        ],
+        "heightType": "auto",
+        "currentViewKey": null,
+        "iconByIndex": [],
+        "_flexWrap": false,
+        "clickable": false,
+        "_iconByIndex": [
+          ""
+        ],
+        "headerPadding": "4px 12px",
+        "showFooterBorder": true,
+        "_align": "center",
+        "enableFullBleed": false,
+        "showBorder": true,
+        "hidden": "{{ !input_analysis_result.value?.analysis || !input_analysis_result.value?.readiness?.canShowEventPreview || !input_analysis_result.value?.association?.entity?.requiresDecision }}",
+        "showHeader": false,
+        "hoistFetching": false,
+        "margin": "0",
+        "views": [],
+        "showInEditor": false,
+        "tooltipText": "",
+        "padding": "12px",
+        "_justify": "start",
+        "style": {
+          "background": "#fffbeb",
+          "border": "highlight",
+          "borderRadius": "10px"
+        },
+        "hiddenByIndex": [],
+        "_hiddenByIndex": [
+          ""
+        ],
+        "currentViewIndex": null,
+        "_hasMigratedNestedItems": true,
+        "transition": "none",
+        "showHeaderBorder": true,
+        "footerPadding": "4px 12px",
+        "itemMode": "static",
+        "_gap": "8px",
+        "_tooltipByIndex": [
+          ""
+        ],
+        "tooltipByIndex": [],
+        "showFooter": false,
+        "_viewKeys": [
+          "View 1"
+        ],
+        "_type": "stack",
+        "events": {},
+        "_ids": [
+          "00030"
+        ],
+        "viewKeys": [],
+        "iconPositionByIndex": [],
+        "_iconPositionByIndex": [
+          ""
+        ],
+        "hovered": false,
+        "loading": false,
+        "overflowType": "scroll",
+        "disabled": false,
+        "_labels": [
+          ""
+        ],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "showBody": true,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_associations",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 112,
+        "col": 0,
+        "height": 19,
+        "width": 6,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 2,
+          "widthType": "fill",
+          "width": 156,
+          "height": 40
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795111963895",
+      "updatedAt": "~m1795127868566",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "text_inline_inactive_entity": {
+    "native_configuration_except_delegated_properties": {
+      "id": "text_inline_inactive_entity",
+      "uuid": "2b8370fd-49a5-49ce-9d80-9da7e2e729ee",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "left",
+        "hidden": "{{ !input_analysis_result.value?.association?.entity?.requiresDecision }}",
+        "imageWidth": "fit",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "verticalAlign": "center",
+        "tooltipText": "",
+        "value": "{{ (() => { const entry = input_analysis_result.value?.association?.entity; const escape = value => String(value || \"\").replace(/&/g,\"&amp;\").replace(/</g,\"&lt;\").replace(/>/g,\"&gt;\").replace(/\"/g,\"&quot;\").replace(/'/g,\"&#39;\"); return `<div style=\"font-weight:600;color:#92400e;font-size:13px;margin-bottom:6px;\">Associazione entità</div><div style=\"color:#1f1a17;font-size:13px;line-height:1.45;\">${escape(entry?.message)}</div><div style=\"color:#64748b;font-size:12px;line-height:1.4;margin-top:6px;\">${escape(entry?.information)}</div>`; })() }}",
+        "ariaLive": "off",
+        "disableMarkdown": false,
+        "overflowType": "scroll",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_entity_choice",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 0,
+        "col": 0,
+        "height": 3,
+        "width": 3,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fill",
+          "width": 78,
+          "height": 48
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795117259540",
+      "updatedAt": "~m1795127903788",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "select_inline_inactive_entity": {
+    "native_configuration_except_delegated_properties": {
+      "id": "select_inline_inactive_entity",
+      "uuid": "3179d38d-47fc-4834-ad21-ae2516d0511e",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "SelectWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "imageByIndex": [],
+        "_disabledByIndex": [
+          "",
+          ""
+        ],
+        "showSelectionIndicator": true,
+        "_values": [
+          "{{ input_analysis_result.value?.association?.entity?.choiceValues?.link || \"unavailable:entity:link\" }}",
+          "{{ input_analysis_result.value?.association?.entity?.choiceValues?.skip || \"unavailable:entity:skip\" }}"
+        ],
+        "iconByIndex": [],
+        "values": [],
+        "readOnly": false,
+        "clearInputValueOnChange": false,
+        "iconAfter": "",
+        "_iconByIndex": [
+          "",
+          ""
+        ],
+        "overlayMinWidth": null,
+        "allowDeselect": false,
+        "inputValue": "",
+        "hidden": "{{ !input_analysis_result.value?.association?.entity?.requiresDecision }}",
+        "customValidation": "{{ (() => { const entry = input_analysis_result.value?.association?.entity; if (!entry?.requiresDecision) return \"\"; return typeof self.value === \"string\" && self.value && [entry.choiceValues?.link, entry.choiceValues?.skip].includes(self.value) ? \"\" : self.value ? \"I dati sono cambiati: ripeti la scelta.\" : \"Scegli Collega oppure Non collegare.\"; })() }}",
+        "data": [],
+        "searchMode": "fuzzy",
+        "hideValidationMessage": false,
+        "fallbackTextByIndex": [],
+        "textBefore": "",
+        "_fallbackTextByIndex": [
+          "",
+          ""
+        ],
+        "selectedItem": null,
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "automaticItemColors": false,
+        "itemAdornmentShape": "circle",
+        "textAfter": "",
+        "showInEditor": false,
+        "showClear": false,
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "value": null,
+        "hiddenByIndex": [],
+        "labelCaption": "",
+        "labelWidth": "33",
+        "deprecatedLabels": [],
+        "_hiddenByIndex": [
+          "",
+          ""
+        ],
+        "placeholder": "Scegli come proseguire",
+        "_captionByIndex": [
+          "",
+          ""
+        ],
+        "itemAdornmentSize": "auto",
+        "label": "Associazione entità",
+        "_hasMigratedNestedItems": true,
+        "captionByIndex": [],
+        "_validate": false,
+        "itemMode": "static",
+        "labelWidthUnit": "%",
+        "allowCustomValue": false,
+        "invalid": false,
+        "selectedIndex": null,
+        "_tooltipByIndex": [
+          "",
+          ""
+        ],
+        "_colorByIndex": [
+          "",
+          ""
+        ],
+        "tooltipByIndex": [],
+        "iconBefore": "",
+        "colorByIndex": [],
+        "selectedLabel": "",
+        "events": {},
+        "_ids": [
+          "00030",
+          "00031"
+        ],
+        "emptyMessage": "No options",
+        "overlayMaxHeight": 375,
+        "loading": false,
+        "disabled": "{{ confirm_event.isFetching }}",
+        "labelPosition": "top",
+        "_labels": [
+          "Collega",
+          "Non collegare"
+        ],
+        "labelWrap": true,
+        "disabledValues": [],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "_imageByIndex": [
+          "",
+          ""
+        ],
+        "required": true,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_inactive_entity_choice",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 3,
+        "col": 0,
+        "height": 1,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 1,
+          "widthType": "fill",
+          "width": 104,
+          "height": 64
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795117340979",
+      "updatedAt": "~m1795121784746",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "toggle_manual_associations": {
+    "native_configuration_except_delegated_properties": {
+      "id": "toggle_manual_associations",
+      "uuid": "23336781-75d2-4090-b9b6-3aa659bfb6b3",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ToggleButtonWidget",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "horizontalAlign": "stretch",
+        "iconPosition": "right",
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowEventData }}",
+        "ariaLabel": "",
+        "text": "Modifica associazioni",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "value": false,
+        "iconForFalse": "bold/interface-arrows-button-down",
+        "styleVariant": "outline",
+        "events": {},
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "iconForTrue": "bold/interface-arrows-button-up",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 135,
+        "col": 0,
+        "height": 5,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 6,
+          "widthType": "fill",
+          "width": 56,
+          "height": 40
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1795125702528",
+      "updatedAt": "~m1795125765257",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "select1": {
+    "native_configuration_except_delegated_properties": {
+      "id": "select1",
+      "uuid": "c22d5279-8d11-4c51-8dd4-206166c48fb1",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "SelectWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "imageByIndex": [],
+        "_disabledByIndex": [
+          "",
+          "",
+          "",
+          false
+        ],
+        "showSelectionIndicator": true,
+        "_values": [
+          "Evento",
+          "Incasso",
+          "Spesa",
+          "Tempo"
+        ],
+        "iconByIndex": [],
+        "values": [],
+        "readOnly": false,
+        "clearInputValueOnChange": false,
+        "iconAfter": "",
+        "_iconByIndex": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "overlayMinWidth": null,
+        "allowDeselect": false,
+        "inputValue": "",
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowEventData }}",
+        "customValidation": "",
+        "data": [],
+        "searchMode": "fuzzy",
+        "hideValidationMessage": false,
+        "fallbackTextByIndex": [],
+        "textBefore": "",
+        "_fallbackTextByIndex": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "selectedItem": null,
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "automaticItemColors": false,
+        "itemAdornmentShape": "circle",
+        "textAfter": "",
+        "showInEditor": false,
+        "showClear": false,
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "style": {
+          "sharedLabel": "#64748b",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "Inter"
+        },
+        "hiddenByIndex": [],
+        "labelCaption": "",
+        "hideLabel": false,
+        "labelWidth": "25",
+        "deprecatedLabels": [],
+        "_hiddenByIndex": [
+          "",
+          "",
+          "",
+          false
+        ],
+        "placeholder": "Seleziona tipo evento...",
+        "_captionByIndex": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "itemAdornmentSize": "auto",
+        "label": "Tipo evento",
+        "_hasMigratedNestedItems": true,
+        "captionByIndex": [],
+        "_validate": false,
+        "itemMode": "static",
+        "labelWidthUnit": "%",
+        "allowCustomValue": false,
+        "invalid": false,
+        "selectedIndex": null,
+        "_tooltipByIndex": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "_colorByIndex": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "tooltipByIndex": [],
+        "iconBefore": "",
+        "colorByIndex": [],
+        "selectedLabel": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "window.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nawait event_confirmation.setValue(null);\n\n"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "change",
+            "type": "script",
+            "id": "dc33f060",
+            "waitMs": "0"
+          }
+        ],
+        "_ids": [
+          "00030",
+          "00031",
+          "00032",
+          "6e0ad"
+        ],
+        "emptyMessage": "No options",
+        "overlayMaxHeight": 375,
+        "loading": false,
+        "disabled": false,
+        "labelPosition": "left",
+        "_labels": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "labelWrap": false,
+        "disabledValues": [],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "_imageByIndex": [
+          "",
+          "",
+          "",
+          ""
+        ],
+        "required": false,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 164,
+        "col": 0,
+        "height": 1,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 5,
+          "widthType": "fill",
+          "width": 334,
+          "height": 64
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774704195849",
+      "updatedAt": "~m1795181822564",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {
+      "template.value": {
+        "mother": "01_LOGOS_Input_System.md",
+        "anchor": "q2-source-select1-value",
+        "sha256_utf8_LF": "321f51a11f027fee961ec3cba6f2a61c2e141a539e8b3fe6d84f12b4dea79289"
+      }
+    }
+  },
+  "select_project": {
+    "native_configuration_except_delegated_properties": {
+      "id": "select_project",
+      "uuid": "68d8a923-adc1-4e70-9ee4-204adb684287",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "SelectWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "imageByIndex": [],
+        "_disabledByIndex": [],
+        "showSelectionIndicator": true,
+        "_values": [],
+        "iconByIndex": [],
+        "values": "{{ item.id }}",
+        "readOnly": false,
+        "clearInputValueOnChange": false,
+        "iconAfter": "",
+        "_iconByIndex": [],
+        "overlayMinWidth": null,
+        "allowDeselect": false,
+        "inputValue": "",
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowEventData || !toggle_manual_associations.value }}",
+        "customValidation": "",
+        "data": "{{ projects_list.data }}",
+        "searchMode": "fuzzy",
+        "hideValidationMessage": false,
+        "fallbackTextByIndex": [],
+        "textBefore": "",
+        "_fallbackTextByIndex": [],
+        "selectedItem": null,
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "automaticItemColors": false,
+        "itemAdornmentShape": "circle",
+        "textAfter": "",
+        "showInEditor": false,
+        "showClear": true,
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "value": "{{\n  (() => {\n    if (edit_mode.data === true) {\n      return editing_event.data?.project_id || null;\n    }\n\n    const singleMatch = analysis_snapshot.value?.project?.singleMatch || null;\n    return singleMatch?.status === \"ACTIVE\" ? singleMatch.id || null : null;\n  })()\n}}",
+        "style": {
+          "sharedLabel": "#64748b",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "Inter"
+        },
+        "hiddenByIndex": [],
+        "labelCaption": "",
+        "labelWidth": "25",
+        "deprecatedLabels": [],
+        "_hiddenByIndex": [],
+        "placeholder": "Seleziona progetto...",
+        "_captionByIndex": [],
+        "itemAdornmentSize": "auto",
+        "label": "Progetto",
+        "_hasMigratedNestedItems": true,
+        "captionByIndex": "",
+        "_validate": false,
+        "itemMode": "dynamic",
+        "labelWidthUnit": "%",
+        "allowCustomValue": false,
+        "invalid": false,
+        "selectedIndex": null,
+        "_tooltipByIndex": [],
+        "_colorByIndex": [],
+        "tooltipByIndex": [],
+        "iconBefore": "",
+        "colorByIndex": [],
+        "selectedLabel": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "window.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nawait event_confirmation.setValue(null);\n\n"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "change",
+            "type": "script",
+            "id": "eb265ab3",
+            "waitMs": "0"
+          }
+        ],
+        "_ids": [],
+        "emptyMessage": "No options",
+        "overlayMaxHeight": 375,
+        "loading": false,
+        "disabled": "{{ !input_raw.value }}",
+        "labelPosition": "left",
+        "_labels": [],
+        "labelWrap": false,
+        "disabledValues": [],
+        "disabledByIndex": "{{ item.status !== \"ACTIVE\" && !(edit_mode.data === true && item.id === editing_event.data?.project_id) }}",
+        "maintainSpaceWhenHidden": false,
+        "_imageByIndex": [],
+        "required": false,
+        "labels": "{{ item.name }}"
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 15,
+        "col": 0,
+        "height": 1,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 7,
+          "widthType": "fill",
+          "width": 112,
+          "height": 8
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774621528564",
+      "updatedAt": "~m1795181713194",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "select_entity": {
+    "native_configuration_except_delegated_properties": {
+      "id": "select_entity",
+      "uuid": "f5c6d996-0642-47a2-84f5-4a6689be5af9",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "SelectWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "imageByIndex": [],
+        "_disabledByIndex": [],
+        "showSelectionIndicator": true,
+        "_values": [],
+        "iconByIndex": [],
+        "values": "{{ item.id }}",
+        "readOnly": false,
+        "clearInputValueOnChange": false,
+        "iconAfter": "",
+        "_iconByIndex": [],
+        "overlayMinWidth": null,
+        "allowDeselect": false,
+        "inputValue": "",
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowEventData || !toggle_manual_associations.value }}",
+        "customValidation": "",
+        "data": "{{ entities_list.data }}",
+        "searchMode": "fuzzy",
+        "hideValidationMessage": false,
+        "fallbackTextByIndex": [],
+        "textBefore": "",
+        "_fallbackTextByIndex": [],
+        "selectedItem": null,
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "automaticItemColors": false,
+        "itemAdornmentShape": "circle",
+        "textAfter": "",
+        "showInEditor": false,
+        "showClear": true,
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "value": "{{\n  (() => {\n    if (edit_mode.data === true) {\n      return editing_event.data?.entity_id || null;\n    }\n\n    const singleMatch = analysis_snapshot.value?.entity?.singleMatch || null;\n    return singleMatch?.status === \"ACTIVE\" ? singleMatch.id || null : null;\n  })()\n}}",
+        "style": {
+          "sharedLabel": "#64748b",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "Inter"
+        },
+        "hiddenByIndex": [],
+        "labelCaption": "",
+        "labelWidth": "25",
+        "deprecatedLabels": [],
+        "_hiddenByIndex": [],
+        "placeholder": "Seleziona entità...",
+        "_captionByIndex": [],
+        "itemAdornmentSize": "auto",
+        "label": "Entità",
+        "_hasMigratedNestedItems": true,
+        "captionByIndex": [],
+        "_validate": false,
+        "itemMode": "dynamic",
+        "labelWidthUnit": "%",
+        "allowCustomValue": false,
+        "invalid": false,
+        "selectedIndex": null,
+        "_tooltipByIndex": [],
+        "_colorByIndex": [],
+        "tooltipByIndex": [],
+        "iconBefore": "",
+        "colorByIndex": [],
+        "selectedLabel": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "window.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nawait event_confirmation.setValue(null);\n\n"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "change",
+            "type": "script",
+            "id": "f93e6c67",
+            "waitMs": "0"
+          }
+        ],
+        "_ids": [],
+        "emptyMessage": "No options",
+        "overlayMaxHeight": 375,
+        "loading": false,
+        "disabled": "{{ !input_raw.value }}",
+        "labelPosition": "left",
+        "_labels": [],
+        "labelWrap": false,
+        "disabledValues": [],
+        "disabledByIndex": "{{ item.status !== \"ACTIVE\" && !(edit_mode.data === true && item.id === editing_event.data?.entity_id) }}",
+        "maintainSpaceWhenHidden": false,
+        "_imageByIndex": [],
+        "required": false,
+        "labels": "{{ (() => {\n  const duplicates = (entities_list.data || []).filter(entity => entity.name === item.name);\n  if (duplicates.length < 2 || !item.id) return item.name;\n  const key = String(item.id).replace(/-/g, \"\");\n  let length = 8;\n  while (length < key.length && duplicates.some(entity =>\n    entity.id !== item.id && String(entity.id).replace(/-/g, \"\").startsWith(key.slice(0, length))\n  )) length++;\n  return `${item.name} · ${key.slice(0, length)}`;\n})() }}"
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 16,
+        "col": 0,
+        "height": 1,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 8,
+          "widthType": "fill",
+          "width": 112,
+          "height": 8
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774621714747",
+      "updatedAt": "~m1795181783860",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "button_input_confirm": {
+    "native_configuration_except_delegated_properties": {
+      "id": "button_input_confirm",
+      "uuid": "503dbbe3-64c4-4fbc-a345-59e560f2615b",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowConfirm }}",
+        "ariaLabel": "",
+        "text": "Conferma evento",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "primary",
+          "hoverBackground": "primary",
+          "borderRadius": "10px"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-validation-check-circle",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "return confirm_event.trigger({additionalScope:{confirmation_action:\"begin\"}});"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "8dd911a8",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "{{ !input_analysis_result.value?.readiness?.canConfirm || confirm_event.isFetching || [\"project\", \"entity\"].some(layer => { const entry = input_analysis_result.value?.association?.[layer]; const value = layer === \"project\" ? select_inline_inactive_project.value : select_inline_inactive_entity.value; return entry?.requiresDecision && ![entry.choiceValues?.link, entry.choiceValues?.skip].some(token => typeof token === \"string\" && token.length > 0 && token === value); }) }}",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 65,
+        "col": 2,
+        "height": 5,
+        "width": 1,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 9,
+          "widthType": "fixed",
+          "width": 300,
+          "height": 45
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774622274482",
+      "updatedAt": "~m1795125660854",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "input_home": {
+    "native_configuration_except_delegated_properties": {
+      "id": "input_home",
+      "uuid": "50132396-de46-4bc4-b400-65bfb4967927",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextInputWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "spellCheck": false,
+        "readOnly": false,
+        "iconAfter": "",
+        "showCharacterCount": false,
+        "autoComplete": false,
+        "enforceMaxLength": false,
+        "maxLength": null,
+        "hidden": false,
+        "customValidation": "",
+        "patternType": "",
+        "hideValidationMessage": false,
+        "textBefore": "",
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "textAfter": "",
+        "showInEditor": false,
+        "showClear": true,
+        "pattern": "",
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "value": "",
+        "style": {
+          "borderRadius": "12px",
+          "border": "#d1d5db",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "fontFamily": "Source Sans 3"
+        },
+        "labelCaption": "",
+        "hideLabel": true,
+        "labelWidth": "33",
+        "autoFill": "",
+        "placeholder": "✎ Scrivi cosa vuoi fare...",
+        "label": "",
+        "_validate": false,
+        "labelWidthUnit": "%",
+        "invalid": false,
+        "iconBefore": "",
+        "minLength": null,
+        "inputTooltip": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const value = String(input_home.value || \"\");\nconst ownedWrite = window.__logosOwnedInputWrite;\nwindow.__logosOwnedInputWrite = null;\nif (ownedWrite?.raw === value && ownedWrite.epoch === window.__logosAnalysisEpoch) return;\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\nawait input_raw.setValue(value);\nif (window.__logosAnalysisEpoch !== epoch || input_home.value !== value) return;\nif (value.trim()) {\n  await ui_state.setValue({...ui_state.value,view:\"home\"});\n  if (window.__logosAnalysisEpoch !== epoch) return;\n  container_events_list.setHidden(true);\n  container_feedback.setHidden(true);\n  container_home.setHidden(false);\n  container_input.setHidden(false);\n}\nreturn trigger_parse_debounced.trigger({additionalScope:{analysis_revision_id:String(epoch)}});\n"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "change",
+            "type": "script",
+            "id": "6a93bb9b",
+            "waitMs": "0"
+          }
+        ],
+        "autoCapitalize": "none",
+        "loading": false,
+        "disabled": false,
+        "labelPosition": "top",
+        "labelWrap": false,
+        "maintainSpaceWhenHidden": false,
+        "required": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_home",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 0,
+        "col": 0,
+        "height": 1,
+        "width": 12,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fixed",
+          "width": 335,
+          "height": 48
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774789915166",
+      "updatedAt": "~m1795181865578",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "input_raw": {
+    "native_configuration_except_delegated_properties": {
+      "id": "input_raw",
+      "uuid": "3c1d1f78-3088-4075-b1f7-b4030f22eddd",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextAreaWidget",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "spellCheck": false,
+        "readOnly": false,
+        "autoResize": true,
+        "showCharacterCount": false,
+        "autoComplete": false,
+        "enforceMaxLength": false,
+        "maxLength": null,
+        "hidden": "true",
+        "customValidation": "",
+        "hideValidationMessage": false,
+        "minLines": 2,
+        "validationMessage": "",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "pattern": "",
+        "tooltipText": "",
+        "labelAlign": "left",
+        "formDataKey": "{{ self.id }}",
+        "value": "",
+        "style": {},
+        "labelCaption": "",
+        "labelWidth": "33",
+        "autoFill": "",
+        "placeholder": "Scrivi un evento...",
+        "label": "",
+        "_validate": false,
+        "labelWidthUnit": "%",
+        "invalid": false,
+        "minLength": null,
+        "inputTooltip": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const text = input_raw.value?.trim() || \"\";\n\nconst normalize = (str) =>\n  (str || \"\").toLowerCase().replace(/\\s+/g, \" \").trim();\n\nconst cleanText = normalize(text);\n\nconst projects = projects_list.data || [];\nconst entities = entities_list.data || [];\n\n// STOPWORDS\nconst STOPWORDS = [\n  \"di\",\"del\",\"della\",\"dei\",\"degli\",\"delle\",\n  \"per\",\"con\",\"e\",\"a\",\"da\",\"in\",\"su\"\n];\n\n// TOKEN INPUT\nconst inputTokens = cleanText\n  .split(\" \")\n  .filter(w => w.length > 2)\n  .filter(w => !STOPWORDS.includes(w));\n\n\n// =====================\n// PROJECT MATCH (CORE)\n// =====================\n\nconst scoredMatches = projects.map(p => {\n  const name = normalize(p.name);\n\n  const nameWords = name\n    .split(\" \")\n    .filter(w => w.length > 2)\n    .filter(w => isNaN(w));\n\n  let score = 0;\n\n  // EXACT MATCH\n  if (cleanText === name) score += 100;\n\n  // FULL MATCH\n  const matchedWords = nameWords.filter(word =>\n    inputTokens.includes(word)\n  );\n\n  if (matchedWords.length === nameWords.length && nameWords.length > 0) {\n    score += 50;\n  }\n\n  // PARTIAL MATCH\n  const partialMatches = nameWords.filter(word =>\n    inputTokens.some(t => t.startsWith(word))\n  );\n\n  score += partialMatches.length * 10;\n\n  return {\n    project: p,\n    score\n  };\n});\n\n// SORT\nconst ranked = scoredMatches\n  .filter(m => m.score > 0)\n  .sort((a, b) => b.score - a.score);\n\n// ESTRAZIONE\nlet finalMatches = ranked.map(m => m.project);\n\n// DISAMBIGUAZIONE NUMERICA\nconst numbers = cleanText.match(/\\d+/g);\n\nif (numbers && finalMatches.length > 1) {\n  const filtered = finalMatches.filter(p => {\n    const name = normalize(p.name);\n    return numbers.some(n => name.includes(n));\n  });\n\n  if (filtered.length === 1) {\n    finalMatches = filtered;\n  }\n}\n\n// AUTO-SELECT DISABILITATO (STEP 1 — ALIGN_MATCH_TO_SELECTION_SAFE)\n// const topMatch = ranked[0];\n\n// if (\n//   finalMatches.length === 1 &&\n//   topMatch &&\n//   topMatch.score >= 80\n// ) {\n//   if (!select_project.value) {\n//     select_project.setValue(finalMatches[0].id);\n//   }\n// }\n\n\n// =====================\n// ENTITY MATCH (SEMPLICE E COERENTE)\n// =====================\n\nconst entityMatches = entities.filter(e => {\n  const name = normalize(e.name);\n\n  const nameWords = name\n    .split(\" \")\n    .filter(w => w.length > 2);\n\n  return nameWords.some(word => cleanText.includes(word));\n});\n\n\n// =====================\n// STATE UPDATE (UX)\n// =====================\n\n// PROJECT\n// await project_state.trigger({\n//   additionalScope: {\n//     matches: finalMatches.length\n//   }\n// });\n\n// ENTITY\n// await entity_state.trigger({\n//   additionalScope: {\n//     matches: entityMatches.length\n//   }\n// });"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "change",
+            "type": "script",
+            "id": "01a309f9",
+            "waitMs": "0"
+          }
+        ],
+        "autoCapitalize": "none",
+        "maxLines": null,
+        "loading": false,
+        "disabled": false,
+        "labelPosition": "top",
+        "labelWrap": false,
+        "maintainSpaceWhenHidden": false,
+        "required": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 0,
+        "col": 0,
+        "height": 5,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 1,
+          "widthType": "fill",
+          "width": 112,
+          "height": 40
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774617980372",
+      "updatedAt": "~m1778331191506",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_cancel_edit": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_cancel_edit",
+      "uuid": "c6c2aa84-6fdd-4897-8435-fa0ac8fde7ca",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{\n  !(\n    input_analysis_result.value?.mode?.effectiveIsInputFlow === true &&\n    input_analysis_result.value?.mode?.isEditMode === true\n  )\n}}",
+        "ariaLabel": "",
+        "text": "{{ edit_mode.data ? \"Annulla modifica\" : \"Torna alla home\" }}",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "#f8fafc",
+          "border": "#e2e8f0",
+          "label": "#475569",
+          "hoverBackground": "#f8fafc",
+          "borderRadius": "10px"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-delete-circle-alternate",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\n// --- CANCEL / RETURN CONTEXTUAL ---\n\nconst wasEditMode = Boolean(edit_mode.data);\nconst targetView = wasEditMode ? \"events\" : \"home\";\n\n// 1. Ferma eventuale debounce pendente\nif (window.__parseTimer) {\n  clearTimeout(window.__parseTimer);\n  window.__parseTimer = null;\n}\n\ntrigger_parse_debounced.cancel?.();\n\n// 2. Ferma eventuale timer feedback pendente\nif (window.__logos_feedback_timer) {\n  clearTimeout(window.__logos_feedback_timer);\n  window.__logos_feedback_timer = null;\n}\n\n// 3. Esci sempre da edit mode\nwindow.__logos_edit_mode_value = false;\nawait edit_mode.trigger();\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// 4. Svuota evento in modifica\nwindow.__logos_editing_event_value = null;\nawait editing_event.trigger();\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// 5. Reset input\nwindow.__logosOwnedInputWrite = {raw:\"\",epoch:window.__logosAnalysisEpoch};\nawait input_home.setValue(\"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait input_raw.setValue(\"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// 6. Reset select\nselect_project.clearValue();\nselect_entity.clearValue();\nselect1.clearValue?.();\n\n// 7. Reset parsed/state controllato\nui_state.setValue({\n  ...ui_state.value,\n  view: targetView,\n  parsed: {\n    amount: null,\n    unit: null,\n    event_date: null\n  },\n  status: \"idle\",\n  feedback_text: null,\n  feedback_project: null,\n  feedback_summary: null\n});\n\n// 8. Routing UI contestuale\ncontainer_input.setHidden(true);\ncontainer_feedback.setHidden(true);\n\nif (targetView === \"events\") {\n  container_home.setHidden(true);\n  container_events_list.setHidden(false);\n} else {\n  container_events_list.setHidden(true);\n  container_home.setHidden(false);\n}"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "0b517d3e",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 159,
+        "col": 0,
+        "height": 5,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 10,
+          "widthType": "fixed",
+          "width": 300,
+          "height": 45
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1777715211761",
+      "updatedAt": "~m1795181979951",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_cancel_input_home": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_cancel_input_home",
+      "uuid": "e275c435-c1ec-45e0-82c7-b602f289d566",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{\n  !(\n    input_analysis_result.value?.mode?.effectiveIsInputFlow === true &&\n    input_analysis_result.value?.mode?.isEditMode !== true\n  )\n}}",
+        "ariaLabel": "",
+        "text": "Torna alla home",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "border": "#e2e8f0",
+          "label": "#334155",
+          "background": "#f8fafc",
+          "hoverBackground": "#f1f5f9",
+          "borderRadius": "10px"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-arrows-left-circle-1-alternate",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\n// --- TORNA ALLA HOME / ANNULLA INPUT NUOVO ---\n\n// 1. Ferma eventuale debounce pendente\nif (window.__parseTimer) {\n  clearTimeout(window.__parseTimer);\n  window.__parseTimer = null;\n}\n\ntrigger_parse_debounced.cancel?.();\n\n// 2. Chiudi micro-editor e suggestion project\nproject_create_inline_open.setValue(false);\nproject_create_suggestion_dismissed.setValue(false);\ninput_new_project_name.setValue(\"\");\n\n// 3. Chiudi micro-editor e suggestion entity\nentity_create_inline_open.setValue(false);\nentity_create_suggestion_dismissed.setValue(false);\ninput_new_entity_name.setValue(\"\");\n\nawait select_new_project_type_inline.clearValue();\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait select_new_entity_type_inline.clearValue();\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait select_command_project_type.clearValue();\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait select_command_entity_type.clearValue();\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// 4. Reset input principale e adapter tecnico\nwindow.__logosOwnedInputWrite = {raw:\"\",epoch:window.__logosAnalysisEpoch};\nawait input_home.setValue(\"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait input_raw.setValue(\"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// 5. Reset select decisionali\nselect_project.clearValue();\nselect_entity.clearValue();\nselect1.clearValue?.();\n\n// 6. Reset parsed/state controllato\nui_state.setValue({\n  ...ui_state.value,\n  view: \"home\",\n  parsed: {\n    amount: null,\n    unit: null,\n    event_date: null\n  },\n  status: \"idle\",\n  feedback_text: null,\n  feedback_project: null\n});\n\n// 7. Torna alla home\ncontainer_input.setHidden(true);\ncontainer_home.setHidden(false);\ncontainer_feedback.setHidden(true);\ncontainer_events_list.setHidden(true);"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "0b517d3e",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 165,
+        "col": 0,
+        "height": 5,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 11,
+          "widthType": "fixed",
+          "width": 300,
+          "height": 45
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778330540420",
+      "updatedAt": "~m1795182015888",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "button_handle_attivita": {
+    "native_configuration_except_delegated_properties": {
+      "id": "button_handle_attivita",
+      "uuid": "11500a68-3e79-48f7-b319-e912a7eda900",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": false,
+        "ariaLabel": "",
+        "text": "Gestisci eventi  ›",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "primary",
+          "fontSize": "h6Font",
+          "fontWeight": "h6Font",
+          "fontFamily": "h6Font"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\nawait ui_state.setValue({...ui_state.value,view:\"events\"});\nif (window.__logosAnalysisEpoch !== epoch) return;\ncontainer_events_list.setHidden(false)\ncontainer_home.setHidden(true)"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "44bb8471",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_attivita",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 6,
+        "col": 0,
+        "height": 5,
+        "width": 12,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 2,
+          "widthType": "fixed",
+          "width": 295,
+          "height": 40
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1774791054221",
+      "updatedAt": "~m1795181905500",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_edit": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_edit",
+      "uuid": "807c76b2-fc32-4305-a557-0c25c6864f95",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": false,
+        "ariaLabel": "Modifica",
+        "text": "Modifica",
+        "margin": "2px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "border": "info",
+          "label": "info",
+          "borderRadius": "10px",
+          "hoverBackground": "#eff6ff"
+        },
+        "allowWrap": true,
+        "styleVariant": "outline",
+        "submit": false,
+        "iconBefore": "bold/interface-edit-pencil",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nconst original = JSON.parse(JSON.stringify(item));\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\nwindow.__logos_editing_event_value = original;\nconst loadedEvent = await editing_event.trigger();\nif (window.__logosAnalysisEpoch !== epoch || loadedEvent?.id !== original.id) return;\nwindow.__logos_edit_mode_value = true;\nconst loadedEditMode = await edit_mode.trigger();\nif (window.__logosAnalysisEpoch !== epoch || loadedEditMode !== true) return;\nawait ui_state.setValue({...ui_state.value,view:\"home\",analysis:null});\nif (window.__logosAnalysisEpoch !== epoch) return;\ncontainer_events_list.setHidden(true);\ncontainer_feedback.setHidden(true);\ncontainer_home.setHidden(false);\ncontainer_input.setHidden(false);\nwindow.__logosOwnedInputWrite = {raw:original.raw_input || \"\",epoch:window.__logosAnalysisEpoch};\nawait input_home.setValue(original.raw_input || \"\");\n// setValue may emit change: let that new owner complete the analysis instead.\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait input_raw.setValue(original.raw_input || \"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait select_project.setValue(original.project_id || null);\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait select_entity.setValue(original.entity_id || null);\nif (window.__logosAnalysisEpoch !== epoch) return;\nreturn trigger_parse_debounced.trigger({additionalScope:{\n  analysis_revision_id:String(epoch),\n  analysis_expected_context:JSON.stringify([\"home\",true,loadedEvent])\n}});\n"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "c11af1ad",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "grid",
+        "container": "container_events",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 9,
+        "col": 8,
+        "height": 4,
+        "width": 4,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fixed",
+          "width": 0,
+          "height": 0
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1776862267020",
+      "updatedAt": "~m1795181939922",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_nav_home": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_nav_home",
+      "uuid": "4dfd5d60-8609-4768-b23e-b72598949992",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": false,
+        "ariaLabel": "",
+        "text": "Home",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "#ffffff",
+          "border": "primary",
+          "label": "primary",
+          "activeBackground": "#f1e8e1",
+          "hoverBackground": "#f1e8e1"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "{{  \"/icon:bold/interface-home-2\"  }}",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\nui_state.setValue({\n  ...ui_state.value,\n  view: \"home\"\n});\n\ncontainer_home.setHidden(false);\ncontainer_input.setHidden(!input_raw.value);\ncontainer_events_list.setHidden(true);\ncontainer_feedback.setHidden(true);\nif (String(input_home.value || \"\").trim()) return trigger_parse_debounced.trigger({additionalScope:{analysis_revision_id:String(epoch)}});"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "fe9f8378",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_app_nav",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 0,
+        "col": 0,
+        "height": 4,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 0,
+          "widthType": "fixed",
+          "width": 150,
+          "height": 48
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778416800759",
+      "updatedAt": "~m1795182047665",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_nav_events": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_nav_events",
+      "uuid": "57b1c29f-9673-4c1f-8f2a-d60b9db67e8e",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": false,
+        "ariaLabel": "",
+        "text": "Eventi",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "#ffffff",
+          "border": "primary",
+          "label": "primary",
+          "activeBackground": "#f1e8e1",
+          "hoverBackground": "#f1e8e1"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-file-clipboard-text",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\nui_state.setValue({\n  ...ui_state.value,\n  view: \"events\"\n});\n\ncontainer_home.setHidden(true);\ncontainer_input.setHidden(true);\ncontainer_feedback.setHidden(true);\ncontainer_events_list.setHidden(false);\n\nawait events_new.trigger();\nif (window.__logosAnalysisEpoch !== epoch) return;"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "fe9f8378",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_app_nav",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 4,
+        "col": 0,
+        "height": 4,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 1,
+          "widthType": "fixed",
+          "width": 150,
+          "height": 48
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778417015196",
+      "updatedAt": "~m1795182087727",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_command_go_events": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_command_go_events",
+      "uuid": "4c5e7f42-99c8-4b14-a107-7c7e7743322f",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{\n  (() => {\n    const text = String(input_home.value || input_raw.value || \"\")\n      .toLowerCase()\n      .normalize(\"NFD\")\n      .replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/\\s+/g, \" \")\n      .trim();\n\n    const stateRaw = String(command_intent_state.data?.rawInput || \"\")\n      .toLowerCase()\n      .normalize(\"NFD\")\n      .replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/\\s+/g, \" \")\n      .trim();\n\n    const stateReady = stateRaw === text;\n\n    return !(\n      stateReady &&\n      command_intent_state.data?.commandType === \"edit_event_help\"\n    );\n  })()\n}}",
+        "ariaLabel": "",
+        "text": "Vai agli eventi",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "#2563eb",
+          "hoverBackground": "#1d4ed8",
+          "borderRadius": "10px"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-text-formatting-list-bullets",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\n// --- COMMAND INTENT: GUIDE TO EVENTS LIST ---\n\n// Ferma eventuale debounce pendente\nif (window.__parseTimer) {\n  clearTimeout(window.__parseTimer);\n  window.__parseTimer = null;\n}\n\ntrigger_parse_debounced.cancel?.();\n\n// Reset input principale\nwindow.__logosOwnedInputWrite = {raw:\"\",epoch:window.__logosAnalysisEpoch};\nawait input_home.setValue(\"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait input_raw.setValue(\"\");\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// Reset command inputs\ninput_command_project_name.clearValue?.();\ninput_command_entity_name.clearValue?.();\n\n// Reset micro-editor\nproject_create_inline_open.setValue(false);\nproject_create_suggestion_dismissed.setValue(false);\ninput_new_project_name.setValue(\"\");\n\nentity_create_inline_open.setValue(false);\nentity_create_suggestion_dismissed.setValue(false);\ninput_new_entity_name.setValue(\"\");\n\n// Reset select\nselect_project.clearValue();\nselect_entity.clearValue();\nselect1.clearValue?.();\n\n// Stato UI\nui_state.setValue({\n  ...ui_state.value,\n  view: \"events\",\n  status: \"idle\",\n  feedback_mode: null,\n  feedback_text: null,\n  feedback_project: null,\n  feedback_summary: null\n});\n\n// Aggiorna eventi se disponibile\nawait events_new.trigger?.();\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n// Vai alla lista eventi\ncontainer_input.setHidden(true);\ncontainer_home.setHidden(true);\ncontainer_feedback.setHidden(true);\ncontainer_events_list.setHidden(false);"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "4af043fc",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_command_intent",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 33,
+        "col": 0,
+        "height": 5,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 10,
+          "widthType": "fill",
+          "width": 50,
+          "height": 42
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778619339857",
+      "updatedAt": "~m1795182124831",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_nav_anagrafiche": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_nav_anagrafiche",
+      "uuid": "d6f46932-e0fe-4f10-bae6-aa8c7c8e96f1",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": false,
+        "ariaLabel": "",
+        "text": "Anagrafiche",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "#ffffff",
+          "border": "primary",
+          "label": "primary",
+          "activeBackground": "#f1e8e1",
+          "hoverBackground": "#f1e8e1"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-user-single",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "// Invalidate analysis and any exceptional consent before the first await.\nconst epoch = (window.__logosAnalysisEpoch || 0) + 1;\nwindow.__logosAnalysisEpoch = epoch;\nwindow.__logosConsentEpoch = (window.__logosConsentEpoch || 0) + 1;\nwindow.__logosPendingConsent = null;\nif (window.__parseTimer) clearTimeout(window.__parseTimer);\nif (window.__logosEditTimer0) clearTimeout(window.__logosEditTimer0);\nif (window.__logosEditTimer150) clearTimeout(window.__logosEditTimer150);\nwindow.__parseTimer = null;\nif (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);\nwindow.__logosAnalysisDelayResolve = null;\nawait analysis_revision.setValue(String(epoch));\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait event_confirmation.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\n\nawait state_edit_project_anag.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\nawait state_edit_entity_anag.setValue(null);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\ncontainer_home.setHidden(true);\ncontainer_events_list.setHidden(true);\ncontainer_input.setHidden(true);\ncontainer_feedback.setHidden(true);\n\nui_state.setValue({\n  ...ui_state.value,\n  view: \"anagrafiche\"\n});\n\nawait Promise.all([\n  projects_list.trigger(),\n  entities_list.trigger()\n]);\nif (window.__logosAnalysisEpoch !== epoch) return;\n\ntable_projects_anag.clearSelection();\ntable_entities_anag.clearSelection();"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "fe9f8378",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_app_nav",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 8,
+        "col": 0,
+        "height": 4,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 2,
+          "widthType": "fixed",
+          "width": 150,
+          "height": 48
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1793197731642",
+      "updatedAt": "~m1795182160435",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_create_project_inline": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_create_project_inline",
+      "uuid": "c7502901-202d-4a69-b585-80a16cb6dc5d",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{ !project_create_inline_open.value }}",
+        "ariaLabel": "",
+        "text": "Crea progetto",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-folder",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const inlineEpoch = window.__logosAnalysisEpoch;\nlet creation;\ntry {\n  creation = await create_anagrafica.trigger({\n    additionalScope: { anagKind: \"project\", anagName: input_new_project_name.value, anagType: select_new_project_type_inline.value }\n  });\n} catch {\n  creation = null;\n}\nif (window.__logosAnalysisEpoch !== inlineEpoch) return;\nif (creation?.ok !== true || !creation.record?.id) {\n  utils.showNotification({\n    title: \"Creazione non confermata\",\n    description: creation?.message || \"Esito incerto. Verifica l'anagrafica prima di riprovare.\",\n    notificationType: creation?.code === \"DUPLICATE\" || creation?.code === \"INVALID_INPUT\" ? \"warning\" : \"error\"\n  });\n  return;\n}\nconst refreshed = creation.refresh === \"ok\";\nproject_create_inline_open.setValue(false);\nproject_create_suggestion_dismissed.setValue(true);\nawait input_new_project_name.setValue(\"\");\nawait select_new_project_type_inline.clearValue();\nif (refreshed) {\n  await select_project.setValue(creation.record.id);\n}\nawait trigger_parse_debounced.trigger();\nutils.showNotification({\n  title: refreshed ? \"Progetto creato\" : \"Anagrafica creata, elenco da ricaricare\",\n  description: refreshed ? creation.record.name : creation.message,\n  notificationType: refreshed ? \"success\" : \"warning\"\n});"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "84e460f5",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "{{ create_anagrafica.isFetching || !select_new_project_type_inline.value || ((() => {\n    const name = input_new_project_name.value?.trim() || \"\";\n\n    if (!name) return true;\n\n    const normalize = (str) =>\n      String(str || \"\")\n        .toLowerCase()\n        .normalize(\"NFD\")\n        .replace(/[\\u0300-\\u036f]/g, \"\")\n        .replace(/\\s+/g, \" \")\n        .trim();\n\n    return (projects_list.data || []).some(\n      (p) => normalize(p.name) === normalize(name)\n    );\n  })()) }}",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_association_suggestions",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 31,
+        "col": 1,
+        "height": 5,
+        "width": 5,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 10,
+          "widthType": "fixed",
+          "width": 230,
+          "height": 44
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778071152772",
+      "updatedAt": "~m1794980244753",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_create_entity_inline": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_create_entity_inline",
+      "uuid": "b6c6470e-8251-4695-953e-911a2631d05b",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{ !entity_create_inline_open.value }}",
+        "ariaLabel": "",
+        "text": "Crea entità",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-user-single",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const inlineEpoch = window.__logosAnalysisEpoch;\nlet creation;\ntry {\n  creation = await create_anagrafica.trigger({\n    additionalScope: { anagKind: \"entity\", anagName: input_new_entity_name.value, anagType: select_new_entity_type_inline.value }\n  });\n} catch {\n  creation = null;\n}\nif (window.__logosAnalysisEpoch !== inlineEpoch) return;\nif (creation?.ok !== true || !creation.record?.id) {\n  utils.showNotification({\n    title: \"Creazione non confermata\",\n    description: creation?.message || \"Esito incerto. Verifica l'anagrafica prima di riprovare.\",\n    notificationType: creation?.code === \"DUPLICATE\" || creation?.code === \"INVALID_INPUT\" ? \"warning\" : \"error\"\n  });\n  return;\n}\nconst refreshed = creation.refresh === \"ok\";\nif (refreshed) await select_entity.setValue(creation.record.id);\nentity_create_inline_open.setValue(false);\nentity_create_suggestion_dismissed.setValue(true);\nawait input_new_entity_name.setValue(\"\");\nawait select_new_entity_type_inline.clearValue();\nawait trigger_parse_debounced.trigger();\nutils.showNotification({\n  title: refreshed ? \"Entità creata\" : \"Anagrafica creata, elenco da ricaricare\",\n  description: refreshed ? creation.record.name : creation.message,\n  notificationType: refreshed ? \"success\" : \"warning\"\n});"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "84e460f5",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "{{ create_anagrafica.isFetching || !select_new_entity_type_inline.value || ((() => {\n    const name = input_new_entity_name.value?.trim() || \"\";\n\n    if (!name) return true;\n\n    const normalize = (str) =>\n      String(str || \"\")\n        .toLowerCase()\n        .normalize(\"NFD\")\n        .replace(/[\\u0300-\\u036f]/g, \"\")\n        .replace(/\\s+/g, \" \")\n        .trim();\n\n    return (entities_list.data || []).some(\n      (e) => normalize(e.name) === normalize(name)\n    );\n  })()) }}",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_association_suggestions",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 26,
+        "col": 1,
+        "height": 5,
+        "width": 5,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 5,
+          "widthType": "fixed",
+          "width": 230,
+          "height": 44
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778159568032",
+      "updatedAt": "~m1794980265080",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_command_create_project": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_command_create_project",
+      "uuid": "e0c26d19-8a9b-4d00-b53e-7244cb6f37be",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{\n  (() => {\n    const text = String(input_home.value || input_raw.value || \"\")\n      .toLowerCase()\n      .normalize(\"NFD\")\n      .replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/\\s+/g, \" \")\n      .trim();\n\n    const stateRaw = String(command_intent_state.data?.rawInput || \"\")\n      .toLowerCase()\n      .normalize(\"NFD\")\n      .replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/\\s+/g, \" \")\n      .trim();\n\n    const stateReady = stateRaw === text;\n\n    return !(\n      stateReady &&\n      command_intent_state.data?.commandType === \"create_project\" &&\n      command_intent_state.data?.canExecute === true\n    );\n  })()\n}}",
+        "ariaLabel": "",
+        "text": "{{\n  command_intent_state.data?.candidateName\n    ? \"Crea progetto\"\n    : \"Crea progetto\"\n}}",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "primary",
+          "borderRadius": "10px"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-folder",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const commandEpoch = window.__logosAnalysisEpoch;\nconst commandSnapshot = analysis_snapshot.value;\nif (!commandSnapshot || commandSnapshot.revision !== String(commandEpoch) || edit_mode.data === true) return;\n// --- COMMAND INTENT: CREATE PROJECT ---\n\nconst candidateName = commandSnapshot.command?.candidateName;\nconst typedName = input_command_project_name.value;\n\nconst projectName = String(candidateName || typedName || \"\")\n  .trim()\n  .replace(/\\s+/g, \" \");\n\nif (!projectName) {\n  utils.showNotification({\n    title: \"Nome progetto mancante\",\n    description: \"Inserisci il nome del progetto da creare.\",\n    notificationType: \"warning\"\n  });\n  return;\n}\n\n// Sicurezza: non creare se command_intent_state segnala elemento già esistente\nif (commandSnapshot.command?.canExecute !== true) {\n  utils.showNotification({\n    title: \"Creazione non disponibile\",\n    description: commandSnapshot.command?.guideMessage || \"Il comando non può essere eseguito.\",\n    notificationType: \"warning\"\n  });\n  return;\n}\n\nlet creation;\ntry {\n  creation = await create_anagrafica.trigger({\n    additionalScope: { anagKind: \"project\", anagName: projectName, anagType: select_command_project_type.value }\n  });\n} catch {\n  creation = null;\n}\nif (window.__logosAnalysisEpoch !== commandEpoch) return;\nif (creation?.ok !== true || !creation.record?.id) {\n  utils.showNotification({\n    title: \"Creazione non confermata\",\n    description: creation?.message || \"Esito incerto. Verifica l'anagrafica prima di riprovare.\",\n    notificationType: creation?.code === \"DUPLICATE\" || creation?.code === \"INVALID_INPUT\" ? \"warning\" : \"error\"\n  });\n  return;\n}\n\n// Pulizia input command / suggestion\ninput_command_project_name.clearValue?.();\nproject_create_inline_open.setValue(false);\nproject_create_suggestion_dismissed.setValue(false);\ninput_new_project_name.setValue(\"\");\n\nentity_create_inline_open.setValue(false);\nentity_create_suggestion_dismissed.setValue(false);\ninput_new_entity_name.setValue(\"\");\n\nawait select_new_project_type_inline.clearValue();\nawait select_new_entity_type_inline.clearValue();\nawait select_command_project_type.clearValue();\nawait select_command_entity_type.clearValue();\n\n// Reset input principale\nwindow.__logosOwnedInputWrite = {raw:\"\",epoch:window.__logosAnalysisEpoch};\nawait input_home.setValue(\"\");\nawait input_raw.setValue(\"\");\n\n// Reset select\nselect_project.clearValue();\nselect_entity.clearValue();\nselect1.clearValue?.();\n\nconst feedbackEpoch = window.__logosAnalysisEpoch;\n// Feedback strutturale tramite container_feedback esistente.\n// Importante: preparare tutto lo stato feedback PRIMA di mostrare il container.\nconst nextFeedbackState = {\n  ...ui_state.value,\n  view: \"feedback\",\n  parsed: {\n    amount: null,\n    unit: null,\n    event_date: null\n  },\n  status: \"idle\",\n  feedback_mode: \"project_created\",\n  feedback_text: \"Progetto creato\",\n  feedback_project: projectName,\n  feedback_summary: {\n    type: \"Progetto\",\n    date: \"—\",\n    amount: \"—\",\n    project: projectName,\n    entity: \"—\",\n    text: creation.refresh === \"ok\" ? \"Nuovo progetto creato correttamente.\" : creation.message\n  }\n};\n\nawait ui_state.setValue(nextFeedbackState);\n\n// Lascia un micro-tick a Retool per applicare ui_state prima di rendere visibile il feedback.\n// Evita il flash del contenuto fallback/evento generico.\nawait new Promise((resolve) => setTimeout(resolve, 0));\nif (window.__logosAnalysisEpoch !== feedbackEpoch) return;\n\n// Routing UI\ncontainer_input.setHidden(true);\ncontainer_home.setHidden(true);\ncontainer_feedback.setHidden(false);\ncontainer_events_list.setHidden(true);\n\n// Ritorno controllato alla Home dopo feedback strutturale\nsetTimeout(() => {\nif (window.__logosAnalysisEpoch !== feedbackEpoch) return;\nui_state.setValue({\n  ...ui_state.value,\n  view: \"home\",\n  status: \"idle\",\n  feedback_mode: null,\n  feedback_text: null,\n  feedback_project: null,\n  feedback_summary: null\n});\n\n  container_feedback.setHidden(true);\n  container_input.setHidden(true);\n  container_events_list.setHidden(true);\n  container_home.setHidden(false);\n\n  focus_input_home.trigger?.();\n}, 1800);"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "eeeea328",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "{{ create_anagrafica.isFetching || !select_command_project_type.value || !String(command_intent_state.data?.candidateName || input_command_project_name.value || \"\").trim() || (command_intent_state.data?.needsCompletion === true &&\n  !input_command_project_name.value) }}",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_command_intent",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 27,
+        "col": 0,
+        "height": 5,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 13,
+          "widthType": "fill",
+          "width": 50,
+          "height": 42
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778619091780",
+      "updatedAt": "~m1794980292691",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_command_create_entity": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_command_create_entity",
+      "uuid": "db1cf20d-1305-4637-ab8a-1a6d408a70d7",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{\n  (() => {\n    const text = String(input_home.value || input_raw.value || \"\")\n      .toLowerCase()\n      .normalize(\"NFD\")\n      .replace(/[\\u0300-\\u036f]/g, \"\")\n      .replace(/\\s+/g, \" \")\n      .trim();\n\n    const stateRaw = String(command_intent_state.data?.rawInput || \"\")\n      .toLowerCase()\n      .normalize(\"NFD\")\n      .replace(/[\\u0300-\\u036f]/g, \"\")\n      .trim();\n\n    const stateReady = stateRaw === text;\n\n    return !(\n      stateReady &&\n      command_intent_state.data?.commandType === \"create_entity\" &&\n      command_intent_state.data?.canExecute === true\n    );\n  })()\n}}",
+        "ariaLabel": "",
+        "text": "Crea entità",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {
+          "background": "primary",
+          "borderRadius": "10px"
+        },
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "bold/interface-user-single",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const commandEpoch = window.__logosAnalysisEpoch;\nconst commandSnapshot = analysis_snapshot.value;\nif (!commandSnapshot || commandSnapshot.revision !== String(commandEpoch) || edit_mode.data === true) return;\n// --- COMMAND INTENT: CREATE ENTITY ---\n\nconst candidateName = commandSnapshot.command?.candidateName;\nconst typedName = input_command_entity_name.value;\n\nconst entityName = String(candidateName || typedName || \"\")\n  .trim()\n  .replace(/\\s+/g, \" \");\n\nif (!entityName) {\n  utils.showNotification({\n    title: \"Nome entità mancante\",\n    description: \"Inserisci il nome dell’entità da creare.\",\n    notificationType: \"warning\"\n  });\n  return;\n}\n\n// Sicurezza: non creare se command_intent_state segnala elemento già esistente\nif (commandSnapshot.command?.canExecute !== true) {\n  utils.showNotification({\n    title: \"Creazione non disponibile\",\n    description: commandSnapshot.command?.guideMessage || \"Il comando non può essere eseguito.\",\n    notificationType: \"warning\"\n  });\n  return;\n}\n\nlet creation;\ntry {\n  creation = await create_anagrafica.trigger({\n    additionalScope: { anagKind: \"entity\", anagName: entityName, anagType: select_command_entity_type.value }\n  });\n} catch {\n  creation = null;\n}\nif (window.__logosAnalysisEpoch !== commandEpoch) return;\nif (creation?.ok !== true || !creation.record?.id) {\n  utils.showNotification({\n    title: \"Creazione non confermata\",\n    description: creation?.message || \"Esito incerto. Verifica l'anagrafica prima di riprovare.\",\n    notificationType: creation?.code === \"DUPLICATE\" || creation?.code === \"INVALID_INPUT\" ? \"warning\" : \"error\"\n  });\n  return;\n}\n\n// Pulizia input command / suggestion\ninput_command_entity_name.clearValue?.();\nproject_create_inline_open.setValue(false);\nproject_create_suggestion_dismissed.setValue(false);\ninput_new_project_name.setValue(\"\");\n\nentity_create_inline_open.setValue(false);\nentity_create_suggestion_dismissed.setValue(false);\ninput_new_entity_name.setValue(\"\");\n\nawait select_new_project_type_inline.clearValue();\nawait select_new_entity_type_inline.clearValue();\nawait select_command_project_type.clearValue();\nawait select_command_entity_type.clearValue();\n\n// Reset input principale\nwindow.__logosOwnedInputWrite = {raw:\"\",epoch:window.__logosAnalysisEpoch};\nawait input_home.setValue(\"\");\nawait input_raw.setValue(\"\");\n\n// Reset select\nselect_project.clearValue();\nselect_entity.clearValue();\nselect1.clearValue?.();\n\nconst feedbackEpoch = window.__logosAnalysisEpoch;\n// Feedback strutturale provvisorio tramite container_feedback esistente\nawait ui_state.setValue({\n  ...ui_state.value,\n  view: \"feedback\",\n  parsed: {\n    amount: null,\n    unit: null,\n    event_date: null\n  },\n  status: \"idle\",\n  feedback_mode: \"entity_created\",\n  feedback_text: \"Entità creata\",\n  feedback_project: null,\n  feedback_summary: {\n    type: \"Entità\",\n    date: \"—\",\n    amount: \"—\",\n    project: \"—\",\n    entity: entityName,\n    text: creation.refresh === \"ok\" ? \"Nuova entità creata correttamente.\" : creation.message\n  }\n});\n\nawait new Promise(resolve => setTimeout(resolve, 0));\nif (window.__logosAnalysisEpoch !== feedbackEpoch) return;\n\n// Routing UI\ncontainer_input.setHidden(true);\ncontainer_home.setHidden(true);\ncontainer_feedback.setHidden(false);\ncontainer_events_list.setHidden(true);\n\n// Ritorno controllato alla Home dopo feedback strutturale\nsetTimeout(() => {\nif (window.__logosAnalysisEpoch !== feedbackEpoch) return;\n  ui_state.setValue({\n    ...ui_state.value,\n    view: \"home\",\n    status: \"idle\",\n    feedback_mode: null,\n    feedback_text: null,\n    feedback_project: null,\n    feedback_summary: null\n  });\n\n  container_feedback.setHidden(true);\n  container_input.setHidden(true);\n  container_events_list.setHidden(true);\n  container_home.setHidden(false);\n\n  focus_input_home.trigger?.();\n}, 1800);"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "656da0f4",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": "{{ create_anagrafica.isFetching || !select_command_entity_type.value || !String(command_intent_state.data?.candidateName || input_command_entity_name.value || \"\").trim() || (command_intent_state.data?.needsCompletion === true &&\n  !input_command_entity_name.value) }}",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_command_intent",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 42,
+        "col": 0,
+        "height": 5,
+        "width": 2,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 12,
+          "widthType": "fill",
+          "width": 50,
+          "height": 42
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778619238759",
+      "updatedAt": "~m1794980318073",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "create_suggestion_hint": {
+    "native_configuration_except_delegated_properties": {
+      "id": "create_suggestion_hint",
+      "uuid": "25859f72-bb0b-4757-9f29-b1c12114fa14",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "left",
+        "hidden": "",
+        "imageWidth": "fit",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "verticalAlign": "center",
+        "tooltipText": "",
+        "ariaLive": "off",
+        "disableMarkdown": false,
+        "overflowType": "scroll",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_association_suggestions",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 5,
+        "col": 0,
+        "height": 3,
+        "width": 12,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 1,
+          "widthType": "fixed",
+          "width": 308,
+          "height": 24
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778014892968",
+      "updatedAt": "~m1795130299526",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {
+      "template.value": {
+        "mother": "06_LOGOS_View_Preview_System.md",
+        "anchor": "q2-source-create-suggestion-hint-value",
+        "sha256_utf8_LF": "1fd22b8d81a62cf74d7952810a4dc5c9f247f2d89d60633b116766ad76eb8942"
+      }
+    }
+  },
+  "container_association_suggestions": {
+    "native_configuration_except_delegated_properties": {
+      "id": "container_association_suggestions",
+      "uuid": "4c0fd7b0-0621-439c-a716-f91ba0c7d8eb",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ContainerWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "_direction": "vertical",
+        "_disabledByIndex": [
+          ""
+        ],
+        "heightType": "auto",
+        "currentViewKey": null,
+        "iconByIndex": [],
+        "_flexWrap": false,
+        "clickable": false,
+        "_iconByIndex": [
+          ""
+        ],
+        "headerPadding": "4px 12px",
+        "showFooterBorder": true,
+        "_align": "center",
+        "enableFullBleed": false,
+        "showBorder": true,
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowAssociationSuggestions || (!create_suggestion_hint.value && !project_create_inline_open.value && !entity_create_inline_open.value) }}",
+        "showHeader": false,
+        "hoistFetching": false,
+        "margin": "4px 8px",
+        "views": [],
+        "showInEditor": false,
+        "tooltipText": "",
+        "padding": "12px",
+        "_justify": "start",
+        "style": {
+          "background": "#f7fbff",
+          "border": "#dcebff",
+          "borderRadius": "10px"
+        },
+        "hiddenByIndex": [],
+        "_hiddenByIndex": [
+          ""
+        ],
+        "currentViewIndex": null,
+        "_hasMigratedNestedItems": true,
+        "transition": "none",
+        "showHeaderBorder": true,
+        "footerPadding": "4px 12px",
+        "itemMode": "static",
+        "_gap": "6px",
+        "_tooltipByIndex": [
+          ""
+        ],
+        "tooltipByIndex": [],
+        "showFooter": false,
+        "_viewKeys": [
+          "View 1"
+        ],
+        "_type": "stack",
+        "events": {},
+        "_ids": [
+          "00030"
+        ],
+        "viewKeys": [],
+        "iconPositionByIndex": [],
+        "_iconPositionByIndex": [
+          ""
+        ],
+        "hovered": false,
+        "loading": false,
+        "overflowType": "scroll",
+        "disabled": false,
+        "_labels": [
+          ""
+        ],
+        "disabledByIndex": [],
+        "maintainSpaceWhenHidden": false,
+        "showBody": true,
+        "labels": []
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 173,
+        "col": 0,
+        "height": 5,
+        "width": 6,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 3,
+          "widthType": "fixed",
+          "width": 335,
+          "height": 152
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778072544279",
+      "updatedAt": "~m1779367937844",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_open_project_create": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_open_project_create",
+      "uuid": "d84075c0-25cb-48b5-9ec9-4085376242cb",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "bold/interface-arrows-button-right",
+        "submitTargetId": null,
+        "hidden": "{{\n  !input_raw.value ||\n  project_create_inline_open.value ||\n  entity_create_inline_open.value ||\n  project_create_suggestion_dismissed.value ||\n  !(\n    create_suggestion_state.data?.project?.shouldShowNoMatchHint ||\n    create_suggestion_state.data?.project?.shouldSuggestCreate\n  ) ||\n  Boolean(project_state.data?.isAmbiguous) ||\n  ((project_state.data?.matches?.length ?? 0) > 1) ||\n  Boolean(input_analysis_result.value?.association?.project?.selectedId || input_analysis_result.value?.association?.project?.candidateId)\n  }}",
+        "ariaLabel": "",
+        "text": "Crea progetto",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "project_create_inline_open.setValue(true);\n\nawait input_new_project_name.setValue(\n  create_suggestion_state.data?.project?.draftName || \"\"\n);"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "2823ed80",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_association_suggestions",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 8,
+        "col": 1,
+        "height": 5,
+        "width": 5,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 12,
+          "widthType": "fixed",
+          "width": 230,
+          "height": 44
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778070789638",
+      "updatedAt": "~m1795130319385",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_open_entity_create": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_open_entity_create",
+      "uuid": "6c1c7634-6964-4b3d-be15-9e78af50347f",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "bold/interface-arrows-button-right",
+        "submitTargetId": null,
+        "hidden": "{{\n  !input_raw.value ||\n  project_create_inline_open.value ||\n  entity_create_inline_open.value ||\n  entity_create_suggestion_dismissed.value ||\n  !(\n    create_suggestion_state.data?.entity?.shouldShowNoMatchHint ||\n    create_suggestion_state.data?.entity?.shouldSuggestCreate\n  ) ||\n  Boolean(entity_state.data?.isAmbiguous) ||\n  ((entity_state.data?.matches?.length ?? 0) > 1) ||\n  Boolean(input_analysis_result.value?.association?.entity?.selectedId || input_analysis_result.value?.association?.entity?.candidateId)\n  }}",
+        "ariaLabel": "",
+        "text": "Crea entità",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "allowWrap": true,
+        "styleVariant": "solid",
+        "submit": false,
+        "iconBefore": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "const draftName =\n  create_suggestion_state.data?.entity?.draftName || \"\";\n\nawait input_new_entity_name.setValue(draftName);\n\nentity_create_inline_open.setValue(true);"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "2823ed80",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_association_suggestions",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 8,
+        "col": 6,
+        "height": 5,
+        "width": 5,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 13,
+          "widthType": "fixed",
+          "width": 230,
+          "height": 44
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778159055061",
+      "updatedAt": "~m1795130334605",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "btn_cancel_project_create": {
+    "native_configuration_except_delegated_properties": {
+      "id": "btn_cancel_project_create",
+      "uuid": "5f53c58c-5237-460a-8836-c4a1fb500e34",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "ButtonWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "fixed",
+        "horizontalAlign": "stretch",
+        "clickable": false,
+        "iconAfter": "",
+        "submitTargetId": null,
+        "hidden": "{{ !create_suggestion_hint.value || ((() => {\n    if (project_create_inline_open.value || entity_create_inline_open.value) {\n      return true;\n    }\n\n    const project = create_suggestion_state.data?.project || {};\n    const entity = create_suggestion_state.data?.entity || {};\n\n    const hasProjectSuggestion =\n      !project_create_suggestion_dismissed.value &&\n      (\n        project.shouldShowNoMatchHint ||\n        project.shouldSuggestCreate\n      );\n\n    const hasEntitySuggestion =\n      !entity_create_suggestion_dismissed.value &&\n      (\n        entity.shouldShowNoMatchHint ||\n        entity.shouldSuggestCreate\n      );\n\n    return !(hasProjectSuggestion || hasEntitySuggestion);\n    })()) }}",
+        "ariaLabel": "",
+        "text": "Non ora",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "tooltipText": "",
+        "style": {},
+        "allowWrap": true,
+        "styleVariant": "outline",
+        "submit": false,
+        "iconBefore": "",
+        "events": [
+          {
+            "method": "run",
+            "params": {
+              "src": "project_create_inline_open.setValue(false);\nentity_create_inline_open.setValue(false);\n\nproject_create_suggestion_dismissed.setValue(true);\nentity_create_suggestion_dismissed.setValue(true);\n\nawait input_new_project_name.setValue(\"\");\nawait input_new_entity_name.setValue(\"\");\nawait select_new_project_type_inline.clearValue();\nawait select_new_entity_type_inline.clearValue();"
+            },
+            "targetId": null,
+            "pluginId": "",
+            "waitType": "debounce",
+            "event": "click",
+            "type": "script",
+            "id": "af27d91f",
+            "waitMs": "0"
+          }
+        ],
+        "loading": false,
+        "loaderPosition": "auto",
+        "disabled": false,
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_association_suggestions",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 13,
+        "col": 1,
+        "height": 5,
+        "width": 10,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 14,
+          "widthType": "fixed",
+          "width": 230,
+          "height": 44
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778071036027",
+      "updatedAt": "~m1795130361773",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  },
+  "text_event_data_title": {
+    "native_configuration_except_delegated_properties": {
+      "id": "text_event_data_title",
+      "uuid": "94fdd943-6b2f-4db3-831a-dc32e0381626",
+      "_comment": null,
+      "type": "widget",
+      "subtype": "TextWidget2",
+      "namespace": null,
+      "resourceName": null,
+      "resourceDisplayName": null,
+      "template": {
+        "heightType": "auto",
+        "horizontalAlign": "left",
+        "hidden": "{{ !input_analysis_result.value?.readiness?.canShowEventData }}",
+        "imageWidth": "fit",
+        "margin": "4px 8px",
+        "showInEditor": false,
+        "verticalAlign": "center",
+        "tooltipText": "",
+        "value": "Dati evento",
+        "style": {
+          "fontSize": "13px",
+          "fontWeight": "600",
+          "fontFamily": "Inter",
+          "color": "#111827"
+        },
+        "ariaLive": "off",
+        "disableMarkdown": false,
+        "overflowType": "scroll",
+        "maintainSpaceWhenHidden": false
+      },
+      "style": {},
+      "position2": {
+        "type": "stack",
+        "container": "container_input",
+        "rowGroup": "body",
+        "subcontainer": "00030",
+        "row": 170,
+        "col": 0,
+        "height": 3,
+        "width": 3,
+        "tabNum": 0,
+        "stackPosition": {
+          "ordinal": 4,
+          "widthType": "fixed",
+          "width": 317,
+          "height": 24
+        }
+      },
+      "mobilePosition2": null,
+      "mobileAppPosition": null,
+      "tabIndex": null,
+      "container": "",
+      "createdAt": "~m1778279045417",
+      "updatedAt": "~m1779367205923",
+      "folder": "",
+      "presetName": null,
+      "screen": "page1",
+      "boxId": null,
+      "subBoxIds": null
+    },
+    "delegated_properties": {}
+  }
+}
+```
+
+### Dodici distacchi visivi legacy
+
+Ogni handler ha già invalidazione esplicita del consenso prima della vecchia chiusura: incremento ConsentEpoch, PendingConsent=null e await event_confirmation.setValue(null). La rimozione non delega più tale responsabilità a Hide. Restanti istruzioni, eventi e loro ID conservati. L08 rimane non verificato LIVE.
+
+| Componente | Evento / ID | Statement eliminato |
+| --- | --- | --- |
+| `select_project` | `change` / `eb265ab3` | `modalFrame1.setHidden(true);` |
+| `select_entity` | `change` / `f93e6c67` | `modalFrame1.setHidden(true);` |
+| `select1` | `change` / `dc33f060` | `modalFrame1.setHidden(true);` |
+| `input_home` | `change` / `6a93bb9b` | `modalFrame1.setHidden(true);` |
+| `button_handle_attivita` | `click` / `44bb8471` | `modalFrame1.setHidden(true);` |
+| `btn_edit` | `click` / `c11af1ad` | `modalFrame1.setHidden(true);` |
+| `btn_cancel_edit` | `click` / `0b517d3e` | `modalFrame1.setHidden(true);` |
+| `btn_cancel_input_home` | `click` / `0b517d3e` | `modalFrame1.setHidden(true);` |
+| `btn_nav_home` | `click` / `fe9f8378` | `modalFrame1.setHidden(true);` |
+| `btn_nav_events` | `click` / `fe9f8378` | `modalFrame1.setHidden(true);` |
+| `btn_command_go_events` | `click` / `4af043fc` | `modalFrame1.setHidden(true);` |
+| `btn_nav_anagrafiche` | `click` / `fe9f8378` | `modalFrame1.setHidden(true);` |
+
+### Oggetti legacy assenti
+
+modalFrame1 (uuid null nel formato originale), modalTitle1, modalCloseButton1, text_exception_project, select_exception_project, text_exception_entity, select_exception_entity, button_exception_confirm e button_exception_cancel sono rimossi. Nessuna nuova modale sostitutiva; nessuna eliminazione di event_confirmation. UUID originali degli otto figli e diff integrale nel registro Runtime/pacchetto finale.
+
 CHANGELOG
 
 v01 — 2026-04-01
@@ -7632,3 +10674,5 @@ v29 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Contratto Salva corrente, 
 v30 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v31 — 2026-11-16 — N21/DOC PREPARE R03: allineati inventario, Select, suggestion e ordine delle operazioni Conferma.
+
+v32 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

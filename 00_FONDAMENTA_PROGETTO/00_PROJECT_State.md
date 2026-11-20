@@ -1,15 +1,24 @@
 # 00_PROJECT_State
-Versione: v45
+Versione: v46
 
-DATA: 2026-11-16
+DATA: 2026-11-20
 
-## Stato corrente — N21 matching, associazioni e guida UX
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
 
-Nodo `CP-LOGOS-M04-ACTIVE-MATCHING-GATE-20261112-21`. Fotografia tecnica e documentale al 15 novembre 2026. **VERIFICATO LIVE nella Draft** nei checkpoint Work del 15 novembre 2026: B1 Δ1–Δ2, B2/R01 Δ3–Δ4 e Gate B T01–T08 PASS. Il primo FAIL T05 è conservato. Nel recupero il PATCH ha aggiornato lo stesso EV01 da 51 a 52 euro, preservando entrambe le FK storiche quando le anagrafiche erano INACTIVE. La causa originaria non è stata determinata e il Click R01 è stato ripristinato dopo la diagnosi temporanea. Fonti e limiti in [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md).
+## Stato corrente — Q2 conferma INACTIVE inline
 
-Matching e repertori completi sono distinti dall'associabilità. INACTIVE e NULL rimangono riconoscibili. Una nuova associazione richiede ACTIVE. Le FK storiche invariate sono consentite, anche se inattive. Gli avvisi UX informano su Stato, varianti, ambiguità e omonimi. **VERIFICATO LIVE UI** in Chrome desktop e in user-view responsive a 390 × 844 e 375 × 812 (controllo rapido a 375). Safari/iPhone reale per N21 e touch sono **NON VERIFICATI**.
+Nodo `CP-LOGOS-M04-UX06-INACTIVE-EXCEPTION-20261117-Q2`. **Tecnico Q2 PASS nel perimetro verificato**: analisi correlata e recovery edit, conferma inline A4, UX-R1, collaudo INSERT/UPDATE sullo stesso evento e rimozione della modale legacy. Consolidamento delle madri in PREPARE; copia, verifica documentale assistita, commit/push e chiusura del nodo restano distinti.
 
-**Core 35%, M04 PARZIALE.** Allo snapshot PREPARE del 15 novembre 2026, review, copia personale, verifica documentale assistita e pubblicazione Git erano pendenti. Per lo stato successivo, consultare il checkpoint di chiusura e verificare lo SHA pubblicato su GitHub main. A quella data la Draft Retool risultava salvata e il Publish Retool non era stato eseguito. Restano separati UX-06, G35, R2 Dirty, gerarchie/metadata, omonimie concorrenti non atomiche e l'ordine mobile del logo N22. Le fixture N21 restano nel dataset di sviluppo.
+L’evento conserva associazioni facoltative. Una selezione ACTIVE valida o la FK storica invariata prevale; soltanto un candidato canonico univoco INACTIVE senza tale selezione richiede Collega/Non collegare, indipendentemente per Project ed Entity. NULL escluso dalle nuove eccezioni, nessuna riattivazione o ricerca manuale INACTIVE aggiunta. Guardie N21, fingerprint, preflight e unico `confirm_event` preservati; `button_input_confirm` delega il solo begin. Sintesi, scelte e payload consumano lo stesso contesto; risultati superati/falliti non autorizzano una nuova FK.
+
+«Modifica associazioni» mostra/nasconde soltanto le Select manuali senza azzerarle; Tipo evento resta accessibile. Dodici sole chiamate visive alla vecchia modale eliminate; poi `modalFrame1` e otto figli rimossi e assenti dopo reload. `event_confirmation` rimane stato condiviso necessario.
+
+**Core Global Completion v1.0 35% → 35%, 0 pp; M04 PARZIALE.** Il PASS della tranche UX-06 non chiude gerarchie/metadata, omonimie concorrenti non atomiche, P1-01 o le altre condizioni della milestone. G35, R2 Dirty e N22 restano distinti: UX-R1 non ne dichiara la risoluzione generale.
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
+
+Dettagli, sorgenti e prove in [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale); responsabilità funzionali nelle madri tecniche. Il raccordo N21 precedente resta una prova storica del 15 novembre, non il flusso attuale di conferma.
+
 
 ## Snapshot N20 — Editor Stato e consolidamento DOC-01
 
@@ -135,7 +144,7 @@ nessun nuovo nodo è aperto e il recap per Regia rimane da trasferire.
 Gli snapshot seguenti conservano il testo e le condizioni dei nodi di
 origine, incluse le formulazioni allora candidate della baseline e i
 riferimenti DA BASELINARE. Non sostituiscono il quadro corrente sopra.
-La sezione OBIETTIVO IMMEDIATO riporta lo stato del consolidamento N21; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
+La sezione OBIETTIVO IMMEDIATO riporta il Prepare finale Q2; le condizioni di pubblicazione della baseline nei riquadri precedenti sono fotografie storiche.
 
 ## Snapshot precedente — LOGOS Core Global Completion, baseline v1.0 (nodo 13)
 
@@ -744,7 +753,7 @@ STATO GENERALE SISTEMA — BASELINE STORICA PRE-HARDENING
 
 Le attestazioni, percentuali e catene sotto descrivono la baseline funzionale
 precedente. Il quadro corrente, le guardie DB e i limiti produttivi sono nella
-sezione iniziale «Stato corrente — N21 matching, associazioni e guida UX» e nei documenti tecnici competenti. Il collaudo funzionale riguarda la Draft del 15 novembre 2026. Codice e prove sono tracciati in [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#appendice-n21--sorgenti-delle-proprietà). «produzione reale», «DB invariato» e «storage passivo»
+sezione iniziale «Stato corrente — Q2 conferma INACTIVE inline» e nei documenti tecnici competenti. La fotografia N21 del 15 novembre resta storica; i collaudi Q2 pertinenti sono del 18–20 novembre 2026, con i limiti dei rispettivi checkpoint. Codice e prove finali sono tracciati in [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale). «produzione reale», «DB invariato» e «storage passivo»
 non costituiscono attestazioni correnti. I candidati non sono nodi attivati.
 
 Sistema funzionante end-to-end:
@@ -826,7 +835,7 @@ Debiti principali:
 
 Fonte completa:
 
-- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — N21 matching, associazioni e guida UX»
+- SNAPSHOT FUNZIONALE CONSOLIDATO in questo documento per la baseline storica pre-N16; stato corrente nella sezione iniziale «Stato corrente — Q2 conferma INACTIVE inline»
 - 01_LOGOS_Input_System per input/parser/input_analysis_result
 - 02_LOGOS_Match_Engine per matching
 - 03_LOGOS_Event_Lifecycle per lifecycle
@@ -842,7 +851,7 @@ SNAPSHOT FUNZIONALE CONSOLIDATO — BASELINE STORICA PRE-N16
 
 La numerazione dei layer sottostante conserva la fotografia precedente;
 non include l'Editor N16 né il delta N18. Capacità corrente nella sezione
-«Stato corrente — N21 matching, associazioni e guida UX»; struttura generale
+«Stato corrente — Q2 conferma INACTIVE inline»; struttura generale
 in 00_FONDAMENTA_PROGETTO/00_PROJECT_System.md e contratto tecnico in 04_LOGOS_Retool_Architecture.md.
 Nessun ricalcolo delle percentuali storiche dei singoli layer.
 
@@ -1329,7 +1338,7 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-CP-LOGOS-M04-ACTIVE-MATCHING-GATE-20261112-21 — N21 tecnico PASS nel perimetro verificato nella Draft del 15 novembre 2026. Nell’archivio della working copy del 16 novembre le nove madri coincidono con le postimage R02. La review ha rilevato una lacuna di assorbimento tecnico, affrontata nel PREPARE R03. Lo snapshot dello ZIP documenta i byte delle madri ricevute. Stato Git del PC, pubblicazione R03 e chiusura del nodo richiedono riscontri distinti. Core 35%, M04 PARZIALE.
+Completare la review del lotto documentale Q2 su preimage locali preservate; poi, soltanto con consenso e Source Guard della corsia qualificata, copia personale, verifica documentale assistita e pubblicazione Git manuale. Nessuna riapertura automatica della Draft o nuovo collaudo.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -2948,3 +2957,6 @@ v43 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Raccordo N20 e obiettivo o
 v44 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v45 — 2026-11-16 — N21/DOC PREPARE R03: riconciliati stato tecnico, snapshot R02, esito documentale e gate di pubblicazione.
+
+
+v46 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

@@ -1,9 +1,23 @@
 # 06_LOGOS_View_Preview_System
-Versione: v19
+Versione: v20
 
-DATA: 2026-11-16
+DATA: 2026-11-20
 
-## Contratto corrente N21 — avvisi di associazione
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Contratto finale Q2 — Sintesi e decisioni
+
+Ordine finale: Sintesi → eventuali schede Project/Entity INACTIVE indipendenti → suggerimenti facoltativi → Dati evento/Tipo e Toggle «Modifica associazioni» → unico Conferma evento. I controlli interattivi sono Retool nativi, non HTML nella Sintesi. Le domande INACTIVE provengono da IAR; nessuna duplicazione delle domande nel renderer.
+
+Il renderer legge analysis_snapshot.parsed, la proiezione IAR e le due Select inline. Confronta le scelte con choiceValues correnti: scelta richiesta, da collegare o Non collegato; nessun matching alternativo. Badge: Da completare per scelte obbligatorie mancanti; Da verificare quando readiness/avvisi lo richiedono; OK soltanto con condizioni di conferma soddisfatte e assenza degli avvisi previsti dal renderer. Non è una chiusura generale di G35. La spiegazione della conferma indisponibile usa lo stesso contesto; non crea un altro pulsante.
+
+Le schede obbligatorie sono ambra, i suggerimenti facoltativi secondari blu. create_suggestion_hint e i relativi pulsanti sopprimono soltanto la proposta dello stesso livello già risolto da association.selectedId o candidato canonico association.candidateId. Non sopprimono genericamente il suggerimento dell’altro livello; restano guardie canoniche suggestion/dismissed/ambiguità e i form già aperti. IAR e coordinatore non sono cambiati da questo filtro di presentazione. «Non ora» conserva handler e significato originari.
+
+Il Toggle mostra/nasconde le sole Select manuali senza resettare valori; un’alternativa ACTIVE valida viene recepita da IAR/Sintesi e può eliminare la domanda INACTIVE dello stesso livello. Il cambio di contesto invalida i token precedenti anche se il controllo trattiene materialmente un vecchio valore.
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
+
+## Contratto N21 — avvisi di associazione (snapshot 15 novembre 2026)
 
 `preview_analysis_state` costruisce gli avvisi di Stato e le alternative. `sintesi` riusa «Da verificare», codifica i testi e le etichette provenienti dalle anagrafiche prima dell'HTML e applica l'evidenziazione a segmenti di testo. INACTIVE è riconosciuto e inattivo; NULL è riconosciuto e con Stato da definire. La lista presenta fino a cinque risultati, con conteggio degli altri. Le alternative ACTIVE sono preferite nell'elenco; se tutte sono inammissibili l'avviso indirizza alle Anagrafiche. Le alternative di un nome esatto informano senza cambiare preselezione o blocchi. Una FK storica già selezionata evita l'avviso di nuova associazione vietata.
 
@@ -188,23 +202,17 @@ Layer:
 
 Collocazione attuale:
 
-input_raw
-→ trigger_parse_debounced
-→ ui_visibility_mode
-→ command_intent_state
-→ parse_input_controlled
-→ ui_state.parsed
-→ project_state / entity_state
-→ create_suggestion_state
-→ preview_analysis_state
-→ input_analysis_result
-→ preview (sintesi) / card Da verificare / suggestion container
-→ oppure container_command_intent
-→ Dati evento / Conferma Hidden oppure command action
-→ select_project / select_entity / select1
-→ confirm evento / insert_project / insert_entity / go events
-→ feedback temporaneo
-→ routing post-save
+input_home → input_raw e invalidazione della revisione/consenso
+→ trigger_parse_debounced: richiesta identificata per revisione, testo e contesto
+→ parser, project_state, entity_state e Command Intent canonici sulla stessa richiesta
+→ suggestion canonica correlata → unico publish di ui_state.analysis e mirror ui_state.parsed
+→ analysis_snapshot validato → IAR, Select ordinarie, Tipo e preview
+→ decisioni INACTIVE contestuali nelle Select inline, se richieste
+→ button_input_confirm delega confirm_event(begin)
+→ guardie/lock, no-op e command guard → preflight e verifica fingerprint/consume-once
+→ un solo ramo insert_event oppure update_event
+→ dopo successo: reset, refresh e feedback/routing contestuale.
+La creazione Project/Entity resta un’azione separata già esistente, non un secondo salvataggio evento.
 
 Nota post UX Mobile Coherence Pass:
 
@@ -292,7 +300,7 @@ e non modifica DB.
 La preview si colloca dopo il parsing controllato
 e legge i dati strutturati principalmente da:
 
-ui_state.parsed
+analysis_snapshot.parsed validato; ui_state.parsed resta mirror compatibile del bundle.
 
 Dopo Preview Analysis State:
 
@@ -303,13 +311,13 @@ preview_analysis_state
 
 Nota post G22:
 
-preview_analysis_state ora legge anche create_suggestion_state per i casi
+preview_analysis_state ora legge anche analysis_snapshot.suggestion, risultato correlato di create_suggestion_state, per i casi
 di match presente + suggestion extension.
 
 Fonte:
 
-create_suggestion_state.data.project.requiresUserOverride
-create_suggestion_state.data.entity.requiresUserOverride
+analysis_snapshot.value?.suggestion?.project?.requiresUserOverride
+analysis_snapshot.value?.suggestion?.entity?.requiresUserOverride
 
 Quando requiresUserOverride = true, il nome selezionato è risolto e candidateName e le guardie preesistenti sono soddisfatti, la card Da verificare mostra un warning mirato:
 
@@ -372,8 +380,8 @@ non una query.
 
 Per il matching project/entity, la preview legge anche:
 
-project_state.data
-entity_state.data
+analysis_snapshot.value?.project
+analysis_snapshot.value?.entity
 
 In particolare:
 
@@ -385,7 +393,7 @@ In particolare:
 
 Per le suggestion project/entity, il container suggestion legge anche:
 
-create_suggestion_state.data
+create_suggestion_state.data: è la lettura effettiva dell’helper create_suggestion_hint e dei consumer di suggerimento pertinenti; i filtri di presentazione usano anche association IAR. Distinguere questa fonte dal renderer/preview_analysis_state, che legge suggestion nello snapshot. Nessuna sostituzione generica dei binding acquisiti.
 
 Nota:
 
@@ -500,7 +508,7 @@ Il save flow non dipende dalla preview per il type.
 Il type viene salvato tramite:
 
 select1.value
-→ button_input_confirm payload.type
+→ confirm_event payload.type (pulsante normale solo delegante)
 → insert_event / update_event
 → events.type
 
@@ -508,15 +516,15 @@ Il save flow non dipende dalla preview per project/entity.
 
 project_id viene salvato tramite:
 
-select_project.value
-→ button_input_confirm payload.project_id
+association IAR + scelta contestuale corrente oppure selezione ordinaria/storica
+→ confirm_event finalAssociationId("project") → payload.project_id
 → insert_event / update_event
 → events.project_id
 
 entity_id viene salvato tramite:
 
-select_entity.value
-→ button_input_confirm payload.entity_id
+association IAR + scelta contestuale corrente oppure selezione ordinaria/storica
+→ confirm_event finalAssociationId("entity") → payload.entity_id
 → insert_event / update_event
 → events.entity_id
 
@@ -691,55 +699,12 @@ Ma:
 
 ------------------------------------------------
 INPUT DELLA PREVIEW
-------------------------------------------------
 
-Fonti dati utilizzate:
+Fonti correnti: input_raw per testo, analysis_snapshot.parsed/project/entity per interpretazione correlata, repertori per nomi/UUID selezionati, select1 e Select ordinarie, preview_analysis_state per hint, IAR per associazioni/readiness e Select inline per la rappresentazione delle decisioni contestuali. Il renderer non legge più ui_state.parsed o project_state.data/entity_state.data come risultato autorevole separato dal bundle.
 
-- input_raw.value
-- ui_state.parsed
-- select_project.value
-- select_entity.value
-- projects_list.data
-- entities_list.data
-- project_state.data
-- entity_state.data
-- select1.value
-- create_suggestion_state.data
-- project_create_suggestion_dismissed.value
-- entity_create_suggestion_dismissed.value
-- preview_analysis_state.value per hint/status/warning/missing association
-- input_analysis_result.value per visibility/readiness degli Hidden principali del flow input
+Hidden finale UX-R1 di host e Sintesi: `{{ !input_analysis_result.value?.analysis || input_analysis_result.value?.mode?.effectiveIsCommandFlow }}`. Non coincide con il solo canShowEventPreview. I gruppi restano indipendenti: Project `{{ !input_analysis_result.value?.analysis || !input_analysis_result.value?.readiness?.canShowEventPreview || !input_analysis_result.value?.association?.project?.requiresDecision }}`; Entity `{{ !input_analysis_result.value?.analysis || !input_analysis_result.value?.readiness?.canShowEventPreview || !input_analysis_result.value?.association?.entity?.requiresDecision }}`. Badge e spiegazioni confrontano i choiceValues correnti senza scrivere stato. I binding/stili nativi integrali sono in Architecture; il codice finale del renderer e dell’helper suggerimenti resta integralmente conservato in questa madre.
 
-Nota post Input Analysis Result:
 
-La preview non usa ui_visibility_state come fonte di contenuto.
-
-La visibilità diretta della Sintesi ora legge:
-
-input_analysis_result.readiness.canShowEventPreview
-
-ui_visibility_state non è stato eliminato:
-resta presente come residuo tecnico deprecabile,
-ma non governa più container_input, loading, cancel controls o button_input_confirm.Hidden.
-
-Fonte visibilità Sintesi:
-
-input_analysis_result.readiness.canShowEventPreview
-
-Fonte hint/status Sintesi:
-
-preview_analysis_state
-
-Fonte contenuto:
-
-- input_raw.value
-- ui_state.parsed
-- select1.value
-- project_state.data
-- entity_state.data
-- create_suggestion_state.data
-- select_project.value
-- select_entity.value
 
 Nota Command Intent:
 
@@ -747,16 +712,7 @@ La preview NON deve usare command_intent_state come fonte di rappresentazione ev
 
 command_intent_state appartiene al container_command_intent.
 
-La preview viene nascosta quando:
-
-input_analysis_result.readiness.canShowEventPreview = false
-
-In particolare:
-
-- input vuoto
-- command intent
-- input non ancora pronto
-- edit mode gestito dal flow event ma con notice dedicata se attivo
+La Sintesi è nascosta con analisi assente o effectiveIsCommandFlow. Una analisi presente ma non ancora confermabile deve restare rappresentabile. La visibilità delle schede decisionali resta separata e richiede canShowEventPreview e requiresDecision del livello. Il contesto edit e la command guard restano quelli canonici, senza nuovi override di readiness.
 
 Nota:
 
@@ -1486,7 +1442,7 @@ o nascosti lato UI.
 VALUE BUILDER
 
 costruzione amount + unit
-lettura da ui_state.parsed
+lettura da analysis_snapshot.parsed validato
 formattazione visuale italiana
 
 Gestione formati:
@@ -1731,8 +1687,8 @@ project → blu (#2563eb)
 
 Fonte dati dopo Match Engine Unification First Controlled Level:
 
-project_state.data.matches
-entity_state.data.matches
+analysis_snapshot.value?.project.matches
+analysis_snapshot.value?.entity.matches
 
 ---
 
@@ -1787,8 +1743,8 @@ su unità tecniche o parole non rilevanti.
 Dopo Match Engine Unification,
 l’highlight project/entity legge però i matches da:
 
-- project_state.data.matches
-- entity_state.data.matches
+- analysis_snapshot.value?.project.matches
+- analysis_snapshot.value?.entity.matches
 
 La preview non usa più detection locale come fonte decisionale matching.
 
@@ -1818,8 +1774,8 @@ La Sintesi resta comunque responsabile del rendering HTML finale.
 
 Basato su:
 
-- project_state.data
-- entity_state.data
+- analysis_snapshot.value?.project
+- analysis_snapshot.value?.entity
 - parsed.unit
 - select1.value
 - contenuto testo
@@ -1848,10 +1804,7 @@ Durante UX Mobile Coherence Pass, la Sintesi è stata confermata come card strut
 Struttura:
 
 - intestazione Sintesi
-- indicatore stato:
-  - OK
-  - Verifica
-  - Attenzione
+- indicatore stato: Da completare per scelte richieste mancanti, Da verificare per readiness/avvisi, OK soltanto quando le condizioni effettive sono soddisfatte
 - frase interpretata
 - righe dati:
   - Tipo
@@ -1859,9 +1812,7 @@ Struttura:
   - Importo / Durata / Valore in base all’unità rilevata
   - Progetto
   - Entità
-- micro-azioni visive:
-  - Cambia
-  - Scegli
+- associazioni rappresentate secondo IAR e decisioni contestuali correnti; nessun secondo controllo HTML o microazione Cambia/Scegli operativa. Le Select native inline e «Modifica associazioni» sono i controlli effettivi.
 
 Regola:
 
@@ -1869,12 +1820,7 @@ La Sintesi rappresenta ciò che LOGOS ha interpretato.
 
 Non decide cosa salvare.
 
-Le fonti salvabili restano:
-
-- select1.value
-- select_project.value
-- select_entity.value
-- ui_state.parsed
+Il builder unico in confirm_event usa snapshot.parsed, select1/input_raw vincolati al contesto e finalAssociationId per entrambe le FK. La Sintesi rappresenta questi dati e le decisioni, non li persiste.
 
 La Sintesi non è una form.
 
@@ -2709,7 +2655,7 @@ Questo documento conserva solo il rapporto tra dati parsati e rappresentazione v
 
 Regola:
 
-la Preview legge ui_state.parsed e select1.value,
+la Preview legge analysis_snapshot.parsed e select1.value,
 ma non esegue parsing,
 non normalizza il dato salvabile
 e non scrive nel payload.
@@ -2718,21 +2664,21 @@ Parsing strutturato avviene ora in:
 
 ✔ parse_input_controlled
 
-e viene trasferito in:
+e, dopo correlazione, viene pubblicato dal solo trigger nel bundle con mirror compatibile:
 
-✔ ui_state.parsed
+✔ analysis_snapshot.parsed per i consumer; ui_state.parsed come proiezione compatibile
 
 La preview legge:
 
-ui_state.parsed.amount
-ui_state.parsed.unit
-ui_state.parsed.event_date
+analysis_snapshot.parsed.amount
+analysis_snapshot.parsed.unit
+analysis_snapshot.parsed.event_date
 
 Per il type, la preview legge:
 
 select1.value
 
-select1.value può dipendere da ui_state.parsed.unit.
+select1.value può dipendere da analysis_snapshot.parsed.unit.
 
 Esempio:
 
@@ -3062,7 +3008,7 @@ Regola:
 la Preview non salva direttamente.
 Il salvataggio avviene solo tramite button_input_confirm e le fonti salvabili finali.
 
-Il [Lifecycle N21](03_LOGOS_Event_Lifecycle.md#conferma-evento-dopo-n21b2-r01) qualifica le verifiche delle FK nuove prima di POST/PATCH e il mantenimento della FK storica. L’ID del PATCH proviene dall’evento catturato dal Click.
+Il [Lifecycle Q2](03_LOGOS_Event_Lifecycle.md#contratto-finale-q2--conferma-unica) qualifica snapshot, decisioni contestuali, preflight delle FK nuove e preservazione delle FK storiche. La Preview non autorizza né persiste; l’ID del PATCH proviene dall’evento originale catturato dal coordinatore.
 
 Dati salvati:
 
@@ -3076,18 +3022,11 @@ entity_id
 
 Fonti dati salvate:
 
-✔ ui_state.parsed per amount/unit/event_date  
-✔ select1.value per type  
-✔ select_project.value per project_id  
-✔ select_entity.value per entity_id  
+✔ snapshot.parsed per amount/unit/event_date
+✔ select1.value per type e input_raw per testo, validati contro contesto/fingerprint
+✔ finalAssociationId sulla proiezione IAR e sulle scelte contestuali per le FK
 
-button_input_confirm:
-
-✔ non ricalcola più parsing
-✔ non contiene più parsing legacy
-✔ costruisce payload da ui_state.parsed e select1.value
-✔ usa insert_event/update_event
-✔ aggiorna events_new dopo save completato
+button_input_confirm delega il solo begin; confirm_event non ricalcola parsing, costruisce il solo payload e invoca il solo ramo INSERT/UPDATE. Reset, events_new e feedback seguono il successo del save.
 
 Relazione:
 
@@ -3095,7 +3034,7 @@ Relazione:
 ✔ dati persistiti sono coerenti con parser controllato
 ✔ durate certe persistite come amount in minuti e unit = minuti
 ✔ type persistito in events.type
-✔ project_id/entity_id persistiti solo tramite select_project/select_entity  
+✔ FK persistite soltanto tramite finalAssociationId nel coordinatore, senza usare il renderer come fonte
 ✔ preview non è fonte di salvataggio project/entity  
 ✔ match state influenza select/hint/confirm, non scrive direttamente DB  
 ✔ create_suggestion_state non è fonte di salvataggio evento
@@ -3132,7 +3071,9 @@ preview:
 2 ore 30 minuti
 Normalizzato: 150 minuti
 
-VINCOLI ATTUALI (REALI)
+VINCOLI — FOTOGRAFIA STORICA PRE-Q2
+
+Le attestazioni e i limiti fino a «RELAZIONE CON DATI EVENTO» appartengono ai pass citati e non descrivono automaticamente il runtime finale. In Q2 le fonti sono snapshot/IAR; host/Sintesi hanno Hidden UX-R1; Disabled confronta anche scelte correnti. Le vecchie microazioni e l’azzeramento lint sono storici. Restano distinti i limiti generali di view-purity e G35.
 
 ✔ preview non blocca input
 ✔ preview attiva quando input_analysis_result.readiness.canShowEventPreview è true
@@ -3664,7 +3605,9 @@ Nota:
 la visualizzazione umana non modifica il dato interno.
 Il dato persistito resta amount = 150, unit = minuti.
 
-PROPRIETÀ DEL SISTEMA
+PROPRIETÀ — FOTOGRAFIA STORICA PRE-Q2
+
+Inizio riepilogo storico fino a «Possibili futuri tecnici collegati alla Preview». Le prove dei pass precedenti sono conservate; per runtime e residui correnti prevalgono il contratto finale Q2, i binding e i sorgenti integrali. Non interpretare lint azzerati, microazioni o vecchie fonti parsed come stato corrente.
 
 ✔ deterministico localmente
 ✔ funzionante lato utente
@@ -3715,7 +3658,7 @@ MA:
 ⚠ ui_visibility_state non è Input Analysis Model completo
 ✔ linting Retool azzerati
 
-STATO ATTUALE
+STATO NELLA FOTOGRAFIA STORICA PRE-Q2
 
 ✔ preview funzionante
 ✔ UX utilizzabile
@@ -3903,6 +3846,869 @@ Nota:
 
 questi sono residui tecnici collegati al dominio Preview.
 La decisione se e quando aprirli resta in 00_PROJECT_State / 00_PROJECT_Roadmap / 00_PROJECT_Gap_Register.
+
+## Q2 — sorgenti finali di competenza
+
+Trascrizioni integrali dai file effettivi, non candidate storiche o nuovo codice. Gli hash si riferiscono ai file sorgente UTF-8/LF nel pacchetto di review: per estrarli dal Markdown CRLF normalizzare soltanto EOL del contenitore. Non eliminare spazi iniziali/finali del codice. Provenienza dettagliata nel registro Runtime e nel manifest del lotto. Le descrizioni storiche precedenti non sostituiscono queste proprietà finali.
+
+### q2-source-preview-analysis-state-funcbody
+
+`preview_analysis_state.template.funcBody` — sorgente integrale. SHA-256 UTF-8/LF `bb35859a6b3506502295e779bd3fb825135e1e5e403f2c08e89d3c3052c89547`, 9773 byte.
+
+```js
+const text = String({{ input_raw.value || "" }}).trim();
+const lowerText = text.toLowerCase();
+
+const parsed = {{ analysis_snapshot.value?.parsed || {} }};
+const parsedAmount = parsed.amount || null;
+const parsedUnit = parsed.unit || null;
+
+const projects = {{ projects_list.data || [] }};
+const entities = {{ entities_list.data || [] }};
+
+const projectId = {{ select_project.value || null }};
+const entityId = {{ select_entity.value || null }};
+
+const selectedProject =
+  projects.find(p => p.id === projectId)?.name || null;
+
+const selectedEntity =
+  entities.find(e => e.id === entityId)?.name || null;
+
+const entityMatch = {{ analysis_snapshot.value?.entity || {} }};
+const projectMatch = {{ analysis_snapshot.value?.project || {} }};
+
+const selectType = String({{ select1.value || "Evento" }});
+
+// -----------------------------
+// DURATION DETECTION — SAME LOGIC AS CURRENT SINTESI
+// -----------------------------
+
+const hasHourDurationInput =
+  /\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\b/.test(lowerText) ||
+  /\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/.test(lowerText) ||
+  /\bh\s*\d+(?:[,.]\d+)?\b/.test(lowerText);
+
+const hasAmbiguousLongDuration =
+  /\b\d+(?:[,.]\d+)?\s*(giorno|giorni|settimana|settimane|giornata|giornate)\b/.test(lowerText) ||
+  /\b(giorno|giorni|settimana|settimane|giornata|giornate)\s*\d+(?:[,.]\d+)?\b/.test(lowerText) ||
+  /\bmezza giornata\b/.test(lowerText);
+
+const formatDurationMinutesIT = (minutesValue) => {
+  const total = Number(minutesValue);
+
+  if (!Number.isFinite(total)) return null;
+
+  const rounded = Math.round(total);
+
+  return `${rounded.toLocaleString("it-IT", {
+    useGrouping: true,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })} ${rounded === 1 ? "minuto" : "minuti"}`;
+};
+
+// -----------------------------
+// MATCH STATE
+// -----------------------------
+
+const entityMatchCount =
+  Number(entityMatch.count ?? entityMatch.matches?.length ?? 0);
+
+const projectMatchCount =
+  Number(projectMatch.count ?? projectMatch.matches?.length ?? 0);
+
+const entityIsAmbiguous =
+  Boolean(entityMatch.isAmbiguous) || entityMatchCount > 1;
+
+const projectIsAmbiguous =
+  Boolean(projectMatch.isAmbiguous) || projectMatchCount > 1;
+
+const isMeaningful = lowerText.length >= 3;
+
+const suggestionState = {{ analysis_snapshot.value?.suggestion || {} }};
+const projectSuggestion = suggestionState.project || {};
+const entitySuggestion = suggestionState.entity || {};
+
+// -----------------------------
+// ACTION MAPPER
+// -----------------------------
+
+const getHintAction = (hintText) => {
+  const value = String(hintText || "");
+
+  if (value.includes("Più entità trovate")) {
+    return "Scegli l’entità corretta nel campo Entità.";
+  }
+
+  if (value.includes("Più progetti trovati")) {
+    return "Scegli il progetto corretto nel campo Progetto.";
+  }
+
+  if (value.includes("Definisci spesa o incasso")) {
+    return "Controlla il campo Tipo evento.";
+  }
+
+  if (value.includes("Normalizzato:")) {
+    return "Controlla che la durata interpretata sia corretta.";
+  }
+
+  if (value.includes("Durata ambigua")) {
+    return "Specifica ore o minuti se vuoi salvare una durata analizzabile.";
+  }
+
+  return "Controlla i dati evento prima di confermare.";
+};
+
+const hints = [];
+
+const pushHint = (text, color, actionOverride = null) => {
+  hints.push({
+    text,
+    color,
+    action: actionOverride || getHintAction(text)
+  });
+};
+
+// -----------------------------
+// AMBIGUITÀ MATCH
+// -----------------------------
+
+const availability = record =>
+  record.status === "ACTIVE" ? "disponibile" :
+  record.status === "INACTIVE" ? "inattivo" : "Stato da definire";
+
+const showAlternatives = (title, records, field, blocking) => {
+  const candidates = [...new Map(records.filter(r => r?.id).map(r => [r.id, r])).values()];
+  if (!candidates.length) {
+    if (blocking) pushHint(title, "#dc2626");
+    return;
+  }
+  const active = candidates.filter(r => r.status === "ACTIVE");
+  const ordered = [...active, ...candidates.filter(r => r.status !== "ACTIVE")];
+  const shown = ordered.slice(0, 5);
+  const names = shown.map(r => `${r.name} — ${availability(r)}`).join(" · ");
+  const remaining = candidates.length - shown.length;
+  const tail = remaining ? ` · altri: ${remaining}` : "";
+  const action = active.length
+    ? `Per usare una variante disponibile, scegli nel campo ${field}.`
+    : "Nessuna di queste alternative è associabile. Verifica lo Stato nelle Anagrafiche.";
+  pushHint(title, blocking ? "#dc2626" : "#6B7280", `${names}${tail}. ${action}`);
+};
+
+const showAssociationGuidance = ({ match, selectedId, ambiguous, field, ambiguityTitle, historicalId }) => {
+  if (ambiguous && !selectedId) {
+    showAlternatives(ambiguityTitle, match.matches || [], field, true);
+    return;
+  }
+  const exact = match.singleMatch;
+  if (exact && exact.status !== "ACTIVE" && exact.status !== "INACTIVE" &&
+      !(selectedId === exact.id && historicalId === exact.id)) {
+    const status = exact.status === "INACTIVE" ? "esiste, ma è inattivo" : "esiste, ma lo Stato non è definito";
+    pushHint(`ℹ️ ${field}: ${exact.name} ${status}`, "#6B7280",
+      `Non associabile a un nuovo evento. Scegli un’altra voce attiva nel campo ${field} oppure verifica lo Stato nelle Anagrafiche.`);
+  }
+  if (exact && (!selectedId || selectedId === exact.id)) {
+    showAlternatives(`ℹ️ Varianti per ${exact.name}`, match.moreSpecificMatches || [], field, false);
+  }
+  if (!selectedId && !exact && match.prefixAlternatives?.length) {
+    showAlternatives(`ℹ️ Progetti con nome simile al testo digitato`, match.prefixAlternatives, field, false);
+  }
+};
+
+if (isMeaningful) {
+  const historical = {{ edit_mode.data === true ? editing_event.data : null }};
+  showAssociationGuidance({ match: entityMatch, selectedId: entityId, ambiguous: entityIsAmbiguous,
+    field: "Entità", ambiguityTitle: "⚠️ Più entità trovate", historicalId: historical?.entity_id });
+  showAssociationGuidance({ match: projectMatch, selectedId: projectId, ambiguous: projectIsAmbiguous,
+    field: "Progetto", ambiguityTitle: "⚠️ Più progetti trovati", historicalId: historical?.project_id });
+}
+
+// -----------------------------
+// G22 — MATCH PRESENT / USER OVERRIDE
+// -----------------------------
+// Warning mirato solo quando:
+// - esiste una selezione attiva
+// - l’input suggerisce una nuova associazione più specifica
+// - la candidate nasce da create_suggestion_state
+//
+// Non usa moreSpecificMatches perché quello indica solo
+// che nel DB esistono record più specifici,
+// non che l’input corrente li stia richiedendo.
+
+if (
+  isMeaningful &&
+  projectSuggestion.requiresUserOverride &&
+  selectedProject &&
+  projectSuggestion.candidateName
+) {
+  pushHint(
+    "ℹ️ Associazione progetto da controllare",
+    "#6B7280",
+    `${selectedProject} selezionato · testo letto: ${projectSuggestion.candidateName}`
+  );
+}
+
+if (
+  isMeaningful &&
+  entitySuggestion.requiresUserOverride &&
+  selectedEntity &&
+  entitySuggestion.candidateName
+) {
+  pushHint(
+    "ℹ️ Associazione entità da controllare",
+    "#6B7280",
+    `${selectedEntity} selezionata · testo letto: ${entitySuggestion.candidateName}`
+  );
+}
+
+// -----------------------------
+// SPESA / INCASSO
+// -----------------------------
+
+if (parsedUnit === "euro" && selectType === "Evento") {
+  pushHint("ℹ️ Definisci spesa o incasso", "#d97706");
+}
+
+// -----------------------------
+// DURATA NORMALIZZATA / AMBIGUA
+// -----------------------------
+
+if (parsedUnit === "minuti" && parsedAmount && hasHourDurationInput) {
+  const normalizedLabel = formatDurationMinutesIT(parsedAmount);
+
+  if (normalizedLabel) {
+    pushHint(`ℹ️ Normalizzato: ${normalizedLabel}`, "#6B7280");
+  }
+}
+
+if (hasAmbiguousLongDuration && !parsedUnit) {
+  pushHint(
+    "⚠️ Durata ambigua: specifica ore/minuti per salvarla come tempo analizzabile",
+    "#d97706"
+  );
+}
+
+// -----------------------------
+// STATUS
+// -----------------------------
+
+const hasHints = hints.length > 0;
+
+const hasBlockingAmbiguity =
+  (entityIsAmbiguous && !entityId) ||
+  (projectIsAmbiguous && !projectId);
+
+const hasWarning =
+  hasBlockingAmbiguity ||
+  hints.some(h => String(h.text || "").includes("⚠"));
+
+let statusLabel = "OK";
+
+if (hasBlockingAmbiguity) {
+  statusLabel = "Verifica";
+} else if (hasWarning) {
+  statusLabel = "Attenzione";
+}
+
+let statusColor = "#059669";
+
+if (hasBlockingAmbiguity || hasWarning) {
+  statusColor = "#D97706";
+}
+
+let statusBg = "#ECFDF5";
+
+if (hasBlockingAmbiguity || hasWarning) {
+  statusBg = "#FEF3C7";
+}
+
+let dotColor = "#059669";
+
+if (hasBlockingAmbiguity || hasWarning) {
+  dotColor = "#D97706";
+}
+
+// -----------------------------
+// ASSOCIAZIONI MANCANTI
+// -----------------------------
+
+const missingProject = !selectedProject;
+const missingEntity = !selectedEntity;
+
+let missingAssociationTitle = null;
+
+if (missingProject && missingEntity) {
+  missingAssociationTitle = "Manca un progetto e un’entità";
+} else if (missingProject) {
+  missingAssociationTitle = "Manca un progetto";
+} else if (missingEntity) {
+  missingAssociationTitle = "Manca un’entità";
+}
+
+const showMissingAssociationNotice =
+  Boolean(missingAssociationTitle) &&
+  !hasBlockingAmbiguity;
+
+// -----------------------------
+// OUTPUT READ-ONLY
+// -----------------------------
+
+return {
+  text,
+  lowerText,
+
+  parsedAmount,
+  parsedUnit,
+
+  selectedProject,
+  selectedEntity,
+
+  projectId,
+  entityId,
+
+  entityMatchCount,
+  projectMatchCount,
+  entityIsAmbiguous,
+  projectIsAmbiguous,
+
+  hasHourDurationInput,
+  hasAmbiguousLongDuration,
+
+  hints,
+  hasHints,
+
+  hasBlockingAmbiguity,
+  hasWarning,
+
+  statusLabel,
+  statusColor,
+  statusBg,
+  dotColor,
+
+  missingProject,
+  missingEntity,
+  missingAssociationTitle,
+  showMissingAssociationNotice
+};
+```
+
+### q2-source-sintesi-value
+
+`sintesi.template.value` — sorgente integrale. SHA-256 UTF-8/LF `f2724be8b9cd9ad76967c0af11744bc4c0261403060996fb185112cf79b26dcb`, 16150 byte.
+
+```js
+{{
+(() => {
+
+  const text = input_raw.value?.trim() || "";
+  const lowerText = text.toLowerCase();
+
+  const parsed = analysis_snapshot.value?.parsed || {};
+  const parsedAmount = parsed.amount || null;
+  const parsedUnit = parsed.unit || null;
+  const parsedDate = parsed.event_date || null;
+
+  const projects = projects_list.data || [];
+  const entities = entities_list.data || [];
+
+  const projectId = select_project.value;
+  const entityId = select_entity.value;
+
+  const selectedProject = projects.find(p => p.id === projectId)?.name || null;
+  const selectedEntity = entities.find(e => e.id === entityId)?.name || null;
+
+  // -----------------------------
+  // DATE
+  // -----------------------------
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split("-");
+    const mesi = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+    return `${parseInt(d)} ${mesi[parseInt(m)-1]}`;
+  };
+
+  const displayDate = formatDate(parsedDate);
+
+  // -----------------------------
+  // VALUE (BOLD) — PREVIEW ALIGNMENT BASE
+  // -----------------------------
+
+  const formatAmountIT = (amount, unit) => {
+    const num = Number(amount);
+
+    if (!Number.isFinite(num)) return null;
+
+        if (unit === "euro") {
+      return num.toLocaleString("it-IT", {
+        useGrouping: true,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+        if (unit === "ore" || unit === "minuti") {
+      return num.toLocaleString("it-IT", {
+        useGrouping: true,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    }
+
+        return num.toLocaleString("it-IT", {
+      useGrouping: true,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const formatUnitIT = (amount, unit) => {
+    const num = Number(amount);
+
+    if (unit === "euro") return "€";
+    if (unit === "ore") return num === 1 ? "ora" : "ore";
+    if (unit === "minuti") return num === 1 ? "minuto" : "minuti";
+
+    return unit;
+  };
+
+ // -----------------------------
+// DURATION DISPLAY — BASE
+// -----------------------------
+
+const hasHourDurationInput =
+  // ore testuali o h semplice:
+  // 1 ora, 2 ore, 1,5 ore, 2h
+  /\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\b/.test(lowerText) ||
+
+  // formato compatto ore+minuti:
+  // 2h30, 2h 30, 2 h 30
+  /\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/.test(lowerText) ||
+
+  // formato h prima del numero:
+  // h2
+  /\bh\s*\d+(?:[,.]\d+)?\b/.test(lowerText);
+
+const hasAmbiguousLongDuration =
+  /\b\d+(?:[,.]\d+)?\s*(giorno|giorni|settimana|settimane|giornata|giornate)\b/.test(lowerText) ||
+  /\b(giorno|giorni|settimana|settimane|giornata|giornate)\s*\d+(?:[,.]\d+)?\b/.test(lowerText) ||
+  /\bmezza giornata\b/.test(lowerText);
+
+const formatDurationHumanIT = (minutesValue) => {
+  const total = Number(minutesValue);
+
+  if (!Number.isFinite(total)) return null;
+
+  const rounded = Math.round(total);
+  const hours = Math.floor(rounded / 60);
+  const minutes = rounded % 60;
+
+  const hourLabel = hours === 1 ? "ora" : "ore";
+  const minuteLabel = minutes === 1 ? "minuto" : "minuti";
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} ${hourLabel} ${minutes} ${minuteLabel}`;
+  }
+
+  if (hours > 0) {
+    return `${hours} ${hourLabel}`;
+  }
+
+  return `${rounded} ${minuteLabel}`;
+};
+
+const formatDurationMinutesIT = (minutesValue) => {
+  const total = Number(minutesValue);
+
+  if (!Number.isFinite(total)) return null;
+
+  const rounded = Math.round(total);
+
+  return `${rounded.toLocaleString("it-IT", {
+    useGrouping: true,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })} ${rounded === 1 ? "minuto" : "minuti"}`;
+};
+
+  let value = null;
+
+if (parsedAmount && parsedUnit) {
+
+  if (parsedUnit === "minuti" && hasHourDurationInput) {
+    const durationLabel = formatDurationHumanIT(parsedAmount);
+
+    if (durationLabel) {
+      value = `<span style="font-weight:600;">${durationLabel}</span>`;
+    }
+
+  } else {
+    const amountLabel = formatAmountIT(parsedAmount, parsedUnit);
+    const unitLabel = formatUnitIT(parsedAmount, parsedUnit);
+
+    if (amountLabel && unitLabel) {
+      value = `<span style="font-weight:600;">${amountLabel} ${unitLabel}</span>`;
+    }
+  }
+}
+
+    // -----------------------------
+  // LABEL CLEAN
+  // -----------------------------
+
+  let note = lowerText;
+
+  note = note
+    .replace(/€/g, " € ")
+
+    // unità compatte
+    // ordine importante: "minuti" prima di "min"
+    // per evitare residui tipo "uti"
+    .replace(/(\d)(minuti|minuto|min|ore|ora|h)/g, "$1 $2")
+    .replace(/(minuti|minuto|min|ore|ora|h)(\d)/g, "$1 $2")
+
+    .replace(/\s+/g, " ")
+    .trim();
+
+if (parsedAmount && parsedUnit) {
+  note = note
+    // duration normalization base — rimozione durata originale già normalizzata
+    // esempi:
+    // 1 ora e 15 minuti
+    // 1 ora 15 minuti
+    // 2 ore e 30 minuti
+    // 2 ore 30
+    // 2h30
+    // 2 h 30
+    .replace(/\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\s*(?:e\s*)?\d{1,2}\s*(minuti|minuto|min)?\b/gi, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/gi, " ")
+
+// euro separati o compatti:
+// 1.500,50 euro / 1500,50 euro / 10 euro / 10€ / €10 / € 500
+.replace(/€\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?/gi, " ")
+.replace(/€\s*\d+(?:[,.]\d+)?/gi, " ")
+.replace(/\b\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\s*(€|euro|eur)\b/gi, " ")
+.replace(/\b\d+(?:[,.]\d+)?\s*(€|euro|eur)\b/gi, " ")
+.replace(/\b(euro|eur)\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\b/gi, " ")
+.replace(/\b(euro|eur)\s*\d+(?:[,.]\d+)?\b/gi, " ")
+
+    // ore separate o compatte:
+    // 1 ora / 1,5 ore / 2.2 ore / 2h / h2
+    .replace(/\b\d+(?:[,.]\d+)?\s*(ore|ora|h)\b/gi, " ")
+    .replace(/\b(h)\s*\d+(?:[,.]\d+)?\b/gi, " ")
+
+    // minuti separati o compatti:
+    // 18 minuti / 18min / min30
+    .replace(/\b\d+(?:[,.]\d+)?\s*(minuti|minuto|min)\b/gi, " ")
+    .replace(/\b(minuti|minuto|min)\s*\d+(?:[,.]\d+)?\b/gi, " ")
+
+    // pulizia congiunzioni residue generate dalla rimozione duration
+    .replace(/\b(e|ed)\b/gi, " ")
+
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+  note = note
+    .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, "")
+    .replace(/\b\d{1,2}\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/g, "")
+    .replace(/\b20\d{2}\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = note.split(" ");
+  const combined = [];
+
+  for (let i = 0; i < words.length; i++) {
+    if (words[i + 1] && /^\d+$/.test(words[i + 1])) {
+      combined.push(words[i] + " " + words[i + 1]);
+      i++;
+    } else {
+      combined.push(words[i]);
+    }
+  }
+
+  note = combined.join(" ").trim();
+  note = note.split(" ").slice(0, 6).join(" ");
+
+  // -----------------------------
+  // TOKEN FILTER PREVIEW
+  // -----------------------------
+
+  const previewStopTokens = [
+  "ora",
+  "ore",
+  "h",
+  "min",
+  "minuto",
+  "minuti",
+  "euro",
+  "eur",
+  "giorno",
+  "giorni",
+  "settimana",
+  "settimane",
+  "giornata",
+  "giornate"
+];
+
+  const getPreviewTokens = () =>
+    lowerText
+      .split(" ")
+      .map(t => t.trim())
+      .filter(t => t.length >= 3)
+      .filter(t => !previewStopTokens.includes(t));
+
+  // -----------------------------
+  // DETECTION ENTITÀ / PROGETTI
+  // -----------------------------
+
+const detectedEntities =
+  Array.isArray(analysis_snapshot.value?.entity?.matches)
+    ? analysis_snapshot.value?.entity.matches
+    : [];
+
+const detectedProjects =
+  Array.isArray(analysis_snapshot.value?.project?.matches)
+    ? analysis_snapshot.value?.project.matches
+    : [];
+
+  const htmlCharacters = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => htmlCharacters[char]);
+
+  // Applica l'evidenziazione solo a segmenti del testo originale.
+  const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let segments = [{ text: note, color: null }];
+  const highlightName = (name, color) => {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return;
+    const pattern = new RegExp(`\\b${parts.map(escapeRegex).join("\\s+")}\\b`, "gi");
+    segments = segments.flatMap(segment => {
+      if (segment.color) return [segment];
+      const matches = [...segment.text.matchAll(pattern)];
+      if (!matches.length) return [segment];
+      const result = [];
+      let offset = 0;
+      for (const match of matches) {
+        result.push({ text: segment.text.slice(offset, match.index), color: null });
+        result.push({ text: match[0], color });
+        offset = match.index + match[0].length;
+      }
+      result.push({ text: segment.text.slice(offset), color: null });
+      return result;
+    });
+  };
+
+  detectedProjects.forEach(p => highlightName(p.name, "#2563eb"));
+  detectedEntities.forEach(e => highlightName(e.name, "#059669"));
+  const styledNote = segments.map(({ text, color }) =>
+    color ? `<span style="color:${color};font-weight:500;">${escapeHtml(text)}</span>` : escapeHtml(text)
+  ).join("");
+  const labelStyled = [displayDate, value, styledNote].filter(Boolean).join(" • ");
+
+// -----------------------------
+// PREVIEW ANALYSIS STATE — FIRST CONTROLLED LAYER
+// -----------------------------
+
+const previewAnalysis = preview_analysis_state.value || {};
+
+const hints = Array.isArray(previewAnalysis.hints)
+  ? previewAnalysis.hints
+  : [];
+
+const hasHints =
+  previewAnalysis.hasHints === true ||
+  hints.length > 0;
+
+const hasBlockingAmbiguity =
+  previewAnalysis.hasBlockingAmbiguity === true;
+
+const hasWarning =
+  previewAnalysis.hasWarning === true;
+
+// Badge derived below from canonical readiness and current inline choices.
+
+const missingAssociationTitle =
+  previewAnalysis.missingAssociationTitle || null;
+
+const showMissingAssociationNotice =
+  previewAnalysis.showMissingAssociationNotice === true;
+
+// -----------------------------
+// OUTPUT HINT / VERIFICATION CARD
+// -----------------------------
+
+const verificationOutput = hints
+  .map((h, index) => {
+    const isLast = index === hints.length - 1;
+
+    const hintText = String(h.text || "");
+    const hintColor = String(h.color || "#6B7280");
+    const hintAction = String(
+      h.action || "Controlla i dati evento prima di confermare."
+    );
+
+    return `<div style="padding:${index === 0 ? "0 0 8px 0" : "8px 0"};${!isLast ? "border-bottom:1px solid #F3F4F6;" : ""}"><div style="color:${hintColor};font-size:13px;font-weight:500;line-height:1.35;">${escapeHtml(hintText)}</div><div style="color:#6B7280;font-size:12px;line-height:1.35;margin-top:2px;">${escapeHtml(hintAction)}</div></div>`;
+  })
+  .join("");
+
+// -----------------------------
+// OUTPUT — PREVIEW CARD UX STRUCTURED BASE
+// -----------------------------
+
+const typeLabel = select1.value || "Evento";
+const dateLabel = displayDate || "—";
+const amountLabel = value || "—";
+
+const valueRowLabel =
+  parsedUnit === "euro"
+    ? "Importo"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "Durata"
+      : value
+        ? "Valore"
+        : "Valore";
+
+const valueRowIcon =
+  parsedUnit === "euro"
+    ? "€"
+    : parsedUnit === "ore" || parsedUnit === "minuti"
+      ? "⏱️"
+      : "🔢";
+
+const inlineAssociation = input_analysis_result.value?.association || {};
+const currentChoice = (layer, value) => {
+  const entry = inlineAssociation[layer];
+  if (!entry?.requiresDecision || typeof value !== "string" || !value) return null;
+  return value === entry.choiceValues?.link ? "link" : value === entry.choiceValues?.skip ? "skip" : null;
+};
+const missingRequiredChoices = ["project", "entity"].filter(layer => {
+  const entry = inlineAssociation[layer];
+  const value = layer === "project" ? select_inline_inactive_project.value : select_inline_inactive_entity.value;
+  return entry?.requiresDecision && !currentChoice(layer, value);
+});
+const canConfirmPresentation = input_analysis_result.value?.readiness?.canConfirm === true &&
+  !confirm_event.isFetching && missingRequiredChoices.length === 0;
+const statusLabel = missingRequiredChoices.length ? "Da completare"
+  : !canConfirmPresentation || hasHints || hasBlockingAmbiguity || hasWarning ? "Da verificare" : "OK";
+const statusColor = statusLabel === "OK" ? "#059669" : "#9c6500";
+const statusBg = statusLabel === "OK" ? "#ecfdf5" : "#fffbeb";
+const dotColor = statusColor;
+const confirmationHelp = missingRequiredChoices.length
+  ? "Scegli Collega o Non collegare per ogni associazione richiesta."
+  : confirm_event.isFetching ? "Conferma in corso…"
+  : !input_analysis_result.value?.readiness?.canConfirm ? "Controlla i dati indicati prima di confermare."
+  : "";
+const associationLabel = (layer, selectedName, value, color) => {
+  const entry = inlineAssociation[layer];
+  if (!entry?.requiresDecision) return selectedName
+    ? `<span style="color:${color};font-weight:500;">${escapeHtml(selectedName)}</span>` : "—";
+  const choice = currentChoice(layer,value);
+  if (choice === "skip") return "Non collegato";
+  return `${escapeHtml(entry.candidateName || "")} · ${choice === "link" ? "da collegare" : "scelta richiesta"}`;
+};
+const projectLabel = associationLabel("project",selectedProject,select_inline_inactive_project.value,"#64748B");
+const entityLabel = associationLabel("entity",selectedEntity,select_inline_inactive_entity.value,"#059669");
+
+// -----------------------------
+// NOTICE ASSOCIAZIONI MANCANTI
+// -----------------------------
+
+const canUseAssociationSuggestions =
+  input_analysis_result.value?.readiness?.canShowAssociationSuggestions === true;
+
+const missingAssociationHelpText = canUseAssociationSuggestions
+  ? "Puoi selezionare i dati nei campi sotto o usare i suggerimenti."
+  : "Puoi selezionare i dati nei campi sotto.";
+
+const missingInlineProject = !inlineAssociation.project?.selectedId && !inlineAssociation.project?.requiresDecision;
+const missingInlineEntity = !inlineAssociation.entity?.selectedId && !inlineAssociation.entity?.requiresDecision;
+const inlineMissingTitle = missingInlineProject && missingInlineEntity ? "Manca un progetto e un’entità"
+  : missingInlineProject ? "Manca un progetto" : missingInlineEntity ? "Manca un’entità" : null;
+const missingAssociationNotice = confirmationHelp
+  ? `<div style="margin-top:8px;color:#9c6500;font-size:12px;line-height:1.4;">${escapeHtml(confirmationHelp)}</div>`
+  : "";
+
+const row = (icon, label, val, action = "") =>
+  `<div style="display:grid;grid-template-columns:24px 82px 1fr 52px;align-items:center;column-gap:4px;min-height:26px;font-size:13px;line-height:1.35;"><div style="font-size:13px;text-align:center;">${icon}</div><div style="color:#64748B;">${label}</div><div style="color:#111827;">${val}</div><div style="color:#64748B;font-size:11px;text-align:right;font-weight:500;white-space:nowrap;">${action}</div></div>`;
+
+const verificationCard = hasHints
+  ? `<div style="border:1px solid #FDE68A;border-radius:10px;background:#FFFBEB;padding:12px;margin-bottom:10px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-weight:600;font-size:13px;color:#111827;">Da verificare</div><div style="font-size:11px;font-weight:600;color:#B45309;background:#FEF3C7;border-radius:6px;padding:2px 6px;">Controlla</div></div><div>${verificationOutput}</div></div>`
+  : "";
+
+return `<div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div style="font-weight:600;font-size:13px;color:#111827;"><span style="color:${dotColor};">●</span> Sintesi</div><div style="font-size:11px;font-weight:600;color:${statusColor};background:${statusBg};border-radius:6px;padding:2px 6px;">${statusLabel}</div></div><div style="font-size:13px;color:#111827;line-height:1.45;margin-bottom:6px;">${labelStyled || "—"}</div><div style="border-top:1px solid #F3F4F6;padding-top:8px;">${row("🏷️", "Tipo", typeLabel)}${row("📅", "Data", dateLabel)}${row(valueRowIcon, valueRowLabel, amountLabel)}${row("📁", "Progetto", projectLabel)}${row("👤", "Entità", entityLabel)}</div>${missingAssociationNotice}</div>${verificationCard}</div>`;
+
+})()
+  }}
+```
+
+### q2-source-create-suggestion-hint-value
+
+`create_suggestion_hint.template.value` — sorgente integrale. SHA-256 UTF-8/LF `1fd22b8d81a62cf74d7952810a4dc5c9f247f2d89d60633b116766ad76eb8942`, 1583 byte.
+
+```js
+{{
+(() => {
+  const data = create_suggestion_state.data || {};
+  const project = data.project || {};
+  const entity = data.entity || {};
+
+  const rows = [];
+  const association = input_analysis_result.value?.association || {};
+
+  const muted = "#6B7280";
+  const action = "#2563eb";
+
+  const showProject =
+    !association.project?.selectedId &&
+    !association.project?.candidateId &&
+    !project_create_suggestion_dismissed.value &&
+    (
+      project.shouldShowNoMatchHint ||
+      project.shouldSuggestCreate
+    );
+
+  const showEntity =
+    !association.entity?.selectedId &&
+    !association.entity?.candidateId &&
+    !entity_create_suggestion_dismissed.value &&
+    (
+      entity.shouldShowNoMatchHint ||
+      entity.shouldSuggestCreate
+    );
+
+  if (showProject) {
+    if (project.shouldSuggestCreate && project.candidateName) {
+      rows.push(
+        `<span style="color:${action};">➕ Possibile nuovo progetto: <strong>${project.candidateName}</strong></span>`
+      );
+
+    } else if (project.shouldShowNoMatchHint) {
+      rows.push(
+        `<span style="color:${muted};">ℹ️ Nessun progetto associato</span>`
+      );
+    }
+  }
+
+  if (showEntity) {
+    if (entity.shouldSuggestCreate && entity.candidateName) {
+      rows.push(
+        `<span style="color:${action};">➕ Possibile nuova entità: <strong>${entity.candidateName}</strong></span>`
+      );
+
+    } else if (entity.shouldShowNoMatchHint) {
+      rows.push(
+        `<span style="color:${muted};">ℹ️ Nessuna entità associata</span>`
+      );
+    }
+  }
+
+  return rows.join("<br>");
+})()
+  }}
+```
 
 CHANGELOG
 
@@ -4313,3 +5119,5 @@ v17 — 2026-11-12 — N19/DOC-01, candidato documentale PREPARE.
 v18 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v19 — 2026-11-16 — N21/DOC PREPARE R03: integrati avvisi, alternative, omonimi, storico ed escaping nel sistema Preview.
+
+v20 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

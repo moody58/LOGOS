@@ -1,13 +1,28 @@
 # 03_LOGOS_Event_Lifecycle
-Versione: v16
+Versione: v17
 
-DATA: 2026-11-16
+DATA: 2026-11-20
+
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Contratto finale Q2 — conferma unica
+
+Unico ingresso ordinario: button_input_confirm → confirm_event con confirmation_action="begin". cancel invalida il consenso e non salva; resume legacy viene rifiutato. La vecchia modale è rimossa. Lo stato condiviso event_confirmation resta necessario e non è la vecchia interfaccia grafica.
+
+Il lock __logosEventConfirmPending è acquisito prima del primo await e rilasciato in finally dopo invio/reset. Il coordinatore confronta bundle completo, richiesta corrente, epoch/revisione, testo visibile/tecnico, view/edit/originalEvent, cataloghi e associationContext. Il fingerprint include le Select ordinarie, Tipo e le due Select inline. Se è richiesta una decisione, confronta il valore con choiceValues.link/skip del livello, crea il consenso transitorio con snapshotId/revision/context/fingerprint/association e lo ricontrolla dopo la pubblicazione.
+
+Un solo builder usa snapshot.parsed, input_raw e Tipo; ogni FK è selectedId oppure candidateId con consenso link, oppure null per skip. Command guard in edit, no-op su testo/tipo/FK e ID originale verificabile precedono la scrittura. La FK storica identica evita il nuovo gate di Stato; le nuove FK non vuote usano le righe del GET senza cache, UUID unico e Stato ACTIVE ordinario oppure INACTIVE candidato autorizzato. Anche skip di un candidato richiede il controllo del catalogo previsto dal codice. Un GET fallito o catalogo variato interrompe il percorso.
+
+Dopo preflight si ricontrollano contesto e fingerprint; consenso consume-once immediatamente prima del solo ramo update_event/insert_event. UPDATE riceve confirm_event_id dall’evento catturato, mai da una ricerca successiva; URL events?id=eq.{{ confirm_event_id }}. Solo a scrittura risolta seguono reset/feedback/refresh e ritorno contestuale. Errore di invio: «Salvataggio non verificato», input non ripulito da questo ramo, nessun retry automatico. No-op chiude edit senza UPDATE o variazione updated_at.
+
+Limite conservato: GET e POST/PATCH sono richieste separate, senza atomicità DB della verifica di Stato. Lock e consume-once non sono idempotenza globale multi-scheda/rete. Corse reali, cancellazioni durante GET e fuori ordine hanno le coperture locali/LIVE distinte nella fotografia Runtime, non una garanzia universale.
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
+
 
 ## Conferma evento dopo N21/B2-R01
 
-Il Click applicativo preserva command guard e uscita no-op. Prima di POST/PATCH, per ogni FK nuova o sostituita invoca il GET anagrafico senza cache e usa le righe restituite per verificare UUID e ACTIVE. Se lo Stato è inammissibile o non verificabile, interrompe il salvataggio con avviso. Un UUID storico che rimane identico evita il nuovo controllo anche quando è INACTIVE o NULL. Il controllo di coerenza confronta contesto, testo, tipo e UUID prima dell'invio. Il PATCH usa `events?id=eq.{{ confirm_event_id }}`, con UUID dell'evento acquisito all'avvio e passato via `additionalScope`. Un lock in memoria copre invio e reset UI. Dopo il salvataggio il Click aggiorna la lista e gestisce il feedback. Le FK restano facoltative, salvo ambiguità bloccanti già previste.
-
-Il preflight GET e il POST/PATCH sono richieste separate. Una variazione dello Stato successiva al GET e precedente alla scrittura può sfuggire alla verifica applicativa, che non garantisce atomicità. T08 ha qualificato un solo doppio clic nella stessa UI. Idempotenza generale, più schede e retry di rete restano fuori da quella prova (P1-04). Le protezioni DB e le transizioni del ledger descritte sotto restano distinte. Si veda la [fotografia N21](LOGOS_RETOOL_RUNTIME_REAL.md) per il no-op, il PATCH con FK storiche, il blocco della race e il doppio clic osservati LIVE. Gli estratti precedenti al delta descrivono lo storico del flusso.
+Rinvio storico al Click R01 del 15 novembre 2026; nel sistema finale governa il contratto Q2 in apertura e la sorgente confirm_event in appendice. Le prove N21 restano distinte e conservate nel Runtime.
 
 ## Protezione del lifecycle implementata nel database
 
@@ -449,7 +464,7 @@ NEW
 - può essere normalizzato base in insert/update
 - può contenere durate certe normalizzate in minuti
 - può contenere type base valorizzato
-- può contenere project_id/entity_id derivati da select_project/select_entity
+- può contenere FK risolte dal coordinatore: selezione valida/storica oppure candidato INACTIVE univoco con scelta esplicita
 - può usare project/entity creati inline prima del salvataggio evento
 - project/entity creati inline vengono salvati solo su conferma utente
 - evento resta NEW solo dopo Conferma evento / insert_event
@@ -605,8 +620,8 @@ EDIT:
 - disponibile solo per eventi NEW
 - riuso pipeline input
 - usa parse_input_controlled
-- usa ui_state.parsed
-- rilancia project_state / entity_state
+- usa analysis_snapshot.parsed validato nel contesto edit corrente
+- invoca il trigger unico con revisione e contesto atteso; parser e matcher canonici sono correlati alla richiesta
 - riallinea select_project / select_entity
 - preserva project_id/entity_id salvati se presenti
 - usa update_event solo se c’è una modifica reale
@@ -625,7 +640,7 @@ EDIT:
 - edit mode prevale su Command Intent
 - se l’utente scrive “crea” durante edit mode, resta nel flow modifica
 - per uscire dall’edit flow deve usare Annulla - se l’utente scrive un command riconosciuto durante edit mode, il command non diventa update_event
-- button_input_confirm intercetta il command fresco e blocca il salvataggio
+- confirm_event intercetta il command fresco del medesimo snapshot e blocca il salvataggio
 - nessun project/entity viene creato da command durante edit mode
 - text_edit_mode_notice mostra guidance contestuale quando rileva un command
 - input_analysis_result resta alla base stabile e non viene usato per correggere questo caso tramite Hidden multipli
@@ -969,12 +984,12 @@ Serve solo a chiarire il contesto.
 
 Guard funzionale:
 
-button_input_confirm contiene una guard locale contro command freschi in edit mode.
+confirm_event contiene la guardia contestuale contro command freschi in edit mode; il pulsante delega begin.
 
 La guard:
 
 - verifica edit_mode attivo
-- verifica command_intent_state.data.isCommand
+- verifica snapshot.command?.isCommand nel risultato correlato validato
 - confronta input corrente e rawInput del command normalizzati
 - se il command è fresco e coerente con l’input corrente, blocca update_event
 - mostra notifica warning
@@ -1084,9 +1099,9 @@ NEW → NEW (EDIT)
 - aggiorna type
 - aggiorna project_id
 - aggiorna entity_id
-- project_id/entity_id derivano da select_project/select_entity
+- project_id/entity_id sono risolti da confirm_event usando la proiezione IAR e le scelte contestuali; le Select ordinarie rimangono fonti di selezione ACTIVE/storica.
 - Select alimentate dai repertori completi, con B1 nel default del flusso nuovo e FK originale nel default edit
-- FK storica identica: resta nel payload e salta il controllo di Stato. Sostituzione con UUID non vuoto: preflight ACTIVE. L’assenza di associazione resta ammessa secondo le guardie esistenti.
+- FK storica identica: resta nel payload e salta il nuovo controllo di Stato. Nuovo UUID non vuoto: preflight ACTIVE ordinario oppure INACTIVE canonico con consenso Q2 corrente. NULL escluso dalle nuove eccezioni; assenza di associazione ammessa salvo ambiguità bloccante.
 - `update_event` riceve `confirm_event_id: originalEvent.id` con il payload in `additionalScope`; filtro URL `events?id=eq.{{ confirm_event_id }}`. Stato evento NEW governato dal lifecycle DB, distinto dallo Stato anagrafico.
 - aggiorna updated_at
 - al termine dell’update reale azzera edit_mode
@@ -1126,7 +1141,7 @@ NEW → NEW (EDIT NO-OP)
 
 - azione: conferma edit senza modifiche reali
 - eseguita da utente
-- runtime: button_input_confirm con no-op edit guard
+- runtime: button_input_confirm delega confirm_event, che esegue la no-op edit guard
 - status invariato
 - nessun update_event
 - raw_input invariato
@@ -1495,7 +1510,7 @@ INPUT SYSTEM:
 - usa input_home come input utente
 - usa input_raw come adapter tecnico
 - usa parse_input_controlled come parser runtime
-- usa ui_state.parsed come fonte unica dei dati strutturati
+- usa snapshot.parsed catturato e validato come fonte dei dati strutturati del builder
 - usa select1.value come fonte type
 - usa project_state/entity_state come fonte minima matching
 - usa select_project/select_entity come fonte project_id/entity_id
@@ -1569,7 +1584,7 @@ evento NEW selezionato
 → input_raw  
 → parse_input_controlled  
 → project_state / entity_state  
-→ ui_state.parsed  
+→ bundle correlato pubblicato dal trigger → analysis_snapshot.parsed
 → select_project / select_entity  
 → select1  
 → scelta utente  
@@ -1899,7 +1914,7 @@ La preview NON:
 
 Fonte dati strutturata condivisa:
 
-ui_state.parsed
+analysis_snapshot.parsed validato; ui_state.parsed resta mirror compatibile del publish unico, non risultato autorevole indipendente.
 
 ---
 
@@ -1908,14 +1923,14 @@ Stato attuale:
 - preview allineata visualmente a amount/unit/date
 - preview allineata alla duration normalization base
 - preview mostra type tramite select1
-- preview legge project_state/entity_state per hint/highlight matching
+- preview legge analysis_snapshot.project/entity e suggestion per hint/highlight, oltre ai controlli correnti
 - preview non è fonte del salvataggio
 - preview resta layer ibrido
 - per i comandi puri la preview viene sostituita da container_command_intent
 
 Dopo Input Analysis Result — Visibility Migration Completion:
 
-- la visibilità preview è governata da input_analysis_result.readiness.canShowEventPreview
+- Hidden finale UX-R1 di host e Sintesi: `{{ !input_analysis_result.value?.analysis || input_analysis_result.value?.mode?.effectiveIsCommandFlow }}`. Non coincide con il solo canShowEventPreview. I gruppi restano indipendenti: Project `{{ !input_analysis_result.value?.analysis || !input_analysis_result.value?.readiness?.canShowEventPreview || !input_analysis_result.value?.association?.project?.requiresDecision }}`; Entity `{{ !input_analysis_result.value?.analysis || !input_analysis_result.value?.readiness?.canShowEventPreview || !input_analysis_result.value?.association?.entity?.requiresDecision }}`.
 - container_command_intent è governato da input_analysis_result.readiness.canShowCommandContainer
 - Dati evento è governato da input_analysis_result.readiness.canShowEventData
 - Conferma evento è governata da input_analysis_result.readiness.canShowConfirm
@@ -2015,16 +2030,13 @@ Campi evento principali:
 
 Fonti runtime dei campi:
 
-**Preflight N21/B2-R01 comune a INSERT e UPDATE.** Il Click invoca in parallelo `projects_list.trigger()` e/o `entities_list.trigger()` per le sole FK non vuote nuove o sostituite. Le query sono GET senza cache secondo le proprietà acquisite in B2/R01. Usa le righe della risposta: per UUID serve esattamente una riga e Stato ACTIVE. Risposta mancante, errore, righe duplicate o Stato inatteso generano «Stato non verificabile». INACTIVE e NULL producono «Anagrafica non attiva». Un blocco conserva input e selezioni. I due repertori non sono filtrati per Stato.
+**Preflight corrente Q2 comune a INSERT e UPDATE.** confirm_event verifica le associazioni effettivamente da controllare (nuove/sostituite e candidati eccezionali, anche con scelta skip), tramite GET canonici. Le FK storiche invariate non diventano nuove associazioni. La risposta deve coincidere col catalogo congelato nello snapshot e contenere un solo UUID pertinente; lo stato atteso è INACTIVE per il candidato oggetto di decisione, ACTIVE per la nuova associazione ordinaria. Errori, duplicati o cambio di catalogo/Stato bloccano senza pulire l’input.
 
-Prima di chiamare la query mutativa verifica di nuovo modo edit, UUID dell’evento in edit, testo, tipo e due UUID. Usa `insert_event` per nuovo evento e `update_event` per modifica. Solo dopo la risposta del save cancella debounce, resetta input e Select, mostra feedback, aggiorna con `events_new` e riallinea lo stato edit. Il lock locale `window.__logosEventConfirmPending` resta attivo fino a reset, refresh e schedulazione del ritorno dopo feedback; `finally` lo rilascia. Questo lock non copre il timer dopo la sua schedulazione né il ramo no-op che precede l’acquisizione. In caso di esito incerto avvisa di controllare la lista prima di riprovare.
+Il lock window.__logosEventConfirmPending è acquisito prima del primo await e del no-op; finally lo rilascia dopo la gestione prevista. Prima della scrittura si ricontrollano snapshot/fingerprint/contesto e, se presente, il consenso consume-once. Esiste un solo builder e un solo ramo UPDATE/INSERT. Un errore o esito incerto non autorizza retry automatici; controllare prima la lista.
 
-**Confine transazionale.** I GET e la scrittura sono separati: T07 osserva il cambio di Stato prima della rilettura, mentre un cambio fra GET e POST/PATCH può sfuggire. T08 copre il singolo doppio clic osservato nella stessa UI. Multi-tab, idempotenza generale e retry di rete restano non qualificati. I vincoli referenziali e le protezioni SQL sullo stato evento hanno un ruolo distinto.
+**Confine transazionale invariato:** GET e save sono separati; un cambio fra GET e POST/PATCH può sfuggire. Le prove N21 T07/T08 sono storiche e non dimostrano atomicità, multi-tab o idempotenza generale. Il lock non copre un timer dopo la sua schedulazione. Le protezioni DB lifecycle/referenziali hanno un ruolo distinto.
 
-- amount / unit / event_date → ui_state.parsed
-- type → select1.value
-- project_id → select_project.value
-- entity_id → select_entity.value
+Fonti payload correnti: snapshot.parsed per amount/unit/event_date; select1 per type e input_raw per raw_input, vincolati al contesto; finalAssociationId per le FK secondo proiezione IAR e scelte. Solo dopo successo avvengono reset, refresh e feedback/routing. Il preflight N21/B2-R01 ACTIVE-only era la baseline precedente, superata per la sola eccezione esplicita Q2.
 - raw_input → input_raw.value
 
 Project/entity creation:
@@ -2683,9 +2695,777 @@ solo dopo stabilizzazione:
 ------------------------------------------------
 ## Revisione corrente
 
-La revisione R03 integra le transizioni e le guardie N21/B2-R01 nelle sezioni operative sopra. Le voci di changelog riportano le revisioni nelle rispettive date.
+Q2 consolida coordinatore e transizioni finali nel contratto in apertura e nell’appendice sorgenti; il precedente Click R01 rimane storico. Le guardie DB e gli altri stati lifecycle non cambiano. Le voci di changelog conservano data e perimetro.
 
 v14 — 2026-10-27 — Riconciliazione documentale post-hardening 07/08: protezioni, provenienza e limiti delle prove; nessuna modifica applicativa. Lo storico precedente segue integralmente.
+
+## Q2 — sorgenti finali di competenza
+
+Trascrizioni integrali dai file effettivi, non candidate storiche o nuovo codice. Gli hash si riferiscono ai file sorgente UTF-8/LF nel pacchetto di review: per estrarli dal Markdown CRLF normalizzare soltanto EOL del contenitore. Non eliminare spazi iniziali/finali del codice. Provenienza dettagliata nel registro Runtime e nel manifest del lotto. Le descrizioni storiche precedenti non sostituiscono queste proprietà finali.
+
+### q2-source-confirm-event-query
+
+`confirm_event.template.query` — sorgente integrale. SHA-256 UTF-8/LF `6eb54d94d83e8fb2c390a7d97e62a246a8eeceb27b0cea656e6f3ba49dc40e8a`, 16468 byte.
+
+```js
+// Q2 inline coordinator: only the normal final confirmation may begin saving.
+const action = typeof confirmation_action === "undefined" ? "begin" : confirmation_action;
+if (action === "cancel") {
+  window.__logosConsentEpoch = (window.__logosConsentEpoch || 0)+1;
+  window.__logosPendingConsent = null;
+  await event_confirmation.setValue(null);
+  return;
+}
+if (action !== "begin") {
+  utils.showNotification({title:"Conferma non disponibile",description:"Usa il pulsante Conferma evento sotto la Sintesi.",notificationType:"warning"});
+  return;
+}
+if (window.__logosEventConfirmPending) return;
+window.__logosEventConfirmPending = true;
+try {
+const warnFresh = () => utils.showNotification({title:"Analisi da aggiornare",description:"Modifica il testo o riapri Home per aggiornare l’analisi, poi premi Conferma.",notificationType:"warning"});
+const snapshot = ui_state.value?.analysis;
+const analysis = input_analysis_result.value;
+const liveSnapshotValid = () => Boolean(snapshot && snapshot.status === "complete" &&
+  snapshot.id === ui_state.value?.analysis?.id && snapshot.id === window.__logosAnalysisCurrentRequest &&
+  snapshot.revision === String(window.__logosAnalysisEpoch || 0) && snapshot.revision === analysis_revision.value &&
+  snapshot.raw === input_home.value && snapshot.raw === input_raw.value && snapshot.raw.trim() &&
+  snapshot.context === JSON.stringify([String(ui_state.value?.view || "home"),edit_mode.data === true,
+    edit_mode.data === true ? editing_event.data || null : null]) &&
+  snapshot.catalogue === JSON.stringify([projects_list.data || [],entities_list.data || []]));
+const fingerprint = () => JSON.stringify([
+  String(window.__logosAnalysisEpoch || 0),String(window.__logosConsentEpoch || 0),
+  input_home.value,input_raw.value,ui_state.value?.view,
+  edit_mode.data === true,edit_mode.data === true ? editing_event.data : null,
+  select_project.value || null,select_entity.value || null,select1.value || "Evento",
+  select_inline_inactive_project.value || null,select_inline_inactive_entity.value || null
+]);
+if (!liveSnapshotValid() ||
+    snapshot.id !== window.__logosAnalysisCurrentRequest ||
+    analysis?.analysis?.id !== snapshot.id || !analysis?.readiness?.canConfirm ||
+    analysis.associationContext !== JSON.stringify([snapshot.id,select_project.value || null,select_entity.value || null,
+      String(select1.value || "Evento"),edit_mode.data === true,edit_mode.data === true ? editing_event.data : null])) {
+  warnFresh();return;
+}
+const initialFingerprint = fingerprint();
+const association = analysis.association;
+let consent = null;
+const consentIsCurrent = () => Boolean(consent &&
+  window.__logosPendingConsent?.id === consent.id && event_confirmation.value?.id === consent.id &&
+  consent.snapshotId === snapshot.id && consent.revision === snapshot.revision &&
+  consent.context === snapshot.context && consent.fingerprint === fingerprint() &&
+  input_analysis_result.value?.readiness?.canConfirm === true &&
+  input_analysis_result.value?.associationContext === analysis.associationContext &&
+  JSON.stringify(input_analysis_result.value?.association) === JSON.stringify(consent.association) &&
+  !window.__logosConsumedConsent?.has(consent.id));
+if (Object.values(association).some(x => x.requiresDecision)) {
+  const choices = {};
+  for (const [layer,control] of [["project",select_inline_inactive_project],["entity",select_inline_inactive_entity]]) {
+    const entry = association[layer];
+    if (!entry.requiresDecision) continue;
+    const value = control.value;
+    choices[layer] = typeof value === "string" && value && value === entry.choiceValues?.link ? "link"
+      : typeof value === "string" && value && value === entry.choiceValues?.skip ? "skip" : null;
+    if (!choices[layer]) {
+      utils.showNotification({title:"Scegli come proseguire",description:"Per ogni voce inattiva scegli Collega oppure Non collegare. Se i dati sono cambiati, ripeti la scelta.",notificationType:"warning"});
+      return;
+    }
+  }
+  const id = snapshot.id+":"+String((window.__logosConsentSerial || 0)+1);
+  window.__logosConsentSerial = (window.__logosConsentSerial || 0)+1;
+  consent = {id,snapshotId:snapshot.id,revision:snapshot.revision,context:snapshot.context,
+    fingerprint:initialFingerprint,association:JSON.parse(JSON.stringify(association)),
+    projectChoice:choices.project || null,entityChoice:choices.entity || null};
+  window.__logosPendingConsent = consent;
+  await event_confirmation.setValue(consent);
+  if (fingerprint() !== initialFingerprint || !liveSnapshotValid() || !consentIsCurrent()) {warnFresh();return;}
+}
+const finalAssociationId = layer => association[layer].requiresDecision
+  ? consent?.[layer+"Choice"] === "link" ? association[layer].candidateId : null
+  : association[layer].selectedId;
+const verifiesInactiveCandidate = layer => Boolean(consent && association[layer].requiresDecision);
+const consumeConsent = async () => {
+  if (!consent) return true;
+  window.__logosConsumedConsent = window.__logosConsumedConsent || new Set();
+  if (!consentIsCurrent()) return false;
+  window.__logosConsumedConsent.add(consent.id);
+  window.__logosPendingConsent = null;
+  await event_confirmation.setValue(null);
+  return true;
+};
+
+
+// --- INSERT / UPDATE SWITCH ---
+const parsed = snapshot.parsed;
+
+const payload = {
+  raw_input: input_raw.value,
+  type: select1.value || "Evento",
+  amount: parsed.amount,
+  unit: parsed.unit,
+  event_date: parsed.event_date,
+  project_id: finalAssociationId("project"),
+  entity_id: finalAssociationId("entity")
+};
+
+// --- NO-OP EDIT GUARD ---
+// Se siamo in edit mode ma il payload non cambia nulla,
+// non eseguiamo update_event e non aggiorniamo updated_at.
+
+const wasEditMode = edit_mode.data;
+const originalEvent = editing_event.data;
+
+// --- EDIT MODE COMMAND GUARD ---
+// In edit mode un command riconosciuto non deve diventare update_event.
+// Esempi:
+// - modifica
+// - correggi
+// - cambia
+// - crea progetto test
+// - crea entità test
+//
+// Non salva.
+// Non crea project/entity.
+// Non chiude edit mode.
+// L’utente può correggere l’input oppure premere Annulla modifica.
+
+const normalizeCommandText = (value) => {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const currentInputForCommandGuard = normalizeCommandText(input_raw.value);
+const commandRawForGuard = normalizeCommandText(snapshot.command?.rawInput);
+
+const isFreshCommandInEditMode =
+  wasEditMode === true &&
+  snapshot.command?.isCommand === true &&
+  currentInputForCommandGuard &&
+  commandRawForGuard === currentInputForCommandGuard;
+
+if (isFreshCommandInEditMode) {
+  utils.showNotification({
+    title: "Comando non disponibile durante la modifica",
+    description: "Completa la modifica dell’evento oppure premi Annulla modifica prima di usare un comando.",
+    notificationType: "warning"
+  });
+
+  return;
+}
+
+const normalizeComparable = (value) => {
+  if (value === undefined || value === "") return null;
+  return value;
+};
+
+const normalizeNumberComparable = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? value : n;
+};
+
+// Confronto no-op basato solo sui campi modificabili dall'utente.
+// amount / unit / event_date sono derivati dal parser:
+// se l'utente non cambia input, non devono generare update_event.
+
+const sameText =
+  String(normalizeComparable(payload.raw_input) || "") ===
+  String(normalizeComparable(originalEvent?.raw_input) || "");
+
+const sameType =
+  String(normalizeComparable(payload.type) || "Evento") ===
+  String(normalizeComparable(originalEvent?.type) || "Evento");
+
+const sameProject =
+  String(normalizeComparable(payload.project_id) || "") ===
+  String(normalizeComparable(originalEvent?.project_id) || "");
+
+const sameEntity =
+  String(normalizeComparable(payload.entity_id) || "") ===
+  String(normalizeComparable(originalEvent?.entity_id) || "");
+
+const isSamePayload =
+  wasEditMode &&
+  originalEvent &&
+  sameText &&
+  sameType &&
+  sameProject &&
+  sameEntity;
+
+if (isSamePayload) {
+  // reset edit mode senza salvare
+  if (!await consumeConsent()) return;
+  window.__logosAnalysisEpoch = (window.__logosAnalysisEpoch || 0)+1;
+  await analysis_revision.setValue(String(window.__logosAnalysisEpoch));
+  if (window.__parseTimer) {
+    clearTimeout(window.__parseTimer);
+    window.__parseTimer = null;
+  }
+
+  trigger_parse_debounced.cancel?.();
+
+  window.__logos_edit_mode_value = false;
+await edit_mode.trigger();
+
+window.__logos_editing_event_value = null;
+await editing_event.trigger();
+
+  window.__logosOwnedInputWrite = {raw:"",epoch:window.__logosAnalysisEpoch};
+  await input_home.setValue("");
+  await input_raw.setValue("");
+
+  select_project.clearValue();
+  select_entity.clearValue();
+  select1.clearValue?.();
+
+  ui_state.setValue({
+  ...ui_state.value,
+  view: "events",
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "idle",
+  feedback_text: null,
+  feedback_project: null,
+  feedback_summary: null
+});
+
+  container_input.setHidden(true);
+  container_home.setHidden(true);
+  container_feedback.setHidden(true);
+  container_events_list.setHidden(false);
+
+  return;
+}
+
+const feedbackText = input_raw.value;
+const feedbackProject = (projects_list.data || []).find(x => x.id === payload.project_id)?.name || null;
+const feedbackEntity = (entities_list.data || []).find(x => x.id === payload.entity_id)?.name || null;
+
+const formatFeedbackDate = (dateStr) => {
+  if (!dateStr) return "—";
+  const [y, m, d] = String(dateStr).split("-");
+  if (!y || !m || !d) return "—";
+  return `${d}/${m}/${y}`;
+};
+
+const formatFeedbackAmount = (amount, unit) => {
+  const num = Number(amount);
+
+  if (!Number.isFinite(num) || !unit) return "—";
+
+  if (unit === "euro") {
+    return `${num.toLocaleString("it-IT", {
+      useGrouping: true,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })} €`;
+  }
+
+  if (unit === "minuti") {
+    return `${num.toLocaleString("it-IT", {
+      useGrouping: true,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })} minuti`;
+  }
+
+  return `${num.toLocaleString("it-IT")} ${unit}`;
+};
+
+const feedbackSummary = {
+  type: payload.type || "Evento",
+  date: formatFeedbackDate(payload.event_date),
+  amount: formatFeedbackAmount(payload.amount, payload.unit),
+  project: feedbackProject || "—",
+  entity: feedbackEntity || "—",
+  text: feedbackText || "—"
+};
+
+// Verifica soltanto le nuove FK non vuote usando il risultato del GET senza cache.
+const associationsToVerify = [
+  { layer:"project", label: "Progetto", id: payload.project_id || (consent && association.project.requiresDecision ? association.project.candidateId : null), unchanged: wasEditMode && sameProject && !verifiesInactiveCandidate("project"), query: projects_list },
+  { layer:"entity", label: "Entità", id: payload.entity_id || (consent && association.entity.requiresDecision ? association.entity.candidateId : null), unchanged: wasEditMode && sameEntity && !verifiesInactiveCandidate("entity"), query: entities_list }
+].filter(({ id, unchanged }) => id && !unchanged);
+
+const warn = (title, description) => utils.showNotification({
+  title,
+  description,
+  notificationType: "warning"
+});
+
+if (wasEditMode && !originalEvent?.id) {
+  warn("Evento non verificabile", "Riapri l’evento prima di salvare.");
+  return;
+}
+
+
+  const results = await Promise.all(associationsToVerify.map(async ({ layer, label, id, query }) => {
+    try {
+      const rows = await query.trigger();
+      const frozenCatalogue = JSON.parse(snapshot.catalogue)[layer === "project" ? 0 : 1];
+      if (JSON.stringify(rows) !== JSON.stringify(frozenCatalogue)) {
+        return {label,reason:"Elenco anagrafiche cambiato: aggiorna l’analisi"};
+      }
+      const matches = Array.isArray(rows) ? rows.filter(row => row?.id === id) : [];
+      if (matches.length !== 1 || !["ACTIVE", "INACTIVE", null].includes(matches[0].status)) {
+        return { label, reason: "Stato non verificabile" };
+      }
+      const expected = verifiesInactiveCandidate(layer) ? "INACTIVE" : "ACTIVE";
+      return matches[0].status === expected ? null : { label, reason: "Stato anagrafica cambiato" };
+    } catch {
+      return { label, reason: "Stato non verificabile" };
+    }
+  }));
+
+  const blocked = results.find(Boolean);
+  if (blocked) {
+    warn(blocked.reason, `${blocked.label}: riapri Home o modifica il testo per aggiornare l’analisi, poi premi Conferma.`);
+    return;
+  }
+
+  if (
+    edit_mode.data !== wasEditMode ||
+    (wasEditMode && editing_event.data?.id !== originalEvent.id) ||
+    input_raw.value !== payload.raw_input ||
+    (select1.value || "Evento") !== payload.type ||
+    fingerprint() !== initialFingerprint ||
+    !liveSnapshotValid() ||
+    (consent && !consentIsCurrent())
+  ) {
+    warn("Dati evento cambiati", "Controlla i dati correnti e premi di nuovo Conferma.");
+    return;
+  }
+
+  // Consume once, immediately before the only persistence branch.
+  if (consent) {
+    if (!await consumeConsent()) return;
+    if (fingerprint() !== initialFingerprint || !liveSnapshotValid()) {warnFresh();return;}
+  }
+  // Esegui il salvataggio prima di pulire input e selezioni.
+  try {
+    if (wasEditMode) {
+      await update_event.trigger({ additionalScope: { ...payload, confirm_event_id: originalEvent.id } });
+    } else {
+      await insert_event.trigger({ additionalScope: payload });
+    }
+  } catch {
+    warn("Salvataggio non verificato", "Controlla la lista eventi prima di riprovare.");
+    return;
+  }
+// Mantieni il lock anche durante il reset e la transizione al feedback.
+// Il finally è posto a fine handler per coprire entrambe le fasi.
+
+window.__logosAnalysisEpoch = (window.__logosAnalysisEpoch || 0)+1;
+await analysis_revision.setValue(String(window.__logosAnalysisEpoch));
+// RESET INPUT / SELECT PRIMA DEL FEEDBACK
+// Motivo: input_home.setValue("") può attivare handler di change.
+// Quindi il feedback va impostato come ultimo stato UI visibile.
+
+if (window.__parseTimer) {
+  clearTimeout(window.__parseTimer);
+  window.__parseTimer = null;
+}
+
+trigger_parse_debounced.cancel?.();
+
+window.__logosOwnedInputWrite = {raw:"",epoch:window.__logosAnalysisEpoch};
+await input_home.setValue("");
+await input_raw.setValue("");
+
+select_project.clearValue();
+select_entity.clearValue();
+select1.clearValue?.();
+
+// MOSTRA FEEDBACK COME ULTIMO STATO UI
+ui_state.setValue({
+  ...ui_state.value,
+  parsed: {
+    amount: null,
+    unit: null,
+    event_date: null
+  },
+  status: "success",
+  view: "feedback",
+  feedback_text: feedbackText,
+  feedback_project: feedbackProject,
+  feedback_summary: feedbackSummary
+});
+
+// ALLINEAMENTO CONTAINER ESPLICITO
+container_home.setHidden(true);
+container_input.setHidden(true);
+container_events_list.setHidden(true);
+container_feedback.setHidden(false);
+
+// ora la lista legge il dato aggiornato
+await events_new.trigger();
+
+// reset edit mode dopo il salvataggio
+if (wasEditMode) {
+  window.__logos_edit_mode_value = false;
+  await edit_mode.trigger();
+
+  window.__logos_editing_event_value = null;
+  await editing_event.trigger();
+}
+
+// --- AUTO RETURN AFTER FEEDBACK ---
+// Nuovo evento: feedback breve → Home
+// Modifica evento reale: feedback breve → Lista eventi
+// Gestito qui per evitare conflitti con insert_event/update_event success handlers.
+
+const returnViewAfterFeedback = wasEditMode ? "events" : "home";
+const feedbackEpoch = window.__logosAnalysisEpoch;
+
+if (window.__logos_feedback_timer) {
+  clearTimeout(window.__logos_feedback_timer);
+  window.__logos_feedback_timer = null;
+}
+
+window.__logos_feedback_timer = setTimeout(() => {
+  if (window.__logosAnalysisEpoch !== feedbackEpoch) return;
+  ui_state.setValue({
+    ...ui_state.value,
+    view: returnViewAfterFeedback,
+    parsed: {
+      amount: null,
+      unit: null,
+      event_date: null
+    },
+    status: "idle",
+    feedback_text: null,
+    feedback_project: null,
+    feedback_summary: null
+  });
+
+  container_feedback.setHidden(true);
+  container_input.setHidden(true);
+
+  if (returnViewAfterFeedback === "events") {
+    container_home.setHidden(true);
+    container_events_list.setHidden(false);
+  } else {
+    container_events_list.setHidden(true);
+    container_home.setHidden(false);
+  }
+
+  window.__logos_feedback_timer = null;
+}, 1800);
+} finally {
+  window.__logosEventConfirmPending = false;
+  }
+```
+
+### q2-source-edit-mode-query
+
+`edit_mode.template.query` — sorgente integrale. SHA-256 UTF-8/LF `eb5078e00cff573b73d40e722e87a0905ec3c1aa4a83f2b9af2232c0b3363faa`, 196 byte.
+
+```js
+const key = "__logos_edit_mode_value";
+
+if (!Object.prototype.hasOwnProperty.call(window, key)) {
+  return false;
+}
+
+const nextValue = window[key];
+
+delete window[key];
+
+return Boolean(nextValue);
+```
+
+### q2-source-editing-event-query
+
+`editing_event.template.query` — sorgente integrale. SHA-256 UTF-8/LF `fe7c00c9ea31e2c69adfd17e5bf2e839bce30d38d941fcbf0230422377d5bd34`, 198 byte.
+
+```js
+const key = "__logos_editing_event_value";
+
+if (!Object.prototype.hasOwnProperty.call(window, key)) {
+  return null;
+}
+
+const nextValue = window[key];
+
+delete window[key];
+
+return nextValue ?? null;
+```
+
+### Q2 — stato di consenso e endpoint persistenti
+
+Modelli integrali originali da Logos (47).json, invariati dal solo Delete. Non usare questo JSON come import o autorizzazione a eseguire query.
+
+```json
+{
+  "event_confirmation": {
+    "id": "event_confirmation",
+    "uuid": null,
+    "_comment": null,
+    "type": "state",
+    "subtype": "State",
+    "namespace": null,
+    "resourceName": null,
+    "resourceDisplayName": null,
+    "template": {
+      "value": "null"
+    },
+    "style": null,
+    "position2": null,
+    "mobilePosition2": null,
+    "mobileAppPosition": null,
+    "tabIndex": null,
+    "container": "",
+    "createdAt": "~m1794951823842",
+    "updatedAt": "~m1794951842460",
+    "folder": "",
+    "presetName": null,
+    "screen": "page1",
+    "boxId": null,
+    "subBoxIds": null
+  },
+  "insert_event": {
+    "id": "insert_event",
+    "uuid": null,
+    "_comment": null,
+    "type": "datasource",
+    "subtype": "RESTQuery",
+    "namespace": null,
+    "resourceName": "8630d849-f250-4840-a005-47810223f6ea",
+    "resourceDisplayName": "supabase_api_secure_test",
+    "template": {
+      "queryRefreshTime": "",
+      "paginationLimit": "",
+      "allowedGroupIds": [],
+      "openAPIRequestBody": "",
+      "streamResponse": false,
+      "body": "{{ JSON.stringify({\n  raw_input: raw_input,\n  type: type,\n  amount: amount,\n  unit: unit,\n  event_date: event_date,\n  project_id: project_id,\n  entity_id: entity_id,\n  status: \"NEW\",\n  updated_at: new Date().toISOString(),\n  payload: {}\n}) }}",
+      "lastReceivedFromResourceAt": null,
+      "isFunction": false,
+      "functionParameters": null,
+      "queryDisabledMessage": "",
+      "servedFromCache": false,
+      "openAPIResolvedSpec": "",
+      "offlineUserQueryInputs": "",
+      "functionDescription": null,
+      "successMessage": "",
+      "queryDisabled": "",
+      "playgroundQuerySaveId": "latest",
+      "workflowParams": null,
+      "resourceNameOverride": "",
+      "runWhenModelUpdates": false,
+      "paginationPaginationField": "",
+      "workflowRunExecutionType": "sync",
+      "headers": "[]",
+      "showFailureToaster": true,
+      "paginationEnabled": false,
+      "query": "events",
+      "playgroundQueryUuid": "",
+      "playgroundQueryId": null,
+      "error": null,
+      "workflowRunBodyType": "raw",
+      "privateParams": [],
+      "queryRunOnSelectorUpdate": false,
+      "runWhenPageLoadsDelay": "",
+      "data": null,
+      "importedQueryInputs": {},
+      "_additionalScope": [],
+      "isImported": false,
+      "showSuccessToaster": true,
+      "cacheKeyTtl": "",
+      "requestSentTimestamp": null,
+      "cookies": "",
+      "metadata": null,
+      "queryRunTime": null,
+      "changesetObject": "",
+      "offlineOptimisticResponse": null,
+      "errorTransformer": "return data.error",
+      "finished": null,
+      "confirmationMessage": null,
+      "isFetching": false,
+      "changeset": "",
+      "openAPIOperationId": "",
+      "rawData": null,
+      "queryTriggerDelay": "0",
+      "resourceTypeOverride": "",
+      "watchedParams": [],
+      "enableErrorTransformer": false,
+      "showLatestVersionUpdatedWarning": false,
+      "paginationDataField": "",
+      "timestamp": 0,
+      "openAPIParams": "{}",
+      "importedQueryDefaults": {},
+      "enableTransformer": false,
+      "showUpdateSetValueDynamicallyToggle": true,
+      "version": 2,
+      "overrideOrgCacheForUserCache": false,
+      "runWhenPageLoads": false,
+      "transformer": "return data",
+      "events": [],
+      "isMultiplayerEdited": false,
+      "queryTimeout": "10000",
+      "workflowId": null,
+      "requireConfirmation": false,
+      "type": "POST",
+      "queryFailureConditions": "",
+      "forceResponseBase64": false,
+      "changesetIsObject": false,
+      "enableCaching": false,
+      "allowedGroups": [],
+      "bodyType": "raw",
+      "offlineQueryType": "None",
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false,
+      "notificationDuration": ""
+    },
+    "style": null,
+    "position2": null,
+    "mobilePosition2": null,
+    "mobileAppPosition": null,
+    "tabIndex": null,
+    "container": "",
+    "createdAt": "~m1774639028174",
+    "updatedAt": "~m1793133328883",
+    "folder": "",
+    "presetName": null,
+    "screen": "page1",
+    "boxId": null,
+    "subBoxIds": null
+  },
+  "update_event": {
+    "id": "update_event",
+    "uuid": null,
+    "_comment": null,
+    "type": "datasource",
+    "subtype": "RESTQuery",
+    "namespace": null,
+    "resourceName": "8630d849-f250-4840-a005-47810223f6ea",
+    "resourceDisplayName": "supabase_api_secure_test",
+    "template": {
+      "queryRefreshTime": "",
+      "paginationLimit": "",
+      "allowedGroupIds": [],
+      "openAPIRequestBody": "",
+      "streamResponse": false,
+      "body": "{{ JSON.stringify({\n  raw_input: raw_input,\n  type: type,\n  amount: amount,\n  unit: unit,\n  event_date: event_date,\n  project_id: project_id,\n  entity_id: entity_id,\n  updated_at: new Date().toISOString()\n}) }}",
+      "lastReceivedFromResourceAt": null,
+      "isFunction": false,
+      "functionParameters": null,
+      "queryDisabledMessage": "",
+      "servedFromCache": false,
+      "openAPIResolvedSpec": "",
+      "offlineUserQueryInputs": "",
+      "functionDescription": null,
+      "successMessage": "",
+      "queryDisabled": "",
+      "playgroundQuerySaveId": "latest",
+      "workflowParams": null,
+      "resourceNameOverride": "",
+      "runWhenModelUpdates": false,
+      "paginationPaginationField": "",
+      "workflowRunExecutionType": "sync",
+      "headers": "[]",
+      "showFailureToaster": true,
+      "paginationEnabled": false,
+      "query": "events?id=eq.{{ confirm_event_id }}",
+      "playgroundQueryUuid": "",
+      "playgroundQueryId": null,
+      "error": null,
+      "workflowRunBodyType": "raw",
+      "privateParams": [],
+      "queryRunOnSelectorUpdate": false,
+      "runWhenPageLoadsDelay": "",
+      "data": null,
+      "importedQueryInputs": {},
+      "_additionalScope": [],
+      "isImported": false,
+      "showSuccessToaster": true,
+      "cacheKeyTtl": "",
+      "requestSentTimestamp": null,
+      "cookies": "",
+      "metadata": null,
+      "queryRunTime": null,
+      "changesetObject": "",
+      "offlineOptimisticResponse": null,
+      "errorTransformer": "return data.error",
+      "finished": null,
+      "confirmationMessage": null,
+      "isFetching": false,
+      "changeset": "",
+      "openAPIOperationId": "",
+      "rawData": null,
+      "queryTriggerDelay": "0",
+      "resourceTypeOverride": "",
+      "watchedParams": [],
+      "enableErrorTransformer": false,
+      "showLatestVersionUpdatedWarning": false,
+      "paginationDataField": "",
+      "timestamp": 0,
+      "openAPIParams": "{}",
+      "importedQueryDefaults": {},
+      "enableTransformer": false,
+      "showUpdateSetValueDynamicallyToggle": true,
+      "version": 2,
+      "overrideOrgCacheForUserCache": false,
+      "runWhenPageLoads": false,
+      "transformer": "return data",
+      "events": [],
+      "isMultiplayerEdited": false,
+      "queryTimeout": "10000",
+      "workflowId": null,
+      "requireConfirmation": false,
+      "type": "PATCH",
+      "queryFailureConditions": "",
+      "forceResponseBase64": false,
+      "changesetIsObject": false,
+      "enableCaching": false,
+      "allowedGroups": [],
+      "bodyType": "raw",
+      "offlineQueryType": "None",
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false,
+      "notificationDuration": ""
+    },
+    "style": null,
+    "position2": null,
+    "mobilePosition2": null,
+    "mobileAppPosition": null,
+    "tabIndex": null,
+    "container": "",
+    "createdAt": "~m1776864872212",
+    "updatedAt": "~m1794729592007",
+    "folder": "",
+    "presetName": null,
+    "screen": "page1",
+    "boxId": null,
+    "subBoxIds": null
+  }
+}
+```
+
+Configurazione di esecuzione confirm_event:
+
+```json
+{
+  "queryDisabled": "",
+  "runWhenModelUpdates": false,
+  "_additionalScope": [
+    "confirmation_action"
+  ],
+  "runWhenPageLoads": false,
+  "events": [],
+  "enableCaching": false,
+  "queryThrottleTime": "750",
+  "updateSetValueDynamically": true
+}
+```
 
 CHANGELOG
 ------------------------------------------------
@@ -3060,3 +3840,5 @@ v13 — 2026-06-15
 v15 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v16 — 2026-11-16 — N21/DOC PREPARE R03: integrati no-op, FK, preflight, PATCH e limiti transazionali nelle sezioni del lifecycle.
+
+v17 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

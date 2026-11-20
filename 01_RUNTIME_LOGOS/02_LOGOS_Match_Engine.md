@@ -1,6 +1,25 @@
-# 02_LOGOS_Match_Engine_v14
+# 02_LOGOS_Match_Engine_v15
+Versione: v15
+DATA: 2026-11-20
 
-DATA: 2026-11-16
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Contratto finale Q2 — riconoscimento e associazione
+
+Il riconoscimento canonico N21 opera sul repertorio completo indipendentemente da Stato; le funzioni interne restano quelle esistenti dentro adapter request-scoped. Q2 aggiunge correlazione della richiesta e consuma i risultati tramite analysis_snapshot: non introduce fuzzy, ranking, lookup manuale INACTIVE o matcher paralleli.
+
+| Caso per singolo livello | Associazione finale |
+| --- | --- |
+| Selezione ACTIVE valida | Selezione ordinaria prevalente, nessuna domanda di Stato |
+| Stessa FK storica in edit | Preservata anche INACTIVE/NULL; nessuna nuova autorizzazione implicita |
+| Nessuna selezione valida prevalente, unico candidato canonico INACTIVE | IAR richiede Collega/Non collegare con token contestuale; solo Collega propone candidateId |
+| Candidato NULL o Stato inatteso | Nessuna nuova associazione eccezionale |
+| Ambiguità canonica non risolta | Blocco esistente conservato; non selezionare arbitrariamente un INACTIVE |
+| Nessun candidato riconosciuto | Associazione facoltativa e suggerimenti pertinenti; nessuna ricerca manuale INACTIVE aggiunta |
+
+Project ed Entity sono indipendenti. IAR costruisce la proiezione, renderer e controlli rappresentano, il [coordinatore](03_LOGOS_Event_Lifecycle.md#contratto-finale-q2--conferma-unica) ricontrolla snapshot e nuovi UUID. Nessuna modifica automatica dello Stato anagrafico. Le descrizioni N21 precedenti sono la base storica; l’esclusività ACTIVE sulle nuove FK ha ora la sola deroga Q2 esplicita.
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
 
 ## Contratto corrente N21 — riconoscimento e associabilità
 
@@ -314,7 +333,7 @@ Il matching non normalizza amount/unit/date.
 La normalizzazione base è gestita dal layer input/parser:
 
 parse_input_controlled
-→ ui_state.parsed
+→ risultato del parser correlato nel bundle → analysis_snapshot.parsed (mirror compatibile ui_state.parsed nello stesso publish)
 
 Il matching resta dedicato a:
 
@@ -473,15 +492,7 @@ Il Match Engine resta composto da:
 - project_state
 - entity_state
 
-input_analysis_result può leggere:
-
-- project_state.data
-- entity_state.data
-- select_project.value
-- select_entity.value
-- create_suggestion_state.data
-- command_intent_state.data
-- preview_analysis_state.value
+input_analysis_result legge i risultati correlati analysis_snapshot.project/entity/command/suggestion/parsed, i controlli e i cataloghi correnti e preview_analysis_state. project_state/entity_state restano le origini canoniche del riconoscimento; non si consumano i loro .data indipendenti come autorità di questo bundle.
 
 ma non calcola:
 
@@ -551,7 +562,7 @@ ma continua a NON:
 
 button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm.
 
-button_input_confirm.Disabled resta separato e continua a leggere ambiguità/select secondo la guard funzionale esistente.
+button_input_confirm.Disabled resta una proprietà del componente: usa readiness.canConfirm, confirm_event.isFetching e validità dei choiceValues correnti, con guardie finali nel coordinatore.
 
 ------------------------------------------------
 ENTITÀ COINVOLTE
@@ -575,26 +586,23 @@ POSIZIONE NEL RUNTIME ATTUALE
 
 Il matching opera dentro il seguente flow:
 
-input_home  
-→ input_raw  
-→ trigger_parse_debounced  
-→ ui_visibility_mode  
-→ command_intent_state  
-→ parse_input_controlled  
-→ ui_state.parsed  
-→ project_state / entity_state  
-→ create_suggestion_state  
-→ preview_analysis_state  
-→ input_analysis_result  
-→ preview / hint / highlight / suggestion container / Dati evento / Confirm Hidden  
-→ select_project / select_entity  
-→ button_input_confirm oppure command action  
+input_home → input_raw e invalidazione della revisione/consenso
+→ trigger_parse_debounced: richiesta identificata per revisione, testo e contesto
+→ parser, project_state, entity_state e Command Intent canonici sulla stessa richiesta
+→ suggestion canonica correlata → unico publish di ui_state.analysis e mirror ui_state.parsed
+→ analysis_snapshot validato → IAR, Select ordinarie, Tipo e preview
+→ decisioni INACTIVE contestuali nelle Select inline, se richieste
+→ button_input_confirm delega confirm_event(begin)
+→ guardie/lock, no-op e command guard → preflight e verifica fingerprint/consume-once
+→ un solo ramo insert_event oppure update_event
+→ dopo successo: reset, refresh e feedback/routing contestuale.
+La creazione Project/Entity resta un’azione separata già esistente, non un secondo salvataggio evento.
 
 ---
 
 Dopo lo STEP 6.4 — MATCH ENGINE UNIFICATION — FIRST CONTROLLED LEVEL:
 
-- amount / unit / event_date restano gestiti da ui_state.parsed
+- amount / unit / event_date provengono da analysis_snapshot.parsed validato; ui_state.parsed è mirror compatibile
 - type resta gestito da select1.value
 - project/entity matching è calcolato da project_state / entity_state
 - select_project / select_entity leggono singleMatch
@@ -829,7 +837,7 @@ NORMALIZATION LAYER BASE:
 - duration normalization
 
 Fonte:
-parse_input_controlled → ui_state.parsed
+parse_input_controlled sulla richiesta canonica → trigger_parse_debounced verifica la correlazione → unico publish di ui_state.analysis con mirror parsed → analysis_snapshot.parsed validato
 
 MATCH NORMALIZATION:
 
@@ -841,7 +849,7 @@ MATCH NORMALIZATION:
 - moreSpecificMatches
 
 Fonte:
-input_raw → project_state / entity_state
+testo e repertori congelati in analysis_request → project_state / entity_state canonici → risultati correlati nel bundle
 
 ---
 
@@ -851,7 +859,7 @@ il matching può leggere input_raw perché project/entity sono contenuti nel tes
 
 input_raw NON torna fonte di verità per amount/unit/event_date.
 
-ui_state.parsed resta fonte unica per i dati parsati strutturati.
+analysis_snapshot.parsed è il risultato parsato validato per i consumer Q2; ui_state.parsed resta la proiezione compatibile dello stesso publish.
 
 ------------------------------------------------
 PROJECT MATCH ATTUALE
@@ -859,13 +867,13 @@ PROJECT MATCH ATTUALE
 
 ### MATCH CON VARIANTI E PREFISSI
 
-`project_state` legge `input_raw.value` e `projects_list.data`; `entity_state` legge lo stesso input e `entities_list.data`. Lo Stato non restringe i repertori. `matches` contiene risultati con UUID, `count` è il loro numero, `hasMatch` vale sopra zero, `isAmbiguous` sopra uno e `singleMatch` è valorizzato soltanto con un candidato. In presenza di una base unica, `moreSpecificMatches` espone nomi su UUID diversi che iniziano col nome base seguito da spazio.
+I corpi canonici di project_state/entity_state ricevono testo e cataloghi della richiesta analysis_request. Lo Stato non restringe i repertori. matches contiene candidati per UUID, count il loro numero, hasMatch vale sopra zero, isAmbiguous sopra uno e singleMatch esiste soltanto con un candidato. I consumer Q2 leggono i risultati correlati analysis_snapshot.project/entity, non output indipendenti di esecuzioni diverse.
 
 Il primo token immediatamente dopo la base individuata nel testo rende plausibile una variante se coincide con il primo token numerico del suffisso o, per testo di almeno tre caratteri, ne è prefisso. `plausibleAlternatives` entra nei candidati canonici per UUID senza sostituire la base. Perciò Casa Mar con Casa e Casa Mare porta a scelta manuale, mentre Casa esatta resta riconosciuta quando la sola esistenza di Casa Mare non rende plausibile un suffisso digitato. I flag `hasMoreSpecificMatches` e `hasPlausibleAlternatives` espongono separatamente la presenza delle due liste.
 
 Solo Project aggiunge `prefixAlternatives`. Quando i candidati B1 sono zero, per ogni record si cerca il più lungo prefisso proprio di almeno due token interi presente come sequenza contigua nell’input. Si espongono i gruppi condivisi da almeno due record, deduplicati per UUID. Cucciolata Marzo può così mostrare 2025 e 2026 lasciando `count=0` e `singleMatch=null`. Questo ramo non seleziona, non altera gli output B1 e non rende ambiguo un campo che prima non lo era.
 
-`project_id` e `entity_id` persistono solo tramite le Select. Il match unico può identificare INACTIVE/NULL anche se la Select non lo preseleziona nei nuovi eventi. L’UUID storico viene mantenuto in edit dal [wiring delle Select](04_LOGOS_Retool_Architecture.md#inventario-funzionale-n21). Il matcher Entity non acquisisce la regola del prefisso informativo Project. La creazione da comando rimane separata.
+Le Select ordinarie usano i singleMatch di analysis_snapshot: nuove preselezioni soltanto ACTIVE, oppure FK storiche in edit. IAR risolve association.selectedId e l’eventuale candidato canonico unico INACTIVE senza selezione valida prevalente. Il coordinatore usa finalAssociationId: selectedId se non serve decisione; candidateId con Collega; null con Non collegare. Le due decisioni sono indipendenti. NULL non abilita nuove eccezioni, le FK storiche restano preservate. Non esiste ricerca manuale INACTIVE aggiuntiva. Il matcher Entity non acquisisce la regola del prefisso informativo Project. La creazione da comando rimane separata.
 
 RELAZIONE CON CREATE SUGGESTION:
 
@@ -901,8 +909,8 @@ AUTO-SELECT LOGIC
 
 Auto-select SOLO tramite:
 
-project_state.data.singleMatch  
-entity_state.data.singleMatch  
+analysis_snapshot.value?.project?.singleMatch  
+analysis_snapshot.value?.entity?.singleMatch  
 
 Nota post UI Readiness:
 
@@ -927,16 +935,16 @@ Non può valorizzare:
 
 Non può sostituire:
 
-- project_state.data.singleMatch
-- entity_state.data.singleMatch
+- analysis_snapshot.value?.project?.singleMatch
+- analysis_snapshot.value?.entity?.singleMatch
 
 La selezione automatica resta limitata a singleMatch prodotto da project_state / entity_state.
 
 Nota post Visibility Migration Completion:
 
-la migrazione degli Hidden principali a input_analysis_result era una modifica di visibilità. Le Select sono ora regolate da B2/R01.
+La migrazione storica degli Hidden non modificava i default; i binding finali Q2 usano lo snapshot con le guardie ordinarie N21 mantenute.
 
-In un nuovo evento i due default leggono rispettivamente il `singleMatch` di Project ed Entity e restituiscono il suo UUID soltanto se ACTIVE. In edit restituiscono la rispettiva FK persistita o null. La scelta manuale lavora sul repertorio completo e le opzioni non ACTIVE sono disabilitate eccetto l’UUID storico invariato. La Select resta l’autorità sulla FK.
+In un nuovo evento i default restituiscono il singleMatch dello snapshot soltanto se ACTIVE. In edit restituiscono la FK persistita o null. Le opzioni non ACTIVE restano disabilitate salvo l’UUID storico invariato. Questa regola delle Select ordinarie è distinta dall’eccezione INACTIVE esplicita risolta dal coordinatore.
 
 NON auto-select se:
 
@@ -950,7 +958,7 @@ NON auto-select se:
 Regola:
 
 il match engine suggerisce.
-La select è la fonte finale salvabile.
+La Select ordinaria fornisce la selezione; la FK finale dell’evento è risolta da confirm_event sulla proiezione IAR e sulle eventuali decisioni inline.
 L’utente mantiene controllo.
 
 ------------------------------------------------
@@ -959,8 +967,8 @@ GESTIONE AMBIGUITÀ
 
 Ambiguità calcolata da:
 
-project_state.data.isAmbiguous  
-entity_state.data.isAmbiguous  
+analysis_snapshot.value?.project?.isAmbiguous
+analysis_snapshot.value?.entity?.isAmbiguous
 
 ---
 
@@ -1321,14 +1329,14 @@ Dopo:
 
 preview legge:
 
-- project_state.data.matches
-- entity_state.data.matches
-- project_state.data.count
-- entity_state.data.count
-- project_state.data.isAmbiguous
-- entity_state.data.isAmbiguous
-- project_state.data.hasMoreSpecificMatches
-- entity_state.data.hasMoreSpecificMatches
+- analysis_snapshot.value?.project?.matches
+- analysis_snapshot.value?.entity?.matches
+- analysis_snapshot.value?.project?.count
+- analysis_snapshot.value?.entity?.count
+- analysis_snapshot.value?.project?.isAmbiguous
+- analysis_snapshot.value?.entity?.isAmbiguous
+- analysis_snapshot.value?.project?.hasMoreSpecificMatches
+- analysis_snapshot.value?.entity?.hasMoreSpecificMatches
 
 ---
 
@@ -1417,15 +1425,7 @@ RELAZIONE CON CREATE SUGGESTION
 
 create_suggestion_state è un layer successivo al matching.
 
-Consuma:
-
-- input_raw.value
-- project_state.data
-- entity_state.data
-- projects_list.data
-- entities_list.data
-- select_project.value
-- select_entity.value
+Nel flow Q2 l’adapter di create_suggestion_state riceve dalla medesima analysis_request il testo e i cataloghi congelati, i risultati canonici Project/Entity correlati e gli UUID delle selezioni catturate. Il corpo canonico continua a usare i propri parametri locali, non un matcher alternativo. Il trigger verifica __logosRequestId e pubblica suggestion nello stesso bundle.
 
 Produce:
 
@@ -1802,7 +1802,7 @@ preview_analysis_state:
 
 input_analysis_result:
 
-- legge project_state / entity_state come raw match source
+- legge analysis_snapshot.project/entity come risultati correlati dei matcher canonici
 - legge select_project / select_entity come selection source
 - calcola effective usability
 - distingue event / command / edit flow
@@ -1810,7 +1810,7 @@ input_analysis_result:
 - non calcola singleMatch
 - non seleziona project/entity
 - non modifica il matching
-- non modifica confirm payload
+- non costruisce il payload; espone association contestuale usata dal builder unico in confirm_event
 - non salva dati
 - governa gli Hidden principali del flow input
 - espone canShowConfirm per la visibilità del bottone Conferma
@@ -1938,7 +1938,7 @@ LIMITI ATTUALI
 - Linting / Retool Query Safety Pass completato senza modificare matching
 - Full Visibility Migration degli Hidden principali completata
 - button_input_confirm.Hidden migrato
-- button_input_confirm.Disabled non migrato
+- Disabled resta proprietà del pulsante con readiness, fetching e confronto dei token; guardie finali in confirm_event
 - save readiness non centralizzata
 - cleanup obsolete UI guards / query reduction non ancora eseguito
 - nessuna creazione automatica silenziosa project/entity
@@ -1947,8 +1947,8 @@ LIMITI ATTUALI
 - preview ancora layer ibrido
 - hint duration/type ancora embedded nella preview
 - match engine avanzato separato non implementato
-- Status Semantics Alignment ancora aperto: badge OK può risultare semanticamente debole quando esiste una card Da verificare
-- Missing Association Notice Cleanup ancora aperto: balloon blu “Manca progetto / Manca entità” da rivalutare in nodo Preview/UX futuro
+- G35 / Status Semantics Alignment generale resta aperto; UX-R1 Q2 ha corretto badge e scelte richieste nel solo perimetro della conferma inline
+- Missing Association Notice Cleanup generale resta distinto; UX-R1 filtra solo i suggerimenti dello stesso livello già risolto
 - residui grafici/mobile polish da trattare in nodi UX dedicati o sessioni brevi
 
 ---
@@ -2324,13 +2324,15 @@ senza modificare il Match Engine.
 Il Match Engine resta invariato.
 
 project_state / entity_state restano la fonte minima matching.
-select_project / select_entity restano la fonte finale salvabile.
+Le Select ordinarie forniscono selezioni valide/storiche; la FK finale Q2 è risolta da confirm_event con la proiezione e le scelte inline.
 
 Il prossimo livello non è “rifare il Match Engine”,
 ma evolverlo tramite nodi dedicati.
 
 ------------------------------------------------
-STATO ATTUALE
+FOTOGRAFIA STORICA PRE-Q2 — ESITI DEI PASS PRECEDENTI
+
+Le attestazioni seguenti appartengono ai pass nominati (G22, G33, Visibility Migration e Linting). Non rappresentano il binding Disabled, il payload o il conteggio lint correnti Q2; valgono il contratto finale iniziale e le configurazioni in Architecture. Conservare le prove storiche e i limiti ancora validi.
 ------------------------------------------------
 
 ✔ matching base funzionante  
@@ -2414,6 +2416,417 @@ STATO ATTUALE
 ⚠ non ancora pronto per output/KPI affidabili senza ulteriori nodi data/economic/report readiness
 
 ------------------------------------------------
+## Q2 — sorgenti finali di competenza
+
+Trascrizioni integrali dai file effettivi, non candidate storiche o nuovo codice. Gli hash si riferiscono ai file sorgente UTF-8/LF nel pacchetto di review: per estrarli dal Markdown CRLF normalizzare soltanto EOL del contenitore. Non eliminare spazi iniziali/finali del codice. Provenienza dettagliata nel registro Runtime e nel manifest del lotto. Le descrizioni storiche precedenti non sostituiscono queste proprietà finali.
+
+### q2-source-project-state-query
+
+`project_state.template.query` — sorgente integrale. SHA-256 UTF-8/LF `02c3dca27b5c823d2da411a1f3c045ae9e8cb1b3b1b669e1139e6823bdbec446`, 6997 byte.
+
+```js
+// Q2: request-scoped adapter. Canonical body below is unchanged.
+const req = typeof analysis_request === "undefined" ? null : analysis_request;
+const values = req ? [
+  {value:req.raw}, {value:req.raw}, {data:req.projects}, {data:req.entities},
+  {data:req.project}, {data:req.entity}, {value:req.projectId}, {value:req.entityId}
+] : [input_home,input_raw,projects_list,entities_list,project_state,entity_state,select_project,select_entity];
+const result = ((input_home, input_raw, projects_list, entities_list, project_state, entity_state, select_project, select_entity) => {
+const text = input_raw.value?.trim() || "";
+const projects = projects_list.data || [];
+
+const normalize = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const escapeRegex = (str) =>
+  String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const cleanText = normalize(text);
+
+if (!cleanText || cleanText.length < 3) {
+  return {
+    matches: [],
+    count: 0,
+    hasMatch: false,
+    isAmbiguous: false,
+    singleMatch: null,
+    moreSpecificMatches: [],
+    hasMoreSpecificMatches: false,
+    plausibleAlternatives: [],
+    hasPlausibleAlternatives: false,
+    prefixAlternatives: []
+  };
+}
+
+// Token testuali a confine parola: un nome non deve coincidere con una sottostringa.
+const inputWords = cleanText.match(/[a-z0-9]+/g) || [];
+
+const hasFullNameInText = (name) => {
+  const cleanName = normalize(name);
+  if (!cleanName) return false;
+
+  const parts = cleanName
+    .split(" ")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (!parts.length) return false;
+
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+  return regex.test(cleanText);
+};
+
+const baseMatches = projects.filter((p) => {
+  const name = normalize(p.name);
+  if (!name) return false;
+
+  const nameTokens = name.match(/[a-z0-9]+/g) || [];
+  const meaningfulWords = nameTokens.filter((w) => w.length > 2 && !/^\d+$/.test(w));
+
+  // Nome numerico: richiediamo la frase completa, non un numero ricavato
+  // accidentalmente dall'importo/durata/data dell'evento.
+  if (nameTokens.some((w) => /^\d+$/.test(w))) {
+    if (!hasFullNameInText(p.name)) return false;
+
+    // Se dopo il nome numerico compare subito un'unita' di misura,
+    // il numero puo' appartenere al valore dell'evento: scelta manuale.
+    const pattern = name.split(" ").map(escapeRegex).join("\\s+");
+    const numericValueContext = new RegExp(
+      `\\b${pattern}\\b\\s*(?:\\b(?:euro|eur|ora|ore|h|min|minuto|minuti)\\b|€)`, "i"
+    ).test(cleanText);
+    return !numericValueContext;
+  }
+
+  // Evita il match vacuo su nomi brevi (es. "A", "2").
+  return hasFullNameInText(p.name) ||
+    (meaningfulWords.length > 0 && meaningfulWords.every((w) => inputWords.includes(w)));
+});
+
+// Priorità ai nomi completi realmente presenti nel testo
+const fullNameMatches = baseMatches.filter((p) =>
+  hasFullNameInText(p.name)
+);
+
+let candidates = baseMatches;
+
+if (fullNameMatches.length > 0) {
+  candidates = fullNameMatches;
+}
+
+// Rimuove match generici coperti da match più specifici.
+// Esempi:
+// Casa + Casa Mare → Casa Mare
+// Ristrutturazione + Ristrutturazione Bagno → Ristrutturazione Bagno
+// Villa + Villa 2 → Villa 2
+candidates = candidates.filter((p) => {
+  const name = normalize(p.name);
+
+  return !candidates.some((other) => {
+    if (other.id === p.id) return false;
+
+    const otherName = normalize(other.name);
+
+    return (
+      otherName.length > name.length &&
+      (` ${otherName} `).includes(` ${name} `)
+    );
+  });
+});
+
+// Questa è la corrispondenza prima di valutare eventuali varianti
+// digitate parzialmente. Le varianti plausibili richiedono scelta manuale.
+const baseSingleMatch = candidates.length === 1 ? candidates[0] : null;
+let moreSpecificMatches = [];
+
+if (baseSingleMatch) {
+  moreSpecificMatches = projects.filter((p) => {
+    if (p.id === baseSingleMatch.id) {
+      return false;
+    }
+
+    const baseName = normalize(baseSingleMatch.name);
+    const otherName = normalize(p.name);
+
+    if (!baseName || !otherName) {
+      return false;
+    }
+
+    return otherName.startsWith(`${baseName} `);
+  });
+}
+
+// Alternativa plausibile: il token immediatamente dopo il nome-base
+// coincide con l'inizio della prima parola del suffisso di un nome esistente.
+// La soglia 3 caratteri e' gia' usata dalla suggestion; numeri solo esatti.
+const plausibleAlternatives = [];
+if (baseSingleMatch && moreSpecificMatches.length > 0) {
+  const baseName = normalize(baseSingleMatch.name);
+  const parts = baseName.split(" ").filter(Boolean);
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const typedSuffix = cleanText.match(new RegExp(`\\b${pattern}\\b\\s+([a-z0-9]+)`, "i"))?.[1] || "";
+
+  if (typedSuffix) {
+    for (const candidate of moreSpecificMatches) {
+      const suffix = normalize(candidate.name).slice(baseName.length).trim();
+      const first = suffix.split(" ")[0] || "";
+      const isNumber = /^\d+$/.test(typedSuffix);
+      const plausible = isNumber
+        ? first === typedSuffix
+        : typedSuffix.length >= 3 && first.startsWith(typedSuffix);
+      if (plausible) plausibleAlternatives.push(candidate);
+    }
+  }
+}
+
+// Non preselezionare la base se il testo suggerisce una variante diversa.
+if (plausibleAlternatives.length > 0) {
+  const seen = new Set(candidates.map((c) => c.id));
+  for (const candidate of plausibleAlternatives) {
+    if (!seen.has(candidate.id)) {
+      candidates.push(candidate);
+      seen.add(candidate.id);
+    }
+  }
+}
+const singleMatch = candidates.length === 1 ? candidates[0] : null;
+
+// Prefissi di parole intere, solo a fini informativi quando B1 non ha match.
+const prefixAlternatives = [];
+if (candidates.length === 0) {
+  const byPrefix = new Map();
+  const wordsIn = (" " + inputWords.join(" ") + " ");
+  for (const project of projects) {
+    const words = normalize(project.name).match(/[a-z0-9]+/g) || [];
+    for (let size = words.length - 1; size >= 2; size--) {
+      const prefix = words.slice(0, size).join(" ");
+      if (!wordsIn.includes(" " + prefix + " ")) continue;
+      if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+      byPrefix.get(prefix).push(project);
+      break;
+    }
+  }
+  const seen = new Set();
+  for (const group of byPrefix.values()) {
+    if (group.length < 2) continue;
+    for (const project of group) {
+      if (seen.has(project.id)) continue;
+      seen.add(project.id);
+      prefixAlternatives.push(project);
+    }
+  }
+}
+
+return {
+  matches: candidates,
+  count: candidates.length,
+  hasMatch: candidates.length > 0,
+  isAmbiguous: candidates.length > 1,
+  singleMatch: singleMatch,
+  moreSpecificMatches: moreSpecificMatches,
+  hasMoreSpecificMatches: moreSpecificMatches.length > 0,
+  plausibleAlternatives,
+  hasPlausibleAlternatives: plausibleAlternatives.length > 0,
+  prefixAlternatives
+};
+})(...values);
+return {...result, __logosRequestId:req?.id || null};
+```
+
+### q2-source-entity-state-query
+
+`entity_state.template.query` — sorgente integrale. SHA-256 UTF-8/LF `2807fc720369ebbc38da0e39d47dbbd2201f71f726eee1d311fce0432c9a43a5`, 5845 byte.
+
+```js
+// Q2: request-scoped adapter. Canonical body below is unchanged.
+const req = typeof analysis_request === "undefined" ? null : analysis_request;
+const values = req ? [
+  {value:req.raw}, {value:req.raw}, {data:req.projects}, {data:req.entities},
+  {data:req.project}, {data:req.entity}, {value:req.projectId}, {value:req.entityId}
+] : [input_home,input_raw,projects_list,entities_list,project_state,entity_state,select_project,select_entity];
+const result = ((input_home, input_raw, projects_list, entities_list, project_state, entity_state, select_project, select_entity) => {
+const text = input_raw.value?.trim() || "";
+const entities = entities_list.data || [];
+
+const normalize = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const escapeRegex = (str) =>
+  String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const cleanText = normalize(text);
+
+if (!cleanText || cleanText.length < 3) {
+  return {
+    matches: [],
+    count: 0,
+    hasMatch: false,
+    isAmbiguous: false,
+    singleMatch: null,
+    moreSpecificMatches: [],
+    hasMoreSpecificMatches: false,
+    plausibleAlternatives: [],
+    hasPlausibleAlternatives: false
+  };
+}
+
+const inputWords = cleanText.match(/[a-z0-9]+/g) || [];
+
+const hasFullNameInText = (name) => {
+  const cleanName = normalize(name);
+  if (!cleanName) return false;
+
+  const parts = cleanName
+    .split(" ")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (!parts.length) return false;
+
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+  return regex.test(cleanText);
+};
+
+const baseMatches = entities.filter((e) => {
+  const name = normalize(e.name);
+  if (!name) return false;
+
+  const nameTokens = name.match(/[a-z0-9]+/g) || [];
+  const meaningfulWords = nameTokens.filter((w) => w.length > 2 && !/^\d+$/.test(w));
+
+  // Un suffisso numerico dell'entità non può sparire dal riconoscimento.
+  if (nameTokens.some((w) => /^\d+$/.test(w))) {
+    if (!hasFullNameInText(e.name)) return false;
+
+    // Se dopo il nome numerico compare subito un'unita' di misura,
+    // il numero puo' appartenere al valore dell'evento: scelta manuale.
+    const pattern = name.split(" ").map(escapeRegex).join("\\s+");
+    const numericValueContext = new RegExp(
+      `\\b${pattern}\\b\\s*(?:\\b(?:euro|eur|ora|ore|h|min|minuto|minuti)\\b|€)`, "i"
+    ).test(cleanText);
+    return !numericValueContext;
+  }
+
+  return hasFullNameInText(e.name) ||
+    (meaningfulWords.length > 0 && meaningfulWords.every((w) => inputWords.includes(w)));
+});
+
+// Priorità ai nomi completi realmente presenti nel testo
+const fullNameMatches = baseMatches.filter((e) =>
+  hasFullNameInText(e.name)
+);
+
+let candidates = baseMatches;
+
+if (fullNameMatches.length > 0) {
+  candidates = fullNameMatches;
+}
+
+// Rimuove match generici coperti da match più specifici.
+// Esempi:
+// Marco + Marco Rossi → Marco Rossi
+// Mario + Mario Rossi → Mario Rossi
+// Cliente + Cliente Test → Cliente Test
+candidates = candidates.filter((e) => {
+  const name = normalize(e.name);
+
+  return !candidates.some((other) => {
+    if (other.id === e.id) return false;
+
+    const otherName = normalize(other.name);
+
+    return (
+      otherName.length > name.length &&
+      (` ${otherName} `).includes(` ${name} `)
+    );
+  });
+});
+
+// Questa è la corrispondenza prima di valutare eventuali varianti
+// digitate parzialmente. Le varianti plausibili richiedono scelta manuale.
+const baseSingleMatch = candidates.length === 1 ? candidates[0] : null;
+let moreSpecificMatches = [];
+
+if (baseSingleMatch) {
+  moreSpecificMatches = entities.filter((e) => {
+    if (e.id === baseSingleMatch.id) {
+      return false;
+    }
+
+    const baseName = normalize(baseSingleMatch.name);
+    const otherName = normalize(e.name);
+
+    if (!baseName || !otherName) {
+      return false;
+    }
+
+    return otherName.startsWith(`${baseName} `);
+  });
+}
+
+// Alternativa plausibile: il token immediatamente dopo il nome-base
+// coincide con l'inizio della prima parola del suffisso di un nome esistente.
+// La soglia 3 caratteri e' gia' usata dalla suggestion; numeri solo esatti.
+const plausibleAlternatives = [];
+if (baseSingleMatch && moreSpecificMatches.length > 0) {
+  const baseName = normalize(baseSingleMatch.name);
+  const parts = baseName.split(" ").filter(Boolean);
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const typedSuffix = cleanText.match(new RegExp(`\\b${pattern}\\b\\s+([a-z0-9]+)`, "i"))?.[1] || "";
+
+  if (typedSuffix) {
+    for (const candidate of moreSpecificMatches) {
+      const suffix = normalize(candidate.name).slice(baseName.length).trim();
+      const first = suffix.split(" ")[0] || "";
+      const isNumber = /^\d+$/.test(typedSuffix);
+      const plausible = isNumber
+        ? first === typedSuffix
+        : typedSuffix.length >= 3 && first.startsWith(typedSuffix);
+      if (plausible) plausibleAlternatives.push(candidate);
+    }
+  }
+}
+
+// Non preselezionare la base se il testo suggerisce una variante diversa.
+if (plausibleAlternatives.length > 0) {
+  const seen = new Set(candidates.map((c) => c.id));
+  for (const candidate of plausibleAlternatives) {
+    if (!seen.has(candidate.id)) {
+      candidates.push(candidate);
+      seen.add(candidate.id);
+    }
+  }
+}
+const singleMatch = candidates.length === 1 ? candidates[0] : null;
+
+return {
+  matches: candidates,
+  count: candidates.length,
+  hasMatch: candidates.length > 0,
+  isAmbiguous: candidates.length > 1,
+  singleMatch: singleMatch,
+  moreSpecificMatches: moreSpecificMatches,
+  hasMoreSpecificMatches: moreSpecificMatches.length > 0,
+  plausibleAlternatives,
+  hasPlausibleAlternatives: plausibleAlternatives.length > 0
+};
+})(...values);
+return {...result, __logosRequestId:req?.id || null};
+```
+
 CHANGELOG
 ------------------------------------------------
 
@@ -2707,3 +3120,5 @@ v12 — 2026-06-04
 v13 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v14 — 2026-11-16 — N21/DOC PREPARE R03: integrate regole B1 e varianti UX nelle sezioni di matching e suggestion.
+
+v15 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

@@ -1,9 +1,23 @@
-# 01_LOGOS_Input_System_v24
-Versione: v24
+# 01_LOGOS_Input_System_v25
+Versione: v25
 
-DATA: 2026-11-16
+DATA: 2026-11-20
 
-## Raccordo corrente N21 — matching e suggerimenti in input evento
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Contratto finale Q2 — analisi correlata
+
+`input_home` è il testo UX; `input_raw` è l’adapter tecnico. La validità funzionale richiede testi esattamente concordi, revisione/epoch, ID richiesta, contesto view/edit/evento originale e cataloghi coerenti. `trigger_parse_debounced` congela questi ingressi, invoca parser, Project, Entity e Command Intent canonici con `analysis_request`, verifica ogni `__logosRequestId`, poi calcola la suggestion con i risultati della stessa esecuzione. Pubblica un solo bundle completo `ui_state.analysis` e il compatibile `ui_state.parsed`. Il vecchio Success publisher di `parse_input_controlled` è assente (`events=[]`).
+
+`analysis_snapshot` rifiuta bundle scaduti; Tipo, default Select, preview, IAR e conferma consumano il medesimo snapshot. `ui_state.parsed` resta una proiezione compatibile, non la prova autonoma di freschezza. Il debounce 350 ms e il throttle nativo non sono barriere; `__logos_visibility_run_id` non attesta completamento. Le risposte fuori ordine o fallite non devono autorizzare nuove associazioni; il coordinatore ricontrolla anche gli identificatori correnti prima della persistenza.
+
+Ingresso edit: usare i risultati specifici di `editing_event.trigger()`/`edit_mode.trigger()` e il contesto atteso `analysis_expected_context`; i mailbox window vengono consumati dai due helper e non sono un secondo stato autorevole. Il recovery EV01 ha corretto il confronto con mailbox già cancellati, senza modificare parser/matcher o salvare EV01. Input/cancel/navigazioni incrementano epoch prima degli await; owned input write protegge le scritture programmate; timer e continuazioni restano subordinati al proprietario. Codice finale degli eventi in [Architecture](04_LOGOS_Retool_Architecture.md#q2--configurazioni-native-finali).
+
+IAR resta composizione unidirezionale: `association` contiene selectedId/candidateId/requiresDecision, `associationContext` e `choiceValues` legano le opzioni a richiesta/revisione/contesto/UUID/scelta. IAR non legge le Select inline, non persiste e non duplica matching. [Lifecycle](03_LOGOS_Event_Lifecycle.md#contratto-finale-q2--conferma-unica) governa il payload finale; [Preview](06_LOGOS_View_Preview_System.md#contratto-finale-q2--sintesi-e-decisioni) la rappresentazione.
+
+**Provenienza e limiti:** comportamento VERIFICATO LIVE nei checkpoint Q2 del 18–20 novembre 2026; in questo STEP 4 soltanto DOCUMENTATO e riconciliato sui file, senza nuovi accessi Retool/Supabase. UAT Safari UX-R1 4/4 PASS dichiarati dall’utente. Inventario 171→162 riconciliato da prove native; nessun export completo post-Delete. L08: Click «Vai agli eventi» non verificato LIVE, né PASS né FAIL. Draft non pubblicata, manutenzione ancora attiva. Il presente contenuto è PREPARE documentale per review: non attesta propria copia, verifica locale o pubblicazione Git.
+
+## Base N21 — matching e suggerimenti in input evento (15 novembre 2026)
 
 I repertori `projects_list` e `entities_list` rimangono completi. L'input legacy `input_raw.change` resta fuori dal delta. Il [Match Engine](02_LOGOS_Match_Engine.md) definisce B1 e l'uscita informativa Project `prefixAlternatives`. Quando questa contiene alternative, `create_suggestion_state` sopprime il suggerimento Project prematuro e la scheda Sintesi presenta le varianti. Le estensioni ordinarie e il controllo omonimie sul repertorio completo mantengono il percorso B1.
 
@@ -224,27 +238,15 @@ Il sistema suggerisce, l’utente decide.
 
 6. FONTI CONTROLLATE PER IL SALVATAGGIO
 
-I dati strutturati salvati nel DB devono derivare da fonti runtime controllate:
+I dati del payload sono costruiti soltanto da confirm_event:
 
-- amount / unit / event_date → ui_state.parsed
-- type → select1.value
-- project_id → select_project.value
-- entity_id → select_entity.value
+- amount / unit / event_date → snapshot.parsed catturato e validato;
+- type → select1.value; raw_input → input_raw.value, coerenti con snapshot/contesto;
+- project_id / entity_id → finalAssociationId sulla proiezione IAR e sulle scelte contestuali.
 
-Il matching project/entity è calcolato da:
+Le Select ordinarie usano i singleMatch di analysis_snapshot: nuove preselezioni soltanto ACTIVE, oppure FK storiche in edit. IAR risolve association.selectedId e l’eventuale candidato canonico unico INACTIVE senza selezione valida prevalente. Il coordinatore usa finalAssociationId: selectedId se non serve decisione; candidateId con Collega; null con Non collegare. Le due decisioni sono indipendenti. NULL non abilita nuove eccezioni, le FK storiche restano preservate. Non esiste ricerca manuale INACTIVE aggiuntiva.
 
-- project_state
-- entity_state
-
-Le select leggono il risultato del match state:
-
-- select_project → project_state.data.singleMatch
-- select_entity → entity_state.data.singleMatch
-
-Il bottone di conferma NON deve ricalcolare parsing
-e NON deve ricalcolare matching.
-
-Deve solo costruire il payload usando lo stato già disponibile.
+Il pulsante delega soltanto confirm_event(begin); né il Click né il coordinatore ricalcolano parser o matching.
 
 ---
 
@@ -258,16 +260,13 @@ Non sostituisce la scelta utente.
 
 Regole:
 
-- match univoco → select valorizzata
-- match ambiguo non risolto → conferma bloccata
-- match ambiguo risolto manualmente → conferma consentita
-- nessun match → conferma consentita
-- match generico con hint più specifici → conferma consentita
+- match unico ACTIVE → default della Select ordinaria, salvo contesto storico/manuale;
+- candidato unico INACTIVE senza selezione valida prevalente → decisione inline esplicita;
+- ambiguità non risolta → blocco; assenza di match o suggestion ignorata non rende obbligatoria un’associazione;
+- la risoluzione dell’ambiguità è necessaria ma non sufficiente: restano tutte le guardie canoniche e le decisioni richieste.
 
-Nota post G33:
-
-la guard funzionale button_input_confirm.Disabled blocca solo su isAmbiguous non risolto.
-Non usa più matches.length > 1 come criterio grezzo di blocco.
+Disabled corrente UX-R1: `{{ !input_analysis_result.value?.readiness?.canConfirm || confirm_event.isFetching || ["project", "entity"].some(layer => { const entry = input_analysis_result.value?.association?.[layer]; const value = layer === "project" ? select_inline_inactive_project.value : select_inline_inactive_entity.value; return entry?.requiresDecision && ![entry.choiceValues?.link, entry.choiceValues?.skip].some(token => typeof token === "string" && token.length > 0 && token === value); }) }}`
+Il risultato G33 rimosse il fallback grezzo matches.length; non descrive da solo la disponibilità finale Q2.
 
 ---
 
@@ -481,10 +480,9 @@ Regole:
 - input_analysis_result non è Event Interpretation Engine
 - ui_visibility_state è deprecabile ma non eliminato
 - button_input_confirm.Hidden è migrato a input_analysis_result
-- button_input_confirm.Disabled non è migrato dentro input_analysis_result
-- button_input_confirm.Disabled resta guard funzionale separata
-- dopo G33, button_input_confirm.Disabled legge solo project_state/entity_state isAmbiguous
-- button_input_confirm payload resta invariato
+- button_input_confirm.Disabled resta proprietà del componente ma dipende da readiness IAR, fetching e choiceValues correnti
+- la guardia G33 solo isAmbiguous è un esito storico, non il binding finale
+- il payload corrente è costruito soltanto in confirm_event
 - save readiness completa non è ancora centralizzata
 - non esiste più dipendenza input_analysis_result → ui_visibility_state
 - resta vietato creare dipendenze inverse o loop tra visibility helper
@@ -655,7 +653,7 @@ input_analysis_result
 → governa readiness/visibility per Sintesi, Dati evento, Command, Suggestion, Input container, Loading, Cancel e Conferma Hidden
 → espone canShowConfirm come flag visibility-only
 → mantiene distinta la readiness funzionale canConfirm
-→ non governa button_input_confirm.Disabled
+→ alimenta Disabled tramite readiness.canConfirm; il componente aggiunge fetching e controllo dei token
 → non alimenta select_project / select_entity
 → non costruisce payload save
 → non modifica DB
@@ -663,8 +661,8 @@ input_analysis_result
 parse_input_controlled
 → parser controllato + normalization base + duration normalization base
 
-ui_state.parsed
-→ fonte unica per preview/save/edit
+analysis_snapshot.parsed
+→ risultato parsato validato usato dai consumer Q2; ui_state.parsed è mirror compatibile pubblicato nello stesso bundle.
 
 select1
 → fonte runtime per type classification base
@@ -690,12 +688,12 @@ create_suggestion_state
 → non modifica button_input_confirm.Disabled
 
 select_project
-→ legge project_state.data.singleMatch
-→ fonte salvabile per project_id
+→ legge analysis_snapshot.value?.project?.singleMatch per il default ordinario
+→ fornisce la selezione Project ordinaria/storica alla proiezione IAR; la FK finale è risolta dal coordinatore
 
 select_entity
-→ legge entity_state.data.singleMatch
-→ fonte salvabile per entity_id
+→ legge analysis_snapshot.value?.entity?.singleMatch per il default ordinario
+→ fornisce la selezione Entity ordinaria/storica alla proiezione IAR; la FK finale è risolta dal coordinatore
 
 input_new_project_name
 → campo micro-editor per creazione project inline
@@ -787,7 +785,7 @@ feedback_mode
 
 label / sintesi (preview)
 → derivato UI (non persistito)
-→ allineato visualmente a ui_state.parsed per amount/unit/date
+→ allineato visualmente a analysis_snapshot.parsed per amount/unit/date
 → mostra durata normalizzata in forma umana + hint tecnico
 → mostra/supporta type tramite select1
 → legge project_state/entity_state per hint e highlight matching
@@ -797,30 +795,17 @@ label / sintesi (preview)
 
 FLOW ATTUALE:
 
-input_home
-→ sync
-→ input_raw
-→ trigger_parse_debounced
-→ ui_visibility_mode
-→ command_intent_state
-→ parse_input_controlled
-→ ui_state.parsed
-→ project_state / entity_state
-→ create_suggestion_state
-→ preview_analysis_state
-→ input_analysis_result
-→ Sintesi / Command container / Suggestion container / Dati evento / Input container / Loading / Cancel / Confirm Hidden
-→ select_project / select_entity
-→ select1 / type classification base
-→ confirm guard tramite button_input_confirm.Disabled se input evento ordinario
-→ eventuale creazione inline project/entity con Nome/Tipologia e query condivisa N18, previa conferma utente
-→ eventuale creazione project/entity da command con Nome/Tipologia e query condivisa N18, previa conferma utente
-→ conferma evento manuale se input evento ordinario
-→ no-op edit guard se in edit mode
-→ feedback_summary costruito prima del reset input/select
-→ insert_event / update_event / insert_project / insert_entity se necessario
-→ events_new / projects_list / entities_list refresh
-→ reset edit_mode / editing_event se necessario
+input_home → input_raw e invalidazione della revisione/consenso
+→ trigger_parse_debounced: richiesta identificata per revisione, testo e contesto
+→ parser, project_state, entity_state e Command Intent canonici sulla stessa richiesta
+→ suggestion canonica correlata → unico publish di ui_state.analysis e mirror ui_state.parsed
+→ analysis_snapshot validato → IAR, Select ordinarie, Tipo e preview
+→ decisioni INACTIVE contestuali nelle Select inline, se richieste
+→ button_input_confirm delega confirm_event(begin)
+→ guardie/lock, no-op e command guard → preflight e verifica fingerprint/consume-once
+→ un solo ramo insert_event oppure update_event
+→ dopo successo: reset, refresh e feedback/routing contestuale.
+La creazione Project/Entity resta un’azione separata già esistente, non un secondo salvataggio evento.
 → feedback temporaneo
 → routing post-save contestuale
 
@@ -951,30 +936,11 @@ input_analysis_result agisce come layer compositivo read-only.
 
 Legge:
 
-- input_home / input_raw
-- ui_visibility_mode
-- edit_mode
-- command_intent_state
-- ui_state.parsed
-- select1
-- project_state / entity_state
-- select_project / select_entity
-- create_suggestion_state
-- preview_analysis_state
+- input_home/input_raw, ui_state e ui_visibility_mode per testo e contesto UI;
+- analysis_snapshot.parsed, .project, .entity, .command e .suggestion per i risultati correlati;
+- edit_mode/editing_event, cataloghi, select1, select_project/select_entity e preview_analysis_state.
 
-Espone:
-
-- mode
-- input
-- parsed
-- type
-- project.raw / project.selection / project.effective
-- entity.raw / entity.selection / entity.effective
-- suggestion
-- command
-- preview
-- readiness
-- diagnostics
+Espone mode/input/parsed/type, project ed entity raw/selection/effective, suggestion, command, preview, readiness e diagnostics; inoltre analysis, association, associationContext e choiceValues contestuali. Le scelte inline non sono lette da IAR: nessuna dipendenza inversa o secondo matching. association è input di confirm_event, senza costruzione o persistenza del payload nel transformer.
 
 Non modifica:
 
@@ -983,7 +949,7 @@ Non modifica:
 - command_intent_state
 - create_suggestion_state
 - select value/default
-- button_input_confirm payload
+- payload save: non lo costruisce né lo scrive, ma association è consumata dal builder unico
 - insert_event / update_event
 - DB
 
@@ -1017,32 +983,16 @@ Dopo creazione verificata tramite page1.create_anagrafica:
 
 EDIT FLOW:
 
-evento selezionato
-→ window.__logos_editing_event_value = item
-→ editing_event
-→ window.__logos_edit_mode_value = true
-→ edit_mode
-→ load raw_input
-→ input_home
-→ input_raw
-→ parse_input_controlled
-→ project_state / entity_state
-→ ui_state.parsed
-→ select_project / select_entity
-→ select1 / type classification base
-→ preview / hint / highlight
-→ modifica utente
-→ text_edit_mode_notice visibile
+Ingresso edit corrente Q2: btn_edit invalida analysis/consenso con epoch e revisione; inizializza l’evento e il modo edit tramite i risultati delle query canoniche, verificandoli dopo ogni await; carica testo visibile/tecnico e FK storiche; avvia il solo trigger correlato con analysis_revision_id e analysis_expected_context. Se setValue genera un nuovo proprietario della revisione, l’handler superato si ferma. Non usare await del solo debounce come attestazione di analisi completa.
+Il sorgente integrale finale di btn_edit e gli handler di cancel/navigazione sono conservati in Architecture, nelle configurazioni e nei dodici handler Q2.
+La notice edit e i consumer seguono il medesimo snapshot/contesto.
 
 Percorsi possibili:
 
 1. Modifica reale:
-→ button_input_confirm
-→ feedback_summary
-→ update_event
-→ events_new refresh
-→ reset edit_mode / editing_event
-→ feedback temporaneo 1800 ms
+→ button_input_confirm delega confirm_event(begin)
+→ guardie, payload unico e preflight → update_event
+→ soltanto dopo successo: reset, events_new, feedback temporaneo 1800 ms
 → ritorno Lista eventi
 
 1. Conferma senza modifiche reali:
@@ -1565,7 +1515,7 @@ Il precedente rischio di loop reattivo è stato ridotto tramite:
 
 - trigger_parse_debounced
 - parse_input_controlled
-- ui_state.parsed come fonte unica
+- pubblicazione correlata unica e analysis_snapshot; ui_state.parsed resta mirror compatibile, non prova autonoma di completamento
 
 ------------------------------------------------
 MOBILE SAFARI BASELINE
@@ -1663,228 +1613,20 @@ per evitare sovrapposizioni e instabilità mobile in Retool.
 TRIGGER_PARSE_DEBOUNCED
 ------------------------------------------------
 
-Ruolo:
+Orchestratore finale Q2, sorgente integrale nell’appendice di questo documento. Attesa cancellabile di 350 ms; ogni invocazione ha ID seriale distinto anche a revisione uguale. Il controllo current precede i motori e segue gli await. Parser/Project/Entity/Command vengono attesi con Promise.all; una risposta mancante/non correlata impedisce il bundle. La suggestion dipende dai risultati della stessa richiesta. Il catch corrente azzera analysis e la proiezione parsed, senza autorizzare un risultato parziale. Una richiesta superata termina senza diventare autorevole.
 
-- evitare parsing per-lettera
-- ridurre chiamate inutili
-- stabilizzare UX
-- mantenere preview reattiva senza loop critici
-- aggiornare ui_visibility_mode
-- distinguere visivamente empty / event / command
-- aggiornare anche il match state project/entity
-- evitare update stale tramite window.__logos_visibility_run_id
+La vecchia classificazione parallela di Command Intent e il token di visibilità non sono il contratto funzionale attuale. La visibilità finale segue il Command Intent canonico restituito. Il valore restituito dal solo trigger non sostituisce i controlli dello snapshot e del coordinatore.
 
----
-
-Comportamento:
-
-input_raw aggiornato
-→ reset micro-state suggestion inline
-→ calcolo rawText
-→ aggiornamento ui_visibility_mode
-→ salvataggio window.__logos_visibility_run_id
-→ attesa debounce
-→ controllo runId valido
-→ command_intent_state.trigger()
-→ parse_input_controlled.trigger()
-→ project_state.trigger()
-→ entity_state.trigger()
-→ create_suggestion_state.trigger()
-
----
-
-Esempio runtime:
-
-Esempio runtime aggiornato:
-
-// Reset micro-editor project/entity quando cambia input principale.
-// Evita stati stale tra input consecutivi.
-project_create_inline_open.setValue(false);
-project_create_suggestion_dismissed.setValue(false);
-input_new_project_name.setValue("");
-
-entity_create_inline_open.setValue(false);
-entity_create_suggestion_dismissed.setValue(false);
-input_new_entity_name.setValue("");
-
-// Classificazione locale minima SOLO per visibilità UI.
-const rawText = String(input_home.value || input_raw.value || "")
-  .toLowerCase()
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/\s+/g, " ")
-  .trim();
-
-const runId = Date.now();
-window.__logos_visibility_run_id = runId;
-
-if (!rawText) {
-  ui_visibility_mode.setValue("empty");
-} else {
-  const isGenericCreateCommand =
-    /^(crea|aggiungi|inserisci|nuovo|nuova)$/.test(rawText);
-
-  const isCreateCommand =
-    /^(crea|aggiungi|inserisci|nuovo|nuova)\s+(nuovo\s+|nuova\s+)?(progetto|entita)(\s|$)/.test(rawText);
-
-  const isGuideCommand =
-    /^(modifica|correggi|cambia)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText) ||
-    /^(come\s+)?(modifico|correggo|cambio)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText) ||
-    /^(devo\s+)?(modificare|correggere|cambiare)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/.test(rawText);
-
-  ui_visibility_mode.setValue(
-    isGenericCreateCommand || isCreateCommand || isGuideCommand
-      ? "command"
-      : "event"
-  );
-}
-
-if (window.__parseTimer) {
-  clearTimeout(window.__parseTimer);
-}
-
-window.__parseTimer = setTimeout(async () => {
-  if (window.__logos_visibility_run_id !== runId) return;
-
-  await Promise.allSettled([
-    command_intent_state.trigger(),
-    parse_input_controlled.trigger(),
-    project_state.trigger(),
-    entity_state.trigger()
-  ]);
-
-  await create_suggestion_state.trigger();
-}, 350);
-
-Risultato:
-
-✔ parsing aggiornato
-✔ ui_state.parsed aggiornato
-✔ project_state aggiornato
-✔ entity_state aggiornato
-✔ select_project/select_entity coerenti
-✔ preview/hint/confirm guard coerenti
-✔ create_suggestion_state aggiornato
-✔ suggestion stale resettate al cambio input
-✔ micro-editor project/entity chiusi quando cambia input principale
-✔ ui_visibility_mode aggiornato
-✔ ui_visibility_state può distinguere empty/event/command
-✔ container vuoto durante digitazione risolto
-✔ flash input flow ridotto
-✔ update stale da debounce precedenti ridotti
-
-Nota:
-
-La classificazione locale in trigger_parse_debounced serve solo alla visibilità UI.
-
-La fonte funzionale del Command Intent resta command_intent_state.
-
-Limite noto:
-
-“modifica evento” viene riconosciuto correttamente come command guide.
-“modifica” generico non è ancora riconosciuto come guida edit e viene trattato come evento ordinario.
 
 UI_STATE.PARSED
 
-Ruolo:
+Proiezione compatibile con amount/unit/event_date, pubblicata dall’orchestratore insieme a ui_state.analysis. Non è una barriera autonoma. I consumer decisivi (Tipo, Sintesi, IAR e coordinatore) leggono il parsed del bundle correlato, attraverso analysis_snapshot o lo snapshot catturato e ricontrollato dal coordinatore.
 
-fonte unica dei dati strutturati parsati
-base per preview
-base per insert/update
-base per edit flow
+ui_state.analysis contiene ID richiesta, revisione, raw, contesto, status complete, cataloghi e risultati parser/Project/Entity/Command/suggestion. analysis_revision e i controlli correnti ne qualificano l’uso; lo schema iniziale di ui_state è riportato esattamente nella configurazione Q2 in appendice. Analisi null o non corrente non consente una nuova associazione eccezionale.
 
-Struttura:
+parsed non incorpora type, matching o decisioni: Tipo rimane la scelta canonica corrente; IAR compone le associazioni e confirm_event risolve gli UUID finali. La creazione anagrafica canonica aggiorna cataloghi/selezione e riavvia il raccordo di analisi negli handler finali conservati in Architecture. Non modifica il corpo del parser per inventare risultati.
 
-{
-  amount: null,
-  unit: null,
-  event_date: null
-}
 
-ui_state completo:
-
-{
-  view: "home",
-  parsed: {
-    amount: null,
-    unit: null,
-    event_date: null
-  },
-  status: null,
-  feedback_mode: null,
-  feedback_text: null,
-  feedback_project: null,
-  feedback_summary: null
-}
-
-Regole:
-
-✔ parsed deve sempre esistere
-✔ parsed non deve tornare null
-✔ parsed deve contenere sempre amount/unit/event_date
-✔ button_input_confirm usa parsed senza ricalcolare parsing
-✔ parsed.unit alimenta select1 per la classificazione Tempo
-
-Relazione con preview:
-
-✔ preview legge ui_state.parsed
-✔ preview formatta amount/unit solo visualmente
-✔ preview non modifica parsed
-✔ preview non modifica il payload di salvataggio
-✔ preview non modifica il DB
-
-Esempio:
-
-ui_state.parsed.amount = 1500.5
-ui_state.parsed.unit = euro
-
-preview:
-
-1.500,50 €
-
-DB:
-
-amount 1500.5
-unit euro
-
-Nota:
-
-ui_state.parsed NON contiene type.
-
-Il type viene gestito da select1.value e salvato nel DB tramite payload.type.
-
-Nota matching:
-
-ui_state.parsed NON contiene project/entity.
-
-Il matching project/entity è gestito da:
-
-input_raw
-→ project_state / entity_state
-
-La scelta finale salvabile resta:
-
-select_project.value
-select_entity.value
-
-Nota suggestion:
-
-ui_state.parsed NON contiene suggestion project/entity.
-
-Le suggestion sono gestite da:
-
-create_suggestion_state
-
-La creazione project/entity inline aggiorna:
-
-- projects_list / entities_list
-- select_project / select_entity
-
-Non modifica:
-
-- ui_state.parsed
-- raw_input
-- amount / unit / event_date
 
 Nota feedback:
 
@@ -2028,7 +1770,7 @@ input_analysis_result:
 - fonte UI controllata per gli Hidden principali del flow input
 - espone canShowConfirm come flag visibility-only
 - mantiene canConfirm come readiness funzionale distinta
-- non governa ancora button_input_confirm.Disabled
+- alimenta Disabled tramite readiness.canConfirm; il componente aggiunge fetching e confronto reattivo dei choiceValues
 - non centralizza la save readiness completa
 
 Relazione con input system:
@@ -2072,23 +1814,9 @@ La visibilità del bottone Conferma resta governata da:
 
 input_analysis_result.readiness.canShowConfirm
 
-La readiness funzionale del componente resta locale in:
+La proprietà Disabled resta nel componente e usa il binding UX-R1 riportato in «MATCHING NON DECISIONALE». IAR fornisce la readiness canonica; il componente verifica anche fetching/scelte, mentre confirm_event conserva le guardie finali.
 
-button_input_confirm.Disabled
-
-Dopo G33, Disabled legge solo:
-
-- project_state.data?.isAmbiguous
-- entity_state.data?.isAmbiguous
-
-Non sono stati modificati:
-
-- parser
-- matching
-- command_intent_state
-- create_suggestion_state
-- preview_analysis_state
-- input_analysis_result
+**Fotografia G33:** il vecchio controllo era limitato a isAmbiguous e non modificò gli altri layer. Questa descrizione conserva l’esito storico, non il binding corrente Q2.
 - payload
 - insert_event / update_event
 - DB
@@ -2358,7 +2086,7 @@ KPI
 
 Nota:
 
-type classification base usa ui_state.parsed.unit come segnale,
+type classification base usa analysis_snapshot.parsed.unit come segnale,
 ma resta gestita da select1, non dal parser.
 
 Nota:
@@ -2701,27 +2429,8 @@ Decisione:
 
 SUCCESS HANDLER PARSER
 
-parse_input_controlled aggiorna ui_state.parsed tramite success handler.
+Nella versione finale Q2 `parse_input_controlled.template.events=[]`: non pubblica indipendentemente ui_state.parsed. Restituisce il risultato canonico con `__logosRequestId`; l’unico publisher del bundle completo è trigger_parse_debounced. Non ripristinare il vecchio Success handler: potrebbe pubblicare un parsed di richiesta precedente fuori dal bundle. Configurazione effettiva e codice sono nell’appendice Q2.
 
-Codice finale:
-
-const parsed = parse_input_controlled.data || {};
-
-ui_state.setValue({
-  ...ui_state.value,
-  parsed: {
-    amount: parsed.amount ?? null,
-    unit: parsed.unit ?? null,
-    event_date: parsed.event_date ?? null
-  }
-});
-
-Risultato:
-
-✔ parsed sempre strutturato
-✔ nessun undefined
-✔ nessun parsed null
-✔ save/edit leggono dati coerenti
 
 DATE PARSING
 
@@ -2765,9 +2474,9 @@ TIPO:
 INPUT:
 
 raw_input
-ui_state.parsed.amount
-ui_state.parsed.unit
-ui_state.parsed.event_date
+analysis_snapshot.parsed.amount
+analysis_snapshot.parsed.unit
+analysis_snapshot.parsed.event_date
 
 COMPORTAMENTO:
 
@@ -3199,7 +2908,9 @@ Esempio:
 → DB: type Incasso, amount 20, unit euro
 
 ------------------------------------------------
-CODICE LOGICO select1 — DEFAULT VALUE
+CODICE LOGICO select1 — SNAPSHOT STORICO PRE-Q2
+
+L’estratto seguente è superato e non va ricopiato come binding corrente. Il value effettivo legge analysis_snapshot.value?.parsed; la trascrizione integrale finale è in «q2-source-select1-value» più avanti. Un commento storico nei byte autentici cita ancora ui_state.parsed: non cambia la lettura effettiva e non ne altera l’hash.
 ------------------------------------------------
 
 {{
@@ -3264,6 +2975,8 @@ CODICE LOGICO select1 — DEFAULT VALUE
   return "Evento";
 })()
 }}
+
+FINE SNAPSHOT STORICO select1 PRE-Q2
 
 ------------------------------------------------
 LIMITI TYPE
@@ -3446,7 +3159,7 @@ unit: minuti
 
 AGGIORNAMENTO TYPE CLASSIFICATION BASE:
 
-✔ select1 allineato a ui_state.parsed.unit
+✔ select1 allineato a analysis_snapshot.parsed.unit
 ✔ parsed.unit = minuti → Tempo
 ✔ euro + keyword controllate → Spesa / Incasso
 ✔ euro senza direzione chiara → Evento
@@ -3475,10 +3188,10 @@ MATCHING BASE — FIRST CONTROLLED LEVEL
 
 Il riconoscimento segue `project_state.query` e `entity_state.query`: leggono testo e repertori completi. Le query restituiscono `matches`, `count`, `hasMatch`, `isAmbiguous`, `singleMatch`, `moreSpecificMatches`, `hasMoreSpecificMatches`, `plausibleAlternatives` e `hasPlausibleAlternatives`. Project aggiunge `prefixAlternatives` da UX. Il [Match Engine](02_LOGOS_Match_Engine.md#match-con-varianti-e-prefissi) descrive precedenza dei nomi completi, diacritici, parole intere e nomi numerici.
 
-- Nuovo evento: il default della Select è l’UUID del solo `singleMatch` ACTIVE, oppure `null`. INACTIVE e NULL restano visibili, disabilitati, e riconoscibili in Sintesi. Un match univoco non ACTIVE da solo non blocca un evento senza associazione.
-- Edit: il default è l’UUID già persistito, oppure `null`. L’opzione con la stessa FK resta disponibile anche se INACTIVE/NULL. Ogni nuova scelta richiede ACTIVE.
+- Nuovo evento: la Select ordinaria preseleziona il solo singleMatch ACTIVE dello snapshot, altrimenti null. INACTIVE/NULL non sono nuove selezioni manuali. Il candidato unico INACTIVE può richiedere la decisione inline separata; l’associazione resta facoltativa tramite Non collegare.
+- Edit: il default è la FK persistita o null; quella storica resta disponibile anche INACTIVE/NULL. Le nuove scelte manuali ordinarie richiedono ACTIVE; la sola eccezione INACTIVE canonica passa dai token inline e dal coordinatore.
 - Ambiguità canonica: senza UUID scelto, la Select è vuota nel nuovo evento e permane il blocco preesistente. Le varianti solo informative non estendono quel blocco.
-- `select_project.value` e `select_entity.value` sono gli UUID usati dal Click. L’etichetta Entity aggiunge un suffisso UUID per gli omonimi esatti senza cambiare il value. La Sintesi illustra la differenza tra match testuale e scelta effettiva.
+- Le Select ordinarie forniscono UUID alla proiezione IAR; finalAssociationId risolve le FK nel coordinatore. L’etichetta Entity distingue gli omonimi senza alterare il value. Sintesi distingue match testuale, selezione valida e decisione inline.
 
 Esempi N21: Casa Mare può essere proposta come match univoco; Casa Mar presenta Casa e Casa Mare senza scegliere al posto dell’utente. Mario con Stato NULL può essere riconosciuto e mostrare le varianti già presenti, con Select Entity vuota in un nuovo evento. Cucciolata Marzo mostra i due anni senza selezione o proposta di duplicazione. L’handler legacy `input_raw.change` resta fuori dal delta. `input_analysis_result` e la visibilità consumano i risultati senza sostituire i guard della Conferma.
 
@@ -3499,8 +3212,8 @@ REGOLE:
 ✔ mai creare automaticamente project/entity dal matching
 ✔ eventuale creazione project/entity passa da create_suggestion_state e conferma utente
 ✔ utente in controllo
-✔ select_project.value è fonte salvabile per project_id
-✔ select_entity.value è fonte salvabile per entity_id
+✔ selezione Project ordinaria/storica mantenuta; decisione INACTIVE separata e risolta in confirm_event
+✔ selezione Entity ordinaria/storica mantenuta; decisione INACTIVE separata e risolta in confirm_event
 
 ---
 
@@ -3510,7 +3223,7 @@ RISOLTO A PRIMO LIVELLO:
 ✔ preview non usa detection locale come fonte decisionale
 ✔ hint ambiguità da isAmbiguous
 ✔ confirm guard da ambiguità non risolta
-✔ button_input_confirm.Disabled allineato a isAmbiguous dopo G33
+✔ G33 allineò Disabled a isAmbiguous; Q2 conserva l’ambiguità canonica e aggiunge readiness/fetching/token correnti
 ✔ rimosso uso di matches.length > 1 come blocco grezzo
 ✔ match state live in create flow
 ✔ match state live in edit flow
@@ -3969,249 +3682,15 @@ Regola:
 
 CONFERMA EVENTO
 
-AZIONE:
+Il normale pulsante delega il solo begin a confirm_event. Non costruisce il payload e non persiste. Hidden legge canShowConfirm; Disabled combina readiness canonica, isFetching e validità delle due scelte contestuali correnti, come nella configurazione integrale di Architecture.
 
-utente conferma inserimento o modifica.
+confirm_event cattura lo snapshot completo corrente e il fingerprint, verifica le scelte necessarie, costruisce il solo payload e preserva command/no-op/preflight/lock. ACTIVE ordinario e FK storica identica prevalgono; un INACTIVE univoco ammesso richiede scelta esplicita. Non collegare restituisce null per quella nuova associazione; non cancella le altre FK valide. NULL e ambiguità non sono eccezioni ammesse.
 
-SEQUENZA ATTUALE:
+L’invio precede reset e feedback. Fallimento o esito non verificato non autorizzano retry automatici. Dopo salvataggio risolto: reset input/Select, feedback, refresh events_new, reset helper edit e ritorno contestuale dopo 1800 ms sotto epoch. La fonte integrale unica di questa logica è il [Lifecycle](03_LOGOS_Event_Lifecycle.md#q2-source-confirm-event-query). Nessun Success handler UI duplicato sugli endpoint.
 
-SEQUENZA ATTUALE AGGIORNATA:
+I seguenti estratti del vecchio Click rimangono soltanto come snapshot storico del flusso precedente a Q2; non rappresentano l’implementazione corrente e non vanno ricopiati sopra il coordinatore.
 
-lettura ui_state.parsed
-costruzione payload
-determinazione wasEditMode
-no-op edit guard se in edit mode
-costruzione feedbackText / feedbackProject / feedbackEntity
-costruzione feedbackSummary prima del reset input/select
-reset input/select
-ui_state.view = feedback
-container_feedback visibile
-insert_event / update_event
-await savePromise
-await events_new.trigger()
-reset edit_mode / editing_event se necessario tramite window helper
-timer feedback 1800 ms
-routing post-save contestuale
 
-ROUTING POST-SAVE CONSOLIDATO:
-
-Nuovo evento:
-
-- insert_event
-- feedback 1800 ms
-- ritorno Home
-
-Modifica reale:
-
-- update_event
-- feedback 1800 ms
-- ritorno Lista eventi
-
-Edit senza modifiche:
-
-- nessun update_event
-- nessun feedback
-- ritorno immediato Lista eventi
-- updated_at invariato
-
-REGOLE:
-
-✔ conferma consentita se:
-
-- input non vuoto
-- nessun match project/entity
-- match univoco project/entity
-- match generico semplice
-- match presente + suggestion extension con warning G22 non bloccante
-- suggestion ignorata
-- ambiguità project/entity risolta manualmente
-✔ G22 non modifica la guard funzionale della Conferma
-✔ requiresUserOverride non disabilita button_input_confirm
-✔ button_input_confirm non legge requiresUserOverride come blocco
-
-✔ conferma bloccata se:
-
-- project_state.data?.isAmbiguous = true e select_project vuoto
-- entity_state.data?.isAmbiguous = true e select_entity vuoto
-
-✔ input comunque sempre modificabile
-✔ scelta manuale utente preservata
-✔ evento salvabile anche dopo creazione inline project/entity
-✔ evento salvabile anche senza project/entity
-✔ suggestion ignorata non blocca salvataggio
-✔ comando puro riconosciuto da command_intent_state non deve arrivare al save flow evento
-✔ command riconosciuto durante edit mode non deve diventare update_event
-✔ alias generici modifica / correggi / cambia non devono creare eventi
-✔ alias generici modifica / correggi / cambia non devono aggiornare eventi
-✔ container_command_intent sostituisce Sintesi/Dati evento per command puri
-✔ button_input_confirm.Hidden è migrato a input_analysis_result.readiness.canShowConfirm
-✔ button_input_confirm.Disabled è allineato localmente a project_state/entity_state isAmbiguous
-⚠ button_input_confirm.Disabled non è migrato dentro input_analysis_result
-⚠ button_input_confirm payload resta invariato e fuori dalla migrazione
-
-Nota:
-
-button_input_confirm resta un punto delicato perché unisce:
-
-- visibilità bottone
-- disabled state
-- input vuoto
-- ambiguità project/entity
-- edit mode
-- save readiness
-- payload insert/update
-- no-op edit guard
-
-Dopo Visibility Migration Completion, la visibilità del bottone è stata separata:
-
-- canShowConfirm = mostra/nasconde il bottone
-- canConfirm = readiness funzionale
-- Disabled = guard funzionale autonoma ancora nel componente
-
-Nodo completato:
-
-BUTTON CONFIRM READINESS ALIGNMENT
-
-Esito:
-
-- button_input_confirm.Disabled aggiornato
-- rimosso fallback grezzo matches.length > 1
-- payload invariato
-- save flow invariato
-- input_analysis_result invariato
-
-✔ gestione edit_mode:
-
-true → update_event
-false → insert_event
-
-✔ gestione no-op edit:
-
-→ updated_at NON cambia
-→ feedback NON viene mostrato
-→ edit_mode viene chiuso
-se edit_mode = true
-e raw_input / type / project_id / entity_id non cambiano:
-
-→ update_event NON viene eseguito
-→ editing_event viene azzerato
-→ feedback_summary viene azzerato
-→ ritorno immediato Lista eventi
-
-Regola anti-conflitto post-save:
-
-handle_event_success è stato eliminato come query legacy unused dopo Linting / Retool Query Safety Pass.
-
-Feedback e cambio view post-save restano centralizzati in button_input_confirm.
-
-insert_event / update_event non devono avere success handler UI duplicati che modificano:
-
-- ui_state.view
-- container_home
-- container_feedback
-- container_events_list
-- container_input
-
-La gestione UI post-save è centralizzata in button_input_confirm.
-
-Il bottone NON ricalcola più parsing.
-
-Fonte dati strutturata:
-
-const parsed = ui_state.value?.parsed || {
-  amount: null,
-  unit: null,
-  event_date: null
-};
-
-Payload:
-
-const payload = {
-  raw_input: input_raw.value,
-  type: select1.value || "Evento",
-  amount: parsed.amount,
-  unit: parsed.unit,
-  event_date: parsed.event_date,
-  project_id: select_project.value || null,
-  entity_id: select_entity.value || null
-};
-
-Nota:
-
-button_input_confirm non legge create_suggestion_state come fonte dati salvabile.
-button_input_confirm non legge command_intent_state come fonte dati salvabile.
-
-command_intent_state serve solo a distinguere e guidare il flow command.
-I comandi puri devono essere intercettati prima del salvataggio evento.
-
-Nota post Input Context Consistency:
-
-button_input_confirm contiene una guard locale in edit mode contro command freschi.
-
-La guard:
-
-- normalizza input_raw corrente
-- normalizza command_intent_state.data.rawInput
-- verifica che il command sia coerente con l’input corrente
-- se edit_mode = true e command_intent_state.data.isCommand = true, blocca il salvataggio
-- mostra notifica warning
-- non esegue update_event
-- non chiude edit mode
-- non modifica payload
-- non modifica button_input_confirm.Disabled
-La separazione visiva viene gestita ora da ui_visibility_mode + input_analysis_result per gli Hidden principali del flow input.
-ui_visibility_state resta solo residuo tecnico deprecabile.
-La separazione funzionale viene gestita da command_intent_state.
-
-create_suggestion_state può aiutare a creare project/entity,
-ma il payload evento legge sempre e solo:
-
-- select_project.value
-- select_entity.value
-
-Disabled logic post G33:
-
-button_input_confirm non ricalcola matching.
-
-Legge:
-
-- input_raw.value
-- project_state.data?.isAmbiguous
-- entity_state.data?.isAmbiguous
-- select_project.value
-- select_entity.value
-
-Regola:
-
-- input vuoto → blocco / bottone non utilizzabile
-- ambiguità non risolta → blocco
-- ambiguità risolta manualmente → conferma consentita
-- nessun match → conferma consentita
-- match univoco → conferma consentita
-- match generico con hint più specifici → conferma consentita
-- warning non bloccanti → conferma consentita
-
-Codice Disabled validato:
-
-{{
-  (() => {
-    const projectAmbiguous =
-      Boolean(project_state.data?.isAmbiguous);
-
-    const entityAmbiguous =
-      Boolean(entity_state.data?.isAmbiguous);
-
-    return (
-      !input_raw.value ||
-      (projectAmbiguous && !select_project.value) ||
-      (entityAmbiguous && !select_entity.value)
-    );
-  })()
-}}
-
-Nota:
-
-button_input_confirm.Disabled non usa più matches.length > 1.
 
 BUTTON_INPUT_CONFIRM — FLOW FINALE
 
@@ -4391,13 +3870,13 @@ Il codice runtime effettivo di button_input_confirm è stato aggiornato per:
 
 Regola:
 
-Le regole descritte sono il contratto documentato del salvataggio evento; gli estratti soprastanti sono storici e non uno script completo da copiare. Per componenti e wiring vedere Architecture, per la fotografia qualificata Retool Runtime Real.
+Gli estratti precedenti descrivono la fase storica pre-Q2 e non sono script da copiare. Le invarianti tuttora valide restano tali; fonti, builder e wiring correnti sono il contratto Q2 e i sorgenti integrali finali nelle rispettive madri.
 Il feedback_summary è solo UI temporanea e non viene salvato nel DB.
 
 Risultato:
 
 ✔ parsing duplicato rimosso
-✔ insert/update usano ui_state.parsed
+✔ insert/update correnti ricevono i dati parsati da snapshot.parsed nel coordinatore unico
 ✔ insert/update salvano type da select1.value
 ✔ feedback immediato
 ✔ lista eventi aggiornata dopo save reale
@@ -4412,12 +3891,7 @@ Risultato:
 
 Nota Match Engine:
 
-Il bottone conferma continua a costruire il payload da fonti controllate:
-
-- amount / unit / event_date → ui_state.parsed
-- type → select1.value
-- project_id → select_project.value
-- entity_id → select_entity.value
+confirm_event costruisce il payload da fonti controllate: snapshot.parsed; select1 e input_raw vincolati al contesto; finalAssociationId per le due FK. Il normale pulsante delega soltanto begin.
 
 Non ricalcola parsing.
 Non ricalcola matching.
@@ -4548,7 +4022,7 @@ Esito:
 Nota post Linting / Retool Query Safety Pass:
 
 handle_event_success è stato eliminato perché Retool lo segnalava come query unused
-e la gestione feedback/routing è già centralizzata in button_input_confirm.
+e la gestione feedback/routing del salvataggio evento è centralizzata in confirm_event, invocato dal normale pulsante.
 
 Test post-rimozione superati.
 
@@ -4573,15 +4047,15 @@ payload: {}
 
 Caratteristiche:
 
-✔ insert consentito se non ci sono ambiguità bloccanti
-✔ nessuna validazione DB
+✔ insert ammesso soltanto con snapshot/readiness, decisioni richieste e controlli finali conformi; nessuna associazione è obbligatoria in sé
+✔ le protezioni DB lifecycle/accesso documentate nelle madri hanno un ruolo distinto dalle guardie UI
 ✔ nessuna label persistita
-✔ amount coerente con ui_state.parsed
-✔ unit coerente con ui_state.parsed
+✔ amount coerente con snapshot.parsed catturato e validato
+✔ unit coerente con snapshot.parsed catturato e validato
 ✔ raw_input preservato
 ✔ type salvato in events.type
-✔ project_id salvato da select_project.value
-✔ entity_id salvato da select_entity.value
+✔ project_id risolto da finalAssociationId("project") nel coordinatore
+✔ entity_id risolto da finalAssociationId("entity") nel coordinatore
 ✔ project/entity creati inline salvabili solo dopo selezione confermata
 ✔ evento salvabile con project_id/entity_id null se l’utente ignora suggestion
 
@@ -6484,9 +5958,9 @@ ui_visibility_state non è più letto da input_analysis_result
 ui_visibility_state resta residuo tecnico deprecabile
 Full Visibility Migration degli Hidden principali completata
 button_input_confirm.Hidden migrato
-button_input_confirm.Disabled allineato localmente a isAmbiguous
-button_input_confirm.Disabled non migrato dentro input_analysis_result
-button_input_confirm payload invariato
+button_input_confirm.Disabled usa readiness.canConfirm, confirm_event.isFetching e choiceValues correnti
+Disabled resta proprietà del componente; le guardie finali restano nel coordinatore
+confirm_event contiene il solo payload builder e il solo switch INSERT/UPDATE
 save readiness completa non centralizzata
 rendering progressivo input evento normale ridotto tramite UI Readiness e input_analysis_result
 micro-flash feedback project/entity ancora presente
@@ -6624,6 +6098,2092 @@ Le evoluzioni future collegate all’input devono restare in:
 - 00_PROJECT_Roadmap per sequenza e priorità
 - 00_PROJECT_Gap_Register per gap e debiti
 - checkpoint operativo solo durante il nodo attivo
+
+## Q2 — sorgenti finali di competenza
+
+Trascrizioni integrali dai file effettivi, non candidate storiche o nuovo codice. Gli hash si riferiscono ai file sorgente UTF-8/LF nel pacchetto di review: per estrarli dal Markdown CRLF normalizzare soltanto EOL del contenitore. Non eliminare spazi iniziali/finali del codice. Provenienza dettagliata nel registro Runtime e nel manifest del lotto. Le descrizioni storiche precedenti non sostituiscono queste proprietà finali.
+
+### q2-source-parse-input-controlled-query
+
+`parse_input_controlled.template.query` — sorgente integrale. SHA-256 UTF-8/LF `0a721e653597e802b6a160671c6530606750c5eb125378ff83bc46e20d6a3b7c`, 7738 byte.
+
+```js
+// Q2: request-scoped adapter. Canonical body below is unchanged.
+const req = typeof analysis_request === "undefined" ? null : analysis_request;
+const values = req ? [
+  {value:req.raw}, {value:req.raw}, {data:req.projects}, {data:req.entities},
+  {data:req.project}, {data:req.entity}, {value:req.projectId}, {value:req.entityId}
+] : [input_home,input_raw,projects_list,entities_list,project_state,entity_state,select_project,select_entity];
+const result = ((input_home, input_raw, projects_list, entities_list, project_state, entity_state, select_project, select_entity) => {
+const text = input_raw.value || "";
+
+if (!text || text.trim() === "") {
+  return {
+    amount: null,
+    unit: null,
+    event_date: null
+  };
+}
+
+// normalizzazione base testo
+const clean = text.toLowerCase().replace(/\s+/g, " ").trim();
+
+function normalizeNumberValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const raw = String(value).trim();
+
+  // Formato italiano con migliaia + decimali:
+  // 1.500,50 → 1500.50
+  if (/^\d{1,3}(\.\d{3})+,\d+$/.test(raw)) {
+    return Number(raw.replace(/\./g, "").replace(",", "."));
+  }
+
+  // Formato italiano con separatore migliaia:
+  // 1.500 → 1500
+  if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+    return Number(raw.replace(/\./g, ""));
+  }
+
+  // Formato con virgola decimale:
+  // 458,78 → 458.78
+  // 1,5 → 1.5
+  if (/^\d+,\d+$/.test(raw)) {
+    return Number(raw.replace(",", "."));
+  }
+
+  // Formato con punto decimale compatibile:
+  // 1.5 → 1.5
+  if (/^\d+\.\d+$/.test(raw)) {
+    return Number(raw);
+  }
+
+  // Intero semplice:
+  // 1500 → 1500
+  if (/^\d+$/.test(raw)) {
+    return Number(raw);
+  }
+
+  return null;
+}
+
+// ------------------
+// DATE
+// ------------------
+
+let event_date = null;
+
+const dateSlashMatch = clean.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+
+if (dateSlashMatch) {
+  let [, d, m, y] = dateSlashMatch;
+  if (y.length === 2) y = "20" + y;
+  event_date = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
+
+const mesiMap = {
+  gennaio: "01",
+  febbraio: "02",
+  marzo: "03",
+  aprile: "04",
+  maggio: "05",
+  giugno: "06",
+  luglio: "07",
+  agosto: "08",
+  settembre: "09",
+  ottobre: "10",
+  novembre: "11",
+  dicembre: "12"
+};
+
+if (!event_date) {
+  const words = clean.split(" ");
+  for (let i = 0; i < words.length; i++) {
+    if (/^\d{1,2}$/.test(words[i]) && mesiMap[words[i + 1]]) {
+      const year = new Date().getFullYear();
+      event_date = `${year}-${mesiMap[words[i + 1]]}-${words[i].padStart(2, "0")}`;
+      break;
+    }
+  }
+}
+
+// ------------------
+// DURATION NORMALIZATION BASE
+// ------------------
+//
+// Decisione:
+// - tutte le durate certe ore/minuti vengono salvate in minuti
+// - amount = totale minuti
+// - unit = "minuti"
+// - raw_input resta preservato nel save flow
+//
+// Gestito:
+// - 18 minuti
+// - 18min
+// - min18
+// - 1 ora
+// - 1ora
+// - 2h
+// - h2
+// - 1,5 ore
+// - 1.5h
+// - 1 ora e 15 minuti
+// - 1 ora 15 minuti
+// - 2h30
+// - 2 h 30
+// - 2 ore 30
+//
+// Non gestito automaticamente:
+// - giorni
+// - settimane
+// - giornata
+// - mezza giornata
+
+let amount = null;
+let unit = null;
+
+const isTimeFormat = /\d{1,2}:\d{2}/.test(clean);
+
+// rimuove date dal testo usato per amount/unit
+const cleanForParsing = clean
+  .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, "")
+  .replace(/\b\d{1,2}\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/g, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const hasAmbiguousLongDuration =
+  /\b\d+(?:[.,]\d+)?\s*(giorno|giorni|settimana|settimane|giornata|giornate)\b/.test(cleanForParsing) ||
+  /\b(giorno|giorni|settimana|settimane|giornata|giornate)\s*\d+(?:[.,]\d+)?\b/.test(cleanForParsing) ||
+  /\bmezza giornata\b/.test(cleanForParsing);
+
+if (!isTimeFormat && !hasAmbiguousLongDuration) {
+  let totalMinutes = null;
+
+  // 1) Formato compatto ore+minuti:
+  // 2h30, 2h 30
+  const compactHourMinuteMatch = cleanForParsing.match(
+    /\b(\d+(?:[.,]\d+)?)\s*h\s*(\d{1,2})\b/
+  );
+
+  if (compactHourMinuteMatch) {
+    const hours = normalizeNumberValue(compactHourMinuteMatch[1]);
+    const minutes = normalizeNumberValue(compactHourMinuteMatch[2]);
+
+    if (hours !== null && minutes !== null) {
+      totalMinutes = Math.round(hours * 60 + minutes);
+    }
+  }
+
+  // 2) Formato ore + minuti testuale:
+  // 1 ora e 15 minuti
+  // 1 ora 15 minuti
+  // 2 ore 30 minuti
+  if (totalMinutes === null) {
+    const hourMinuteTextMatch = cleanForParsing.match(
+      /\b(\d+(?:[.,]\d+)?)\s*(h|ora|ore)\s*(?:e\s*)?(\d{1,2})\s*(min|minuto|minuti)?\b/
+    );
+
+    if (hourMinuteTextMatch) {
+      const hours = normalizeNumberValue(hourMinuteTextMatch[1]);
+      const minutes = normalizeNumberValue(hourMinuteTextMatch[3]);
+
+      if (hours !== null && minutes !== null) {
+        totalMinutes = Math.round(hours * 60 + minutes);
+      }
+    }
+  }
+
+  // 3) Formato h + numero:
+  // h2
+  if (totalMinutes === null) {
+    const hBeforeMatch = cleanForParsing.match(/\bh\s*(\d+(?:[.,]\d+)?)\b/);
+
+    if (hBeforeMatch) {
+      const hours = normalizeNumberValue(hBeforeMatch[1]);
+
+      if (hours !== null) {
+        totalMinutes = Math.round(hours * 60);
+      }
+    }
+  }
+
+  // 4) Formato ore semplice:
+  // 1 ora
+  // 1ora
+  // 2 ore
+  // 2h
+  // 1,5 ore
+  // 1.5h
+  if (totalMinutes === null) {
+    const simpleHourMatch = cleanForParsing.match(
+      /\b(\d+(?:[.,]\d+)?)\s*(h|ora|ore)\b/
+    );
+
+    if (simpleHourMatch) {
+      const hours = normalizeNumberValue(simpleHourMatch[1]);
+
+      if (hours !== null) {
+        totalMinutes = Math.round(hours * 60);
+      }
+    }
+  }
+
+  // 5) Formato minuti semplice:
+  // 18 minuti
+  // 18min
+  // 30 min
+  if (totalMinutes === null) {
+    const simpleMinuteMatch = cleanForParsing.match(
+      /\b(\d+(?:[.,]\d+)?)\s*(min|minuto|minuti)\b/
+    );
+
+    if (simpleMinuteMatch) {
+      const minutes = normalizeNumberValue(simpleMinuteMatch[1]);
+
+      if (minutes !== null) {
+        totalMinutes = Math.round(minutes);
+      }
+    }
+  }
+
+  // 6) Formato minuti con unità prima:
+  // min30
+  // min 30
+  if (totalMinutes === null) {
+    const minuteBeforeMatch = cleanForParsing.match(
+      /\b(min|minuto|minuti)\s*(\d+(?:[.,]\d+)?)\b/
+    );
+
+    if (minuteBeforeMatch) {
+      const minutes = normalizeNumberValue(minuteBeforeMatch[2]);
+
+      if (minutes !== null) {
+        totalMinutes = Math.round(minutes);
+      }
+    }
+  }
+
+  if (totalMinutes !== null) {
+    amount = totalMinutes;
+    unit = "minuti";
+  }
+}
+
+// ------------------
+// EURO / ECONOMICO BASE
+// ------------------
+//
+// Manteniamo compatibilità con la normalizzazione base economica.
+// Se non è stata rilevata una durata tempo, gestiamo euro come prima.
+
+if (amount === null && unit === null && !isTimeFormat) {
+  const hasEuro = /€|euro|eur/.test(cleanForParsing);
+
+  if (hasEuro) {
+    unit = "euro";
+
+    const euroUnitMatches = [
+      ...cleanForParsing.matchAll(/€|euro|eur/g)
+    ];
+
+    const numbers = cleanForParsing.match(
+      /\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?/g
+    );
+
+    let unitIndex = -1;
+
+    if (euroUnitMatches.length > 0) {
+      unitIndex = euroUnitMatches[euroUnitMatches.length - 1].index;
+    }
+
+    let best = null;
+    let bestDist = Infinity;
+
+    if (numbers && unitIndex >= 0) {
+      numbers.forEach(n => {
+        const idx = cleanForParsing.indexOf(n);
+        const dist = Math.abs(idx - unitIndex);
+
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = n;
+        }
+      });
+    }
+
+    amount = best ? normalizeNumberValue(best) : null;
+  }
+}
+
+// ------------------
+// RETURN
+// ------------------
+
+return {
+  amount,
+  unit,
+  event_date
+};
+})(...values);
+return {...result, __logosRequestId:req?.id || null};
+```
+
+### q2-source-trigger-parse-debounced-query
+
+`trigger_parse_debounced.template.query` — sorgente integrale. SHA-256 UTF-8/LF `64f0a243e12eb408e034cf93ff3a16aa0927d27b54badc105f637f403cd82eb0`, 3697 byte.
+
+```js
+// One completion boundary; no independent parser publisher.
+const revision = typeof analysis_revision_id === "undefined"
+  ? String(window.__logosAnalysisEpoch || 0) : String(analysis_revision_id);
+const raw = String(input_home.value || "");
+const observedContext = JSON.stringify([String(ui_state.value?.view || "home"),edit_mode.data === true,
+  edit_mode.data === true ? editing_event.data || null : null]);
+// Edit entry supplies the context returned by its canonical initialization.
+const context = typeof analysis_expected_context === "string"
+  ? analysis_expected_context : observedContext;
+const req = JSON.parse(JSON.stringify({
+  id:revision+":"+String((window.__logosAnalysisRequestSerial || 0)+1),revision,raw,context,
+  projects:projects_list.data || [],entities:entities_list.data || [],
+  projectId:select_project.value || null,entityId:select_entity.value || null
+}));
+window.__logosAnalysisRequestSerial = (window.__logosAnalysisRequestSerial || 0)+1;
+window.__logosAnalysisCurrentRequest = req.id;
+const current = () => String(window.__logosAnalysisEpoch || 0) === revision &&
+  window.__logosAnalysisCurrentRequest === req.id &&
+  analysis_revision.value === revision && input_home.value === raw && input_raw.value === raw &&
+  JSON.stringify([String(ui_state.value?.view || "home"),edit_mode.data === true,
+    edit_mode.data === true ? editing_event.data || null : null]) === context &&
+  JSON.stringify([projects_list.data || [],entities_list.data || []]) === JSON.stringify([req.projects,req.entities]);
+if (!current()) return null;
+if (window.__parseTimer) clearTimeout(window.__parseTimer);
+if (window.__logosAnalysisDelayResolve) window.__logosAnalysisDelayResolve(false);
+project_create_inline_open.setValue(false);
+project_create_suggestion_dismissed.setValue(false);
+input_new_project_name.setValue("");
+entity_create_inline_open.setValue(false);
+entity_create_suggestion_dismissed.setValue(false);
+input_new_entity_name.setValue("");
+await ui_visibility_mode.setValue("empty");
+if (!current() || !raw.trim()) return null;
+const elapsed = await new Promise(resolve => {
+  window.__logosAnalysisDelayResolve = resolve;
+  window.__parseTimer = setTimeout(() => resolve(true),350);
+});
+if (!elapsed || !current()) return null;
+try {
+  const scope = {additionalScope:{analysis_request:req}};
+  const [parsed,project,entity,command] = await Promise.all([
+    parse_input_controlled.trigger(scope),project_state.trigger(scope),
+    entity_state.trigger(scope),command_intent_state.trigger(scope)
+  ]);
+  if (!current()) return null;
+  if ([parsed,project,entity,command].some(result => !result || result.__logosRequestId !== req.id)) {
+    throw new Error("Risultati non correlati alla richiesta");
+  }
+  const suggestion = await create_suggestion_state.trigger({additionalScope:{analysis_request:{...req,project,entity}}});
+  if (!current()) return null;
+  if (suggestion?.__logosRequestId !== req.id) throw new Error("Suggestion non correlata");
+  const snapshot = {id:req.id,revision,raw,context,status:"complete",
+    catalogue:JSON.stringify([req.projects,req.entities]),parsed,project,entity,command,suggestion};
+  await ui_state.setValue({...ui_state.value,analysis:snapshot,parsed:{
+    amount:parsed.amount ?? null,unit:parsed.unit ?? null,event_date:parsed.event_date ?? null
+  }});
+  if (!current()) return null;
+  await ui_visibility_mode.setValue(command.isCommand ? "command" : "event");
+  return current() ? snapshot : null;
+} catch (error) {
+  if (current()) {
+    await ui_state.setValue({...ui_state.value,analysis:null,parsed:{amount:null,unit:null,event_date:null}});
+    if (current()) await ui_visibility_mode.setValue("empty");
+  }
+  return null;
+}
+
+```
+
+### q2-source-analysis-snapshot-funcbody
+
+`analysis_snapshot.template.funcBody` — sorgente integrale. SHA-256 UTF-8/LF `6404d26273b80b12cb8d13ae5948f39c7463d59f0fe3351ad199900642701c91`, 832 byte.
+
+```js
+const snapshot = {{ ui_state.value?.analysis || null }};
+const revision = String({{ analysis_revision.value || "" }});
+const home = String({{ input_home.value || "" }});
+const raw = String({{ input_raw.value || "" }});
+const view = String({{ ui_state.value?.view || "home" }});
+const isEdit = {{ edit_mode.data === true }};
+const original = {{ editing_event.data || null }};
+const projects = {{ projects_list.data || [] }};
+const entities = {{ entities_list.data || [] }};
+const context = JSON.stringify([view,isEdit,isEdit ? original : null]);
+if (!snapshot || snapshot.status !== "complete" ||
+    snapshot.revision !== revision || !raw.trim() ||
+    snapshot.raw !== home || snapshot.raw !== raw ||
+    snapshot.context !== context ||
+    snapshot.catalogue !== JSON.stringify([projects,entities])) return null;
+return snapshot;
+
+```
+
+### q2-source-input-analysis-result-funcbody
+
+`input_analysis_result.template.funcBody` — sorgente integrale. SHA-256 UTF-8/LF `c3ae149722b45ce64325f18af44a22d6ec2ebfb6d850623f00f87f1507920532`, 15093 byte.
+
+```js
+const rawInput = String({{ input_home.value || input_raw.value || "" }} || "").trim();
+
+const normalizedText = rawInput
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const uiState = {{ ui_state.value || {} }};
+const parsed = {{ analysis_snapshot.value?.parsed || {} }};
+
+const visibilityMode = String({{ ui_visibility_mode.value || "empty" }});
+
+const preview = {{ preview_analysis_state.value || {} }};
+
+const command = {{ analysis_snapshot.value?.command || {} }};
+const suggestion = {{ analysis_snapshot.value?.suggestion || {} }};
+
+const projectMatch = {{ analysis_snapshot.value?.project || {} }};
+const entityMatch = {{ analysis_snapshot.value?.entity || {} }};
+
+const projects = {{ projects_list.data || [] }};
+const entities = {{ entities_list.data || [] }};
+
+const selectedProjectId = {{ select_project.value || null }};
+const selectedEntityId = {{ select_entity.value || null }};
+
+const selectedProject =
+  projects.find(p => p.id === selectedProjectId) || null;
+
+const selectedEntity =
+  entities.find(e => e.id === selectedEntityId) || null;
+
+const selectedProjectName = selectedProject?.name || null;
+const selectedEntityName = selectedEntity?.name || null;
+
+const typeValue = String({{ select1.value || "Evento" }});
+
+const amount = parsed.amount ?? null;
+const unit = parsed.unit ?? null;
+const eventDate = parsed.event_date ?? null;
+
+const hasInput = rawInput.length > 0;
+
+const hasAmount =
+  amount !== null &&
+  amount !== undefined &&
+  amount !== "" &&
+  Number.isFinite(Number(amount));
+
+const hasUnit =
+  unit !== null &&
+  unit !== undefined &&
+  String(unit).trim() !== "";
+
+const hasDate =
+  eventDate !== null &&
+  eventDate !== undefined &&
+  String(eventDate).trim() !== "";
+
+const isEconomic = unit === "euro";
+const isTime = unit === "minuti" || unit === "ore";
+
+const isMissingEconomicDirection =
+  isEconomic && typeValue === "Evento";
+
+const projectMatchCount =
+  Number(projectMatch.count ?? projectMatch.matches?.length ?? 0);
+
+const entityMatchCount =
+  Number(entityMatch.count ?? entityMatch.matches?.length ?? 0);
+
+const projectIsAmbiguous =
+  Boolean(projectMatch.isAmbiguous) || projectMatchCount > 1;
+
+const entityIsAmbiguous =
+  Boolean(entityMatch.isAmbiguous) || entityMatchCount > 1;
+
+const projectSingleMatch = projectMatch.singleMatch || null;
+const entitySingleMatch = entityMatch.singleMatch || null;
+
+const hasProjectSuggestion =
+  Boolean(suggestion.project) &&
+  {{ !project_create_suggestion_dismissed.value }} &&
+  (
+    suggestion.project.shouldShowNoMatchHint === true ||
+    suggestion.project.shouldSuggestCreate === true
+  );
+
+const hasEntitySuggestion =
+  Boolean(suggestion.entity) &&
+  {{ !entity_create_suggestion_dismissed.value }} &&
+  (
+    suggestion.entity.shouldShowNoMatchHint === true ||
+    suggestion.entity.shouldSuggestCreate === true
+  );
+
+const rawHasAssociationSuggestion =
+  hasProjectSuggestion === true ||
+  hasEntitySuggestion === true;
+
+const isEditMode = {{ edit_mode.data === true }};
+
+// Command raw = stato tecnico prodotto da command_intent_state.
+// In edit mode può risultare true, ma NON deve governare il flow.
+const rawIsCommand = command.isCommand === true;
+const rawIsPureCommand = command.isPureCommand === true;
+
+// Command effettivo = command valido per il flow corrente.
+// Regola consolidata: edit mode prevale su Command Intent.
+const isCommand = !isEditMode && rawIsCommand;
+const isPureCommand = !isEditMode && rawIsPureCommand;
+
+// -----------------------------
+// EFFECTIVE FLOW — CONTROLLED BASE
+// -----------------------------
+
+const view = String(uiState.view || "home");
+const isHomeView = view === "home";
+
+const effectiveIsInputFlow =
+  isHomeView &&
+  (
+    (
+      hasInput &&
+      visibilityMode !== "empty"
+    ) ||
+    isEditMode
+  );
+
+let effectiveFlowType = "none";
+
+if (effectiveIsInputFlow) {
+  if (isEditMode) {
+    effectiveFlowType = "edit";
+  } else if (isPureCommand) {
+    effectiveFlowType = "command";
+  } else {
+    effectiveFlowType = "event";
+  }
+}
+
+const effectiveIsCommandFlow =
+  effectiveFlowType === "command";
+
+const effectiveIsEventFlow =
+  effectiveFlowType === "event" ||
+  effectiveFlowType === "edit";
+
+const effectiveCanUseEventFields =
+  effectiveIsEventFlow === true;
+
+const effectiveCanUseCommandFields =
+  effectiveIsCommandFlow === true;
+
+// -----------------------------
+// EFFECTIVE VISIBILITY — INTERNAL BASE
+// -----------------------------
+
+const isInputFlow = effectiveIsInputFlow;
+const isEventFlow = effectiveIsEventFlow;
+
+const showEventPreview =
+  effectiveIsEventFlow === true &&
+  hasInput;
+
+const showCommandContainer =
+  {{ Boolean(analysis_snapshot.value) }} &&
+  effectiveIsCommandFlow === true;
+
+const showEventData =
+  {{ Boolean(analysis_snapshot.value) }} &&
+  effectiveIsEventFlow === true &&
+  hasInput;
+
+const showConfirm =
+  effectiveIsEventFlow === true &&
+  hasInput;
+
+  const showAssociationSuggestions =
+  showEventData === true &&
+  rawHasAssociationSuggestion === true;
+
+const hasBlockingAmbiguity =
+  preview.hasBlockingAmbiguity === true ||
+  (
+    projectIsAmbiguous &&
+    !selectedProjectId
+  ) ||
+  (
+    entityIsAmbiguous &&
+    !selectedEntityId
+  );
+
+const hasPreviewWarnings =
+  preview.hasWarning === true ||
+  preview.hasHints === true;
+
+const hasBlockingIssue =
+  hasBlockingAmbiguity === true;
+
+const hasNonBlockingWarnings =
+  hasPreviewWarnings === true &&
+  hasBlockingIssue === false;
+
+const historical = {{ edit_mode.data === true ? editing_event.data : null }};
+const projectSelection = selectedProject && (selectedProject.status === "ACTIVE" || historical?.project_id === selectedProject.id) ? selectedProject : null;
+const entitySelection = selectedEntity && (selectedEntity.status === "ACTIVE" || historical?.entity_id === selectedEntity.id) ? selectedEntity : null;
+const projectHistorical = Boolean(selectedProjectId && historical?.project_id === selectedProjectId);
+const entityHistorical = Boolean(selectedEntityId && historical?.entity_id === selectedEntityId);
+const invalidSelection = Boolean((selectedProjectId && !projectSelection && !projectHistorical) ||
+  (selectedEntityId && !entitySelection && !entityHistorical));
+const projectCandidate = !projectSelection && !projectHistorical && !projectIsAmbiguous && projectSingleMatch?.status === "INACTIVE" ? projectSingleMatch : null;
+const entityCandidate = !entitySelection && !entityHistorical && !entityIsAmbiguous && entitySingleMatch?.status === "INACTIVE" ? entitySingleMatch : null;
+const association = {
+  project:{selectedId:projectHistorical ? selectedProjectId : projectSelection?.id || null,candidateId:projectCandidate?.id || null,
+    candidateName:projectCandidate?.name || null,requiresDecision:Boolean(projectCandidate),
+    message:projectCandidate ? `Il progetto “${projectCandidate.name}” è inattivo. Vuoi collegarlo a questo evento?` : null,
+    information:"Il progetto resterà inattivo. L’evento sarà comunque consultabile."},
+  entity:{selectedId:entityHistorical ? selectedEntityId : entitySelection?.id || null,candidateId:entityCandidate?.id || null,
+    candidateName:entityCandidate?.name || null,requiresDecision:Boolean(entityCandidate),
+    message:entityCandidate ? `L’entità “${entityCandidate.name}” è inattiva. Vuoi collegarla a questo evento?` : null,
+    information:"L’entità resterà inattiva. L’evento sarà comunque consultabile."}
+};
+
+const associationContext = JSON.stringify([{{ analysis_snapshot.value?.id || null }},selectedProjectId,selectedEntityId,typeValue,isEditMode,historical]);
+const associationSnapshot = {{ analysis_snapshot.value || null }};
+// Correlate UI options only; do not read exception controls or consent here.
+for (const layer of ["project", "entity"]) {
+  const entry = association[layer];
+  entry.choiceValues = associationSnapshot && entry.requiresDecision
+    ? Object.fromEntries(["link", "skip"].map(choice => [choice, JSON.stringify([
+        associationSnapshot.id, associationSnapshot.revision, associationSnapshot.context,
+        associationContext, layer, entry.candidateId, choice
+      ])]))
+    : null;
+}
+
+const canConfirm =
+  !invalidSelection &&
+  {{ Boolean(analysis_snapshot.value) }} &&
+  showConfirm === true &&
+  hasBlockingIssue === false &&
+  isPureCommand === false;
+
+// -----------------------------
+// EFFECTIVE PROJECT / ENTITY — READ ONLY
+// -----------------------------
+
+const projectHasSelectedValue = Boolean(selectedProjectId);
+const entityHasSelectedValue = Boolean(selectedEntityId);
+
+const projectHasRawMatch =
+  projectMatchCount > 0 ||
+  Boolean(projectSingleMatch?.id);
+
+const entityHasRawMatch =
+  entityMatchCount > 0 ||
+  Boolean(entitySingleMatch?.id);
+
+const projectIsBlocking =
+  effectiveCanUseEventFields &&
+  projectIsAmbiguous &&
+  !projectHasSelectedValue;
+
+const entityIsBlocking =
+  effectiveCanUseEventFields &&
+  entityIsAmbiguous &&
+  !entityHasSelectedValue;
+
+const projectIsUsableForEvent =
+  effectiveCanUseEventFields &&
+  projectHasSelectedValue &&
+  !projectIsBlocking;
+
+const entityIsUsableForEvent =
+  effectiveCanUseEventFields &&
+  entityHasSelectedValue &&
+  !entityIsBlocking;
+
+const projectHasNonBlockingWarning =
+  effectiveCanUseEventFields &&
+  !projectIsBlocking &&
+  Boolean(projectMatch.hasMoreSpecificMatches);
+
+const entityHasNonBlockingWarning =
+  effectiveCanUseEventFields &&
+  !entityIsBlocking &&
+  Boolean(entityMatch.hasMoreSpecificMatches);
+
+return {
+  association,
+  associationContext,
+  analysis: {{ analysis_snapshot.value || null }},
+mode: {
+  view: String(uiState.view || "home"),
+  visibilityMode,
+  isInputFlow,
+  isEditMode,
+  isCommand,
+  isPureCommand,
+  isEventFlow,
+  effectiveFlowType,
+  effectiveIsInputFlow,
+  effectiveIsEventFlow,
+  effectiveIsCommandFlow,
+  effectiveCanUseEventFields,
+  effectiveCanUseCommandFields
+},
+
+  input: {
+    raw: rawInput,
+    normalizedText,
+    hasInput
+  },
+
+  parsed: {
+    amount,
+    unit,
+    event_date: eventDate,
+    hasAmount,
+    hasUnit,
+    hasDate,
+    isEconomic,
+    isTime
+  },
+
+  type: {
+    value: typeValue,
+    isMissingEconomicDirection
+  },
+
+project: {
+  selectedId: selectedProjectId,
+  selectedName: selectedProjectName,
+  matchCount: projectMatchCount,
+  isAmbiguous: projectIsAmbiguous,
+  hasSingleMatch: Boolean(projectSingleMatch?.id),
+  singleMatchId: projectSingleMatch?.id || null,
+  singleMatchName: projectSingleMatch?.name || null,
+  hasMoreSpecificMatches: Boolean(projectMatch.hasMoreSpecificMatches),
+  isMissing: !selectedProjectId,
+
+  raw: {
+    matchCount: projectMatchCount,
+    isAmbiguous: projectIsAmbiguous,
+    hasSingleMatch: Boolean(projectSingleMatch?.id),
+    singleMatchId: projectSingleMatch?.id || null,
+    singleMatchName: projectSingleMatch?.name || null,
+    hasMoreSpecificMatches: Boolean(projectMatch.hasMoreSpecificMatches),
+    hasRawMatch: projectHasRawMatch
+  },
+
+  selection: {
+    selectedId: selectedProjectId,
+    selectedName: selectedProjectName,
+    hasSelectedValue: projectHasSelectedValue,
+    isMissing: !selectedProjectId
+  },
+
+  effective: {
+    isUsableForEvent: projectIsUsableForEvent,
+    isBlocking: projectIsBlocking,
+    hasNonBlockingWarning: projectHasNonBlockingWarning,
+    isIgnoredByCommandFlow: effectiveIsCommandFlow
+  }
+},
+
+entity: {
+  selectedId: selectedEntityId,
+  selectedName: selectedEntityName,
+  matchCount: entityMatchCount,
+  isAmbiguous: entityIsAmbiguous,
+  hasSingleMatch: Boolean(entitySingleMatch?.id),
+  singleMatchId: entitySingleMatch?.id || null,
+  singleMatchName: entitySingleMatch?.name || null,
+  hasMoreSpecificMatches: Boolean(entityMatch.hasMoreSpecificMatches),
+  isMissing: !selectedEntityId,
+
+  raw: {
+    matchCount: entityMatchCount,
+    isAmbiguous: entityIsAmbiguous,
+    hasSingleMatch: Boolean(entitySingleMatch?.id),
+    singleMatchId: entitySingleMatch?.id || null,
+    singleMatchName: entitySingleMatch?.name || null,
+    hasMoreSpecificMatches: Boolean(entityMatch.hasMoreSpecificMatches),
+    hasRawMatch: entityHasRawMatch
+  },
+
+  selection: {
+    selectedId: selectedEntityId,
+    selectedName: selectedEntityName,
+    hasSelectedValue: entityHasSelectedValue,
+    isMissing: !selectedEntityId
+  },
+
+  effective: {
+    isUsableForEvent: entityIsUsableForEvent,
+    isBlocking: entityIsBlocking,
+    hasNonBlockingWarning: entityHasNonBlockingWarning,
+    isIgnoredByCommandFlow: effectiveIsCommandFlow
+  }
+},
+
+  suggestion: {
+  hasProjectSuggestion,
+  hasEntitySuggestion,
+  hasAnySuggestion: rawHasAssociationSuggestion,
+
+  effectiveHasProjectSuggestion:
+    showAssociationSuggestions === true &&
+    hasProjectSuggestion === true,
+
+  effectiveHasEntitySuggestion:
+    showAssociationSuggestions === true &&
+    hasEntitySuggestion === true,
+
+  effectiveHasAnySuggestion:
+    showAssociationSuggestions === true,
+
+  project: suggestion.project || null,
+  entity: suggestion.entity || null
+},
+
+  command: {
+  isCommand,
+  isPureCommand,
+
+  rawIsCommand,
+  rawIsPureCommand,
+
+  isSuppressedByEditMode:
+    isEditMode && rawIsCommand,
+
+  commandFamily: isCommand ? (command.commandFamily || null) : null,
+  commandType: isCommand ? (command.commandType || null) : null,
+  targetType: isCommand ? (command.targetType || null) : null,
+  candidateName: isCommand ? (command.candidateName || null) : null,
+  existingId: isCommand ? (command.existingId || null) : null,
+  canExecute: isCommand && command.canExecute === true,
+  needsCompletion: isCommand && command.needsCompletion === true,
+  guideMessage: isCommand ? (command.guideMessage || null) : null
+},
+
+  preview: {
+    hasHints: preview.hasHints === true,
+    hints: Array.isArray(preview.hints) ? preview.hints : [],
+    hasBlockingAmbiguity: preview.hasBlockingAmbiguity === true,
+    hasWarning: preview.hasWarning === true,
+    statusLabel: preview.statusLabel || "OK",
+    missingAssociationTitle: preview.missingAssociationTitle || null,
+    showMissingAssociationNotice: preview.showMissingAssociationNotice === true
+  },
+
+  readiness: {
+  canShowEventPreview: showEventPreview,
+  canShowCommandContainer: showCommandContainer,
+  canShowEventData: showEventData,
+  canShowAssociationSuggestions: showAssociationSuggestions,
+
+  // Visibility-only flag.
+  // Dice se il bottone Conferma deve essere mostrato nel flow evento/edit.
+  // NON include blocchi funzionali come ambiguità o disabled state.
+  canShowConfirm: showConfirm,
+
+  // Functional readiness flag.
+  // Dice se l'evento può essere confermato.
+  // NON usarlo per Hidden del bottone.
+  canConfirm,
+  hasBlockingIssue,
+  hasNonBlockingWarnings
+},
+
+diagnostics: {
+  source: "input_analysis_result",
+  layer: "single_interpretation_base_read_only",
+  writesData: false,
+  modifiesParser: false,
+  modifiesMatching: false,
+  modifiesVisibility: false,
+  modifiesSaveFlow: false,
+  modifiesDb: false,
+  hasUiVisibilityDependency: false,
+usesUiVisibilityOnlyAsRawDiagnostic: false,
+effectiveReadinessComputedInternally: true,
+isConsumptionReadyForUiVisibility: true,
+antiLoopRule: "ui_visibility_state is no longer read by input_analysis_result; no reverse dependency is allowed"
+}
+};
+```
+
+### q2-source-command-intent-state-query
+
+`command_intent_state.template.query` — sorgente integrale. SHA-256 UTF-8/LF `eee8a740ca33f60b15c339ff8995ff2019cf4bed91bbf6698d389fb6e248b489`, 7995 byte.
+
+```js
+// Q2: request-scoped adapter. Canonical body below is unchanged.
+const req = typeof analysis_request === "undefined" ? null : analysis_request;
+const values = req ? [
+  {value:req.raw}, {value:req.raw}, {data:req.projects}, {data:req.entities},
+  {data:req.project}, {data:req.entity}, {value:req.projectId}, {value:req.entityId}
+] : [input_home,input_raw,projects_list,entities_list,project_state,entity_state,select_project,select_entity];
+const result = ((input_home, input_raw, projects_list, entities_list, project_state, entity_state, select_project, select_entity) => {
+const raw = String(input_home.value || input_raw.value || "").trim();
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function titleCase(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/*
+  Duplicate guard minimale.
+
+  Scopo:
+  - evitare che un comando puro proponga di creare un project/entity già esistente
+  - NON sostituire project_state / entity_state
+  - NON fare fuzzy matching
+  - NON fare deduplicazione avanzata
+  - NON decidere associazioni evento
+
+  La verifica è solo su nome esatto normalizzato.
+*/
+function normalizeName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findExistingByExactName(list, candidateName) {
+  const normalizedCandidate = normalizeName(candidateName);
+
+  if (!normalizedCandidate) {
+    return null;
+  }
+
+  return (Array.isArray(list) ? list : []).find(item => {
+    return normalizeName(item?.name) === normalizedCandidate;
+  }) || null;
+}
+
+const clean = normalizeText(raw);
+
+const emptyResult = {
+  isCommand: false,
+  isPureCommand: false,
+  commandFamily: null,
+  commandType: null,
+  targetType: null,
+  candidateName: null,
+  existingId: null,
+  needsCompletion: false,
+  canExecute: false,
+  guideMessage: null,
+  rawInput: raw
+};
+
+if (!clean) {
+  return emptyResult;
+}
+
+/*
+  COMMAND INTENT GENERICO — CREATE TARGET MANCANTE
+
+  Gestisce input troppo generici:
+  - crea
+  - aggiungi
+  - inserisci
+  - nuovo
+  - nuova
+
+  Non esegue nulla.
+  Serve solo a guidare l’utente.
+*/
+
+const genericCreateCommands = /^(crea|aggiungi|inserisci|nuovo|nuova)$/;
+
+if (genericCreateCommands.test(clean)) {
+  return {
+    isCommand: true,
+    isPureCommand: true,
+    commandFamily: "guide",
+    commandType: "create_target_missing",
+    targetType: null,
+    candidateName: null,
+    existingId: null,
+    needsCompletion: true,
+    canExecute: false,
+    guideMessage: "Vuoi creare qualcosa? Specifica se vuoi creare un progetto o un’entità.",
+    rawInput: raw
+  };
+}
+
+/*
+  COMMAND INTENT GENERICO — EDIT / CORRECTION ALIAS
+
+  Gestisce input troppo generici:
+  - modifica
+  - correggi
+  - cambia
+
+  Non esegue nulla.
+  Non apre edit flow automatico.
+  Non salva eventi.
+  Serve solo a evitare che alias generici vengano trattati come eventi ordinari.
+*/
+
+const genericEditGuideCommands = /^(modifica|correggi|cambia)$/;
+
+if (genericEditGuideCommands.test(clean)) {
+  return {
+    isCommand: true,
+    isPureCommand: true,
+    commandFamily: "guide",
+    commandType: "edit_generic_help",
+    targetType: "event",
+    candidateName: null,
+    existingId: null,
+    needsCompletion: false,
+    canExecute: false,
+    guideMessage: "Vuoi modificare un evento? Apri la lista Eventi e usa Modifica. Se sei già in modifica, usa i campi dell’evento oppure Annulla modifica.",
+    rawInput: raw
+  };
+}
+
+/*
+  COMMAND INTENT — CREATE PROJECT / ENTITY
+
+  Gestisce solo comandi puri espliciti:
+  - crea progetto
+  - crea progetto Villa Nuova
+  - aggiungi progetto Villa Nuova
+  - inserisci progetto Villa Nuova
+  - nuovo progetto Villa Nuova
+
+  - crea entità
+  - crea entità Patrizio
+  - aggiungi entità Patrizio
+  - inserisci entità Patrizio
+  - nuova entità Patrizio
+
+  Non salva.
+  Non crea.
+  Non modifica parser.
+  Non modifica matching.
+  Non modifica DB.
+*/
+
+const createPatterns = [
+  {
+    commandType: "create_project",
+    targetType: "project",
+    regex: /^(crea|aggiungi|inserisci|nuovo|nuova)\s+(nuovo\s+|nuova\s+)?progetto(?:\s+(.+))?$/
+  },
+  {
+    commandType: "create_entity",
+    targetType: "entity",
+    regex: /^(crea|aggiungi|inserisci|nuovo|nuova)\s+(nuovo\s+|nuova\s+)?(entita|entità)(?:\s+(.+))?$/
+  }
+];
+
+for (const pattern of createPatterns) {
+  const match = clean.match(pattern.regex);
+
+  if (match) {
+    let rawCandidate = match[4];
+
+if (pattern.targetType === "project") {
+  rawCandidate = match[3];
+}
+
+const candidateName = rawCandidate ? titleCase(rawCandidate) : null;
+
+    /*
+      Comando incompleto:
+      - crea progetto
+      - crea entità
+
+      In questo caso NON possiamo verificare duplicati
+      perché manca il nome.
+    */
+    if (!candidateName) {
+      return {
+        isCommand: true,
+        isPureCommand: true,
+        commandFamily: "create",
+        commandType: pattern.commandType,
+        targetType: pattern.targetType,
+        candidateName: null,
+        existingId: null,
+        needsCompletion: true,
+        canExecute: true,
+        guideMessage: null,
+        rawInput: raw
+      };
+    }
+
+    /*
+      Comando completo:
+      prima di proporre creazione, verifica solo se esiste già
+      un nome identico normalizzato in projects_list / entities_list.
+    */
+    let existingSource = entities_list.data;
+
+if (pattern.targetType === "project") {
+  existingSource = projects_list.data;
+}
+
+const existingItem = findExistingByExactName(
+  existingSource,
+  candidateName
+);
+
+    if (existingItem) {
+  let existingCommandType = "entity_exists";
+
+  if (pattern.targetType === "project") {
+    existingCommandType = "project_exists";
+  }
+
+  let existingGuideMessage =
+    `L’entità "${existingItem.name}" esiste già. Puoi selezionarla nei dati evento o usare un nome più specifico.`;
+
+  if (pattern.targetType === "project") {
+    existingGuideMessage =
+      `Il progetto "${existingItem.name}" esiste già. Puoi selezionarlo nei dati evento o usare un nome più specifico.`;
+  }
+
+  return {
+    isCommand: true,
+    isPureCommand: true,
+    commandFamily: "exists",
+    commandType: existingCommandType,
+    targetType: pattern.targetType,
+    candidateName: existingItem.name,
+    existingId: existingItem.id ?? null,
+    needsCompletion: false,
+    canExecute: false,
+    guideMessage: existingGuideMessage,
+    rawInput: raw
+  };
+}
+
+    return {
+      isCommand: true,
+      isPureCommand: true,
+      commandFamily: "create",
+      commandType: pattern.commandType,
+      targetType: pattern.targetType,
+      candidateName,
+      existingId: null,
+      needsCompletion: false,
+      canExecute: true,
+      guideMessage: null,
+      rawInput: raw
+    };
+  }
+}
+
+/*
+  INTENT GUIDA — NON OPERATIVO
+
+  Non modifica eventi.
+  Non apre edit flow alternativo.
+  Non seleziona automaticamente eventi.
+  Non crea funzioni parallele.
+  Serve solo a guidare l’utente verso funzioni già presenti.
+*/
+
+const editEventPatterns = [
+  /^(modifica|correggi|cambia)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/,
+  /^(come\s+)?(modifico|correggo|cambio)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/,
+  /^(devo\s+)?(modificare|correggere|cambiare)\s+(un\s+|uno\s+|l'|lo\s+|il\s+)?evento$/
+];
+
+if (editEventPatterns.some(regex => regex.test(clean))) {
+  return {
+    isCommand: true,
+    isPureCommand: true,
+    commandFamily: "guide",
+    commandType: "edit_event_help",
+    targetType: "event",
+    candidateName: null,
+    existingId: null,
+    needsCompletion: false,
+    canExecute: false,
+    guideMessage: "Per modificare un evento già creato, apri la lista eventi e usa il pulsante Modifica.",
+    rawInput: raw
+  };
+}
+
+return emptyResult;
+})(...values);
+return {...result, __logosRequestId:req?.id || null};
+```
+
+### q2-source-create-suggestion-state-query
+
+`create_suggestion_state.template.query` — sorgente integrale. SHA-256 UTF-8/LF `fc581c669262a9ccf4a050cb2edbef9e26cd605b2a80a0492775e150fd32db63`, 14983 byte.
+
+```js
+// Q2: request-scoped adapter. Canonical body below is unchanged.
+const req = typeof analysis_request === "undefined" ? null : analysis_request;
+const values = req ? [
+  {value:req.raw}, {value:req.raw}, {data:req.projects}, {data:req.entities},
+  {data:req.project}, {data:req.entity}, {value:req.projectId}, {value:req.entityId}
+] : [input_home,input_raw,projects_list,entities_list,project_state,entity_state,select_project,select_entity];
+const result = ((input_home, input_raw, projects_list, entities_list, project_state, entity_state, select_project, select_entity) => {
+const text = input_raw.value?.trim() || "";
+
+const normalize = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const toTitleCase = (str) =>
+  String(str || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((part) => {
+      if (/^\d+$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(" ");
+
+const cleanText = normalize(text);
+
+const projects = projects_list.data || [];
+const entities = entities_list.data || [];
+
+const projectData = project_state.data || {};
+const entityData = entity_state.data || {};
+
+const projectCount = Number(projectData.count ?? projectData.matches?.length ?? 0);
+const entityCount = Number(entityData.count ?? entityData.matches?.length ?? 0);
+
+const projectIsAmbiguous =
+  Boolean(projectData.isAmbiguous) || projectCount > 1;
+
+const entityIsAmbiguous =
+  Boolean(entityData.isAmbiguous) || entityCount > 1;
+
+const projectHasSingle =
+  Boolean(projectData.singleMatch?.id) || Boolean(select_project.value);
+
+const entityHasSingle =
+  Boolean(entityData.singleMatch?.id) || Boolean(select_entity.value);
+
+const isMeaningful = cleanText.length >= 3;
+
+const escapeRegex = (str) =>
+  String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const STOPWORDS_BASE = [
+  "il", "lo", "la", "i", "gli", "le",
+  "un", "uno", "una",
+  "di", "del", "dello", "della", "dei", "degli", "delle",
+  "a", "al", "allo", "alla", "ai", "agli", "alle",
+  "da", "dal", "dallo", "dalla", "dai", "dagli", "dalle",
+  "in", "nel", "nello", "nella", "nei", "negli", "nelle",
+  "con", "su", "per", "tra", "fra",
+  "e", "ed", "o"
+];
+
+const UNIT_KEYWORDS = [
+  "euro", "eur", "ora", "ore", "h",
+  "min", "minuto", "minuti",
+  "giorno", "giorni", "settimana", "settimane",
+  "giornata", "giornate"
+];
+
+const ECONOMIC_KEYWORDS = [
+  "spesa", "acquisto", "acquistato", "comprato",
+  "pagato", "pagamento", "costo", "costi",
+  "uscita", "incasso", "incassato", "entrata",
+  "vendita", "venduto",
+  "acconto", "saldo",
+  "dato", "dati",
+  "versato", "versati",
+  "ricevuto", "ricevuti",
+  "fattura", "fatture",
+  "preventivo", "preventivi",
+  "ordine", "ordini",
+  "cliente", "clienti",
+  "fornitore", "fornitori"
+];
+
+const OPERATIONAL_CAUSAL_WORDS = [
+  "sopralluogo", "sopralluoghi",
+  "urgente", "urgenza",
+  "lavoro", "lavori",
+  "materiale", "materiali",
+  "nuovo", "nuova", "nuovi", "nuove",
+  "benzina",
+  "mangime",
+  "vaccino", "vaccini", "vaccinazione",
+  "test", "prova", "prove", "regressione",
+  "rendering", "render",
+  "visita", "visite",
+  "controllo", "controlli",
+  "verifica", "verifiche",
+  "manutenzione",
+  "riparazione",
+  "consegna", "consegnato",
+  "ritiro", "ritirato"
+];
+
+const MONTH_WORDS = [
+  "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"
+];
+
+const stopWords = new Set([
+  ...STOPWORDS_BASE,
+  ...UNIT_KEYWORDS,
+  ...ECONOMIC_KEYWORDS,
+  ...OPERATIONAL_CAUSAL_WORDS,
+  ...MONTH_WORDS
+]);
+
+const isStopWord = (word) => stopWords.has(normalize(word));
+
+const stripKnownTokens = (input) => {
+  let s = ` ${normalize(input)} `;
+
+  // date numeriche
+  s = s.replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ");
+
+  // date testuali
+  for (const m of MONTH_WORDS) {
+    s = s.replace(new RegExp(`\\b\\d{1,2}\\s+${m}\\b`, "g"), " ");
+  }
+
+  // importi euro
+  s = s
+    .replace(/€\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?/g, " ")
+    .replace(/€\s*\d+(?:[,.]\d+)?/g, " ")
+    .replace(/\b\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\s*(€|euro|eur)\b/g, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*(€|euro|eur)\b/g, " ")
+    .replace(/\b(euro|eur)\s*\d{1,3}(?:\.\d{3})*(?:[,.]\d+)?\b/g, " ")
+    .replace(/\b(euro|eur)\s*\d+(?:[,.]\d+)?\b/g, " ");
+
+  // durate ore/minuti semplici e composte
+  s = s
+    .replace(/\b\d+(?:[,.]\d+)?\s*(h|ora|ore)\s*(?:e\s*)?\d{1,2}\s*(minuti|minuto|min)?\b/g, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*h\s*\d{1,2}\b/g, " ")
+    .replace(/\b\d+(?:[,.]\d+)?\s*(h|ora|ore|minuti|minuto|min)\b/g, " ")
+    .replace(/\b(h|minuti|minuto|min)\s*\d+(?:[,.]\d+)?\b/g, " ");
+
+  return s.replace(/\s+/g, " ").trim();
+};
+
+const hasPhraseInText = (phrase, sourceText) => {
+  const cleanPhrase = normalize(phrase);
+  if (!cleanPhrase) return false;
+
+  const parts = cleanPhrase.split(" ").filter(Boolean);
+  if (!parts.length) return false;
+
+  const pattern = parts.map(escapeRegex).join("\\s+");
+  const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+  return regex.test(sourceText);
+};
+
+const existsNormalized = (name, records) => {
+  const n = normalize(name);
+  return records.some((r) => normalize(r?.name) === n);
+};
+
+// Solo il record-base gia' identificato dallo state o scelto per UUID
+// puo' originare un'estensione. L'esistenza del nome si controlla sul totale.
+const findExtensionCandidate = (baseRecords, allRecords, excludedPhrases = []) => {
+  const stripped = stripKnownTokens(cleanText);
+
+  const normalizedExcluded = excludedPhrases
+    .map((p) => normalize(p))
+    .filter(Boolean);
+
+  const containsExcludedPhrase = (candidate) => {
+    const normalizedCandidate = normalize(candidate);
+
+    return normalizedExcluded.some((phrase) => {
+      if (!phrase) return false;
+
+      const parts = phrase.split(" ").filter(Boolean);
+      if (!parts.length) return false;
+
+      const pattern = parts.map(escapeRegex).join("\\s+");
+      const regex = new RegExp(`\\b${pattern}\\b`, "i");
+
+      return regex.test(normalizedCandidate);
+    });
+  };
+
+  const sorted = [...baseRecords]
+    .filter((r) => r?.name)
+    .sort((a, b) => normalize(b.name).length - normalize(a.name).length);
+
+  for (const record of sorted) {
+    const baseName = normalize(record.name);
+
+    if (!baseName || !hasPhraseInText(baseName, stripped)) {
+      continue;
+    }
+
+    const baseParts = baseName.split(" ").filter(Boolean);
+    const pattern = baseParts.map(escapeRegex).join("\\s+");
+
+    const regex = new RegExp(`\\b${pattern}\\b\\s*([a-z0-9\\s]*)`, "i");
+    const match = stripped.match(regex);
+
+    if (!match || !match[1]) {
+      continue;
+    }
+
+    const trailingWords = match[1]
+      .split(" ")
+      .map((w) => w.trim())
+      .filter(Boolean);
+
+    const usefulExtra = [];
+
+    for (const word of trailingWords) {
+      const cleanWord = normalize(word);
+
+      if (!cleanWord) continue;
+
+      if (isStopWord(cleanWord)) {
+        break;
+      }
+
+      if (cleanWord.length >= 3 || /^\d+$/.test(cleanWord)) {
+        usefulExtra.push(cleanWord);
+      }
+
+      if (usefulExtra.length >= 3) {
+        break;
+      }
+    }
+
+    if (!usefulExtra.length) {
+      continue;
+    }
+
+    const candidateNormalized = `${baseName} ${usefulExtra.join(" ")}`
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (candidateNormalized === baseName) {
+      continue;
+    }
+
+    if (existsNormalized(candidateNormalized, allRecords)) {
+      continue;
+    }
+
+    // Protezione cross-layer:
+    // se la candidate contiene un project/entity già riconosciuto nell'altro layer,
+    // non va proposta.
+    if (containsExcludedPhrase(candidateNormalized)) {
+      continue;
+    }
+
+    return {
+      candidateName: toTitleCase(candidateNormalized),
+      baseName: record.name,
+      reason: "extension"
+    };
+  }
+
+  return null;
+};
+
+const findNameById = (records, id) =>
+  records.find((r) => r.id === id)?.name || null;
+
+const projectSelectedName =
+  findNameById(projects, select_project.value) ||
+  projectData.singleMatch?.name ||
+  null;
+
+const entitySelectedName =
+  findNameById(entities, select_entity.value) ||
+  entityData.singleMatch?.name ||
+  null;
+
+const projectDetectedNames = [
+  projectSelectedName,
+  ...(Array.isArray(projectData.matches) ? projectData.matches.map((p) => p.name) : [])
+].filter(Boolean);
+
+const entityDetectedNames = [
+  entitySelectedName,
+  ...(Array.isArray(entityData.matches) ? entityData.matches.map((e) => e.name) : [])
+].filter(Boolean);
+
+const buildLayerSuggestion = ({
+  layer,
+  count,
+  isAmbiguous,
+  hasSingle,
+  records,
+  label
+}) => {
+  const noMatch = isMeaningful && count === 0 && !isAmbiguous && !hasSingle;
+
+  // Il matching resta autorita' dello state. Non ripercorrere il repertorio
+  // per individuare autonomamente un record-base alternativo.
+  const stateData = layer === "project" ? projectData : entityData;
+  const chosenId = layer === "project" ? select_project.value : select_entity.value;
+  const selectedRecord = chosenId ? records.find((r) => r.id === chosenId) : null;
+  const canonicalBase = selectedRecord || stateData.singleMatch || null;
+  const baseRecords = canonicalBase ? [canonicalBase] : [];
+  const hasPlausibleAlternatives =
+    Array.isArray(stateData.plausibleAlternatives) &&
+    stateData.plausibleAlternatives.length > 0;
+
+  const hasPrefixAlternatives =
+    layer === "project" && (stateData.prefixAlternatives?.length ?? 0) > 0;
+
+  const canLookForCandidate =
+    isMeaningful &&
+    !isAmbiguous &&
+    hasSingle &&
+    Boolean(canonicalBase) &&
+    !hasPlausibleAlternatives &&
+    !hasPrefixAlternatives;
+
+  const excludedPhrases = layer === "project" ? entityDetectedNames : projectDetectedNames;
+  const extension = canLookForCandidate
+    ? findExtensionCandidate(baseRecords, records, excludedPhrases)
+    : null;
+
+  const candidateName = extension?.candidateName || null;
+
+  const hasStrongCandidate =
+    Boolean(candidateName) &&
+    !existsNormalized(candidateName, records);
+
+  const shouldShowNoMatchHint = noMatch && !hasPrefixAlternatives;
+
+  // In caso di estensione con singleMatch, possiamo suggerire creazione
+  // anche se il layer ha già un valore selezionato.
+  const shouldSuggestCreate =
+    hasStrongCandidate &&
+    !isAmbiguous &&
+    (
+      noMatch ||
+      hasSingle
+    );
+
+  let message = null;
+
+  if (shouldSuggestCreate) {
+    message = `Crea ${label} “${candidateName}”`;
+  } else if (shouldShowNoMatchHint) {
+    message = `Nessun ${label} associato`;
+  }
+
+return {
+  layer,
+  noMatch,
+  isAmbiguous,
+  hasSingle,
+  shouldShowNoMatchHint,
+  shouldSuggestCreate,
+  candidateName,
+  draftName: candidateName || "",
+  reason: hasStrongCandidate ? extension.reason : null,
+  baseName: extension?.baseName || null,
+
+  // G22 — match presente + possibile estensione più specifica.
+  // Non blocca il salvataggio.
+  // Serve alla UI per segnalare che esiste già una selezione attiva
+  // diversa dalla candidate suggerita.
+  requiresUserOverride:
+    Boolean(hasSingle) &&
+    Boolean(hasStrongCandidate) &&
+    extension?.reason === "extension",
+
+  message
+};
+};
+
+const project = buildLayerSuggestion({
+  layer: "project",
+  count: projectCount,
+  isAmbiguous: projectIsAmbiguous,
+  hasSingle: projectHasSingle,
+  records: projects,
+  label: "progetto"
+});
+
+const entity = buildLayerSuggestion({
+  layer: "entity",
+  count: entityCount,
+  isAmbiguous: entityIsAmbiguous,
+  hasSingle: entityHasSingle,
+  records: entities,
+  label: "entità"
+});
+
+// -----------------------------
+// ENTITY AUTOFILL CANDIDATE — CONTROLLED MINIMAL
+// -----------------------------
+// Serve solo a precompilare input_new_entity_name.
+// Non crea entità, non seleziona entità, non modifica match.
+
+// Candidate consentita solo in caso di no-match entity reale,
+// senza ambiguità e senza entity già selezionata.
+const canBuildEntityAutofillCandidate =
+  isMeaningful &&
+  entity.noMatch &&
+  !entity.isAmbiguous &&
+  !entity.hasSingle;
+
+// Parole che possono indicare una entità/persona/contatto.
+// Manteniamo lista corta per evitare falsi positivi tipo "materiale nuovo".
+const ENTITY_PREFIX_WORDS = [
+  "referente",
+  "tecnico",
+  "cliente",
+  "fornitore",
+  "operaio",
+  "collaboratore",
+  "contatto",
+  "responsabile",
+  "muratore",
+  "idraulico",
+  "elettricista",
+  "geometra",
+  "architetto"
+];
+
+const findEntityAutofillCandidate = () => {
+  if (!canBuildEntityAutofillCandidate) {
+    return null;
+  }
+
+  let stripped = stripKnownTokens(cleanText);
+
+  // Rimuove nomi progetto già rilevati/selezionati.
+  let projectMatchNames = [];
+
+if (Array.isArray(projectData.matches)) {
+  projectMatchNames = projectData.matches.map((p) => p.name);
+}
+
+const projectNamesToRemove = [
+  projectSelectedName,
+  ...projectMatchNames
+].filter(Boolean);
+
+  for (const name of projectNamesToRemove) {
+    const cleanName = normalize(name);
+    if (!cleanName) continue;
+
+    const parts = cleanName.split(" ").filter(Boolean);
+    const pattern = parts.map(escapeRegex).join("\\s+");
+    stripped = stripped.replace(new RegExp(`\\b${pattern}\\b`, "gi"), " ");
+  }
+
+  // Rimuove parole operative residue.
+  for (const word of OPERATIONAL_CAUSAL_WORDS) {
+    stripped = stripped.replace(new RegExp(`\\b${escapeRegex(word)}\\b`, "gi"), " ");
+  }
+
+  stripped = stripped
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!stripped) {
+    return null;
+  }
+
+  const words = stripped
+    .split(" ")
+    .map((w) => normalize(w))
+    .filter(Boolean)
+    .filter((w) => !isStopWord(w));
+
+  if (!words.length) {
+    return null;
+  }
+
+  // Cerca pattern con prefisso entity forte:
+  // referente kappa
+  // tecnico alfa
+  // cliente rossi
+  const prefixIndex = words.findIndex((w) =>
+    ENTITY_PREFIX_WORDS.includes(w)
+  );
+
+  if (prefixIndex < 0) {
+    return null;
+  }
+
+  const candidateWords = [];
+
+  for (let i = prefixIndex; i < words.length; i++) {
+    const word = words[i];
+
+    if (!word) break;
+    if (isStopWord(word) && !ENTITY_PREFIX_WORDS.includes(word)) break;
+
+    if (word.length >= 3 || /^\d+$/.test(word)) {
+      candidateWords.push(word);
+    }
+
+    if (candidateWords.length >= 3) {
+      break;
+    }
+  }
+
+  // Richiediamo almeno:
+  // - prefisso + un secondo token
+  // così evitiamo candidate troppo deboli tipo solo "tecnico".
+  if (candidateWords.length < 2) {
+    return null;
+  }
+
+  const candidateNormalized = candidateWords.join(" ").trim();
+
+  if (!candidateNormalized) {
+    return null;
+  }
+
+  if (existsNormalized(candidateNormalized, entities)) {
+    return null;
+  }
+
+  return toTitleCase(candidateNormalized);
+};
+
+const entityAutofillCandidate = findEntityAutofillCandidate();
+
+if (
+  entityAutofillCandidate &&
+  !entity.candidateName &&
+  !entity.draftName
+) {
+  entity.candidateName = entityAutofillCandidate;
+  entity.draftName = entityAutofillCandidate;
+}
+
+return {
+  input: text,
+  cleanText,
+  project,
+  entity
+};
+})(...values);
+return {...result, __logosRequestId:req?.id || null};
+```
+
+### q2-source-focus-input-home-query
+
+`focus_input_home.template.query` — sorgente integrale. SHA-256 UTF-8/LF `8e73ff23f3310b4ad8b38aee270c71330a4bef7bac5aace49ad1395489c896fc`, 241 byte.
+
+```js
+const epoch = window.__logosAnalysisEpoch;
+await ui_state.setValue({...ui_state.value,view:"home"});
+if (window.__logosAnalysisEpoch !== epoch) return;
+setTimeout(() => { if (window.__logosAnalysisEpoch === epoch) input_home.focus(); },200);
+```
+
+### q2-source-select1-value
+
+`select1.template.value` — sorgente integrale. SHA-256 UTF-8/LF `321f51a11f027fee961ec3cba6f2a61c2e141a539e8b3fe6d84f12b4dea79289`, 3153 byte.
+
+```js
+{{
+(() => {
+  const text = (input_raw.value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const parsed = analysis_snapshot.value?.parsed || {};
+  const parsedUnit = String(parsed.unit || "").toLowerCase();
+
+  // ------------------------------------------------
+  // 1. TEMPO — fonte primaria: ui_state.parsed
+  // ------------------------------------------------
+  // Dopo Duration Normalization tutte le durate certe
+  // sono salvate come:
+  // amount = totale minuti
+  // unit = "minuti"
+  //
+  // Questo risolve casi come:
+  // 2h30 rendering → Tempo
+  // 1 ora lavoro → Tempo
+  // 18min test → Tempo
+
+  if (parsedUnit === "minuti") {
+    return "Tempo";
+  }
+
+  // ------------------------------------------------
+  // 2. ECONOMICO — solo se c'è segnale economico
+  // ------------------------------------------------
+
+  const hasEuro =
+    parsedUnit === "euro" ||
+    /€|\beuro\b|\beur\b/.test(text);
+
+  // ------------------------------------------------
+  // 3. INCASSO — keyword controllate
+  // ------------------------------------------------
+  // Regola:
+  // classificare Incasso solo se il testo contiene
+  // segnali abbastanza espliciti di entrata.
+
+  const isIncasso =
+    /\bincasso\b/.test(text) ||
+    /\bincassato\b/.test(text) ||
+    /\bentrata\b/.test(text) ||
+    /\bvendita\b/.test(text) ||
+    /\bvenduto\b/.test(text) ||
+    /\bpagamento ricevuto\b/.test(text) ||
+    /\bacconto ricevuto\b/.test(text) ||
+    /\bsaldo ricevuto\b/.test(text);
+
+  // ------------------------------------------------
+  // 4. SPESA — keyword controllate
+  // ------------------------------------------------
+  // Regola:
+  // classificare Spesa solo se il testo contiene
+  // segnali abbastanza espliciti di uscita.
+
+  const isSpesa =
+    /\bspesa\b/.test(text) ||
+    /\bacquisto\b/.test(text) ||
+    /\bacquistato\b/.test(text) ||
+    /\bcomprato\b/.test(text) ||
+    /\bpagato\b/.test(text) ||
+    /\bpagamento\b/.test(text) ||
+    /\bcosto\b/.test(text) ||
+    /\bcosti\b/.test(text) ||
+    /\buscita\b/.test(text) ||
+    /\bacconto dato\b/.test(text) ||
+    /\bacconto versato\b/.test(text) ||
+    /\bsaldo pagato\b/.test(text) ||
+    /\bsaldo versato\b/.test(text);
+
+  // ------------------------------------------------
+  // 5. AMBIGUITÀ ECONOMICA
+  // ------------------------------------------------
+  // Se emergono segnali contrastanti, non decidere.
+  // Lascia Evento per forzare scelta/hint utente.
+
+  if (isIncasso && isSpesa) {
+    return "Evento";
+  }
+
+  if (isIncasso) {
+    return "Incasso";
+  }
+
+  if (isSpesa) {
+    return "Spesa";
+  }
+
+  // ------------------------------------------------
+  // 6. EURO SENZA DIREZIONE
+  // ------------------------------------------------
+  // Esempio:
+  // 20 euro materiale
+  // 50 euro benzina
+  //
+  // Non decidiamo automaticamente Spesa/Incasso.
+  // Restiamo su Evento così l'utente viene guidato
+  // a scegliere manualmente.
+
+  if (hasEuro) {
+    return "Evento";
+  }
+
+  // ------------------------------------------------
+  // 7. DEFAULT
+  // ------------------------------------------------
+
+  return "Evento";
+})()
+}}
+```
+
+### Q2 — configurazione di esecuzione e stati analisi
+
+Valori effettivi nel modello pre-Delete (nessun delta di queste query nel Delete). Scope e publisher sono proprietà operative, non prove di freschezza autonome.
+
+```json
+{
+  "parse_input_controlled": {
+    "id": "parse_input_controlled",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [
+        "analysis_request"
+      ],
+      "runWhenPageLoads": false,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false
+    }
+  },
+  "trigger_parse_debounced": {
+    "id": "trigger_parse_debounced",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [
+        "analysis_revision_id",
+        "analysis_expected_context"
+      ],
+      "runWhenPageLoads": false,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": true
+    }
+  },
+  "project_state": {
+    "id": "project_state",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "{{ false }}",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [
+        "analysis_request"
+      ],
+      "runWhenPageLoads": false,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false
+    }
+  },
+  "entity_state": {
+    "id": "entity_state",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "{{ false }}",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [
+        "analysis_request"
+      ],
+      "runWhenPageLoads": false,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false
+    }
+  },
+  "command_intent_state": {
+    "id": "command_intent_state",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [
+        "analysis_request"
+      ],
+      "runWhenPageLoads": false,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false
+    }
+  },
+  "create_suggestion_state": {
+    "id": "create_suggestion_state",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [
+        "analysis_request"
+      ],
+      "runWhenPageLoads": false,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": false
+    }
+  },
+  "focus_input_home": {
+    "id": "focus_input_home",
+    "type": "datasource",
+    "subtype": "JavascriptQuery",
+    "template": {
+      "queryDisabled": "",
+      "runWhenModelUpdates": false,
+      "_additionalScope": [],
+      "runWhenPageLoads": true,
+      "events": [],
+      "enableCaching": false,
+      "queryThrottleTime": "750",
+      "updateSetValueDynamically": true
+    }
+  },
+  "analysis_revision": {
+    "id": "analysis_revision",
+    "type": "state",
+    "subtype": "State",
+    "template": {
+      "value": "\"\""
+    }
+  },
+  "ui_state": {
+    "id": "ui_state",
+    "type": "state",
+    "subtype": "State",
+    "template": {
+      "value": "{\n  \"view\": \"home\",\n  \"parsed\": {\n    \"amount\": null,\n    \"unit\": null,\n    \"event_date\": null\n  },\n  \"status\": null,\n  \"feedback_text\": null,\n  \"feedback_project\": null\n}"
+    }
+  }
+}
+```
 
 CHANGELOG
 
@@ -7260,3 +8820,5 @@ v22 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Riconciliati input, creazi
 v23 — 2026-11-15 — N21, candidato PREPARE documentale. Contratto e prove nel raccordo N21 in apertura. Copia, verifica documentale assistita e pubblicazione Git pendenti.
 
 v24 — 2026-11-16 — N21/DOC PREPARE R03: integrati matching, suggestion, Select e confine con il flusso N18 nelle sezioni operative.
+
+v25 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

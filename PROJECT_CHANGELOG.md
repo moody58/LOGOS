@@ -1,7 +1,28 @@
 # PROJECT_CHANGELOG
-Versione: v07
+Versione: v08
 
-DATA: 2026-10-28
+DATA: 2026-11-20
+
+## 2026-11-20 — Q2 / UX-06, consolidamento candidato
+
+### Added
+
+- Conferma INACTIVE inline con scelte Project/Entity indipendenti, snapshot di analisi correlato e consenso contestuale; un solo coordinatore e un solo percorso INSERT/UPDATE.
+- UX-R1: gerarchia delle decisioni/suggerimenti, badge e disabled coerenti, Toggle «Modifica associazioni» senza reset dei valori.
+
+### Changed
+
+- Codici/configurazioni finali distribuiti nelle madri di competenza, con provenienza e hash; distinguere sorgente finale da candidate e fotografie storiche.
+- UAT Safari UX-R1 4/4 PASS dichiarati dall’utente; INSERT e UPDATE sullo stesso evento verificati, nessun duplicato. Autorizzazioni DML esaurite.
+
+### Removed
+
+- Dodici sole chiamate visive legacy; poi modalFrame1 e otto figli, con identità e persistenza verificate. event_confirmation resta necessario.
+
+### Limiti
+
+- Preparazione documentale, non attestazione di propria copia/verifica/pubblicazione. Nessun nuovo intervento Retool/Supabase o Publish. Core 35%, M04 PARZIALE.
+- Inventario 171→162 riconciliato, nessun export completo post-Delete. L08 Click Vai agli eventi non verificato LIVE. Dirty globale, idempotenza universale e concorrenza DB non certificati; altri nodi preservati.
 
 ------------------------------------------------
 SCOPO
@@ -372,3 +393,5 @@ v02 — 2026-04-02
 - Separazione Regia / State / Roadmap
 
 v01 — Template iniziale
+
+v08 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.

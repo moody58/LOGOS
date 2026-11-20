@@ -1,7 +1,17 @@
 # 00_PROJECT_System
-Versione: v12
+Versione: v13
 
-DATA: 2026-11-16
+DATA: 2026-11-20
+
+Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
+
+## Architettura alta corrente — conferma inline Q2
+
+La conferma degli eventi è coordinata da confirm_event, separata dalla rappresentazione. Input/parser/Match Engine/Command Intent restano moduli canonici; un bundle correlato lega analisi, contesto e consumer. IAR compone l’associazione; l’utente decide separatamente sui candidati INACTIVE ammessi, poi usa un solo pulsante finale. Nessuna nuova ricerca manuale INACTIVE o riattivazione automatica; NULL escluso dalle nuove eccezioni e FK storiche invariate preservate.
+
+La vecchia interfaccia modale è rimossa; lo stato interno event_confirmation resta condiviso dal coordinatore. Toggle e suggerimenti sono presentazione, non un secondo sistema di associazioni. Il coordinatore mantiene command/no-op, preflight, fingerprint, lock e consume-once con un solo INSERT/UPDATE. GET e scrittura restano richieste distinte, senza garanzia atomica universale.
+
+Fonti: [Input](../01_RUNTIME_LOGOS/01_LOGOS_Input_System.md), [Lifecycle](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md), [Architecture](../01_RUNTIME_LOGOS/04_LOGOS_Retool_Architecture.md), [Preview](../01_RUNTIME_LOGOS/06_LOGOS_View_Preview_System.md) e [fotografia Runtime](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale). Nessun inventario di codice duplicato in System. Tecnico Q2 concluso nei limiti provati, consolidamento in PREPARE, nessun Publish o nuova verifica LIVE qui. Core 35%, M04 PARZIALE; release/replica e ambiti avanzati invariati.
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -80,12 +90,7 @@ State conserva valore corrente, baseline e istante; Roadmap milestone,
 dipendenze e residui. L'indicatore nasceva DA BASELINARE; il valore corrente risiede nello State,
 che per N16 conserva 35% sulla baseline v1.0, M04 PARZIALE.
 
-Limite delle sezioni tecniche sottostanti: conservano lo snapshot sistemico
-del 25 maggio 2026. I richiami a database passivo, candidati e risultati di
-quel periodo non sostituiscono State e documenti tecnici correnti post-hardening.
-Le parti storiche restano tali; la presente revisione aggiorna soltanto
-la capacità architetturale di gestione anagrafica Base introdotta da N16.
-Non aggiorna o ricertifica gli altri layer e non ripete verifiche live.
+Le sezioni tecniche conservano la baseline sistemica del 25 maggio 2026 dove espressamente qualificata; non ricertificano database o runtime storici. Le revisioni successive descrivono anche capacità N16 e il contratto corrente Q2 nel layer INSERT/UPDATE, con rinvii alle madri e alle fonti finali. Non tutte le parti sotto sono quindi lo stesso snapshot storico: rispettare il perimetro dichiarato di ciascuna. Il FLOW COMPLETO esplicitamente PRE-N16 resta storico. Questa rettifica non esegue verifiche LIVE né aggiorna layer estranei.
 
 ------------------------------------------------
 OBIETTIVO SISTEMA
@@ -373,7 +378,7 @@ Draft N21, il matching B1, i filtri ACTIVE di B2/R01 per le nuove associazioni
 e la guida UX su Stati, alternative e omonimi sono implementati e verificati
 nei rispettivi casi di collaudo. Il Publish Retool non è attestato.
 G11 e M04 restano parziali per le funzionalità avanzate, comprese gerarchie
-e metadata, e per l'eccezione UX-06 ancora da attuare. La protezione dalle
+e metadata; UX-06 è attuata e collaudata nella tranche Q2. La protezione dalle
 omonimie concorrenti rimane non atomica.
 
 Nota post Visibility Migration Completion:
@@ -1140,55 +1145,11 @@ non null.
 
 12 — INSERT / UPDATE LAYER
 
-Componenti:
+Componenti: button_input_confirm delega begin a confirm_event; gli endpoint insert_event/update_event rimangono unici. Parsed dal bundle correlato, tipo dalla scelta corrente, FK dalla proiezione IAR e dalle eventuali scelte INACTIVE. La Preview non è fonte del payload.
 
-button_input_confirm
-insert_event
-update_event
+Il coordinatore cattura contesto/fingerprint, verifica command/no-op e preflight, consuma l’eventuale consenso e persiste prima del reset/feedback. Hidden del pulsante legge canShowConfirm; Disabled combina canConfirm, invio pendente e decisioni contestuali mancanti/obsolete. Il codice integrale è in Lifecycle, il wiring in Architecture. Gli esiti storici di insert/update sotto restano riferiti ai rispettivi periodi.
 
-Principio:
 
-button_input_confirm NON esegue parsing.
-
-Il payload viene costruito da:
-
-const parsed = ui_state.value?.parsed || {
-  amount: null,
-  unit: null,
-  event_date: null
-};
-
-Payload:
-
-{
-  raw_input: input_raw.value,
-  type: select1.value || "Evento",
-  amount: parsed.amount,
-  unit: parsed.unit,
-  event_date: parsed.event_date,
-  project_id: select_project.value || null,
-  entity_id: select_entity.value || null
-}
-
-Fonti controllate payload:
-
-- raw_input → input_raw.value
-- amount / unit / event_date → ui_state.parsed
-- type → select1.value
-- project_id → select_project.value
-- entity_id → select_entity.value
-
-button_input_confirm non ricalcola parsing.
-button_input_confirm non ricalcola matching.
-button_input_confirm non legge la preview come fonte dati.
-button_input_confirm non legge ui_visibility_state come fonte payload.
-
-La visibilità del bottone Conferma è stata migrata a:
-
-input_analysis_result.readiness.canShowConfirm
-
-button_input_confirm.Disabled resta guard funzionale separata.
-Il payload resta invariato.
 
 Insert:
 
@@ -1199,7 +1160,7 @@ salva type
 salva amount/unit/event_date
 salva project/entity se selezionati
 blocca la conferma in caso di ambiguità Project/Entity non risolta
-controlla con preflight applicativo lo Stato ACTIVE di ogni nuova FK
+controlla con preflight lo Stato delle nuove FK: ACTIVE ordinario o INACTIVE canonico con decisione Q2 corrente
 
 Update:
 
@@ -1207,7 +1168,7 @@ modifica evento NEW
 mantiene status NEW
 aggiorna type
 aggiorna amount/unit/event_date
-aggiorna project_id/entity_id se modificati, con preflight ACTIVE sulle nuove FK
+aggiorna project_id/entity_id se modificati, con preflight ACTIVE ordinario o consenso INACTIVE Q2 sulle nuove FK
 mantiene le FK storiche invariate
 aggiorna type
 aggiorna updated_at
@@ -1340,7 +1301,7 @@ Fotografie e prove: [Retool Runtime Real](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTI
   richiedono ACTIVE. INACTIVE e NULL restano riconoscibili e consultabili,
   con le FK storiche invariate preservate in modifica. I NULL legacy
   rimangono tali fino a una classificazione esplicita, senza migrazione
-  automatica. UX-06, per l'associazione eccezionale, resta fuori dal perimetro.
+  automatica. Q2 aggiunge la sola eccezione INACTIVE riconosciuta univocamente con decisione esplicita inline, senza ampliare il matching.
   Il [preflight applicativo](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md)
   precede la scrittura con una lettura separata, con il limite di concorrenza
   documentato per N21.
@@ -2024,3 +1985,5 @@ v10 — 2026-11-02 — Revisione documentale N16/A4 — lotto completo per revie
 v11 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Aggiornati quadro capacità, layer anagrafico e limiti G11/M04 senza estendere schema, lifecycle o release.
 
 v12 — 2026-11-16 — N21/DOC, proposta PREPARE. Riconciliati Architettura Funzionale, gestione anagrafica e passaggi collegati di matching, suggestion e conferma con N18/N20/N21. Nessuna nuova verifica runtime o pubblicazione attestata.
+
+v13 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.
