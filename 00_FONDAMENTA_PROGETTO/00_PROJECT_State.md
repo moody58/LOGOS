@@ -1,11 +1,31 @@
 # 00_PROJECT_State
-Versione: v46
+Versione: v47
 
-DATA: 2026-11-20
+DATA: 2026-11-21
+
+## Stato corrente — accettazione M04-Q4, consolidamento proposto
+
+**M04 PASS tecnico-funzionale qualificato per CF-02/VF-02**, secondo la decisione Q4 del 20 novembre 2026, senza ricalcolo di Q1–Q3 o dei collaudi N14–N21/Q2. Identità UUID, creazione Nome/Tipologia/ACTIVE, Editor Nome/Tipologia/Stato, selezione/disambiguazione, associazioni ammesse e FK RESTRICT sono accettati nei limiti delle prove trasferite. La conservazione ordinaria usa INACTIVE; DELETE amministrativo eccezionale e legacy nullable non richiedono qui migrazioni o nuove funzioni.
+
+Questa revisione è una candidata PREPARE per review. M04 è PASS tecnico-funzionale qualificato; il consolidamento documentale non è ancora applicato né pubblicato. Il valore ufficiale corrente resta 35%; 42% è lo stato successivo soltanto dopo sostituzione autorizzata, verifica documentale assistita e pubblicazione manuale verificata. Nessuna Apply o nuova verifica LIVE è attestata.
+
+**Baseline Core v1.0 invariata: 15 milestone, 100 punti.** M04 pesa 7 punti: transizione proposta **35% → 42%, +7 punti percentuali**, con **7 PASS e 8 non-PASS** dopo il consolidamento verificato. Criteri e pesi immutati; il PASS tecnico non anticipa il nuovo valore ufficiale.
+
+G11 resta INTEGRATO PARZIALE per gerarchie, metadata e funzioni avanzate; P1-01 conserva i residui esterni alla tranche di integrità M04 già qualificata. G35, R2 Dirty, N22, UX-A/B/C/D e lint restano distinti e non chiusi. M05, M10, M12, M14 e le altre milestone non ricevono nuovi PASS.
+
+R-A2-01 resta accettato dopo STP: omonimie concorrenti non protette atomicamente; A2-C non autorizzata. GET di preflight e POST/PATCH restano separati; lock locale, freshness e consume-once non attestano idempotenza universale multi-tab/client o atomicità DB.
+
+Q4 è PASS analitica READ-ONLY, senza nuovi accessi Retool/Supabase o Publish. L08 conserva la successiva prova manuale utente PASS riportata da Q4, senza retrodatare il precedente limite Q2. L'originale autonomo Q3 non è stato acquisito direttamente: la decisione già valida è trasferita dalla Regia, come dichiarato nel checkpoint Q4.
+
+Fonte: checkpoint esterno LOGOS_M04_Q4_CHECKPOINT_ACCETTAZIONE_20261120.md, 20 novembre 2026, nodo CP-LOGOS-M04-CF02-VF02-ACCEPTANCE-20261120-Q4. Artefatto della discussione ChatGPT fornito dall'utente, SHA-256 67430c79c37af6fa13d8a904ec9b6d73132d88ec649238c0fa5674654d48f301; pubblicazione GitHub Q4 non attestata. Fonti canoniche di riferimento: moody58/LOGOS, main, 799fe8217af810dba0daa2d34e14e516f99bbcc9.
+
+Obiettivo della microsessione: review di questo lotto documentale; nessun nuovo nodo funzionale. Il prossimo nodo di sviluppo resta da decidere separatamente in Regia. Le sezioni storiche sottostanti, inclusi i richiami al precedente obiettivo Q2, conservano le condizioni della propria data.
+
+## Snapshot editoriale Q2 — 20 novembre 2026
 
 Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
 
-## Stato corrente — Q2 conferma INACTIVE inline
+### Snapshot Q2 — conferma INACTIVE inline
 
 Nodo `CP-LOGOS-M04-UX06-INACTIVE-EXCEPTION-20261117-Q2`. **Tecnico Q2 PASS nel perimetro verificato**: analisi correlata e recovery edit, conferma inline A4, UX-R1, collaudo INSERT/UPDATE sullo stesso evento e rimozione della modale legacy. Consolidamento delle madri in PREPARE; copia, verifica documentale assistita, commit/push e chiusura del nodo restano distinti.
 
@@ -1338,7 +1358,7 @@ nel nodo DOCUMENTATION ARCHITECTURE AUDIT / REDUNDANCY REDUCTION.
 OBIETTIVO IMMEDIATO
 ------------------------------------------------
 
-Completare la review del lotto documentale Q2 su preimage locali preservate; poi, soltanto con consenso e Source Guard della corsia qualificata, copia personale, verifica documentale assistita e pubblicazione Git manuale. Nessuna riapertura automatica della Draft o nuovo collaudo.
+Completare la review del lotto documentale M04-Q4 sulle preimage locali preservate. La sostituzione personale dell'utente, la verifica documentale assistita e l'eventuale pubblicazione Git manuale restano passaggi distinti, con ricontrollo di HEAD, indice, stato Git e hash prima della copia. Nessuna Apply nativa, riapertura della Draft, nuovo collaudo o nuovo nodo funzionale.
 
 ------------------------------------------------
 NOTE STRATEGICHE
@@ -2960,3 +2980,6 @@ v45 — 2026-11-16 — N21/DOC PREPARE R03: riconciliati stato tecnico, snapshot
 
 
 v46 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.
+
+
+v47 — 2026-11-21 — M04-Q4, candidata PREPARE per review: PASS tecnico-funzionale CF-02/VF-02 e misura 35% → 42% subordinata al consolidamento; residui e snapshot storici preservati. Nessuna propria copia, verifica documentale assistita, commit/push o pubblicazione attestata.

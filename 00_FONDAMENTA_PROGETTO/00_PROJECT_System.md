@@ -1,7 +1,21 @@
 # 00_PROJECT_System
-Versione: v13
+Versione: v14
 
-DATA: 2026-11-20
+DATA: 2026-11-21
+
+## Raccordo corrente — accettazione M04-Q4
+
+M04 è PASS tecnico-funzionale qualificato per CF-02/VF-02, con limiti accettati e senza modifica dell'architettura o dei contratti tecnici. G11 resta INTEGRATO PARZIALE per gerarchie/metadata e funzioni avanzate; il PASS non si estende a M05, M10 o alla release/replica.
+
+Questa revisione è una candidata PREPARE per review. M04 è PASS tecnico-funzionale qualificato; il consolidamento documentale non è ancora applicato né pubblicato. Il valore ufficiale corrente resta 35%; 42% è lo stato successivo soltanto dopo sostituzione autorizzata, verifica documentale assistita e pubblicazione manuale verificata. Nessuna Apply o nuova verifica LIVE è attestata.
+
+Per valore corrente, baseline v1.0 e transizione condizionata 35% → 42% vedere State e Roadmap. R-A2-01 rimane accettato, senza protezione atomica delle omonimie concorrenti; A2-C non autorizzata. G35, R2 Dirty e N22 restano distinti.
+
+Fonte: checkpoint esterno LOGOS_M04_Q4_CHECKPOINT_ACCETTAZIONE_20261120.md, 20 novembre 2026, nodo CP-LOGOS-M04-CF02-VF02-ACCEPTANCE-20261120-Q4. Artefatto della discussione ChatGPT fornito dall'utente, SHA-256 67430c79c37af6fa13d8a904ec9b6d73132d88ec649238c0fa5674654d48f301; pubblicazione GitHub Q4 non attestata. Fonti canoniche di riferimento: moody58/LOGOS, main, 799fe8217af810dba0daa2d34e14e516f99bbcc9.
+
+Il contratto architetturale Q2 seguente resta valido nel suo perimetro; la nota editoriale Q2 conserva la propria data e non descrive lo stato di pubblicazione di questa candidata Q4.
+
+## Nota editoriale Q2 — snapshot del 20 novembre 2026
 
 Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
 
@@ -11,7 +25,7 @@ La conferma degli eventi è coordinata da confirm_event, separata dalla rapprese
 
 La vecchia interfaccia modale è rimossa; lo stato interno event_confirmation resta condiviso dal coordinatore. Toggle e suggerimenti sono presentazione, non un secondo sistema di associazioni. Il coordinatore mantiene command/no-op, preflight, fingerprint, lock e consume-once con un solo INSERT/UPDATE. GET e scrittura restano richieste distinte, senza garanzia atomica universale.
 
-Fonti: [Input](../01_RUNTIME_LOGOS/01_LOGOS_Input_System.md), [Lifecycle](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md), [Architecture](../01_RUNTIME_LOGOS/04_LOGOS_Retool_Architecture.md), [Preview](../01_RUNTIME_LOGOS/06_LOGOS_View_Preview_System.md) e [fotografia Runtime](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale). Nessun inventario di codice duplicato in System. Tecnico Q2 concluso nei limiti provati, consolidamento in PREPARE, nessun Publish o nuova verifica LIVE qui. Core 35%, M04 PARZIALE; release/replica e ambiti avanzati invariati.
+Fonti: [Input](../01_RUNTIME_LOGOS/01_LOGOS_Input_System.md), [Lifecycle](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md), [Architecture](../01_RUNTIME_LOGOS/04_LOGOS_Retool_Architecture.md), [Preview](../01_RUNTIME_LOGOS/06_LOGOS_View_Preview_System.md) e [fotografia Runtime](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-finale-q2--draft-inline-senza-modale). Nessun inventario di codice duplicato in System. Tecnico Q2 concluso nei limiti provati; M04 successivamente accettata PASS tecnico-funzionale in Q4. Il raccordo Q4 in apertura distingue il Core ufficiale 35% dal 42% condizionato al consolidamento. Nessun Publish o nuova verifica LIVE qui; release/replica e ambiti avanzati invariati.
 
 ------------------------------------------------
 IDENTITÀ SISTEMA
@@ -377,8 +391,9 @@ La gestione anagrafica Base è attiva nei perimetri N16/N18/N20. Nella
 Draft N21, il matching B1, i filtri ACTIVE di B2/R01 per le nuove associazioni
 e la guida UX su Stati, alternative e omonimi sono implementati e verificati
 nei rispettivi casi di collaudo. Il Publish Retool non è attestato.
-G11 e M04 restano parziali per le funzionalità avanzate, comprese gerarchie
-e metadata; UX-06 è attuata e collaudata nella tranche Q2. La protezione dalle
+G11 resta INTEGRATO PARZIALE per le funzionalità avanzate, comprese gerarchie
+e metadata, distinte dal PASS tecnico-funzionale M04 qualificato in Q4.
+UX-06 è attuata e collaudata nella tranche Q2. La protezione dalle
 omonimie concorrenti rimane non atomica.
 
 Nota post Visibility Migration Completion:
@@ -1987,3 +2002,5 @@ v11 — 2026-11-12 — N20/DOC-01, candidato PREPARE. Aggiornati quadro capacit�
 v12 — 2026-11-16 — N21/DOC, proposta PREPARE. Riconciliati Architettura Funzionale, gestione anagrafica e passaggi collegati di matching, suggestion e conferma con N18/N20/N21. Nessuna nuova verifica runtime o pubblicazione attestata.
 
 v13 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.
+
+v14 — 2026-11-21 — M04-Q4, candidata PREPARE per review: PASS tecnico-funzionale CF-02/VF-02 e misura 35% → 42% subordinata al consolidamento; residui e snapshot storici preservati. Nessuna propria copia, verifica documentale assistita, commit/push o pubblicazione attestata.

@@ -1,11 +1,29 @@
 # 00_PROJECT_Roadmap
-Versione: v36
+Versione: v37
 
-DATA: 2026-11-20
+DATA: 2026-11-21
+
+## Raccordo corrente — M04-Q4 e misura candidata
+
+**M04 PASS tecnico-funzionale per CF-02/VF-02**, con sufficienza delle prove e limiti accettati nel checkpoint Q4. N14/Q1 qualificano la tranche referenziale; N16–N21 e Q2 documentano creazione, Editor, Stato, matching, disambiguazione e consenso INACTIVE. Q3 non richiede un correttivo indispensabile né un nuovo collaudo.
+
+Questa revisione è una candidata PREPARE per review. M04 è PASS tecnico-funzionale qualificato; il consolidamento documentale non è ancora applicato né pubblicato. Il valore ufficiale corrente resta 35%; 42% è lo stato successivo soltanto dopo sostituzione autorizzata, verifica documentale assistita e pubblicazione manuale verificata. Nessuna Apply o nuova verifica LIVE è attestata.
+
+La matrice v1.0 sottostante propone M04 **PASS** con peso invariato **7%**: **15 milestone, 100 punti, 7 PASS e 8 non-PASS, 42 punti PASS e 58 non conteggiati**, efficaci dopo il gate di consolidamento. Il valore precedente è 35 punti, 6 PASS e 9 non-PASS. Nessun cambio ai criteri di accettazione o alla baseline v1.0.
+
+G11 resta INTEGRATO PARZIALE per gerarchie, metadata e funzioni avanzate; P1-01 conserva i residui esterni alla tranche di integrità M04 già qualificata. G35, R2 Dirty, N22, UX-A/B/C/D e lint restano distinti e non chiusi. M05, M10, M12, M14 e le altre milestone non ricevono nuovi PASS.
+
+R-A2-01 resta accettato dopo STP: omonimie concorrenti non protette atomicamente; A2-C non autorizzata. GET di preflight e POST/PATCH restano separati; lock locale, freshness e consume-once non attestano idempotenza universale multi-tab/client o atomicità DB.
+
+Fonte: checkpoint esterno LOGOS_M04_Q4_CHECKPOINT_ACCETTAZIONE_20261120.md, 20 novembre 2026, nodo CP-LOGOS-M04-CF02-VF02-ACCEPTANCE-20261120-Q4. Artefatto della discussione ChatGPT fornito dall'utente, SHA-256 67430c79c37af6fa13d8a904ec9b6d73132d88ec649238c0fa5674654d48f301; pubblicazione GitHub Q4 non attestata. Fonti canoniche di riferimento: moody58/LOGOS, main, 799fe8217af810dba0daa2d34e14e516f99bbcc9.
+
+Nessuna nuova priorità o attività applicativa. Gli snapshot Q2 e precedenti, la misurazione iniziale del nodo 13 e le prove storiche mantengono il proprio istante; non rappresentano la misura candidata Q4.
+
+## Snapshot editoriale Q2 — 20 novembre 2026
 
 Rettifica editoriale STEP 4 del 20 novembre 2026, PREPARE della medesima versione non pubblicata: aggiornati i soli raccordi Q2 e i confini degli snapshot storici. Nessuna modifica applicativa, copia o pubblicazione attestata.
 
-## Raccordo corrente — M04 dopo Q2
+### Snapshot Q2 — M04 dopo Q2
 
 | Tranche | Risultato e residuo |
 | --- | --- |
@@ -111,12 +129,12 @@ La presente baseline definisce 15 milestone verificabili per 100 punti percentua
 
 ### Matrice v1.0: risultati, pesi e prove
 
-| ID | Risultato/criterio PASS specifico | CF/VF pertinenti | Peso | Stato alla baseline | Evidenza e limite | Dipendenze/residuo |
+| ID | Risultato/criterio PASS specifico | CF/VF pertinenti | Peso | Stato candidato dopo Q4 | Evidenza e limite | Dipendenze/residuo |
 |---|---|---|---:|---|---|---|
 | M01 | Input originale conservato, parsing e normalizzazione base coerenti; dati supportati correttamente trasferiti al salvataggio negli scenari base provati | CF-01; VF-01 limitata | 8% | PASS storico | Input System v20, Retool Runtime v22, prove pregresse di parsing/normalizzazione/save flow; non attestano interpretazione universale né nuove scritture dopo ultimo hardening | Capacità semantiche più ampie in M06; nessun intent engine globale implicito |
 | M02 | Comandi di primo livello distinti da eventi ordinari; comandi puri non persistiti come eventi, edit flow protetto da comandi riconosciuti | CF-01 | 4% | PASS storico | Input System v20, Retool Architecture v24, prove Command Intent e Input Context Consistency; solo primo livello controllato | Nuovi comandi solo quando richiesti da capacità approvate |
 | M03 | Matching Project/Entity, single-match e disambiguazione controllata funzionano nei casi di test; nessuna selezione ambigua salvata senza decisione | CF-02; VF-02 limitata | 7% | PASS storico | Match Engine v12 e G22 come prove storiche. [Contratto Match Engine N21](../01_RUNTIME_LOGOS/02_LOGOS_Match_Engine.md) e collaudi B1/UX precisano la disambiguazione; le protezioni FK e i limiti di concorrenza rientrano in M04 | Integrità e CRUD in M04 |
-| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PARZIALE | Due FK validate nel nodo 14; Editor Base N16 (Nome/Tipologia PASS e protezioni circoscritte); creazione canonica N18 PASS sui quattro percorsi con Nome/Tipologia e ACTIVE esplicito, cinque INSERT verificate, nessun auto-save evento; N20 Editor Stato PASS; N21 B1/B2/R01 e UX verificati nella Draft: disambiguazione e alternative, gate ACTIVE ordinario, FK storiche conservate in edit; Q2 aggiunge la sola eccezione INACTIVE esplicita, INSERT/UPDATE e rimozione modale verificati nei rispettivi checkpoint; [Gate B T01–T08](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026) con FAIL T05 storico e recupero | G11 macro residuo, omonimie concorrenti non atomiche, P1-01/valori base e dati preesistenti; UX-06 Q2 implementata e collaudata nei limiti della fotografia finale |
+| M04 | Progetti/entità gestibili con identificativi stabili, name/type/status pertinenti, associazioni ammesse e protezione da riferimenti errati/duplicati incontrollati | CF-02; VF-02 | 7% | PASS qualificato (candidato al consolidamento) | Q4 accetta CF-02/VF-02 sulla base di N14/Q1, Editor N16/N20, creazione N18, parità N19, disambiguazione/filtri N21 e consenso INACTIVE Q2; prove pregresse riusate senza nuovi test LIVE. Decisione Q3 trasferita dalla Regia, originale autonomo non acquisito direttamente | R-A2-01 e GET→write non atomici accettati; A2-C non autorizzata. G11 avanzato/M05, M10, G35, R2 Dirty, N22 e residui P1-01 distinti e non chiusi |
 | M05 | Gerarchie e correlazioni con semantica e cardinalità esplicite; contenitori/figli, ruoli e legami occasionali recuperabili senza confusione; genealogia con due genitori rappresentabile | CF-03; VF-03, VF-04, VF-06 | 10% | MANCANTE come funzione qualificata | Parent fields storicamente dormienti; contratto dati nodo 03 candidato non integralmente approvato/implementato | P1-02, vincoli e modello correlazioni minimo, casi ASPRI/ADEXIMA |
 | M06 | Eventi economicamente e temporalmente classificati, importi/unità/date/durate sufficienti e interrogabili; spesa e incasso distinguibili in aggregazione | CF-04; VF-01, VF-07 limitate | 8% | PARZIALE | Parsing/amount/duration/type base documentati; la semantica analitica non è interamente verificata | Distinzione economica e persistenza strutturata per casi approvati, M13 |
 | M07 | Prezzo concordato, più versamenti, saldo residuo, stati delle obbligazioni e scadenze future rappresentabili e collegati agli oggetti giusti | CF-04; VF-05; scenari CF §7–8 | 9% | MANCANTE come funzione qualificata | Requisiti definiti nel contratto funzionale, non un modello persistente verificato | Relazioni M05, struttura obbligazioni/tempi, casi ASPRI |
@@ -128,7 +146,7 @@ La presente baseline definisce 15 milestone verificabili per 100 punti percentua
 | M13 | Proiezioni e aggregazioni corrette degli eventi validi per progetto, entità e periodo, con trattamento coerente dei movimenti e delle rettifiche | CF-07; VF-05, VF-07 | 8% | MANCANTE come funzione qualificata | Contratto analitico e query/report affidabili non attestati | P1-05, M06/M07/M10, definizione inclusione dei ledger state |
 | M14 | Release versionata e replicabile del Core comune, binding validati fail-closed, compatibilità aggiornamenti e ripristino comprovato fra installazioni indipendenti | CF-08; VF-09 | 7% | MANCANTE come funzione qualificata | Modello A C1/C2 approvato; P5 PASS solo su app semplice; app Core originale Draft | P0-01 per fonte applicativa, P2, release, backup/restore, verifica isolamento |
 | M15 | Scenari end-to-end rappresentativi VF-01–VF-08 superati con dati e correlazioni reali o di prova qualificati, senza confondere Core e workflow verticali | CF-01–CF-07; VF-01–VF-08 integrati | 4% | NON DETERMINABILE COME PASS | Test isolati esistenti non certificano scenari integrati; nessun nuovo test scrivente nel nodo 13 | M04–M13, campioni operativi rappresentativi e criteri finali |
-| **Totale** | **15 milestone** | **CF-01–CF-08, VF-01–VF-09 complessivamente coperti** | **100%** | **6 PASS; 9 non PASS** | **35 punti candidati da prove esistenti** | **65 punti non ancora conteggiabili** |
+| **Totale** | **15 milestone** | **CF-01–CF-08, VF-01–VF-09 complessivamente coperti** | **100%** | **7 PASS; 8 non-PASS** | **42 punti candidati, efficaci dopo consolidamento verificato** | **58 punti non ancora conteggiabili** |
 
 ### Requisiti dati e vincoli di accettazione
 
@@ -1588,7 +1606,7 @@ Le logiche complete restano nei documenti canonici.
 NODO ATTIVO / PROSSIMO NODO OPERATIVO
 ------------------------------------------------
 
-CP-LOGOS-M04-UX06-INACTIVE-EXCEPTION-20261117-Q2 — lavoro tecnico concluso nel perimetro verificato; STEP 4 consolidamento documentale finale in PREPARE. Nessuna copia/Apply o pubblicazione attestata, nessun nuovo nodo funzionale. Core 35%, M04 PARZIALE.
+CP-LOGOS-M04-CF02-VF02-ACCEPTANCE-20261120-Q4 — accettazione tecnico-funzionale M04 PASS già qualificata; consolidamento documentale in PREPARE/review. Core ufficiale corrente 35%; 42% soltanto dopo i gate del consolidamento. Nessuna Apply nativa o pubblicazione attestata, nessun nuovo nodo funzionale. Prossimo nodo di sviluppo da decidere separatamente in Regia.
 
 ------------------------------------------------
 BACKLOG POST READINESS — NESSUN PROSSIMO NODO PREASSEGNATO
@@ -2715,3 +2733,6 @@ v35 — 2026-11-16 — N21/DOC PREPARE R03: aggiornate evidenze M03/M04 e CF-02/
 
 
 v36 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.
+
+
+v37 — 2026-11-21 — M04-Q4, candidata PREPARE per review: PASS tecnico-funzionale CF-02/VF-02 e misura 35% → 42% subordinata al consolidamento; residui e snapshot storici preservati. Nessuna propria copia, verifica documentale assistita, commit/push o pubblicazione attestata.

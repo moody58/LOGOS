@@ -1,9 +1,25 @@
 # 00_PROJECT_Gap_Register
-Versione: v31
+Versione: v32
 
-DATA: 2026-11-20
+DATA: 2026-11-21
 
-## Raccordo corrente — tranche UX-06 Q2 su G11
+## Raccordo corrente — M04 PASS tecnico-funzionale, G11 parziale
+
+**M04 PASS tecnico-funzionale per CF-02/VF-02**, nei confini e con i limiti accettati di Q4. **G11 resta INTEGRATO PARZIALE**: gerarchie, parent, metadata, relazioni avanzate, alias e merge non sono qualificati dal PASS M04 e non vengono chiusi.
+
+Questa revisione è una candidata PREPARE per review. M04 è PASS tecnico-funzionale qualificato; il consolidamento documentale non è ancora applicato né pubblicato. Il valore ufficiale corrente resta 35%; 42% è lo stato successivo soltanto dopo sostituzione autorizzata, verifica documentale assistita e pubblicazione manuale verificata. Nessuna Apply o nuova verifica LIVE è attestata.
+
+R-A2-01 resta accettato dopo STP: omonimie concorrenti non protette atomicamente; A2-C non autorizzata. GET di preflight e POST/PATCH restano separati; lock locale, freshness e consume-once non attestano idempotenza universale multi-tab/client o atomicità DB.
+
+G11 resta INTEGRATO PARZIALE per gerarchie, metadata e funzioni avanzate; P1-01 conserva i residui esterni alla tranche di integrità M04 già qualificata. G35, R2 Dirty, N22, UX-A/B/C/D e lint restano distinti e non chiusi. M05, M10, M12, M14 e le altre milestone non ricevono nuovi PASS.
+
+Nessun nuovo ID gap, chiusura di debiti estranei o attivazione di backlog. La tranche M04 di P1-01 è qualificata; ciò non chiude automaticamente l'intera macro-voce. La baseline v1.0 resta di 15 milestone/100 punti; i 7 punti M04 portano a 42% soltanto dopo il gate, senza trasferire il PASS a G11 o agli altri residui.
+
+Fonte: checkpoint esterno LOGOS_M04_Q4_CHECKPOINT_ACCETTAZIONE_20261120.md, 20 novembre 2026, nodo CP-LOGOS-M04-CF02-VF02-ACCEPTANCE-20261120-Q4. Artefatto della discussione ChatGPT fornito dall'utente, SHA-256 67430c79c37af6fa13d8a904ec9b6d73132d88ec649238c0fa5674654d48f301; pubblicazione GitHub Q4 non attestata. Fonti canoniche di riferimento: moody58/LOGOS, main, 799fe8217af810dba0daa2d34e14e516f99bbcc9.
+
+Le fotografie Q2 e precedenti restano storiche: le loro formulazioni M04 PARZIALE/Core 35% non sono riscritte.
+
+## Snapshot Q2 — tranche UX-06 su G11
 
 **G11 INTEGRATO PARZIALE, M04 PARZIALE, Core 35% invariato.** La tranche UX-06 è implementata e verificata nella Draft: riconoscimento canonico separato dall’associazione; decisioni INACTIVE indipendenti inline; freshness, consenso e percorso unico; Toggle e suggerimenti UX-R1; collaudo INSERT/UPDATE sullo stesso evento; dodici distacchi visivi e rimozione persistita della vecchia modale.
 
@@ -783,7 +799,7 @@ Perimetro storico emerso dalla Readiness, ora da distinguere dall'implementazion
 - Select con chiavi DB e label italiane; nessuna attestazione di modifica
   generalizzata delle query insert o della gestione Stato dei nuovi record
 
-N21 amplia la tranche applicativa di G11: il riconoscimento considera il repertorio integrale, B2/R01 ammette solo ACTIVE nelle nuove FK e conserva quella storica se invariata, UX distingue Stato non definito, inattività e alternative già presenti. [Contratto e limiti del preflight](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md#conferma-evento-dopo-n21b2-r01) e [prove Gate B](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026). La Readiness G11 è completata come decisione. Il macro-gap rimane **INTEGRATO PARZIALE** per UX-06, omonimie concorrenti non atomiche e funzione avanzata di gerarchie/metadata. G35, R2 Dirty (tab locale `projects_list`) e Δ5 legacy `input_raw.change` rimangono separati. Nessun nuovo gap o nodo implicito.
+N21 amplia la tranche applicativa di G11: il riconoscimento considera il repertorio integrale; nel perimetro B2/R01 le nuove FK ordinarie richiedono ACTIVE e la FK storica invariata è conservata. UX distingue Stato non definito, inattività e alternative già presenti. [Contratto e limiti del preflight](../01_RUNTIME_LOGOS/03_LOGOS_Event_Lifecycle.md#conferma-evento-dopo-n21b2-r01) e [prove Gate B](../01_RUNTIME_LOGOS/LOGOS_RETOOL_RUNTIME_REAL.md#fotografia-n21--matching-preflight-e-ux-nella-draft-15-novembre-2026). Q2 attua e collauda UX-06: l’eccezione INACTIVE richiede consenso esplicito, indipendente per Project ed Entity, nei casi ammessi; NULL resta escluso dalle nuove eccezioni. La Readiness G11 è completata come decisione; Q4 qualifica M04 PASS tecnico-funzionale per CF-02/VF-02. Il macro-gap G11 rimane **INTEGRATO PARZIALE** per gerarchie, metadata e funzioni avanzate. Le omonimie concorrenti non atomiche restano il limite R-A2-01 accettato dopo STP; A2-C non autorizzata. G35, R2 Dirty (tab locale `projects_list`) e Δ5 legacy `input_raw.change` rimangono separati. Nessun nuovo gap o nodo implicito.
 
 Fuori scope della prima tranche:
 - parent operativo completo
@@ -2269,3 +2285,6 @@ v30 — 2026-11-16 — N21/DOC PREPARE R03: assorbiti contratto e residui N21 ne
 
 
 v31 — 2026-11-20 — Q2/STEP 4 PREPARE documentale finale: contratti correnti inline, sorgenti/configurazioni di competenza e rinvii riconciliati; storia preservata. Nessuna propria copia/Apply o pubblicazione attestata.
+
+
+v32 — 2026-11-21 — M04-Q4, candidata PREPARE per review: PASS tecnico-funzionale CF-02/VF-02 e misura 35% → 42% subordinata al consolidamento; residui e snapshot storici preservati. Nessuna propria copia, verifica documentale assistita, commit/push o pubblicazione attestata.
